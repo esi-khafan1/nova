@@ -57,17 +57,29 @@ export default async function ApplyCounselor({
               minLength={5}
             />
           </label>
-          <label>
-            حوزه تخصص
-            <select name="specialty" defaultValue={a?.specialty ?? ""} required>
-              <option value="">انتخاب کن</option>
-              <option>رشته تجربی</option>
-              <option>رشته ریاضی</option>
-              <option>رشته انسانی</option>
-              <option>امتحانات نهایی</option>
-              <option>برنامه‌ریزی تحصیلی</option>
-            </select>
-          </label>
+          <fieldset className="specialty-field">
+            <legend>حوزه تخصص</legend>
+            <div className="specialty-options">
+              {[
+                "رشته تجربی",
+                "رشته ریاضی",
+                "رشته انسانی",
+                "امتحانات نهایی",
+                "برنامه‌ریزی تحصیلی",
+              ].map((specialty) => (
+                <label key={specialty}>
+                  <input
+                    type="radio"
+                    name="specialty"
+                    value={specialty}
+                    defaultChecked={a?.specialty === specialty}
+                    required
+                  />
+                  <span>{specialty}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label>
             سابقه مشاوره (سال)
             <input
