@@ -44,18 +44,28 @@ export async function applyForCounselor(fd: FormData) {
     );
   if (headline.length < 5 || specialty.length < 3)
     redirect("/dashboard/apply-counselor?error=application");
-  const { error } = await s
+  const { data: existing, error: lookupError } = await s
     .from("counselor_profiles")
-    .upsert(
-      {
-        user_id: user.id,
-        headline,
-        specialty,
-        experience_years,
-        is_accepting: false,
-      },
-      { onConflict: "user_id" },
-    );
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (lookupError)
+    redirect("/dashboard/apply-counselor?error=application");
+
+  const application = {
+    headline,
+    specialty,
+    experience_years,
+    is_accepting: false,
+  };
+  const { error } = existing
+    ? await s
+        .from("counselor_profiles")
+        .update(application)
+        .eq("user_id", user.id)
+    : await s
+        .from("counselor_profiles")
+        .insert({ user_id: user.id, ...application });
   if (error) redirect("/dashboard/apply-counselor?error=application");
   revalidatePath("/dashboard");
   redirect("/dashboard/apply-counselor?sent=1");
