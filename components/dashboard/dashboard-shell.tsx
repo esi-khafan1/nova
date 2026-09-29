@@ -28,18 +28,12 @@ export function DashboardShell({
           </div>
         </div>
         <nav className="portal-nav">
-          <Link href="/dashboard">نمای کلی</Link>
+          <Link href={`/dashboard/${role}`}>نمای کلی</Link>
           {role === "student" && (
-            <>
-              <Link href="/dashboard/student">پروفایل من</Link>
-              <Link href="/dashboard/apply-counselor">درخواست مشاورشدن</Link>
-            </>
-          )}
-          {role === "counselor" && (
-            <Link href="/dashboard/counselor">پنل مشاور</Link>
+            <Link href="/dashboard/apply-counselor">درخواست مشاورشدن</Link>
           )}
           {role === "admin" && (
-            <Link href="/dashboard/admin">مدیریت کاربران</Link>
+            <Link href="/dashboard/admin/users">مدیریت کاربران</Link>
           )}
           <Link href="/">مشاهده سایت</Link>
         </nav>

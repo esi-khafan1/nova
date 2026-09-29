@@ -84,3 +84,30 @@ export async function reviewCounselor(fd: FormData) {
   revalidatePath("/dashboard/admin");
   redirect("/dashboard/admin?reviewed=1");
 }
+
+export async function removeCounselor(fd: FormData) {
+  const s = await createClient();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) redirect("/auth/sign-in");
+
+  const user_id = clean(fd.get("user_id"), 50);
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      user_id,
+    ) ||
+    user_id === user.id
+  )
+    redirect("/dashboard/admin/users?error=remove");
+
+  const { error } = await s
+    .from("counselor_profiles")
+    .delete()
+    .eq("user_id", user_id);
+  if (error) redirect("/dashboard/admin/users?error=remove");
+
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/dashboard/admin/users");
+  redirect("/dashboard/admin/users?removed=1");
+}
