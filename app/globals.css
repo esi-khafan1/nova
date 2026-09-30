@@ -227,3 +227,17 @@ body{color:var(--ink);background:#fffdf8}
   .portal-stats article{min-height:112px}
   .portal-heading h1{font-size:29px}
 }
+
+/* Preserve the landing CTA's light-button treatment after global app theming. */
+main .cta .button-light{
+  color:#9d3f06;
+  background:#fffaf2;
+  border-color:#fffaf2;
+  box-shadow:0 10px 24px rgba(80,35,13,.16);
+}
+main .cta .button-light:hover{
+  color:#74320b;
+  background:#ffe6cf;
+  border-color:#ffe6cf;
+  box-shadow:0 12px 28px rgba(80,35,13,.2);
+}
