@@ -19,7 +19,10 @@ export const studyFieldLabels: Record<StudyField, string> = {
 };
 
 const numbered = (label: string, count: number) =>
-  Array.from({ length: count }, (_, index) => `${label} ${index + 1}`);
+  Array.from(
+    { length: count },
+    (_, index) => `${label} ${(index + 1).toLocaleString("fa-IR")}`,
+  );
 
 const biology10 = [
   "فصل ۱: دنیای زنده",
