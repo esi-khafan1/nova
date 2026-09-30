@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
 import { updateStudentProfile } from "@/app/dashboard/actions";
@@ -9,17 +8,10 @@ export default async function StudentDashboard({
 }) {
   const { supabase, profile } = await requireProfile(["student"]),
     params = await searchParams;
-  const [{ count: requests }, { data: application }] = await Promise.all([
-    supabase
-      .from("consultation_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("student_id", profile.id),
-    supabase
-      .from("counselor_profiles")
-      .select("approval_status")
-      .eq("user_id", profile.id)
-      .maybeSingle(),
-  ]);
+  const { count: requests } = await supabase
+    .from("consultation_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", profile.id);
   const grade = profile.grade
     ? `پایه ${profile.grade === 10 ? "دهم" : profile.grade === 11 ? "یازدهم" : "دوازدهم"}`
     : "پایه مشخص نشده";
@@ -31,9 +23,6 @@ export default async function StudentDashboard({
           <h1>سلام {profile.full_name || "دوست نووا"} 👋</h1>
           <p>اطلاعات و مسیر تحصیلی‌ات را از اینجا مدیریت کن.</p>
         </div>
-        <Link className="button button-small" href="/dashboard/apply-counselor">
-          درخواست مشاورشدن
-        </Link>
       </section>
       {params.saved && (
         <div className="portal-alert success">اطلاعات پروفایل ذخیره شد.</div>
@@ -51,14 +40,8 @@ export default async function StudentDashboard({
           <strong>{requests ?? 0}</strong>
         </article>
         <article>
-          <span>وضعیت مشاورشدن</span>
-          <strong>
-            {application?.approval_status === "pending"
-              ? "در انتظار بررسی"
-              : application?.approval_status === "rejected"
-                ? "نیازمند اصلاح"
-                : "ارسال نشده"}
-          </strong>
+          <span>نوع حساب</span>
+          <strong>دانش‌آموز</strong>
         </article>
       </div>
       <div className="portal-grid">

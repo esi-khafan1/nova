@@ -16,6 +16,14 @@ export function DashboardShell({
   name: string;
   children: React.ReactNode;
 }) {
+  const links = [
+    { href: `/dashboard/${role}`, label: "نمای کلی" },
+    ...(role === "admin"
+      ? [{ href: "/dashboard/admin/users", label: "مدیریت کاربران" }]
+      : []),
+    { href: "/", label: "مشاهده سایت" },
+  ];
+
   return (
     <div className="portal-shell">
       <aside className="portal-sidebar">
@@ -28,14 +36,11 @@ export function DashboardShell({
           </div>
         </div>
         <nav className="portal-nav">
-          <Link href={`/dashboard/${role}`}>نمای کلی</Link>
-          {role === "student" && (
-            <Link href="/dashboard/apply-counselor">درخواست مشاورشدن</Link>
-          )}
-          {role === "admin" && (
-            <Link href="/dashboard/admin/users">مدیریت کاربران</Link>
-          )}
-          <Link href="/">مشاهده سایت</Link>
+          {links.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
         </nav>
         <form action={signOut}>
           <button className="portal-signout">خروج از حساب</button>
@@ -46,6 +51,16 @@ export function DashboardShell({
           <Logo />
           <span>{labels[role]}</span>
         </header>
+        <nav className="portal-mobile-nav" aria-label="ناوبری پنل">
+          {links.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
+          <form action={signOut}>
+            <button>خروج</button>
+          </form>
+        </nav>
         {children}
       </main>
     </div>

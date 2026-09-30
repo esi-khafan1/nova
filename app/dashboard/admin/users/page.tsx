@@ -1,4 +1,4 @@
-import { removeCounselor } from "@/app/dashboard/actions";
+import { changeUserRole } from "@/app/dashboard/actions";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
 
@@ -35,21 +35,17 @@ export default async function AdminUsersPage({
         <div>
           <span>مدیریت نووا</span>
           <h1>مدیریت کاربران</h1>
-          <p>
-            نقش کاربران را ببین و در صورت نیاز دسترسی مشاور را لغو کن.
-          </p>
+          <p>نقش هر حساب را مستقیماً بین دانش‌آموز و مشاور تغییر بده.</p>
         </div>
       </section>
 
-      {params.removed && (
+      {params.updated && (
         <div className="portal-alert success">
-          دسترسی مشاور حذف شد و حساب کاربر به دانش‌آموز تغییر کرد.
+          نقش حساب با موفقیت تغییر کرد.
         </div>
       )}
       {params.error && (
-        <div className="portal-alert error">
-          حذف دسترسی مشاور انجام نشد.
-        </div>
+        <div className="portal-alert error">تغییر نقش حساب انجام نشد.</div>
       )}
 
       <section className="portal-card portal-wide">
@@ -76,11 +72,22 @@ export default async function AdminUsersPage({
                 </div>
               </div>
 
-              {user.role === "counselor" ? (
-                <form action={removeCounselor}>
+              {user.role !== "admin" ? (
+                <form action={changeUserRole}>
                   <input type="hidden" name="user_id" value={user.id} />
-                  <button className="remove-counselor">
-                    حذف دسترسی مشاور
+                  <input
+                    type="hidden"
+                    name="target_role"
+                    value={user.role === "counselor" ? "student" : "counselor"}
+                  />
+                  <button
+                    className={`role-action ${
+                      user.role === "counselor" ? "demote" : "promote"
+                    }`}
+                  >
+                    {user.role === "counselor"
+                      ? "تبدیل به دانش‌آموز"
+                      : "تبدیل به مشاور"}
                   </button>
                 </form>
               ) : (
