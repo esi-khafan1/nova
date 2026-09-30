@@ -80,3 +80,150 @@ main .mobile-menu-panel{color:#14263b;border-color:#e9c7aa;background:#fffaf2;bo
 @media(max-width:620px){main .proof-strip{background:#102a43}}
 main .logo small{color:#8a5a3a}
 main .cta:after{border-color:rgba(242,138,53,.34)}
+
+/* Unified Nova product theme for authentication and role dashboards.
+   Mirrors the warm landing palette: cream surfaces, navy structure and focused orange accents. */
+:root{
+  --ink:#14263b;
+  --muted:#704b36;
+  --primary:#c65308;
+  --primary-dark:#923b06;
+  --mint:#fff0e3;
+  --cream:#fff8f1;
+  --line:#efcdb2;
+  --white:#fffefb;
+  --orange:#f28a35;
+  --navy:#102a43;
+  --peach:#ffd7b5;
+}
+
+body{color:var(--ink);background:#fffdf8}
+.logo small{color:#8a5a3a}
+.button{background:var(--primary);border-color:var(--primary);box-shadow:0 10px 24px rgba(153,62,7,.16)}
+.button:hover{background:var(--primary-dark);box-shadow:0 12px 28px rgba(116,48,8,.22)}
+.button:disabled{color:#fff7ef;background:#b96b39;border-color:#b96b39;box-shadow:none;cursor:not-allowed;opacity:.82}
+:focus-visible{outline-color:rgba(198,83,8,.45)}
+
+/* Authentication */
+.auth-shell{position:relative;color:var(--ink);background:#fff8f1;grid-template-columns:minmax(380px,.88fr) minmax(520px,1.12fr)}
+.auth-aside{isolation:isolate;color:#fffaf2;background:var(--navy);padding:54px clamp(36px,5vw,76px)}
+.auth-aside:before{content:"";position:absolute;z-index:-1;width:360px;height:360px;right:-145px;top:17%;border:1px dashed rgba(255,183,121,.36);border-radius:50%}
+.auth-aside:after{z-index:-1;width:420px;height:420px;left:-180px;bottom:-180px;border:74px solid rgba(242,138,53,.34);box-shadow:0 0 0 42px rgba(255,183,121,.08)}
+.auth-aside .logo{color:#fffaf2}
+.auth-aside .logo-mark{background:linear-gradient(145deg,#f28a35,#c65308);color:#fff;box-shadow:0 12px 30px rgba(198,83,8,.3)}
+.auth-aside .logo small{color:#ffc58e}
+.auth-aside>small{position:relative;z-index:1;color:#f6d8be}
+.auth-quote{max-width:540px}
+.auth-quote:before{content:"";width:48px;height:48px;margin-bottom:24px;display:block;background:linear-gradient(145deg,#f28a35,#c65308);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 12px 18px rgba(198,83,8,.25))}
+.auth-kicker{color:#ffc58e;font-size:13px;font-weight:850}
+.auth-quote h1{color:#fffdf8;font-size:clamp(34px,3.2vw,50px);line-height:1.5;margin:12px 0 18px}
+.auth-quote p{color:#f6d8be;font-size:16px;line-height:2}
+.auth-main{position:relative;overflow:hidden;padding:clamp(28px,5vw,72px);background:radial-gradient(circle at 88% 8%,rgba(242,138,53,.16),transparent 25%),radial-gradient(circle at 8% 92%,rgba(255,199,148,.22),transparent 26%),#fff8f1}
+.auth-main:before{content:"";position:absolute;width:260px;height:90px;left:-60px;top:64px;border-top:2px solid rgba(198,83,8,.22);border-radius:50%;transform:rotate(-10deg)}
+.auth-card{position:relative;z-index:1;width:min(480px,100%);padding:clamp(28px,4vw,46px);border:1px solid #efc6a5;border-radius:22px;background:#fffefb;box-shadow:0 28px 70px rgba(112,57,21,.13)}
+.auth-mode-heading>span{display:inline-flex;align-items:center;gap:8px;color:var(--primary);font-size:12px;font-weight:850}
+.auth-mode-heading>span:before{content:"";width:18px;height:2px;background:var(--primary)}
+.auth-mode-heading h1{color:var(--ink);font-size:36px;margin:8px 0 4px}
+.auth-mode-heading p{color:var(--muted);margin-bottom:27px}
+.field{gap:8px;margin-bottom:17px}
+.field label{color:#4f3424;font-size:12px}
+.field input{color:var(--ink);height:54px;border-color:#e7c4aa;border-radius:11px;background:#fffaf6}
+.field input:hover{border-color:#d99a6a}
+.field input:focus{border-color:var(--primary);background:#fffefb;box-shadow:0 0 0 4px rgba(198,83,8,.11)}
+.field input::placeholder{color:#9a6849}
+.field input:-webkit-autofill{-webkit-text-fill-color:#14263b;box-shadow:0 0 0 1000px #fffaf6 inset}
+.form-message{color:#8f342c;background:#fff0ed;border:1px solid #efc7c0}
+.form-message.success{color:#256344;background:#eff8f2;border-color:#b9dcc7}
+.auth-switch{color:#704b36}
+.auth-switch-button{color:#b44907}
+
+/* Dashboards */
+.portal-shell{color:var(--ink);background:#fff8f1;grid-template-columns:276px 1fr}
+.portal-sidebar{isolation:isolate;overflow:hidden;color:#fffaf2;background:var(--navy);border-left:0;padding:30px 22px}
+.portal-sidebar:after{content:"";position:absolute;z-index:-1;width:290px;height:290px;left:-160px;bottom:-110px;border:48px solid rgba(242,138,53,.16);border-radius:50%}
+.portal-sidebar .logo{color:#fffaf2}
+.portal-sidebar .logo-mark{background:linear-gradient(145deg,#f28a35,#c65308);box-shadow:0 10px 24px rgba(198,83,8,.3)}
+.portal-sidebar .logo small{color:#ffc58e}
+.portal-user{padding:15px;border:1px solid rgba(255,199,148,.13);background:rgba(255,244,232,.08)}
+.portal-avatar{background:linear-gradient(145deg,#f28a35,#c65308);box-shadow:0 8px 20px rgba(198,83,8,.25)}
+.portal-user strong{color:#fffaf2}
+.portal-user span{color:#f5cda9}
+.portal-nav a{position:relative;color:#f6d8be}
+.portal-nav a:before{content:"";width:5px;height:5px;margin-left:9px;border-radius:50%;background:#f28a35;opacity:.65}
+.portal-nav a:hover{color:#fff;background:rgba(242,138,53,.17)}
+.portal-signout{position:relative;z-index:1;color:#ffd7cf;border-color:rgba(255,183,174,.25);background:rgba(173,56,47,.13)}
+.portal-signout:hover{color:#fff0ed;background:rgba(198,69,57,.24)}
+.portal-main{position:relative;min-height:100vh;padding:46px clamp(28px,5vw,72px);background:radial-gradient(circle at 5% 2%,rgba(242,138,53,.12),transparent 21%),radial-gradient(circle at 96% 96%,rgba(255,198,145,.18),transparent 20%),#fff8f1}
+.portal-main:before{content:"";position:absolute;top:35px;left:42px;width:116px;height:42px;border-top:1px solid rgba(198,83,8,.22);border-radius:50%;transform:rotate(-9deg);pointer-events:none}
+.portal-main>*{position:relative;z-index:1}
+.portal-heading{align-items:center;margin-bottom:32px}
+.portal-heading>div>span{display:flex;align-items:center;gap:8px;color:#b44907}
+.portal-heading>div>span:before{content:"";width:18px;height:2px;background:#c65308}
+.portal-heading h1{color:#14263b;font-size:clamp(29px,3.4vw,42px);line-height:1.35}
+.portal-heading p{color:#704b36}
+.portal-stats{gap:16px;margin-bottom:20px}
+.portal-stats article{position:relative;overflow:hidden;min-height:128px;padding:24px;border-color:#efc6a5;border-radius:16px;background:#fffefb;box-shadow:0 14px 34px rgba(112,57,21,.07)}
+.portal-stats article:before{content:"";position:absolute;right:0;top:0;width:5px;height:100%;background:linear-gradient(#f28a35,#c65308)}
+.portal-stats article:after{content:"✦";position:absolute;left:18px;top:15px;color:#f2b27c;font-size:17px}
+.portal-stats span{color:#704b36}
+.portal-stats strong{color:#b44907;font-size:24px}
+.portal-grid{gap:20px}
+.portal-card{border-color:#efc6a5;border-radius:17px;background:#fffefb;box-shadow:0 14px 34px rgba(112,57,21,.07)}
+.portal-card-title span,.admin-role-card span{color:#b44907}
+.portal-card h2{color:#14263b}
+.portal-form label{color:#4f3424}
+.portal-form input,.portal-form select{color:#14263b;border-color:#e7c4aa;background:#fffaf6}
+.portal-form input:hover,.portal-form select:hover{border-color:#d99a6a}
+.portal-form input:focus,.portal-form select:focus{border-color:#c65308;background:#fffefb;box-shadow:0 0 0 4px rgba(198,83,8,.11)}
+.portal-form input::placeholder{color:#9a6849}
+.portal-form select option{color:#14263b;background:#fffaf6}
+.portal-empty{background:linear-gradient(145deg,#fffefb,#fff7ed)}
+.portal-empty-icon{color:#b44907;background:#ffe6cf;box-shadow:0 0 0 9px rgba(242,138,53,.07)}
+.portal-empty p,.admin-role-card p{color:#704b36}
+.portal-alert.success{color:#256344;background:#eff8f2;border:1px solid #b9dcc7}
+.portal-alert.error{color:#8f342c;background:#fff0ed;border:1px solid #efc7c0}
+.availability{color:#704b36;background:#ffead7;border:1px solid #efc6a5}
+.availability.active{color:#256344;background:#eff8f2;border-color:#b9dcc7}
+.users-count,.users-list-main small{color:#704b36}
+.users-list article{border-bottom-color:#efd5bf}
+.role-badge{color:#704b36;background:#ffead7;border:1px solid #efc6a5}
+.role-badge.student{color:#6e3a19;background:#fff0df;border-color:#efc69f}
+.role-badge.counselor{color:#a64205;background:#ffe6cf;border-color:#edb785}
+.role-badge.admin{color:#fff8f1;background:#102a43;border-color:#102a43}
+.role-action.promote{color:#9d3f06;border-color:#e0a575;background:#fff0df}
+.role-action.promote:hover{background:#ffdfc2}
+.role-action.demote{color:#743b2c;border-color:#e6b5a7;background:#fff0ed}
+.role-action.demote:hover{background:#ffe1da}
+.no-action{color:#9a6849}
+.application-status{color:#14263b;background:#fff0df;border-color:#edc196}
+.application-status span,.application-list small,.portal-table-empty{color:#704b36}
+.application-status.approved{background:#eff8f2;border-color:#b9dcc7}
+.application-status.rejected{background:#fff0ed;border-color:#efc7c0}
+.application-list article{border-bottom-color:#efd5bf}
+.application-list span{color:#563927}
+.review-reject,.remove-counselor{color:#8f342c;border-color:#e6b5a7;background:#fff0ed}
+.review-reject:hover,.remove-counselor:hover{background:#ffe1da}
+.portal-mobile-header{padding:13px 15px;border:1px solid #efc6a5;border-radius:14px;background:#fffefb;box-shadow:0 10px 26px rgba(112,57,21,.07)}
+.portal-mobile-nav a,.portal-mobile-nav button{color:#14263b;border-color:#efc6a5;background:#fffaf6}
+.portal-mobile-nav a:hover{color:#a94306;background:#ffe9d5}
+.portal-mobile-nav button{color:#8f342c;background:#fff0ed;border-color:#e6b5a7}
+
+@media(max-width:900px){
+  .auth-shell{display:block;min-height:100vh}
+  .auth-aside{display:flex;min-height:auto;padding:24px 24px 19px}
+  .auth-aside .auth-quote,.auth-aside>small{display:none}
+  .auth-main{min-height:calc(100vh - 88px);place-items:start center;padding:38px 20px}
+  .auth-card{padding:30px 24px}
+  .portal-main{padding:24px 20px 42px}
+  .portal-mobile-header{margin-bottom:25px}
+  .portal-mobile-header>span{color:#b44907}
+  .portal-heading{align-items:flex-start}
+}
+
+@media(max-width:620px){
+  .auth-main{padding:24px 16px 36px}
+  .auth-card{border-radius:17px;box-shadow:0 18px 45px rgba(112,57,21,.11)}
+  .auth-mode-heading h1{font-size:30px}
+  .portal-stats article{min-height:112px}
+  .portal-heading h1{font-size:29px}
+}
