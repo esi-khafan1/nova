@@ -79,6 +79,28 @@ export default function Home() {
 
       <section className="section section-cta" id="resources"><div className="container cta"><div><span>شروع یک مسیر تازه</span><h2>آماده‌ای این بار با برنامه جلو بروی؟</h2><p>حسابت را بساز؛ اولین قدم فقط چند دقیقه زمان می‌برد.</p></div><Link className="button button-light" href="/auth?mode=signup">ثبت‌نام در نووا <ArrowLeft /></Link></div></section>
 
+      <section className="social-section" aria-labelledby="social-title">
+        <div className="container social-panel">
+          <div className="social-copy">
+            <span>نووا در کنار تو</span>
+            <h2 id="social-title">در شبکه‌های اجتماعی ما را دنبال کنید</h2>
+            <p>ویدئوهای آموزشی، نکته‌های برنامه‌ریزی و خبرهای تازه نووا را از کانال‌های رسمی دنبال کن.</p>
+          </div>
+          <div className="social-links">
+            <a className="social-link youtube" href="https://www.youtube.com/@novayas" target="_blank" rel="noreferrer">
+              <span className="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.8 2.8 0 0 0-2-2C17.9 4.7 12 4.7 12 4.7s-5.9 0-7.6.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .4 4.8 2.8 2.8 0 0 0 2 2c1.7.5 7.6.5 7.6.5s5.9 0 7.6-.5a2.8 2.8 0 0 0 2-2A29 29 0 0 0 22 12a29 29 0 0 0-.4-4.8ZM10 15.4V8.6l5.8 3.4-5.8 3.4Z" /></svg></span>
+              <span><strong>یوتیوب نووا</strong><small>ویدئوهای آموزشی و مسیر مطالعه</small></span>
+              <ArrowLeft />
+            </a>
+            <a className="social-link telegram" href="https://t.me/novayasyoutube" target="_blank" rel="noreferrer">
+              <span className="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m20.7 4.2-3 15c-.2 1.1-.9 1.4-1.8.9l-4.6-3.4-2.2 2.1c-.2.2-.5.5-1 .5l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L5.8 13.3l-4.6-1.4c-1-.3-1-1 .2-1.5l17.9-6.9c.8-.3 1.6.2 1.4.7Z" /></svg></span>
+              <span><strong>تلگرام نووا</strong><small>اعلان‌ها، فایل‌ها و تازه‌ترین محتوا</small></span>
+              <ArrowLeft />
+            </a>
+          </div>
+        </div>
+      </section>
+
       <footer id="about"><div className="container footer-grid"><Logo /><p>نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی روشن.</p><div><Link href="/auth">ورود / ثبت‌نام</Link></div></div></footer>
     </main>
   );
