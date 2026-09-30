@@ -87,7 +87,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
         <div className="auth-card unified-auth-card">
           <div className="auth-mode-heading">
             <span>{mode === "signin" ? "ادامه مسیر" : "شروع مسیر"}</span>
-            <h1>{mode === "signin" ? "خوش برگشتی" : "ساخت حساب دانش‌آموز"}</h1>
+            <h1>{mode === "signin" ? "خوش برگشتی" : "به نووا بپیوند"}</h1>
             <p>
               {mode === "signin"
                 ? "اطلاعات حسابت را وارد کن."
