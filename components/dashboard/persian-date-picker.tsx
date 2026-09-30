@@ -132,9 +132,15 @@ export function PersianDatePicker({
             </button>
           </header>
           <div className="persian-calendar-weekdays" aria-hidden="true">
-            {["ش", "ی", "د", "س", "چ", "پ", "ج"].map((day) => (
-              <span key={day}>{day}</span>
-            ))}
+            {[
+              "شنبه",
+              "یکشنبه",
+              "دوشنبه",
+              "سه‌شنبه",
+              "چهارشنبه",
+              "پنجشنبه",
+              "جمعه",
+            ].map((day) => <span key={day}>{day}</span>)}
           </div>
           <div className="persian-calendar-days">
             {days.map((date) => {

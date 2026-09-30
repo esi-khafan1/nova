@@ -223,8 +223,8 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                         </label>
                         <label>
                           درس
-                          <input
-                            list={`subjects-${item.key}`}
+                          {books.length ? (
+                          <select
                             value={item.subject}
                             onChange={(event) => {
                               updateItem(
@@ -234,20 +234,35 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                               );
                               updateItem(item.key, "chapter", "");
                             }}
-                            placeholder="مثلاً زیست‌شناسی ۲"
-                            maxLength={100}
                             required
-                          />
-                          <datalist id={`subjects-${item.key}`}>
+                          >
+                            <option value="">انتخاب درس</option>
                             {books.map((book) => (
-                              <option key={book.subject} value={book.subject} />
+                              <option key={book.subject} value={book.subject}>
+                                {book.subject}
+                              </option>
                             ))}
-                          </datalist>
+                          </select>
+                          ) : (
+                            <input
+                              value={item.subject}
+                              onChange={(event) =>
+                                updateItem(
+                                  item.key,
+                                  "subject",
+                                  event.target.value,
+                                )
+                              }
+                              placeholder="نام درس را وارد کن"
+                              maxLength={100}
+                              required
+                            />
+                          )}
                         </label>
                         <label>
                           فصل یا مبحث
-                          <input
-                            list={`chapters-${item.key}`}
+                          {books.length ? (
+                          <select
                             value={item.chapter}
                             onChange={(event) =>
                               updateItem(
@@ -256,14 +271,33 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                                 event.target.value,
                               )
                             }
-                            placeholder="از فهرست انتخاب یا تایپ کن"
-                            maxLength={160}
-                          />
-                          <datalist id={`chapters-${item.key}`}>
+                            disabled={!item.subject}
+                          >
+                            <option value="">
+                              {item.subject
+                                ? "انتخاب فصل یا مبحث"
+                                : "ابتدا درس را انتخاب کن"}
+                            </option>
                             {chapters(item.subject).map((chapter) => (
-                              <option key={chapter} value={chapter} />
+                              <option key={chapter} value={chapter}>
+                                {chapter}
+                              </option>
                             ))}
-                          </datalist>
+                          </select>
+                          ) : (
+                            <input
+                              value={item.chapter}
+                              onChange={(event) =>
+                                updateItem(
+                                  item.key,
+                                  "chapter",
+                                  event.target.value,
+                                )
+                              }
+                              placeholder="فصل یا مبحث را وارد کن"
+                              maxLength={160}
+                            />
+                          )}
                         </label>
                         <label>
                           نوع فعالیت

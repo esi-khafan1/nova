@@ -350,7 +350,7 @@ main .eyebrow span{background:#9d3f06}
 .persian-calendar-weekdays,
 .persian-calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .persian-calendar-weekdays{margin-bottom:4px}
-.persian-calendar-weekdays span{display:grid;place-items:center;height:28px;color:#854019;font-size:10px;font-weight:800}
+.persian-calendar-weekdays span{display:grid;place-items:center;height:30px;color:#854019;font-size:7px;font-weight:850;white-space:nowrap}
 .persian-calendar-days button{aspect-ratio:1;display:grid;place-items:center;color:#14263b;border:1px solid transparent;border-radius:9px;background:transparent;font:inherit;font-size:10px;cursor:pointer}
 .persian-calendar-days button:hover{color:#9d3f06;border-color:#e7b991;background:#fff0df}
 .persian-calendar-days button.outside{color:#b66b3d;opacity:.52}
