@@ -301,3 +301,9 @@ main .result-chip span{color:#91430f}
   .social-links{grid-template-columns:1fr}
   .social-link{min-height:92px;padding:14px}
 }
+
+/* Accessible dark-orange labels on warm landing surfaces. */
+main .eyebrow,
+main .section-kicker,
+main .section-heading>span{color:#9d3f06}
+main .eyebrow span{background:#9d3f06}
