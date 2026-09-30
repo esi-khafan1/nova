@@ -18,6 +18,14 @@ export function DashboardShell({
 }) {
   const links = [
     { href: `/dashboard/${role}`, label: "نمای کلی" },
+    ...(role === "counselor"
+      ? [
+          {
+            href: "/dashboard/counselor/plans",
+            label: "برنامه‌های هفتگی",
+          },
+        ]
+      : []),
     ...(role === "admin"
       ? [{ href: "/dashboard/admin/users", label: "مدیریت کاربران" }]
       : []),

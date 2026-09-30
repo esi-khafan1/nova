@@ -7,6 +7,13 @@ export type CurrentProfile = {
   role: AppRole;
   grade: number | null;
   phone: string | null;
+  study_field:
+    | "mathematics"
+    | "experimental_sciences"
+    | "humanities"
+    | "arts"
+    | "foreign_languages"
+    | null;
 };
 export async function requireProfile(allowed?: AppRole[]) {
   const supabase = await createClient();
@@ -16,7 +23,7 @@ export async function requireProfile(allowed?: AppRole[]) {
   if (!user) redirect("/auth/sign-in");
   const { data } = await supabase
     .from("profiles")
-    .select("id,full_name,role,grade,phone")
+    .select("id,full_name,role,grade,phone,study_field")
     .eq("id", user.id)
     .single();
   if (!data) redirect("/auth/sign-in");

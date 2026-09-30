@@ -1,0 +1,351 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { saveWeeklyPlan } from "@/app/dashboard/actions";
+import {
+  activityTypes,
+  studyCatalog,
+  studyFieldLabels,
+  weekDays,
+  type StudyField,
+} from "@/lib/study-catalog";
+
+type Student = {
+  student_id: string;
+  full_name: string;
+  grade: number | null;
+  study_field: StudyField | null;
+};
+
+type PlanItem = {
+  key: string;
+  dayOfWeek: number;
+  startTime: string;
+  durationMinutes: number;
+  subject: string;
+  chapter: string;
+  activityType: (typeof activityTypes)[number]["value"];
+  details: string;
+};
+
+const newItem = (dayOfWeek = 0): PlanItem => ({
+  key: `${Date.now()}-${Math.random()}`,
+  dayOfWeek,
+  startTime: "08:00",
+  durationMinutes: 90,
+  subject: "",
+  chapter: "",
+  activityType: "lesson",
+  details: "",
+});
+
+function nextSaturday() {
+  const date = new Date();
+  const day = date.getDay();
+  const daysUntilSaturday = (6 - day + 7) % 7;
+  date.setDate(date.getDate() + daysUntilSaturday);
+  return date.toISOString().slice(0, 10);
+}
+
+export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
+  const [studentId, setStudentId] = useState(students[0]?.student_id ?? "");
+  const [items, setItems] = useState<PlanItem[]>([newItem()]);
+
+  const student = students.find((item) => item.student_id === studentId);
+  const books = useMemo(() => {
+    if (!student?.study_field || !student.grade) return [];
+    return (
+      studyCatalog[student.study_field][student.grade as 10 | 11 | 12] ?? []
+    );
+  }, [student]);
+
+  const chapters = (subject: string) =>
+    books.find((book) => book.subject === subject)?.chapters ?? [];
+
+  const updateItem = <K extends keyof PlanItem>(
+    key: string,
+    property: K,
+    value: PlanItem[K],
+  ) =>
+    setItems((current) =>
+      current.map((item) =>
+        item.key === key ? { ...item, [property]: value } : item,
+      ),
+    );
+
+  if (!students.length) {
+    return (
+      <section className="portal-card portal-empty plan-empty">
+        <div className="portal-empty-icon">✦</div>
+        <h2>اول یک دانش‌آموز انتخاب کن</h2>
+        <p>
+          از فهرست دانش‌آموزان، یک نفر را به لیست مشاوره‌ات اضافه کن تا بتوانی
+          برنامه هفتگی او را بسازی.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <form action={saveWeeklyPlan} className="weekly-builder">
+      <section className="portal-card plan-basics">
+        <div className="portal-card-title">
+          <div>
+            <span>تنظیمات برنامه</span>
+            <h2>برنامه برای چه هفته‌ای است؟</h2>
+          </div>
+        </div>
+        <div className="plan-basics-grid">
+          <label>
+            دانش‌آموز
+            <select
+              name="student_id"
+              value={studentId}
+              onChange={(event) => setStudentId(event.target.value)}
+              required
+            >
+              {students.map((item) => (
+                <option key={item.student_id} value={item.student_id}>
+                  {item.full_name || "دانش‌آموز نووا"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            شروع هفته
+            <input name="week_start" type="date" defaultValue={nextSaturday()} required />
+          </label>
+          <label>
+            عنوان برنامه
+            <input
+              name="title"
+              defaultValue="برنامه هفتگی"
+              maxLength={120}
+              required
+            />
+          </label>
+        </div>
+        <div className="student-study-meta">
+          <span>
+            پایه: {student?.grade ? `پایه ${student.grade}` : "ثبت نشده"}
+          </span>
+          <span>
+            رشته:{" "}
+            {student?.study_field
+              ? studyFieldLabels[student.study_field]
+              : "ثبت نشده"}
+          </span>
+          {!books.length && (
+            <strong>
+              برای پیشنهاد درس و فصل، دانش‌آموز باید پایه و رشته‌اش را در
+              پروفایل ثبت کند.
+            </strong>
+          )}
+        </div>
+      </section>
+
+      <div className="weekly-days">
+        {weekDays.map((day, dayIndex) => {
+          const dayItems = items.filter(
+            (item) => item.dayOfWeek === dayIndex,
+          );
+          return (
+            <section className="portal-card plan-day" key={day}>
+              <header>
+                <div>
+                  <span>روز {dayIndex + 1}</span>
+                  <h2>{day}</h2>
+                </div>
+                <button
+                  type="button"
+                  className="plan-add"
+                  onClick={() =>
+                    setItems((current) => [...current, newItem(dayIndex)])
+                  }
+                >
+                  + افزودن فعالیت
+                </button>
+              </header>
+
+              {dayItems.length === 0 ? (
+                <p className="plan-day-empty">برای این روز فعالیتی ثبت نشده.</p>
+              ) : (
+                <div className="plan-item-list">
+                  {dayItems.map((item, index) => (
+                    <article className="plan-item-editor" key={item.key}>
+                      <div className="plan-item-number">{index + 1}</div>
+                      <div className="plan-item-fields">
+                        <label>
+                          ساعت شروع
+                          <input
+                            type="time"
+                            value={item.startTime}
+                            onChange={(event) =>
+                              updateItem(
+                                item.key,
+                                "startTime",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </label>
+                        <label>
+                          مدت (دقیقه)
+                          <input
+                            type="number"
+                            min={15}
+                            max={720}
+                            step={15}
+                            value={item.durationMinutes}
+                            onChange={(event) =>
+                              updateItem(
+                                item.key,
+                                "durationMinutes",
+                                Number(event.target.value),
+                              )
+                            }
+                            required
+                          />
+                        </label>
+                        <label>
+                          درس
+                          <input
+                            list={`subjects-${item.key}`}
+                            value={item.subject}
+                            onChange={(event) => {
+                              updateItem(
+                                item.key,
+                                "subject",
+                                event.target.value,
+                              );
+                              updateItem(item.key, "chapter", "");
+                            }}
+                            placeholder="مثلاً زیست‌شناسی ۲"
+                            maxLength={100}
+                            required
+                          />
+                          <datalist id={`subjects-${item.key}`}>
+                            {books.map((book) => (
+                              <option key={book.subject} value={book.subject} />
+                            ))}
+                          </datalist>
+                        </label>
+                        <label>
+                          فصل یا مبحث
+                          <input
+                            list={`chapters-${item.key}`}
+                            value={item.chapter}
+                            onChange={(event) =>
+                              updateItem(
+                                item.key,
+                                "chapter",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="از فهرست انتخاب یا تایپ کن"
+                            maxLength={160}
+                          />
+                          <datalist id={`chapters-${item.key}`}>
+                            {chapters(item.subject).map((chapter) => (
+                              <option key={chapter} value={chapter} />
+                            ))}
+                          </datalist>
+                        </label>
+                        <label>
+                          نوع فعالیت
+                          <select
+                            value={item.activityType}
+                            onChange={(event) =>
+                              updateItem(
+                                item.key,
+                                "activityType",
+                                event.target.value as PlanItem["activityType"],
+                              )
+                            }
+                          >
+                            {activityTypes.map((activity) => (
+                              <option
+                                key={activity.value}
+                                value={activity.value}
+                              >
+                                {activity.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="plan-details">
+                          توضیح تکمیلی
+                          <input
+                            value={item.details}
+                            onChange={(event) =>
+                              updateItem(
+                                item.key,
+                                "details",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="مثلاً ۳۰ تست زمان‌دار و تحلیل پاسخ‌ها"
+                            maxLength={500}
+                          />
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        className="plan-remove"
+                        aria-label="حذف فعالیت"
+                        onClick={() =>
+                          setItems((current) =>
+                            current.filter(
+                              (currentItem) => currentItem.key !== item.key,
+                            ),
+                          )
+                        }
+                      >
+                        حذف
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <section className="portal-card plan-publish">
+        <label>
+          یادداشت کلی برای دانش‌آموز
+          <textarea
+            name="notes"
+            rows={4}
+            maxLength={2000}
+            placeholder="هدف هفته، نکات اجرایی یا روتین ثابت را بنویس..."
+          />
+        </label>
+        <input
+          type="hidden"
+          name="items"
+          value={JSON.stringify(
+            items.map((item) => ({
+              dayOfWeek: item.dayOfWeek,
+              startTime: item.startTime,
+              durationMinutes: item.durationMinutes,
+              subject: item.subject,
+              chapter: item.chapter,
+              activityType: item.activityType,
+              details: item.details,
+            })),
+          )}
+        />
+        <div>
+          <button className="button button-secondary" name="status" value="draft">
+            ذخیره پیش‌نویس
+          </button>
+          <button className="button" name="status" value="published">
+            انتشار برای دانش‌آموز
+          </button>
+        </div>
+      </section>
+    </form>
+  );
+}

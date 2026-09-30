@@ -313,3 +313,114 @@ main .eyebrow span{background:#9d3f06}
   main #services .section-heading{max-width:1100px}
   main #services .section-heading h2{white-space:nowrap}
 }
+
+/* Counselor weekly planner */
+.student-picker{margin-bottom:20px}
+.student-picker>.portal-card-title{align-items:center}
+.student-picker>.portal-card-title>strong{color:#9d3f06;font-size:14px}
+.selected-students{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.selected-students article{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #efc6a5;border-radius:12px;background:#fff8ef}
+.selected-students article>span{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;color:#fffaf2;background:#c65308;font-weight:850}
+.selected-students article>div{min-width:0;display:grid}
+.selected-students strong{color:#14263b;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selected-students small{color:#854019;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.student-select-form{display:flex;align-items:flex-end;gap:12px;padding-top:18px;border-top:1px solid #efd5bf}
+.student-select-form label{min-width:280px;display:grid;gap:7px;color:#633014;font-size:12px;font-weight:750}
+.student-select-form select,
+.weekly-builder input,
+.weekly-builder select,
+.weekly-builder textarea{width:100%;min-height:46px;padding:0 12px;color:#14263b;border:1px solid #e7c4aa;border-radius:9px;background:#fffaf6;font:inherit;outline:none}
+.weekly-builder textarea{padding:12px;resize:vertical}
+.student-select-form select:focus,
+.weekly-builder input:focus,
+.weekly-builder select:focus,
+.weekly-builder textarea:focus{border-color:#c65308;background:#fffefb;box-shadow:0 0 0 4px rgba(198,83,8,.11)}
+.weekly-builder input::placeholder,
+.weekly-builder textarea::placeholder{color:#a24f1b}
+.all-students-selected{margin:0;color:#854019;font-size:12px}
+.weekly-builder{display:grid;gap:20px}
+.plan-basics-grid{display:grid;grid-template-columns:1.1fr .8fr 1.1fr;gap:12px}
+.plan-basics label,
+.plan-item-fields label,
+.plan-publish>label{display:grid;gap:7px;color:#633014;font-size:11px;font-weight:750}
+.student-study-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+.student-study-meta span{padding:7px 10px;color:#74320b;border:1px solid #f0c49f;border-radius:99px;background:#fff0df;font-size:10px;font-weight:750}
+.student-study-meta strong{color:#8f342c;font-size:10px}
+.weekly-days{display:grid;gap:14px}
+.plan-day{padding:20px}
+.plan-day>header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.plan-day>header>div{display:flex;align-items:center;gap:9px}
+.plan-day>header span{color:#9d3f06;font-size:10px;font-weight:800}
+.plan-day>header h2{margin:0;font-size:18px}
+.plan-add{min-height:38px;padding:0 13px;color:#9d3f06;border:1px solid #e4aa7b;border-radius:8px;background:#fff0df;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.plan-add:hover{background:#ffdfc2}
+.plan-day-empty{margin:0;padding:15px;color:#854019;border:1px dashed #e7b991;border-radius:10px;background:#fffaf6;font-size:11px}
+.plan-item-list{display:grid;gap:10px}
+.plan-item-editor{position:relative;display:grid;grid-template-columns:30px 1fr auto;align-items:start;gap:11px;padding:14px;border:1px solid #efd5bf;border-radius:12px;background:#fffaf6}
+.plan-item-number{width:30px;height:30px;display:grid;place-items:center;color:#fffaf2;border-radius:50%;background:#c65308;font-size:11px;font-weight:850}
+.plan-item-fields{display:grid;grid-template-columns:110px 110px 1fr 1.2fr 1fr 1.5fr;gap:9px}
+.plan-item-fields input,
+.plan-item-fields select{min-height:42px;font-size:11px}
+.plan-remove{height:32px;padding:0 10px;color:#8f342c;border:1px solid #e6b5a7;border-radius:8px;background:#fff0ed;font:inherit;font-size:10px;font-weight:750;cursor:pointer}
+.plan-remove:hover{background:#ffe1da}
+.plan-publish{display:grid;gap:16px}
+.plan-publish>div{display:flex;justify-content:flex-end;gap:10px}
+.button.button-secondary{color:#9d3f06;background:#fff0df;border-color:#e0a575;box-shadow:none}
+.button.button-secondary:hover{color:#74320b;background:#ffdfc2}
+.plan-empty{margin-top:0}
+.recent-plans{margin-top:20px}
+.recent-plans>.portal-card-title{margin-bottom:8px}
+.recent-plans>div:last-child{display:grid}
+.recent-plans article{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid #efd5bf}
+.recent-plans article:last-child{border-bottom:0}
+.recent-plans article>div{display:grid}
+.recent-plans article strong{color:#14263b;font-size:12px}
+.recent-plans article span{color:#854019;font-size:10px}
+.plan-status{padding:6px 9px;border-radius:99px;border:1px solid #efc6a5;background:#fff0df;white-space:nowrap}
+.plan-status.published{color:#256344!important;border-color:#b9dcc7;background:#eff8f2}
+.counselor-secondary{margin-top:18px;min-height:220px}
+
+/* Student weekly plan */
+.student-weekly-plan{margin-top:20px;padding:26px;border:1px solid #efc6a5;border-radius:17px;background:#fffefb;box-shadow:0 14px 34px rgba(112,57,21,.07)}
+.student-weekly-plan>header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px}
+.student-weekly-plan>header span{color:#9d3f06;font-size:11px;font-weight:850}
+.student-weekly-plan>header h2{margin:3px 0;color:#14263b}
+.student-weekly-plan>header>strong{padding:8px 11px;color:#74320b;border-radius:99px;background:#fff0df;font-size:11px}
+.student-weekly-plan>p{margin:0 0 18px;padding:12px;color:#633014;border-right:3px solid #c65308;background:#fff7ed;font-size:12px;line-height:1.9}
+.student-week-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.student-week-grid>article{min-height:130px;padding:13px;border:1px solid #efd5bf;border-radius:12px;background:#fffaf6}
+.student-week-grid h3{margin:0 0 10px;color:#14263b;font-size:14px}
+.student-plan-item{display:grid;gap:5px;padding:9px 0;border-top:1px solid #f0d9c5}
+.student-plan-item:first-of-type{border-top:0}
+.student-plan-item>div{display:grid}
+.student-plan-item strong{color:#14263b;font-size:11px}
+.student-plan-item span,
+.student-plan-item small,
+.student-plan-item p,
+.student-day-off{color:#854019;font-size:9px;line-height:1.8}
+.student-plan-item p{margin:2px 0 0}
+
+@media(max-width:1200px){
+  .plan-item-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .student-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .selected-students{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .plan-basics-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .selected-students{grid-template-columns:1fr}
+  .student-select-form{align-items:stretch;display:grid}
+  .student-select-form label{min-width:0}
+  .plan-day>header{align-items:flex-start}
+  .plan-item-editor{grid-template-columns:28px 1fr}
+  .plan-item-fields{grid-template-columns:1fr 1fr}
+  .plan-details{grid-column:1/-1}
+  .plan-remove{grid-column:2;justify-self:end}
+  .plan-publish>div{display:grid}
+  .plan-publish .button{width:100%}
+  .student-weekly-plan{padding:20px}
+  .student-weekly-plan>header{align-items:flex-start;display:grid}
+  .student-weekly-plan>header>strong{justify-self:start}
+  .student-week-grid{grid-template-columns:1fr}
+}
