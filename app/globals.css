@@ -121,7 +121,7 @@ body{color:var(--ink);background:#fffdf8}
 .auth-main{position:relative;overflow:hidden;padding:clamp(28px,5vw,72px);background:radial-gradient(circle at 88% 8%,rgba(242,138,53,.16),transparent 25%),radial-gradient(circle at 8% 92%,rgba(255,199,148,.22),transparent 26%),#fff8f1}
 .auth-main:before{content:"";position:absolute;width:260px;height:90px;left:-60px;top:64px;border-top:2px solid rgba(198,83,8,.22);border-radius:50%;transform:rotate(-10deg)}
 .auth-card{position:relative;z-index:1;width:min(480px,100%);padding:clamp(28px,4vw,46px);border:1px solid #efc6a5;border-radius:22px;background:#fffefb;box-shadow:0 28px 70px rgba(112,57,21,.13)}
-.auth-mode-heading>span{display:inline-flex;align-items:center;gap:8px;color:var(--primary);font-size:12px;font-weight:850}
+.auth-mode-heading>span{display:inline-flex;align-items:center;gap:8px;color:#9d3f06;font-size:12px;font-weight:850}
 .auth-mode-heading>span:before{content:"";width:18px;height:2px;background:var(--primary)}
 .auth-mode-heading h1{color:var(--ink);font-size:36px;margin:8px 0 4px}
 .auth-mode-heading p{color:var(--muted);margin-bottom:27px}
@@ -158,7 +158,7 @@ body{color:var(--ink);background:#fffdf8}
 .portal-main>*{position:relative;z-index:1}
 .portal-heading{align-items:center;margin-bottom:32px}
 .portal-heading>div>span{display:flex;align-items:center;gap:8px;color:#b44907}
-.portal-heading>div>span:before{content:"";width:18px;height:2px;background:#c65308}
+.portal-heading>div>span{color:#9d3f06}.portal-heading>div>span:before{content:"";width:18px;height:2px;background:#c65308}
 .portal-heading h1{color:#14263b;font-size:clamp(29px,3.4vw,42px);line-height:1.35}
 .portal-heading p{color:#704b36}
 .portal-stats{gap:16px;margin-bottom:20px}
@@ -169,7 +169,7 @@ body{color:var(--ink);background:#fffdf8}
 .portal-stats strong{color:#b44907;font-size:24px}
 .portal-grid{gap:20px}
 .portal-card{border-color:#efc6a5;border-radius:17px;background:#fffefb;box-shadow:0 14px 34px rgba(112,57,21,.07)}
-.portal-card-title span,.admin-role-card span{color:#b44907}
+.portal-card-title span,.admin-role-card span{color:#9d3f06}
 .portal-card h2{color:#14263b}
 .portal-form label{color:#4f3424}
 .portal-form input,.portal-form select{color:#14263b;border-color:#e7c4aa;background:#fffaf6}
