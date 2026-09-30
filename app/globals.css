@@ -337,6 +337,26 @@ main .eyebrow span{background:#9d3f06}
 .weekly-builder textarea:focus{border-color:#c65308;background:#fffefb;box-shadow:0 0 0 4px rgba(198,83,8,.11)}
 .weekly-builder input::placeholder,
 .weekly-builder textarea::placeholder{color:#a24f1b}
+.persian-date-picker{position:relative}
+.persian-date-trigger{width:100%;min-height:46px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#14263b;border:1px solid #e7c4aa;border-radius:9px;background:#fffaf6;font:inherit;font-size:11px;font-weight:750;cursor:pointer}
+.persian-date-trigger:hover{border-color:#d99a6a}
+.persian-date-trigger:focus-visible{border-color:#c65308;box-shadow:0 0 0 4px rgba(198,83,8,.11)}
+.persian-date-trigger>span:last-child{color:#9d3f06;font-size:17px}
+.persian-calendar{position:absolute;z-index:30;top:calc(100% + 8px);right:0;width:min(330px,calc(100vw - 48px));padding:14px;border:1px solid #e7b991;border-radius:14px;background:#fffefb;box-shadow:0 20px 44px rgba(112,57,21,.18)}
+.persian-calendar header{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:8px;margin-bottom:10px}
+.persian-calendar header strong{text-align:center;color:#14263b;font-size:12px}
+.persian-calendar header button{width:34px;height:34px;color:#9d3f06;border:1px solid #efc6a5;border-radius:9px;background:#fff0df;font:inherit;font-size:20px;cursor:pointer}
+.persian-calendar header button:hover{background:#ffdfc2}
+.persian-calendar-weekdays,
+.persian-calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.persian-calendar-weekdays{margin-bottom:4px}
+.persian-calendar-weekdays span{display:grid;place-items:center;height:28px;color:#854019;font-size:10px;font-weight:800}
+.persian-calendar-days button{aspect-ratio:1;display:grid;place-items:center;color:#14263b;border:1px solid transparent;border-radius:9px;background:transparent;font:inherit;font-size:10px;cursor:pointer}
+.persian-calendar-days button:hover{color:#9d3f06;border-color:#e7b991;background:#fff0df}
+.persian-calendar-days button.outside{color:#b66b3d;opacity:.52}
+.persian-calendar-days button.week-start{border-color:#f0b17e}
+.persian-calendar-days button.selected{color:#fffaf2;border-color:#c65308;background:#c65308;box-shadow:0 5px 12px rgba(198,83,8,.2)}
+.persian-calendar>p{margin:9px 2px 0;color:#854019;font-size:9px}
 .all-students-selected{margin:0;color:#854019;font-size:12px}
 .weekly-builder{display:grid;gap:20px}
 .plan-basics-grid{display:grid;grid-template-columns:1.1fr .8fr 1.1fr;gap:12px}

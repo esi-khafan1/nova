@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { saveWeeklyPlan } from "@/app/dashboard/actions";
+import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import {
   activityTypes,
   studyCatalog,
@@ -28,8 +29,8 @@ type PlanItem = {
   details: string;
 };
 
-const newItem = (dayOfWeek = 0): PlanItem => ({
-  key: `${Date.now()}-${Math.random()}`,
+const newItem = (dayOfWeek = 0, key = `${Date.now()}-${Math.random()}`): PlanItem => ({
+  key,
   dayOfWeek,
   startTime: "08:00",
   durationMinutes: 90,
@@ -48,10 +49,10 @@ function nextSaturday() {
 }
 
 export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
-  const [studentId, setStudentId] = useState(students[0]?.student_id ?? "");
-  const [items, setItems] = useState<PlanItem[]>([newItem()]);
+  const [studentIndex, setStudentIndex] = useState(0);
+  const [items, setItems] = useState<PlanItem[]>([newItem(0, "initial-item")]);
 
-  const student = students.find((item) => item.student_id === studentId);
+  const student = students[studentIndex] ?? students[0];
   const books = useMemo(() => {
     if (!student?.study_field || !student.grade) return [];
     return (
@@ -100,8 +101,13 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
             دانش‌آموز
             <select
               name="student_id"
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
+              value={student?.student_id ?? ""}
+              onChange={(event) => {
+                const nextIndex = students.findIndex(
+                  (item) => item.student_id === event.target.value,
+                );
+                setStudentIndex(nextIndex >= 0 ? nextIndex : 0);
+              }}
               required
             >
               {students.map((item) => (
@@ -113,7 +119,10 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
           </label>
           <label>
             شروع هفته
-            <input name="week_start" type="date" defaultValue={nextSaturday()} required />
+            <PersianDatePicker
+              name="week_start"
+              defaultValue={nextSaturday()}
+            />
           </label>
           <label>
             عنوان برنامه
