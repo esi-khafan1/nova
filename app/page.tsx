@@ -28,6 +28,10 @@ export default function Home() {
       </header>
 
       <section className="hero">
+        <div className="hero-comet" aria-hidden="true">
+          <span className="hero-comet-tail" />
+          <span className="hero-comet-core" />
+        </div>
         <div className="container hero-grid">
           <div className="hero-copy">
             <div className="eyebrow"><span /> برای مسیر مهمی که پیش رو داری</div>
