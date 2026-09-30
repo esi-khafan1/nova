@@ -1,127 +1,98 @@
 import Link from "next/link";
-import { ArrowLeft, Book, Calendar, Compass, Users } from "@/components/icons";
+import { ArrowLeft, Book, Calendar, Check, Users } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { MobileMenu } from "@/components/mobile-menu";
 
-const pillars = [
+const proofs = [
+  "مشاور با مدرک و سابقه‌ی تأییدشده",
+  "برنامه‌ی هفتگی مخصوص خودتان",
+  "ثبت‌نام رایگان و بدون تعهد",
+];
+
+const benefits = [
   {
-    icon: Compass,
-    index: "01",
-    title: "برنامه‌ای که واقعاً مال توست",
-    text: "بر اساس پایه، هدف، زمان آزاد و سطح فعلی؛ نه یک فایل آماده برای همه.",
+    n: "۰۱",
+    icon: Calendar,
+    title: "برنامه‌ی مطالعه‌ی شخصی",
+    desc: "برنامه بر اساس پایه، رشته، آزمون‌های پیش‌رو و ساعت‌های آزاد شما چیده می‌شود و هر هفته بازبینی می‌شود.",
+    points: ["بر پایه‌ی رشته و آزمون‌های پیش‌رو", "بازبینی هفتگی همراه مشاور"],
   },
   {
+    n: "۰۲",
     icon: Users,
-    index: "02",
-    title: "مشاوری که مسیرت را می‌بیند",
-    text: "از انتخاب مسیر تا اصلاح برنامه، یک همراه حرفه‌ای روند تو را دنبال می‌کند.",
+    title: "مشاور تأییدشده",
+    desc: "مدرک و سابقه‌ی هر مشاور پیش از پذیرش بررسی می‌شود. مشاور شما مسیر را دنبال می‌کند، نه فقط یک‌بار پاسخ می‌دهد.",
+    points: ["بررسی مدرک و سابقه‌ی کاری", "جلسه‌ی تصویری و بازخورد مکتوب"],
   },
   {
+    n: "۰۳",
     icon: Book,
-    index: "03",
-    title: "منابعی که لازم داری، نه بیشتر",
-    text: "انتخاب‌های محدود و دقیق برای کنکور و امتحان نهایی، متناسب با نیاز واقعی تو.",
+    title: "منابع آموزشی گزینش‌شده",
+    desc: "به‌جای انبوهی از لینک و فایل، فقط منابعی که به درس و هدف همان هفته‌ی شما مربوط‌اند پیشنهاد می‌شود.",
+    points: ["مرتبط با درس و هدف هفته", "بدون فایل و لینک تکراری"],
   },
 ];
 
-const journey = [
-  ["پروفایل کوتاه", "هدفت و شرایط درسی‌ات را ثبت کن."],
-  ["نقشه پیشنهادی", "مسیر و مشاور مناسب خودت را ببین."],
-  ["اجرای هفتگی", "کارها را شفاف و قابل‌اندازه‌گیری جلو ببر."],
-  ["بازبینی مسیر", "با بازخورد واقعی، برنامه را دقیق‌تر کن."],
+const steps = [
+  { n: "۱", tag: "ثبت‌نام", title: "ثبت‌نام و معرفی خود", desc: "پایه، رشته، هدف آزمون و وضعیت فعلی درس‌هایتان را در چند دقیقه مشخص می‌کنید." },
+  { n: "۲", tag: "برنامه", title: "دریافت برنامه‌ی هفته‌ی اول", desc: "نووا بر اساس پاسخ‌های شما برنامه‌ی روزانه و هفتگی را پیشنهاد می‌دهد." },
+  { n: "۳", tag: "مشاوره", title: "جلسه با مشاور", desc: "مشاور برنامه را با شما مرور می‌کند، اصلاح می‌کند و اولویت‌ها را روشن می‌کند." },
+  { n: "۴", tag: "پیگیری", title: "پیگیری پیشرفت هفتگی", desc: "کارهای انجام‌شده را علامت می‌زنید، گزارش هفته را می‌بینید و برنامه به‌روز می‌شود." },
 ];
+
+const tasks = [
+  { subject: "ریاضی", title: "تابع‌های نمایی؛ ۱۰ تست تشریحی", time: "۴۵ دقیقه", state: "done" },
+  { subject: "زیست‌شناسی", title: "فصل ۴ گوارش؛ مرور نکته‌ها", time: "۳۰ دقیقه", state: "done" },
+  { subject: "فیزیک", title: "حرکت‌شناسی؛ حل ۸ مسئله", time: "۶۰ دقیقه", state: "doing" },
+  { subject: "ادبیات", title: "آرایه‌های ادبی؛ تست ۲۰ سؤالی", time: "۲۵ دقیقه", state: "todo" },
+];
+
+const week = [
+  ["ش", 100, 100], ["ی", 100, 82], ["د", 100, 100], ["س", 100, 52], ["چ", 82, 0], ["پ", 58, 0], ["ج", 34, 0],
+] as const;
+
+function ProductPreview() {
+  return (
+    <div className="ref-preview" id="preview">
+      <div className="ref-preview-offset" aria-hidden="true" />
+      <div className="ref-product">
+        <div className="ref-appbar">
+          <div><Logo /><span>/ داشبورد</span></div>
+          <div><small>یازدهم تجربی</small><strong>مینا رضایی</strong><b>م</b></div>
+        </div>
+        <div className="ref-product-grid">
+          <section className="ref-tasks">
+            <header><div><strong>برنامه‌ی امروز</strong><small>سه‌شنبه، ۱۴ آبان</small></div><span>۲ از ۴ کار انجام شد</span></header>
+            <ul>{tasks.map((task) => <li key={task.title} className={task.state === "doing" ? "doing" : ""}><span className={`ref-state ${task.state}`}>{task.state === "done" ? "✓" : task.state === "doing" ? "•" : ""}</span><div><small>{task.subject}</small><strong>{task.title}</strong></div><time>{task.time}</time></li>)}</ul>
+          </section>
+          <div className="ref-product-side">
+            <section className="ref-week"><h3>پیشرفت این هفته</h3><div className="ref-week-number"><strong>۵۶٪</strong><span>۱۰ از ۱۸ ساعت برنامه</span></div><div className="ref-bars">{week.map(([day, plan, done], index) => <div key={day}><i style={{ height: `${plan}%` }}><b className={index === 3 ? "today" : ""} style={{ height: `${done}%` }} /></i><span>{day}</span></div>)}</div><p>↗ ۱۲٪ بیشتر از هفته‌ی قبل</p></section>
+            <section className="ref-session"><h3>جلسه‌ی مشاوره‌ی بعدی</h3><div className="ref-session-row"><div className="ref-date"><b>آبان</b><strong>۱۶</strong><small>پنجشنبه</small></div><div><strong>ساعت ۱۷:۳۰</strong><p>تصویری · ۳۰ دقیقه</p></div></div><div className="ref-advisor"><span>س.ک</span><div><strong>سارا کیانی ◈</strong><small>مشاور تحصیلی · تأییدشده</small></div></div></section>
+          </div>
+        </div>
+        <section className="ref-feedback"><header><strong>بازخورد مشاور</strong><small>دیروز، ۲۱:۱۰</small></header><blockquote>ریتم مطالعه‌ات این هفته خوب بود. فیزیک را صبح‌ها بخوان؛ تمرکزت در آن ساعت بیشتر است. تست‌های ریاضی را هم زمان‌دار حل کن.</blockquote><p>سارا کیانی، مشاور تحصیلی</p></section>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <main className="landing-v4">
-      <header className="site-header">
-        <div className="container nav-wrap">
-          <Logo />
-          <nav className="desktop-nav" aria-label="ناوبری اصلی">
-            <a href="#solution">راه‌حل</a>
-            <a href="#product">محصول</a>
-            <a href="#how">روند کار</a>
-            <a href="#about">درباره نووا</a>
-          </nav>
-          <div className="nav-actions">
-            <Link className="v4-login" href="/auth?mode=signin">ورود</Link>
-            <Link className="button button-small" href="/auth?mode=signup">شروع رایگان</Link>
-          </div>
-          <MobileMenu />
-        </div>
-      </header>
+    <main className="reference-landing">
+      <header className="site-header"><div className="container nav-wrap"><Logo /><nav className="desktop-nav"><a href="#preview">پیش‌نمایش محصول</a><a href="#features">ویژگی‌ها</a><a href="#steps">مسیر کار</a></nav><div className="nav-actions"><Link className="ref-login" href="/auth?mode=signin">ورود</Link><Link className="button button-small" href="/auth?mode=signup">شروع مسیر مطالعه</Link></div><MobileMenu /></div></header>
 
-      <section className="v4-hero">
-        <div className="container">
-          <div className="v4-hero-copy">
-            <div className="v4-kicker"><span>✦</span> مشاوره و برنامه‌ریزی تحصیلی، یکپارچه</div>
-            <h1>برای درس خواندن،<br /><em>یک مسیر روشن</em> داشته باش.</h1>
-            <p>نووا برنامه، مشاور و منابع درست را در یک تجربه ساده کنار هم می‌آورد؛ تا بدانی امروز چه کاری باید انجام بدهی و چرا.</p>
-            <div className="v4-actions">
-              <Link className="button" href="/auth?mode=signup">ساخت مسیر من <ArrowLeft /></Link>
-              <a href="#product">دیدن محیط نووا</a>
-            </div>
-          </div>
-
-          <div className="v4-product" id="product" aria-label="پیش‌نمایش محیط نووا">
-            <div className="v4-windowbar"><div><i /><i /><i /></div><span>app.nova.ir/dashboard</span><b>✦</b></div>
-            <div className="v4-app">
-              <aside className="v4-app-nav">
-                <div className="v4-mini-logo"><span>✦</span><strong>نووا</strong></div>
-                <nav><a className="active">نمای کلی</a><a>برنامه من</a><a>جلسه‌ها</a><a>منابع</a></nav>
-                <div className="v4-mini-user"><span>ن</span><div><strong>نیما رضایی</strong><small>پایه دوازدهم</small></div></div>
-              </aside>
-              <div className="v4-app-main">
-                <div className="v4-app-heading"><div><small>سه‌شنبه، ۸ مهر</small><h2>صبح بخیر نیما</h2></div><span>هفته ۰۶</span></div>
-                <div className="v4-overview">
-                  <article className="v4-focus-card">
-                    <div><span>تمرکز امروز</span><b>۳ از ۴ کار</b></div>
-                    <div className="v4-progress"><i /></div>
-                    <p>فقط یک قدم تا تکمیل برنامه امروز مانده.</p>
-                  </article>
-                  <article className="v4-session-card"><Calendar /><span>جلسه بعدی</span><strong>فردا، ۱۷:۳۰</strong><small>با مریم احمدی</small></article>
-                </div>
-                <div className="v4-today">
-                  <div className="v4-today-head"><h3>کارهای امروز</h3><span>مشاهده همه</span></div>
-                  <div className="v4-task done"><b>01</b><div><strong>مرور زیست یازدهم</strong><small>فصل تنظیم عصبی</small></div><span>انجام شد</span></div>
-                  <div className="v4-task current"><b>02</b><div><strong>آزمون جمع‌بندی ریاضی</strong><small>۴۵ دقیقه</small></div><span>در حال انجام</span></div>
-                  <div className="v4-task"><b>03</b><div><strong>تحلیل آزمون آزمایشی</strong><small>ثبت نقاط ضعف</small></div><span>بعدی</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="v4-float v4-float-one"><strong>۷۸٪</strong><span>پایبندی این ماه</span></div>
-            <div className="v4-float v4-float-two"><span>م</span><div><strong>پیام مشاور</strong><small>برنامه جدید آماده است</small></div></div>
-          </div>
-
-          <div className="v4-proofline"><span>برای پایه‌های دهم تا دوازدهم</span><i /><span>مشاوران تأییدشده</span><i /><span>شروع ساده و سریع</span></div>
-        </div>
+      <section className="ref-hero container">
+        <div className="ref-hero-copy"><span className="ref-eyebrow">ویژه‌ی دانش‌آموزان دهم، یازدهم و دوازدهم</span><h1>هر هفته، یک قدم <em>روشن‌تر</em> تا کنکور</h1><p>نووا برنامه‌ی مطالعه‌ی شخصی، مشاور تأییدشده و منابع گزینش‌شده را در یک مسیر کنار هم می‌گذارد تا بدانید امروز دقیقاً چه کاری مهم‌تر است.</p><div className="ref-actions"><Link className="button" href="/auth?mode=signup">ساخت حساب و شروع مسیر <ArrowLeft /></Link><a className="ref-outline" href="#preview">دیدن نمونه‌ی برنامه</a></div><ul>{proofs.map((proof) => <li key={proof}><Check />{proof}</li>)}</ul></div>
+        <ProductPreview />
       </section>
 
-      <section className="v4-section v4-solution" id="solution">
-        <div className="container">
-          <div className="v4-section-heading"><span>همه‌چیز در یک مسیر</span><h2>کمتر سردرگم شو؛<br />دقیق‌تر جلو برو.</h2><p>به‌جای چند ابزار و چند توصیه پراکنده، یک سیستم روشن برای تصمیم‌گیری و اجرا داشته باش.</p></div>
-          <div className="v4-pillar-grid">
-            {pillars.map(({ icon: Icon, index, title, text }) => (
-              <article className="v4-pillar" key={title}>
-                <div><span>{index}</span><Icon /></div><h3>{title}</h3><p>{text}</p><a href="#how">بیشتر بدان <ArrowLeft /></a>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      <section className="ref-benefits" id="features"><div className="container ref-benefits-grid"><div className="ref-benefits-intro"><span className="ref-eyebrow">چرا نووا</span><h2>سه چیزی که مسیر شما را قابل‌اعتماد می‌کند</h2><p>برنامه‌ریزی فقط جدول نیست؛ باید کسی آن را ببیند، بازخورد بدهد و با شما اصلاحش کند.</p></div><div>{benefits.map(({ n, icon: Icon, title, desc, points }) => <article className="ref-benefit" key={n}><span>{n}</span><div><h3>{title}</h3><p>{desc}</p><ul>{points.map((point) => <li key={point}>{point}</li>)}</ul></div><i><Icon /></i></article>)}</div></div></section>
 
-      <section className="v4-section v4-journey" id="how">
-        <div className="container v4-journey-grid">
-          <div className="v4-journey-intro"><span>از ثبت‌نام تا یک مسیر واقعی</span><h2>چهار قدم.<br />بدون پیچیدگی.</h2><p>نووا هر بار فقط همان تصمیمی را جلوی تو می‌گذارد که برای ادامه لازم داری.</p><Link className="button" href="/auth?mode=signup">شروع مسیر <ArrowLeft /></Link></div>
-          <ol>
-            {journey.map(([title, text], index) => <li key={title}><b>{String(index + 1).padStart(2, "۰")}</b><div><strong>{title}</strong><p>{text}</p></div></li>)}
-          </ol>
-        </div>
-      </section>
+      <section className="ref-steps" id="steps"><div className="container"><div className="ref-steps-head"><div><span className="ref-eyebrow dark">مسیر کار</span><h2>چهار قدم از ثبت‌نام تا پیشرفتی که می‌توان دید</h2></div><p>هر قدم کوتاه و روشن است؛ بدون فرم‌های طولانی و بدون حدس‌زدن.</p></div><ol>{steps.map((step, index) => <li key={step.n}><i className={index === 0 ? "active" : ""} /><small>قدم {step.n} · {step.tag}</small><h3>{step.title}</h3><p>{step.desc}</p></li>)}</ol></div></section>
 
-      <section className="v4-cta"><div className="container"><div className="v4-cta-card"><span>✦</span><div><small>اولین قدم، فقط چند دقیقه</small><h2>مسیر روشن‌تر از همین‌جا شروع می‌شود.</h2></div><Link className="button" href="/auth?mode=signup">ساخت حساب نووا <ArrowLeft /></Link></div></div></section>
+      <section className="ref-cta container"><div><span className="ref-comet" aria-hidden="true">✦</span><div><h2>امروز مسیر مطالعه‌تان را شروع کنید.</h2><p>ثبت‌نام چند دقیقه بیشتر طول نمی‌کشد. بعد از آن برنامه‌ی هفته‌ی اول و امکان رزرو جلسه‌ی مشاوره را می‌بینید.</p></div><div><Link className="button" href="/auth?mode=signup">ساخت حساب رایگان <ArrowLeft /></Link><small>بدون نیاز به کارت بانکی</small></div></div></section>
 
-      <footer id="about"><div className="container footer-grid"><Logo /><p>نووا؛ برنامه، مشاور و مسیر روشن برای سال‌های مهم تحصیلی.</p><div><Link href="/auth">ورود / ثبت‌نام</Link></div></div></footer>
+      <footer><div className="container ref-footer"><Logo /><nav><a>درباره‌ی نووا</a><a>مشاوران</a><a>قوانین و حریم خصوصی</a><a>تماس با ما</a></nav><p>© ۱۴۰۵ نووا. همه‌ی حقوق محفوظ است.</p></div></footer>
     </main>
   );
 }
