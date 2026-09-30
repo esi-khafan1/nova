@@ -151,7 +151,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
           )}
 
           {mode === "signin" ? (
-            <form onSubmit={submitSignIn} noValidate>
+            <form key="signin" onSubmit={submitSignIn} noValidate>
               <div className="field">
                 <label htmlFor="signin-email">ایمیل</label>
                 <input
@@ -190,7 +190,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
               </p>
             </form>
           ) : (
-            <form onSubmit={submitSignUp} noValidate>
+            <form key="signup" onSubmit={submitSignUp} noValidate>
               <div className="field">
                 <label htmlFor="signup-name">نام و نام خانوادگی</label>
                 <input
