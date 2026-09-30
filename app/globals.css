@@ -307,3 +307,9 @@ main .eyebrow,
 main .section-kicker,
 main .section-heading>span{color:#9d3f06}
 main .eyebrow span{background:#9d3f06}
+
+/* Keep the primary services headline on one line on desktop. */
+@media(min-width:901px){
+  main #services .section-heading{max-width:1100px}
+  main #services .section-heading h2{white-space:nowrap}
+}
