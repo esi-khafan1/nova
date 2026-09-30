@@ -241,3 +241,33 @@ main .cta .button-light:hover{
   border-color:#ffe6cf;
   box-shadow:0 12px 28px rgba(80,35,13,.2);
 }
+
+/* Final no-gray pass: secondary copy stays deliberately warm and chromatic. */
+:root{--muted:#854019}
+main .hero-copy>p,
+main .trust-row,
+main .section-heading p,
+main .process-grid>div>p,
+main .feature-card p,
+main .steps small,
+main .footer-grid>p{color:#854019}
+main .progress-ring small,
+main .task-list small,
+main .floating-card small,
+main .result-chip span{color:#91430f}
+.auth-mode-heading p,
+.auth-switch,
+.portal-heading p,
+.portal-stats span,
+.portal-empty p,
+.admin-role-card p,
+.users-count,
+.users-list-main small,
+.application-status span,
+.application-list small,
+.portal-table-empty{color:#854019}
+.field label,
+.portal-form label{color:#633014}
+.field input::placeholder,
+.portal-form input::placeholder,
+.no-action{color:#a24f1b}
