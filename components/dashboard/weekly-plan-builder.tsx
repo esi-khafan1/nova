@@ -40,6 +40,8 @@ const newItem = (dayOfWeek = 0, key = `${Date.now()}-${Math.random()}`): PlanIte
   details: "",
 });
 
+const faNumber = (value: number) => value.toLocaleString("fa-IR");
+
 function nextSaturday() {
   const date = new Date();
   const day = date.getDay();
@@ -136,7 +138,8 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
         </div>
         <div className="student-study-meta">
           <span>
-            پایه: {student?.grade ? `پایه ${student.grade}` : "ثبت نشده"}
+            پایه:{" "}
+            {student?.grade ? `پایه ${faNumber(student.grade)}` : "ثبت نشده"}
           </span>
           <span>
             رشته:{" "}
@@ -162,7 +165,7 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
             <section className="portal-card plan-day" key={day}>
               <header>
                 <div>
-                  <span>روز {dayIndex + 1}</span>
+                  <span>روز {faNumber(dayIndex + 1)}</span>
                   <h2>{day}</h2>
                 </div>
                 <button
@@ -182,7 +185,9 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                 <div className="plan-item-list">
                   {dayItems.map((item, index) => (
                     <article className="plan-item-editor" key={item.key}>
-                      <div className="plan-item-number">{index + 1}</div>
+                      <div className="plan-item-number">
+                        {faNumber(index + 1)}
+                      </div>
                       <div className="plan-item-fields">
                         <label>
                           ساعت شروع

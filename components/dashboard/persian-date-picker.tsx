@@ -107,7 +107,9 @@ export function PersianDatePicker({
         onClick={() => setOpen((current) => !current)}
       >
         <span>{persianFullDateFormatter.format(selected)}</span>
-        <span aria-hidden="true">⌄</span>
+        <svg aria-hidden="true" viewBox="0 0 20 20">
+          <path d="m5 7.5 5 5 5-5" />
+        </svg>
       </button>
 
       {open && (

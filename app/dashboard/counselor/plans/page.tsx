@@ -90,7 +90,9 @@ export default async function CounselorPlansPage({
                 <div>
                   <strong>{student.full_name || "دانش‌آموز نووا"}</strong>
                   <small>
-                    {student.grade ? `پایه ${student.grade}` : "پایه نامشخص"}
+                    {student.grade
+                      ? `پایه ${student.grade.toLocaleString("fa-IR")}`
+                      : "پایه نامشخص"}
                     {" · "}
                     {student.study_field
                       ? studyFieldLabels[student.study_field]
@@ -113,7 +115,9 @@ export default async function CounselorPlansPage({
                 {availableStudents.map((student) => (
                   <option key={student.student_id} value={student.student_id}>
                     {student.full_name || "دانش‌آموز نووا"}
-                    {student.grade ? ` — پایه ${student.grade}` : ""}
+                    {student.grade
+                      ? ` — پایه ${student.grade.toLocaleString("fa-IR")}`
+                      : ""}
                   </option>
                 ))}
               </select>
