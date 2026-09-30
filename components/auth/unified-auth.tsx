@@ -6,6 +6,7 @@ import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthMode = "signin" | "signup";
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
   const router = useRouter();
@@ -23,12 +24,32 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
 
   async function submitSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
     setMessage("");
     const data = new FormData(event.currentTarget);
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "");
+
+    if (!email) {
+      setMessage("لطفاً ایمیل را وارد کن.");
+      return;
+    }
+    if (!emailPattern.test(email)) {
+      setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+      return;
+    }
+    if (!password) {
+      setMessage("لطفاً رمز عبور را وارد کن.");
+      return;
+    }
+    if (password.length < 8) {
+      setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
+      return;
+    }
+
+    setLoading(true);
     const { error } = await createClient().auth.signInWithPassword({
-      email: String(data.get("email")),
-      password: String(data.get("password")),
+      email,
+      password,
     });
     if (error) {
       setMessage("ایمیل یا رمز عبور درست نیست.");
@@ -41,15 +62,40 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
 
   async function submitSignUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
     setMessage("");
     const data = new FormData(event.currentTarget);
+    const fullName = String(data.get("fullName") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "");
+
+    if (fullName.length < 2) {
+      setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
+      return;
+    }
+    if (!email) {
+      setMessage("لطفاً ایمیل را وارد کن.");
+      return;
+    }
+    if (!emailPattern.test(email)) {
+      setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+      return;
+    }
+    if (!password) {
+      setMessage("لطفاً رمز عبور را وارد کن.");
+      return;
+    }
+    if (password.length < 8) {
+      setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
+      return;
+    }
+
+    setLoading(true);
     const { error } = await createClient().auth.signUp({
-      email: String(data.get("email")),
-      password: String(data.get("password")),
+      email,
+      password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: { full_name: String(data.get("fullName")) },
+        data: { full_name: fullName },
       },
     });
     if (error) {
@@ -105,7 +151,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
           )}
 
           {mode === "signin" ? (
-            <form onSubmit={submitSignIn}>
+            <form onSubmit={submitSignIn} noValidate>
               <div className="field">
                 <label htmlFor="signin-email">ایمیل</label>
                 <input
@@ -144,7 +190,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
               </p>
             </form>
           ) : (
-            <form onSubmit={submitSignUp}>
+            <form onSubmit={submitSignUp} noValidate>
               <div className="field">
                 <label htmlFor="signup-name">نام و نام خانوادگی</label>
                 <input
