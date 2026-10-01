@@ -6,6 +6,7 @@ import {
   studyFieldLabels,
   type StudyField,
 } from "@/lib/study-catalog";
+import { formatPersianWeekRange } from "@/lib/persian-date";
 
 type StudentDirectoryRow = {
   student_id: string;
@@ -149,7 +150,7 @@ export default async function CounselorPlansPage({
                     {studentNames.get(plan.student_id) || "دانش‌آموز نووا"}
                   </strong>
                   <span>
-                    {plan.title} · هفته {plan.week_start}
+                    {plan.title} · {formatPersianWeekRange(plan.week_start)}
                   </span>
                 </div>
                 <span className={`plan-status ${plan.status}`}>

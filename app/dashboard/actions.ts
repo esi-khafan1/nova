@@ -191,6 +191,27 @@ export async function saveWeeklyPlan(fd: FormData) {
     `/dashboard/counselor/plans?saved=${status === "published" ? "published" : "draft"}`,
   );
 }
+
+export async function togglePlanItemCompletion(
+  itemId: string,
+  completed: boolean,
+) {
+  const s = await createClient();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) redirect("/auth/sign-in");
+  if (!uuidPattern.test(itemId)) return { ok: false };
+
+  const { error } = await s.rpc("set_weekly_plan_item_completed", {
+    target_item_id: itemId,
+    target_completed: completed,
+  });
+
+  if (error) return { ok: false };
+  revalidatePath("/dashboard/student");
+  return { ok: true };
+}
 export async function changeUserRole(fd: FormData) {
   const s = await createClient();
   const {

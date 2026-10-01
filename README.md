@@ -23,6 +23,8 @@
 - برنامه‌ریز هفتگی مشاور با ساعت، مدت، درس، فصل، نوع فعالیت و توضیحات
 - ذخیره برنامه به‌صورت پیش‌نویس یا انتشار برای دانش‌آموز
 - نمایش برنامه هفتگی منتشرشده در داشبورد دانش‌آموز
+- ثبت انجام هر فعالیت توسط دانش‌آموز
+- گزارش پیشرفت هفتگی، ماهانه و کلی با تفکیک زمان، درس و فصل
 - فهرست آماده دروس و فصل‌های کنکور بر اساس رشته و پایه
 - داشبورد مشاور
 - داشبورد مدیر و مدیریت نقش کاربران
@@ -93,8 +95,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 - ستون‌های `id`، `full_name`، `role`، `grade`، `study_field`، `phone` و `created_at`
 - نقش‌های `student`، `counselor` و `admin`
 - تابع RPC با نام `admin_set_user_role`
-- جدول‌های `counselor_students`، `weekly_plans` و `weekly_plan_items`
-- تابع‌های RPC با نام‌های `counselor_student_directory`، `counselor_select_student` و `save_weekly_plan`
+- جدول‌های `counselor_students`، `weekly_plans`، `weekly_plan_items` و `weekly_plan_item_completions`
+- تابع‌های RPC با نام‌های `counselor_student_directory`، `counselor_select_student`، `save_weekly_plan` و `set_weekly_plan_item_completed`
 - RLS و Policyهای مناسب برای مشاهده و ویرایش پروفایل‌ها
 
 قبل از تغییر Schema، Migration یا Policyها ابتدا وضعیت فعلی پروژه Supabase بررسی شود. تغییرات دیتابیس بدون تأیید و بدون برنامه بازگشت انجام نشوند.

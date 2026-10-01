@@ -1,4 +1,9 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { StudentPlanCheckbox } from "@/components/dashboard/student-plan-checkbox";
+import {
+  StudentProgressSummary,
+  type ProgressScope,
+} from "@/components/dashboard/student-progress-summary";
 import { requireProfile } from "@/lib/auth";
 import { updateStudentProfile } from "@/app/dashboard/actions";
 import {
@@ -6,6 +11,77 @@ import {
   studyFieldLabels,
   weekDays,
 } from "@/lib/study-catalog";
+import {
+  addDays,
+  formatPersianWeekRange,
+  parseIsoDate,
+  samePersianMonth,
+} from "@/lib/persian-date";
+
+type AnalyticsItem = {
+  id: string;
+  plan_id: string;
+  day_of_week: number;
+  duration_minutes: number;
+  subject: string;
+  chapter: string | null;
+  activity_type: string;
+};
+
+const studyActivities = new Set([
+  "lesson",
+  "notes",
+  "review",
+  "homework",
+  "summary",
+]);
+
+function summarizeProgress(
+  key: ProgressScope["key"],
+  label: string,
+  items: AnalyticsItem[],
+): ProgressScope {
+  const subjects = new Map<
+    string,
+    { minutes: number; chapters: Set<string> }
+  >();
+  let totalMinutes = 0;
+  let studyMinutes = 0;
+  let testMinutes = 0;
+
+  for (const item of items) {
+    totalMinutes += item.duration_minutes;
+    if (studyActivities.has(item.activity_type))
+      studyMinutes += item.duration_minutes;
+    if (item.activity_type === "practice_tests")
+      testMinutes += item.duration_minutes;
+
+    const subject = subjects.get(item.subject) ?? {
+      minutes: 0,
+      chapters: new Set<string>(),
+    };
+    subject.minutes += item.duration_minutes;
+    if (item.chapter) subject.chapters.add(item.chapter);
+    subjects.set(item.subject, subject);
+  }
+
+  return {
+    key,
+    label,
+    completedCount: items.length,
+    totalMinutes,
+    studyMinutes,
+    testMinutes,
+    subjects: [...subjects.entries()]
+      .map(([subject, data]) => ({
+        subject,
+        minutes: data.minutes,
+        chapters: [...data.chapters],
+      }))
+      .sort((first, second) => second.minutes - first.minutes),
+  };
+}
+
 export default async function StudentDashboard({
   searchParams,
 }: {
@@ -13,7 +89,7 @@ export default async function StudentDashboard({
 }) {
   const { supabase, profile } = await requireProfile(["student"]),
     params = await searchParams;
-  const [{ count: requests }, { data: currentPlan }] = await Promise.all([
+  const [{ count: requests }, { data: publishedPlans }] = await Promise.all([
     supabase
       .from("consultation_requests")
       .select("id", { count: "exact", head: true })
@@ -23,20 +99,59 @@ export default async function StudentDashboard({
       .select("id,title,week_start,notes")
       .eq("student_id", profile.id)
       .eq("status", "published")
-      .order("week_start", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .order("week_start", { ascending: false }),
   ]);
-  const { data: planItems } = currentPlan
+  const currentPlan = publishedPlans?.[0] ?? null;
+  const planIds = (publishedPlans ?? []).map((plan) => plan.id);
+  const { data: allPlanItems } = planIds.length
     ? await supabase
         .from("weekly_plan_items")
         .select(
-          "id,day_of_week,start_time,duration_minutes,subject,chapter,activity_type,details,sort_order",
+          "id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,details,sort_order",
         )
-        .eq("plan_id", currentPlan.id)
+        .in("plan_id", planIds)
         .order("day_of_week")
         .order("sort_order")
     : { data: [] };
+  const itemIds = (allPlanItems ?? []).map((item) => item.id);
+  const { data: completions } = itemIds.length
+    ? await supabase
+        .from("weekly_plan_item_completions")
+        .select("item_id,completed_at")
+        .in("item_id", itemIds)
+    : { data: [] };
+  const completionMap = new Map(
+    (completions ?? []).map((completion) => [
+      completion.item_id,
+      completion.completed_at,
+    ]),
+  );
+  const currentPlanItems = (allPlanItems ?? []).filter(
+    (item) => item.plan_id === currentPlan?.id,
+  );
+  const planStartDates = new Map(
+    (publishedPlans ?? []).map((plan) => [
+      plan.id,
+      parseIsoDate(plan.week_start),
+    ]),
+  );
+  const completedItems = (allPlanItems ?? []).filter((item) =>
+    completionMap.has(item.id),
+  ) as AnalyticsItem[];
+  const now = new Date();
+  const monthlyCompletedItems = completedItems.filter((item) => {
+    const planStart = planStartDates.get(item.plan_id);
+    if (!planStart) return false;
+    return samePersianMonth(addDays(planStart, item.day_of_week), now);
+  });
+  const weeklyCompletedItems = completedItems.filter(
+    (item) => item.plan_id === currentPlan?.id,
+  );
+  const progressScopes: ProgressScope[] = [
+    summarizeProgress("weekly", "هفتگی", weeklyCompletedItems),
+    summarizeProgress("monthly", "ماهانه", monthlyCompletedItems),
+    summarizeProgress("all", "کلی", completedItems),
+  ];
   const grade = profile.grade
     ? `پایه ${profile.grade === 10 ? "دهم" : profile.grade === 11 ? "یازدهم" : "دوازدهم"}`
     : "پایه مشخص نشده";
@@ -141,12 +256,12 @@ export default async function StudentDashboard({
               <span>برنامه فعال</span>
               <h2>{currentPlan.title}</h2>
             </div>
-            <strong>هفته {currentPlan.week_start}</strong>
+            <strong>{formatPersianWeekRange(currentPlan.week_start)}</strong>
           </header>
           {currentPlan.notes && <p>{currentPlan.notes}</p>}
           <div className="student-week-grid">
             {weekDays.map((day, dayIndex) => {
-              const dayItems = (planItems ?? []).filter(
+              const dayItems = currentPlanItems.filter(
                 (item) => item.day_of_week === dayIndex,
               );
               return (
@@ -154,8 +269,11 @@ export default async function StudentDashboard({
                   <h3>{day}</h3>
                   {dayItems.length ? (
                     dayItems.map((item) => (
-                      <div className="student-plan-item" key={item.id}>
-                        <div>
+                      <div
+                        className={`student-plan-item${completionMap.has(item.id) ? " completed" : ""}`}
+                        key={item.id}
+                      >
+                        <div className="student-plan-item-main">
                           <strong>{item.subject}</strong>
                           <span>
                             {item.chapter || "مبحث آزاد"} ·{" "}
@@ -166,10 +284,13 @@ export default async function StudentDashboard({
                           </span>
                         </div>
                         <small>
-                          {item.start_time?.slice(0, 5) || "شناور"} ·{" "}
-                          {item.duration_minutes} دقیقه
+                          {item.duration_minutes.toLocaleString("fa-IR")} دقیقه
                         </small>
                         {item.details && <p>{item.details}</p>}
+                        <StudentPlanCheckbox
+                          itemId={item.id}
+                          defaultChecked={completionMap.has(item.id)}
+                        />
                       </div>
                     ))
                   ) : (
@@ -181,6 +302,8 @@ export default async function StudentDashboard({
           </div>
         </section>
       )}
+
+      {currentPlan && <StudentProgressSummary scopes={progressScopes} />}
     </DashboardShell>
   );
 }

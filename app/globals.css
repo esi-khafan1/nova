@@ -423,15 +423,43 @@ main .eyebrow span{background:#9d3f06}
 .student-week-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .student-week-grid>article{min-height:130px;padding:13px;border:1px solid #efd5bf;border-radius:12px;background:#fffaf6}
 .student-week-grid h3{margin:0 0 10px;color:#14263b;font-size:14px}
-.student-plan-item{display:grid;gap:5px;padding:9px 0;border-top:1px solid #f0d9c5}
+.student-plan-item{display:grid;grid-template-columns:1fr auto;align-items:start;gap:5px 10px;padding:10px 0;border-top:1px solid #f0d9c5}
 .student-plan-item:first-of-type{border-top:0}
-.student-plan-item>div{display:grid}
+.student-plan-item-main{display:grid}
 .student-plan-item strong{color:#14263b;font-size:11px}
 .student-plan-item span,
 .student-plan-item small,
 .student-plan-item p,
 .student-day-off{color:#854019;font-size:9px;line-height:1.8}
+.student-plan-item>small,
+.student-plan-item>p{grid-column:1}
 .student-plan-item p{margin:2px 0 0}
+.student-plan-item.completed .student-plan-item-main>strong{text-decoration:line-through;text-decoration-color:#c65308}
+.student-plan-check{grid-column:2;grid-row:1/4;align-self:center;display:grid;grid-template-columns:24px auto;align-items:center;gap:5px;color:#854019;font-size:8px;font-weight:800;cursor:pointer}
+.student-plan-check input{position:absolute;opacity:0;pointer-events:none}
+.student-plan-check>span{width:24px;height:24px;display:grid;place-items:center;color:#fffaf2;border:1px solid #dc9967;border-radius:7px;background:#fffaf6;font-size:13px}
+.student-plan-check.checked>span{border-color:#c65308;background:#c65308}
+.student-plan-check input:focus-visible+span{outline:3px solid rgba(198,83,8,.2);outline-offset:2px}
+.student-plan-check input:disabled+span{opacity:.6}
+.student-plan-check>strong{color:#854019;font-size:8px;white-space:nowrap}
+.student-progress{margin-top:20px}
+.student-progress>header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
+.student-progress>header>div:first-child>span{color:#9d3f06;font-size:11px;font-weight:850}
+.student-progress>header h2{margin:3px 0;color:#14263b}
+.progress-tabs{display:flex;gap:6px;padding:4px;border:1px solid #efc6a5;border-radius:11px;background:#fff7ed}
+.progress-tabs button{min-height:34px;padding:0 13px;color:#854019;border:0;border-radius:8px;background:transparent;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.progress-tabs button.active{color:#fffaf2;background:#c65308;box-shadow:0 5px 12px rgba(198,83,8,.18)}
+.progress-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.progress-stats article{display:grid;gap:6px;padding:14px;border:1px solid #efd5bf;border-radius:12px;background:#fffaf6}
+.progress-stats span{color:#854019;font-size:9px}
+.progress-stats strong{color:#14263b;font-size:15px}
+.progress-subjects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.progress-subjects article{padding:13px;border:1px solid #efd5bf;border-radius:12px;background:#fffefb}
+.progress-subjects article>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.progress-subjects strong{color:#14263b;font-size:11px}
+.progress-subjects span{color:#9d3f06;font-size:9px;font-weight:800}
+.progress-subjects p{margin:7px 0 0;color:#854019;font-size:9px;line-height:1.9}
+.progress-empty{margin:12px 0 0;padding:18px;color:#854019;border:1px dashed #e7b991;border-radius:11px;background:#fffaf6;font-size:10px;text-align:center}
 
 @media(max-width:1200px){
   .plan-item-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -441,6 +469,9 @@ main .eyebrow span{background:#9d3f06}
   .selected-students{grid-template-columns:repeat(2,minmax(0,1fr))}
   .plan-basics-grid{grid-template-columns:1fr}
   .plan-details{grid-column:span 2}
+  .student-progress>header{align-items:flex-start;display:grid}
+  .progress-tabs{justify-self:start}
+  .progress-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:620px){
   .selected-students{grid-template-columns:1fr}
@@ -457,4 +488,7 @@ main .eyebrow span{background:#9d3f06}
   .student-weekly-plan>header{align-items:flex-start;display:grid}
   .student-weekly-plan>header>strong{justify-self:start}
   .student-week-grid{grid-template-columns:1fr}
+  .progress-subjects{grid-template-columns:1fr}
+  .student-plan-check{grid-template-columns:24px}
+  .student-plan-check>strong{display:none}
 }
