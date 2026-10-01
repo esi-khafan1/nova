@@ -599,3 +599,27 @@ main .steps li>span{color:#c2410c;border-color:#cbd6e2;background:#fff}
 main .cta span{color:#ffd2ad}
 main .cta p{color:#dbe5ee}
 main footer{border-top-color:#d8e0e8}
+
+/* Orange card surfaces with dark text for stronger visual separation */
+:root{--card-orange:#ffad66;--card-orange-strong:#ff963f;--card-ink:#0b1724;--card-border:#df6700}
+main .dashboard-card,main .floating-card,main .feature-card,.portal-stats article,.admin-role-card,.student-plan-item,.plan-item-editor,.plan-item-readonly,.selected-students article{
+  color:var(--card-ink);
+  background:var(--card-orange);
+  border-color:var(--card-border);
+  box-shadow:0 16px 34px rgba(223,103,0,.16);
+}
+main .floating-card{background:var(--card-orange-strong)}
+main .dashboard-card h3,main .dashboard-card strong,main .floating-card strong,main .floating-card b,main .feature-card h3,main .feature-card p,main .feature-card a,
+.portal-stats article span,.portal-stats article strong,.admin-role-card h2,.admin-role-card p,.admin-role-card span,
+.student-plan-item strong,.student-plan-item span,.student-plan-item small,.plan-item-editor label,.plan-item-readonly strong,.plan-item-readonly span,.plan-item-readonly small,.selected-students article strong,.selected-students article span{color:var(--card-ink)}
+main .dashboard-card .status{color:var(--card-ink);background:rgba(255,255,255,.58)}
+main .dashboard-card .task-list>div{color:var(--card-ink);background:rgba(255,255,255,.82);border:1px solid rgba(11,23,36,.12)}
+main .dashboard-card .task-list small,main .floating-card small,main .floating-card span{color:#25384a}
+main .feature-icon{color:var(--card-ink);background:rgba(255,255,255,.68);border:1px solid rgba(11,23,36,.14)}
+main .feature-card:before{height:5px;background:#102a43;opacity:1}
+.portal-stats article:before{background:#102a43}
+.portal-stats article:after{color:rgba(11,23,36,.4)}
+.student-plan-item.completed{background:#ffbd82;border-color:#c85e00}
+.student-plan-item-main>span,.student-plan-item-main>small{color:#25384a}
+.plan-item-editor input,.plan-item-editor select,.plan-item-editor textarea{color:#102a43;background:#fff;border-color:#aebdca}
+.plan-item-readonly{background:#ffbd82}
