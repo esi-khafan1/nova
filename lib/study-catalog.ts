@@ -57,51 +57,198 @@ const biology12 = [
   "فصل ۸: رفتارهای جانوران",
 ];
 
+const math1 = [
+  "فصل ۱: مجموعه، الگو و دنباله",
+  "فصل ۲: مثلثات",
+  "فصل ۳: توان‌های گویا و عبارت‌های جبری",
+  "فصل ۴: معادله‌ها و نامعادله‌ها",
+  "فصل ۵: تابع",
+  "فصل ۶: شمارش، بدون شمردن",
+  "فصل ۷: آمار و احتمال",
+];
+
+const geometry1 = [
+  "فصل ۱: ترسیم‌های هندسی و استدلال",
+  "فصل ۲: قضیه تالس، تشابه و کاربردهای آن",
+  "فصل ۳: چندضلعی‌ها",
+  "فصل ۴: تجسم فضایی",
+];
+
+const physics1 = [
+  "فصل ۱: فیزیک و اندازه‌گیری",
+  "فصل ۲: ویژگی‌های فیزیکی مواد",
+  "فصل ۳: کار، انرژی و توان",
+  "فصل ۴: دما و گرما",
+];
+
+const chemistry1 = [
+  "فصل ۱: کیهان، زادگاه الفبای هستی",
+  "فصل ۲: ردپای گازها در زندگی",
+  "فصل ۳: آب، آهنگ زندگی",
+];
+
+const chemistry2 = [
+  "فصل ۱: قدر هدایای زمینی را بدانیم",
+  "فصل ۲: در پی غذای سالم",
+  "فصل ۳: پوشاک، نیازی پایان‌ناپذیر",
+];
+
+const chemistry3 = [
+  "فصل ۱: مولکول‌ها در خدمت تندرستی",
+  "فصل ۲: آسایش و رفاه در سایه شیمی",
+  "فصل ۳: شیمی، جلوه‌ای از هنر، زیبایی و ماندگاری",
+  "فصل ۴: شیمی، راهی به سوی آینده‌ای روشن‌تر",
+];
+
+const calculus1 = [
+  "فصل ۱: جبر و معادله",
+  "فصل ۲: تابع",
+  "فصل ۳: توابع نمایی و لگاریتمی",
+  "فصل ۴: مثلثات",
+  "فصل ۵: حد و پیوستگی",
+];
+
+const calculus2 = [
+  "فصل ۱: تابع",
+  "فصل ۲: مثلثات",
+  "فصل ۳: حدهای نامتناهی و حد در بی‌نهایت",
+  "فصل ۴: مشتق",
+  "فصل ۵: کاربردهای مشتق",
+];
+
+const geometry2 = [
+  "فصل ۱: دایره",
+  "فصل ۲: تبدیل‌های هندسی و کاربردها",
+  "فصل ۳: روابط طولی در مثلث",
+  "فصل ۴: تجسم فضایی",
+];
+
+const geometry3 = [
+  "فصل ۱: ماتریس و کاربردها",
+  "فصل ۲: آشنایی با مقاطع مخروطی",
+  "فصل ۳: بردارها",
+];
+
+const statisticsAndProbability = [
+  "فصل ۱: آشنایی با مبانی ریاضیات",
+  "فصل ۲: احتمال",
+  "فصل ۳: آمار توصیفی",
+  "فصل ۴: آمار استنباطی",
+];
+
+const discreteMath = [
+  "فصل ۱: آشنایی با نظریه اعداد",
+  "فصل ۲: گراف و مدل‌سازی",
+  "فصل ۳: ترکیبیات",
+];
+
+const physics2Math = [
+  "فصل ۱: الکتریسیته ساکن",
+  "فصل ۲: جریان الکتریکی و مدارهای جریان مستقیم",
+  "فصل ۳: مغناطیس",
+  "فصل ۴: القای الکترومغناطیسی و جریان متناوب",
+];
+
+const physics2Experimental = [
+  "فصل ۱: الکتریسیته ساکن",
+  "فصل ۲: جریان الکتریکی و مدارهای جریان مستقیم",
+  "فصل ۳: مغناطیس و القای الکترومغناطیسی",
+];
+
+const physics3Math = [
+  "فصل ۱: حرکت بر خط راست",
+  "فصل ۲: دینامیک و حرکت دایره‌ای",
+  "فصل ۳: نوسان و موج",
+  "فصل ۴: برهم‌کنش‌های موج",
+  "فصل ۵: آشنایی با فیزیک اتمی",
+  "فصل ۶: آشنایی با فیزیک هسته‌ای",
+];
+
+const physics3Experimental = [
+  "فصل ۱: حرکت بر خط راست",
+  "فصل ۲: دینامیک",
+  "فصل ۳: نوسان و موج",
+  "فصل ۴: آشنایی با فیزیک اتمی و هسته‌ای",
+];
+
+const experimentalMath2 = [
+  "فصل ۱: هندسه تحلیلی و جبر",
+  "فصل ۲: هندسه",
+  "فصل ۳: تابع",
+  "فصل ۴: مثلثات",
+  "فصل ۵: توابع نمایی و لگاریتمی",
+  "فصل ۶: حد و پیوستگی",
+  "فصل ۷: آمار و احتمال",
+];
+
+const experimentalMath3 = [
+  "فصل ۱: تابع",
+  "فصل ۲: مثلثات",
+  "فصل ۳: حدهای نامتناهی و حد در بی‌نهایت",
+  "فصل ۴: مشتق",
+  "فصل ۵: کاربردهای مشتق",
+  "فصل ۶: هندسه",
+  "فصل ۷: احتمال",
+];
+
+const geology = [
+  "فصل ۱: آفرینش کیهان و تکوین زمین",
+  "فصل ۲: منابع معدنی و ذخایر انرژی، زیربنای تمدن و توسعه",
+  "فصل ۳: منابع آب و خاک",
+  "فصل ۴: زمین‌شناسی و سازه‌های مهندسی",
+  "فصل ۵: زمین‌شناسی و سلامت",
+  "فصل ۶: پویایی زمین",
+  "فصل ۷: زمین‌شناسی ایران",
+];
+
 export const studyCatalog: Record<
   StudyField,
   Partial<Record<10 | 11 | 12, StudyBook[]>>
 > = {
   mathematics: {
     10: [
-      { subject: "ریاضی ۱", chapters: numbered("فصل", 7) },
-      { subject: "هندسه ۱", chapters: numbered("فصل", 4) },
-      { subject: "فیزیک ۱", chapters: numbered("فصل", 5) },
-      { subject: "شیمی ۱", chapters: numbered("فصل", 3) },
+      { subject: "ریاضی ۱", chapters: math1 },
+      { subject: "هندسه ۱", chapters: geometry1 },
+      {
+        subject: "فیزیک ۱",
+        chapters: [...physics1, "فصل ۵: ترمودینامیک"],
+      },
+      { subject: "شیمی ۱", chapters: chemistry1 },
     ],
     11: [
-      { subject: "حسابان ۱", chapters: numbered("فصل", 5) },
-      { subject: "هندسه ۲", chapters: numbered("فصل", 4) },
-      { subject: "آمار و احتمال", chapters: numbered("فصل", 4) },
-      { subject: "فیزیک ۲", chapters: numbered("فصل", 4) },
-      { subject: "شیمی ۲", chapters: numbered("فصل", 3) },
+      { subject: "حسابان ۱", chapters: calculus1 },
+      { subject: "هندسه ۲", chapters: geometry2 },
+      { subject: "آمار و احتمال", chapters: statisticsAndProbability },
+      { subject: "فیزیک ۲", chapters: physics2Math },
+      { subject: "شیمی ۲", chapters: chemistry2 },
     ],
     12: [
-      { subject: "حسابان ۲", chapters: numbered("فصل", 5) },
-      { subject: "هندسه ۳", chapters: numbered("فصل", 3) },
-      { subject: "ریاضیات گسسته", chapters: numbered("فصل", 3) },
-      { subject: "فیزیک ۳", chapters: numbered("فصل", 6) },
-      { subject: "شیمی ۳", chapters: numbered("فصل", 4) },
+      { subject: "حسابان ۲", chapters: calculus2 },
+      { subject: "هندسه ۳", chapters: geometry3 },
+      { subject: "ریاضیات گسسته", chapters: discreteMath },
+      { subject: "فیزیک ۳", chapters: physics3Math },
+      { subject: "شیمی ۳", chapters: chemistry3 },
     ],
   },
   experimental_sciences: {
     10: [
       { subject: "زیست‌شناسی ۱", chapters: biology10 },
-      { subject: "ریاضی ۱", chapters: numbered("فصل", 7) },
-      { subject: "فیزیک ۱", chapters: numbered("فصل", 4) },
-      { subject: "شیمی ۱", chapters: numbered("فصل", 3) },
+      { subject: "ریاضی ۱", chapters: math1 },
+      { subject: "فیزیک ۱", chapters: physics1 },
+      { subject: "شیمی ۱", chapters: chemistry1 },
     ],
     11: [
       { subject: "زیست‌شناسی ۲", chapters: biology11 },
-      { subject: "ریاضی ۲", chapters: numbered("فصل", 7) },
-      { subject: "فیزیک ۲", chapters: numbered("فصل", 3) },
-      { subject: "شیمی ۲", chapters: numbered("فصل", 3) },
-      { subject: "زمین‌شناسی", chapters: numbered("فصل", 7) },
+      { subject: "ریاضی ۲", chapters: experimentalMath2 },
+      { subject: "فیزیک ۲", chapters: physics2Experimental },
+      { subject: "شیمی ۲", chapters: chemistry2 },
+      { subject: "زمین‌شناسی", chapters: geology },
     ],
     12: [
       { subject: "زیست‌شناسی ۳", chapters: biology12 },
-      { subject: "ریاضی ۳", chapters: numbered("فصل", 7) },
-      { subject: "فیزیک ۳", chapters: numbered("فصل", 4) },
-      { subject: "شیمی ۳", chapters: numbered("فصل", 4) },
+      { subject: "ریاضی ۳", chapters: experimentalMath3 },
+      { subject: "فیزیک ۳", chapters: physics3Experimental },
+      { subject: "شیمی ۳", chapters: chemistry3 },
     ],
   },
   humanities: {

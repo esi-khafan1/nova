@@ -67,7 +67,6 @@ export async function selectStudent(fd: FormData) {
 
 type WeeklyPlanItemInput = {
   dayOfWeek: number;
-  startTime: string;
   durationMinutes: number;
   subject: string;
   chapter: string;
@@ -97,6 +96,31 @@ export async function saveWeeklyPlan(fd: FormData) {
     redirect("/dashboard/counselor/plans?error=plan");
   }
 
+  const tehranParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const tehranPart = (type: Intl.DateTimeFormatPartTypes) =>
+    tehranParts.find((part) => part.type === type)?.value ?? "";
+  const today = new Date(
+    `${tehranPart("year")}-${tehranPart("month")}-${tehranPart("day")}T12:00:00Z`,
+  );
+  const selectedWeek = new Date(`${weekStart}T12:00:00Z`);
+  const currentWeekStart = new Date(today);
+  currentWeekStart.setUTCDate(
+    currentWeekStart.getUTCDate() - ((currentWeekStart.getUTCDay() + 1) % 7),
+  );
+
+  if (
+    Number.isNaN(selectedWeek.getTime()) ||
+    selectedWeek.getUTCDay() !== 6 ||
+    selectedWeek < currentWeekStart
+  ) {
+    redirect("/dashboard/counselor/plans?error=week");
+  }
+
   let items: WeeklyPlanItemInput[] = [];
   try {
     const parsed = JSON.parse(rawItems);
@@ -122,7 +146,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     .slice(0, 100)
     .map((item) => ({
       dayOfWeek: Number(item.dayOfWeek),
-      startTime: clean(item.startTime as unknown as string, 5),
+      startTime: "",
       durationMinutes: Number(item.durationMinutes),
       subject: clean(item.subject as unknown as string, 100),
       chapter: clean(item.chapter as unknown as string, 160),
@@ -139,7 +163,12 @@ export async function saveWeeklyPlan(fd: FormData) {
         item.durationMinutes <= 720 &&
         item.subject.length > 0 &&
         activityTypes.has(item.activityType) &&
-        (item.startTime === "" || /^\d{2}:\d{2}$/.test(item.startTime)),
+        item.startTime === "" &&
+        (() => {
+          const plannedDay = new Date(selectedWeek);
+          plannedDay.setUTCDate(plannedDay.getUTCDate() + item.dayOfWeek);
+          return plannedDay >= today;
+        })(),
     );
 
   if (!safeItems.length || safeItems.length !== items.length)

@@ -21,7 +21,6 @@ type Student = {
 type PlanItem = {
   key: string;
   dayOfWeek: number;
-  startTime: string;
   durationMinutes: number;
   subject: string;
   chapter: string;
@@ -32,7 +31,6 @@ type PlanItem = {
 const newItem = (dayOfWeek = 0, key = `${Date.now()}-${Math.random()}`): PlanItem => ({
   key,
   dayOfWeek,
-  startTime: "08:00",
   durationMinutes: 90,
   subject: "",
   chapter: "",
@@ -42,17 +40,43 @@ const newItem = (dayOfWeek = 0, key = `${Date.now()}-${Math.random()}`): PlanIte
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
 
-function nextSaturday() {
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function currentWeekSaturday() {
   const date = new Date();
-  const day = date.getDay();
-  const daysUntilSaturday = (6 - day + 7) % 7;
-  date.setDate(date.getDate() + daysUntilSaturday);
-  return date.toISOString().slice(0, 10);
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - ((date.getDay() + 1) % 7));
+  return toIsoDate(date);
+}
+
+function dayDate(weekStart: string, dayIndex: number) {
+  const [year, month, day] = weekStart.split("-").map(Number);
+  const date = new Date(year, month - 1, day, 12);
+  date.setDate(date.getDate() + dayIndex);
+  return date;
+}
+
+function isPastDay(weekStart: string, dayIndex: number) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  return dayDate(weekStart, dayIndex) < today;
+}
+
+function firstAvailableDay(weekStart: string) {
+  return weekDays.findIndex((_, index) => !isPastDay(weekStart, index));
 }
 
 export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
   const [studentIndex, setStudentIndex] = useState(0);
-  const [items, setItems] = useState<PlanItem[]>([newItem(0, "initial-item")]);
+  const [weekStart, setWeekStart] = useState(currentWeekSaturday);
+  const [items, setItems] = useState<PlanItem[]>(() => [
+    newItem(firstAvailableDay(currentWeekSaturday()), "initial-item"),
+  ]);
 
   const student = students[studentIndex] ?? students[0];
   const books = useMemo(() => {
@@ -123,7 +147,13 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
             شروع هفته
             <PersianDatePicker
               name="week_start"
-              defaultValue={nextSaturday()}
+              value={weekStart}
+              onChange={(nextWeek) => {
+                setWeekStart(nextWeek);
+                setItems([
+                  newItem(firstAvailableDay(nextWeek), `week-${nextWeek}`),
+                ]);
+              }}
             />
           </label>
           <label>
@@ -158,28 +188,38 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
 
       <div className="weekly-days">
         {weekDays.map((day, dayIndex) => {
+          const dayHasPassed = isPastDay(weekStart, dayIndex);
           const dayItems = items.filter(
             (item) => item.dayOfWeek === dayIndex,
           );
           return (
-            <section className="portal-card plan-day" key={day}>
+            <section
+              className={`portal-card plan-day${dayHasPassed ? " past" : ""}`}
+              key={day}
+            >
               <header>
                 <div>
                   <span>روز {faNumber(dayIndex + 1)}</span>
                   <h2>{day}</h2>
                 </div>
-                <button
-                  type="button"
-                  className="plan-add"
-                  onClick={() =>
-                    setItems((current) => [...current, newItem(dayIndex)])
-                  }
-                >
-                  + افزودن فعالیت
-                </button>
+                {!dayHasPassed && (
+                  <button
+                    type="button"
+                    className="plan-add"
+                    onClick={() =>
+                      setItems((current) => [...current, newItem(dayIndex)])
+                    }
+                  >
+                    + افزودن فعالیت
+                  </button>
+                )}
               </header>
 
-              {dayItems.length === 0 ? (
+              {dayHasPassed ? (
+                <p className="plan-day-empty">
+                  این روز گذشته و دیگر قابل برنامه‌ریزی نیست.
+                </p>
+              ) : dayItems.length === 0 ? (
                 <p className="plan-day-empty">برای این روز فعالیتی ثبت نشده.</p>
               ) : (
                 <div className="plan-item-list">
@@ -190,26 +230,8 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                       </div>
                       <div className="plan-item-fields">
                         <label>
-                          ساعت شروع
-                          <input
-                            type="time"
-                            value={item.startTime}
-                            onChange={(event) =>
-                              updateItem(
-                                item.key,
-                                "startTime",
-                                event.target.value,
-                              )
-                            }
-                          />
-                        </label>
-                        <label>
                           مدت (دقیقه)
-                          <input
-                            type="number"
-                            min={15}
-                            max={720}
-                            step={15}
+                          <select
                             value={item.durationMinutes}
                             onChange={(event) =>
                               updateItem(
@@ -218,8 +240,15 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                                 Number(event.target.value),
                               )
                             }
-                            required
-                          />
+                          >
+                            {[30, 45, 60, 75, 90, 120, 150, 180].map(
+                              (duration) => (
+                                <option key={duration} value={duration}>
+                                  {faNumber(duration)} دقیقه
+                                </option>
+                              ),
+                            )}
+                          </select>
                         </label>
                         <label>
                           درس
@@ -376,7 +405,6 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
           value={JSON.stringify(
             items.map((item) => ({
               dayOfWeek: item.dayOfWeek,
-              startTime: item.startTime,
               durationMinutes: item.durationMinutes,
               subject: item.subject,
               chapter: item.chapter,

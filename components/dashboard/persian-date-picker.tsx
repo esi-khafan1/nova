@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 const persianPartsFormatter = new Intl.DateTimeFormat(
   "fa-IR-u-ca-persian-nu-latn",
@@ -30,6 +30,13 @@ const persianFullDateFormatter = new Intl.DateTimeFormat(
 );
 
 const persianNumber = new Intl.NumberFormat("fa-IR");
+const persianShortDateFormatter = new Intl.DateTimeFormat(
+  "fa-IR-u-ca-persian",
+  {
+    month: "long",
+    day: "numeric",
+  },
+);
 
 function addDays(date: Date, days: number) {
   const result = new Date(date);
@@ -68,19 +75,29 @@ function sameDay(first: Date, second: Date) {
   return toIsoDate(first) === toIsoDate(second);
 }
 
+function parseIsoDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
+}
+
 export function PersianDatePicker({
   name,
-  defaultValue,
+  value,
+  onChange,
 }: {
   name: string;
-  defaultValue: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const initialDate = useMemo(() => {
-    const [year, month, day] = defaultValue.split("-").map(Number);
-    return new Date(year, month - 1, day, 12);
-  }, [defaultValue]);
-  const [selected, setSelected] = useState(initialDate);
-  const [monthAnchor, setMonthAnchor] = useState(initialDate);
+  const selected = parseIsoDate(value);
+  const today = startOfDay(new Date());
+  const currentWeekStart = addDays(today, -((today.getDay() + 1) % 7));
+  const selectedWeekEnd = addDays(selected, 6);
+  const [monthAnchor, setMonthAnchor] = useState(selected);
   const [open, setOpen] = useState(false);
 
   const monthStart = startOfPersianMonth(monthAnchor);
@@ -99,14 +116,17 @@ export function PersianDatePicker({
 
   return (
     <div className="persian-date-picker">
-      <input type="hidden" name={name} value={toIsoDate(selected)} />
+      <input type="hidden" name={name} value={value} />
       <button
         type="button"
         className="persian-date-trigger"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span>{persianFullDateFormatter.format(selected)}</span>
+        <span>
+          {persianShortDateFormatter.format(selected)} تا{" "}
+          {persianFullDateFormatter.format(selectedWeekEnd)}
+        </span>
         <svg aria-hidden="true" viewBox="0 0 20 20">
           <path d="m5 7.5 5 5 5-5" />
         </svg>
@@ -149,6 +169,11 @@ export function PersianDatePicker({
                 parts.year === month.year && parts.month === month.month;
               const isSelected = sameDay(date, selected);
               const isSaturday = date.getDay() === 6;
+              const isToday = sameDay(date, today);
+              const isInSelectedWeek =
+                date >= selected && date <= selectedWeekEnd;
+              const isDisabled =
+                !isSaturday || startOfDay(date) < currentWeekStart;
               return (
                 <button
                   type="button"
@@ -156,14 +181,18 @@ export function PersianDatePicker({
                   className={[
                     isCurrentMonth ? "" : "outside",
                     isSelected ? "selected" : "",
+                    isToday ? "today" : "",
+                    isInSelectedWeek ? "selected-week" : "",
                     isSaturday ? "week-start" : "",
+                    isDisabled ? "disabled" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
                   aria-label={persianFullDateFormatter.format(date)}
                   aria-pressed={isSelected}
+                  disabled={isDisabled}
                   onClick={() => {
-                    setSelected(date);
+                    onChange(toIsoDate(date));
                     setMonthAnchor(date);
                     setOpen(false);
                   }}
@@ -173,7 +202,11 @@ export function PersianDatePicker({
               );
             })}
           </div>
-          <p>شنبه‌ها با حلقه نارنجی مشخص شده‌اند.</p>
+          <div className="persian-calendar-legend">
+            <span className="today-key">امروز</span>
+            <span className="week-key">هفته انتخاب‌شده</span>
+          </div>
+          <p>فقط شنبه هفته جاری یا هفته‌های آینده قابل انتخاب است.</p>
         </div>
       )}
     </div>
