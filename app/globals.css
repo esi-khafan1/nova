@@ -390,9 +390,7 @@ main .eyebrow span{background:#9d3f06}
 .plan-item-number{width:30px;height:30px;display:grid;place-items:center;color:#fffaf2;border-radius:50%;background:#c65308;font-size:11px;font-weight:850}
 .plan-item-fields{display:grid;grid-template-columns:110px 1fr 1.2fr 1fr 1.5fr;gap:9px}
 .plan-item-fields input,
-.plan-item-fields select,
-.plan-item-fields textarea{min-height:42px;font-size:11px}
-.plan-item-fields textarea{min-height:74px;line-height:1.8}
+.plan-item-fields select{min-height:42px;font-size:11px}
 .plan-remove{height:32px;padding:0 10px;color:#8f342c;border:1px solid #e6b5a7;border-radius:8px;background:#fff0ed;font:inherit;font-size:10px;font-weight:750;cursor:pointer}
 .plan-remove:hover{background:#ffe1da}
 .plan-day.past{background:#fff7ed;box-shadow:none}
@@ -442,7 +440,7 @@ main .eyebrow span{background:#9d3f06}
 @media(max-width:900px){
   .selected-students{grid-template-columns:repeat(2,minmax(0,1fr))}
   .plan-basics-grid{grid-template-columns:1fr}
-  .plan-details{grid-column:1/-1}
+  .plan-details{grid-column:span 2}
 }
 @media(max-width:620px){
   .selected-students{grid-template-columns:1fr}
@@ -451,6 +449,7 @@ main .eyebrow span{background:#9d3f06}
   .plan-day>header{align-items:flex-start}
   .plan-item-editor{grid-template-columns:28px 1fr}
   .plan-item-fields{grid-template-columns:1fr 1fr}
+  .plan-details{grid-column:1/-1}
   .plan-remove{grid-column:2;justify-self:end}
   .plan-publish>div{display:grid}
   .plan-publish .button{width:100%}

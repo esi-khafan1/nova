@@ -352,8 +352,7 @@ export function WeeklyPlanBuilder({ students }: { students: Student[] }) {
                         </label>
                         <label className="plan-details">
                           توضیح تکمیلی
-                          <textarea
-                            rows={2}
+                          <input
                             value={item.details}
                             onChange={(event) =>
                               updateItem(
