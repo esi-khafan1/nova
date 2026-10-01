@@ -1,11 +1,11 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { WeeklyPlanBuilder } from "@/components/dashboard/weekly-plan-builder";
+import {
+  WeeklyPlanBuilder,
+  type CounselorWeeklyPlan,
+} from "@/components/dashboard/weekly-plan-builder";
 import { selectStudent } from "@/app/dashboard/actions";
 import { requireProfile } from "@/lib/auth";
-import {
-  studyFieldLabels,
-  type StudyField,
-} from "@/lib/study-catalog";
+import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 import { formatPersianWeekRange } from "@/lib/persian-date";
 
 type StudentDirectoryRow = {
@@ -27,15 +27,17 @@ export default async function CounselorPlansPage({
     supabase.rpc("counselor_student_directory"),
     supabase
       .from("weekly_plans")
-      .select("id,student_id,week_start,title,status,updated_at")
+      .select(
+        "id,student_id,week_start,title,notes,status,updated_at,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,details,sort_order)",
+      )
       .eq("counselor_id", profile.id)
-      .order("week_start", { ascending: false })
-      .limit(8),
+      .order("week_start", { ascending: false }),
   ]);
 
   const directory = (directoryData ?? []) as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
   const availableStudents = directory.filter((student) => !student.is_selected);
+  const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
   const studentNames = new Map(
     directory.map((student) => [
       student.student_id,
@@ -50,8 +52,8 @@ export default async function CounselorPlansPage({
           <span>برنامه‌ریزی هفتگی</span>
           <h1>برنامه هر دانش‌آموز را دقیق بچین</h1>
           <p>
-            زمان، درس، فصل و نوع فعالیت را مثل برگه برنامه هفتگی در یک مسیر
-            روشن ثبت کن.
+            زمان، درس، فصل و نوع فعالیت را مثل برگه برنامه هفتگی در یک مسیر روشن
+            ثبت کن.
           </p>
         </div>
       </section>
@@ -132,9 +134,9 @@ export default async function CounselorPlansPage({
         )}
       </section>
 
-      <WeeklyPlanBuilder students={selectedStudents} />
+      <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} />
 
-      {(plans?.length ?? 0) > 0 && (
+      {counselorPlans.length > 0 && (
         <section className="portal-card recent-plans">
           <div className="portal-card-title">
             <div>
@@ -143,7 +145,7 @@ export default async function CounselorPlansPage({
             </div>
           </div>
           <div>
-            {plans?.map((plan) => (
+            {counselorPlans.slice(0, 8).map((plan) => (
               <article key={plan.id}>
                 <div>
                   <strong>

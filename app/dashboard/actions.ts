@@ -82,6 +82,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   if (!user) redirect("/auth/sign-in");
 
   const studentId = clean(fd.get("student_id"), 50);
+  const planId = clean(fd.get("plan_id"), 50);
   const weekStart = clean(fd.get("week_start"), 10);
   const title = clean(fd.get("title"), 120);
   const notes = clean(fd.get("notes"), 2000);
@@ -90,6 +91,7 @@ export async function saveWeeklyPlan(fd: FormData) {
 
   if (
     !uuidPattern.test(studentId) ||
+    (planId.length > 0 && !uuidPattern.test(planId)) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(weekStart) ||
     !["draft", "published"].includes(status)
   ) {
@@ -171,10 +173,14 @@ export async function saveWeeklyPlan(fd: FormData) {
         })(),
     );
 
-  if (!safeItems.length || safeItems.length !== items.length)
+  if (
+    safeItems.length !== items.length ||
+    (!safeItems.length && !(planId && status === "published"))
+  )
     redirect("/dashboard/counselor/plans?error=items");
 
-  const { error } = await s.rpc("save_weekly_plan", {
+  const { error } = await s.rpc("save_weekly_plan_v2", {
+    target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,
     target_title: title,

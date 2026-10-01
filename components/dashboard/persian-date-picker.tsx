@@ -11,15 +11,12 @@ import {
   toIsoDate,
 } from "@/lib/persian-date";
 
-const persianFullDateFormatter = new Intl.DateTimeFormat(
-  "fa-IR-u-ca-persian",
-  {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  },
-);
+const persianFullDateFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 
 function startOfPersianMonth(anchor: Date) {
   let date = new Date(anchor);
@@ -42,10 +39,12 @@ export function PersianDatePicker({
   name,
   value,
   onChange,
+  plannedWeeks = {},
 }: {
   name: string;
   value: string;
   onChange: (value: string) => void;
+  plannedWeeks?: Record<string, "draft" | "published">;
 }) {
   const selected = parseIsoDate(value);
   const today = startOfDay(new Date());
@@ -111,7 +110,9 @@ export function PersianDatePicker({
               "چهارشنبه",
               "پنجشنبه",
               "جمعه",
-            ].map((day) => <span key={day}>{day}</span>)}
+            ].map((day) => (
+              <span key={day}>{day}</span>
+            ))}
           </div>
           <div className="persian-calendar-days">
             {days.map((date) => {
@@ -120,6 +121,9 @@ export function PersianDatePicker({
                 parts.year === month.year && parts.month === month.month;
               const isSelected = sameDay(date, selected);
               const isSaturday = date.getDay() === 6;
+              const weekStatus = isSaturday
+                ? plannedWeeks[toIsoDate(date)]
+                : undefined;
               const isToday = sameDay(date, today);
               const isInSelectedWeek =
                 date >= selected && date <= selectedWeekEnd;
@@ -135,11 +139,18 @@ export function PersianDatePicker({
                     isToday ? "today" : "",
                     isInSelectedWeek ? "selected-week" : "",
                     isSaturday ? "week-start" : "",
+                    weekStatus ? `has-plan ${weekStatus}` : "",
                     isDisabled ? "disabled" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                  aria-label={persianFullDateFormatter.format(date)}
+                  aria-label={`${persianFullDateFormatter.format(date)}${
+                    weekStatus
+                      ? weekStatus === "published"
+                        ? "، برنامه منتشرشده"
+                        : "، دارای پیش‌نویس"
+                      : ""
+                  }`}
                   aria-pressed={isSelected}
                   disabled={isDisabled}
                   onClick={() => {
@@ -156,6 +167,8 @@ export function PersianDatePicker({
           <div className="persian-calendar-legend">
             <span className="today-key">امروز</span>
             <span className="week-key">هفته انتخاب‌شده</span>
+            <span className="published-key">برنامه منتشرشده</span>
+            <span className="draft-key">پیش‌نویس</span>
           </div>
           <p>فقط شنبه هفته جاری یا هفته‌های آینده قابل انتخاب است.</p>
         </div>
