@@ -6,15 +6,12 @@ import {
 } from "@/components/dashboard/student-progress-summary";
 import { requireProfile } from "@/lib/auth";
 import { updateStudentProfile } from "@/app/dashboard/actions";
-import {
-  activityTypes,
-  studyFieldLabels,
-  weekDays,
-} from "@/lib/study-catalog";
+import { activityTypes, studyFieldLabels, weekDays } from "@/lib/study-catalog";
 import {
   addDays,
   formatPersianWeekRange,
   parseIsoDate,
+  persianParts,
   samePersianMonth,
   toIsoDate,
 } from "@/lib/persian-date";
@@ -27,6 +24,10 @@ type AnalyticsItem = {
   subject: string;
   chapter: string | null;
   activity_type: string;
+};
+
+type PlanItemWithDate = AnalyticsItem & {
+  plannedDate: Date;
 };
 
 const studyActivities = new Set([
@@ -52,46 +53,76 @@ function tehranTodayIso() {
 function summarizeProgress(
   key: ProgressScope["key"],
   label: string,
-  items: AnalyticsItem[],
+  items: PlanItemWithDate[],
+  completedItemIds: Set<string>,
 ): ProgressScope {
   const subjects = new Map<
     string,
-    { minutes: number; chapters: Set<string> }
+    {
+      plannedMinutes: number;
+      completedMinutes: number;
+      monthlyMinutes: number[];
+    }
   >();
-  let totalMinutes = 0;
+  let completedCount = 0;
+  let completedMinutes = 0;
   let studyMinutes = 0;
   let testMinutes = 0;
 
   for (const item of items) {
-    totalMinutes += item.duration_minutes;
-    if (studyActivities.has(item.activity_type))
-      studyMinutes += item.duration_minutes;
-    if (item.activity_type === "practice_tests")
-      testMinutes += item.duration_minutes;
-
     const subject = subjects.get(item.subject) ?? {
-      minutes: 0,
-      chapters: new Set<string>(),
+      plannedMinutes: 0,
+      completedMinutes: 0,
+      monthlyMinutes: [0, 0, 0, 0, 0],
     };
-    subject.minutes += item.duration_minutes;
-    if (item.chapter) subject.chapters.add(item.chapter);
+    subject.plannedMinutes += item.duration_minutes;
+
+    if (completedItemIds.has(item.id)) {
+      completedCount += 1;
+      completedMinutes += item.duration_minutes;
+      subject.completedMinutes += item.duration_minutes;
+      if (studyActivities.has(item.activity_type))
+        studyMinutes += item.duration_minutes;
+      if (item.activity_type === "practice_tests")
+        testMinutes += item.duration_minutes;
+
+      if (key === "monthly") {
+        const weekIndex = Math.min(
+          4,
+          Math.floor((persianParts(item.plannedDate).day - 1) / 7),
+        );
+        subject.monthlyMinutes[weekIndex] += item.duration_minutes;
+      }
+    }
+
     subjects.set(item.subject, subject);
   }
+
+  const subjectRows = [...subjects.entries()].map(([subject, data]) => ({
+    subject,
+    plannedMinutes: data.plannedMinutes,
+    completedMinutes: data.completedMinutes,
+    completionRate: data.plannedMinutes
+      ? Math.round((data.completedMinutes / data.plannedMinutes) * 100)
+      : 0,
+    shareOfCompleted: completedMinutes
+      ? Math.round((data.completedMinutes / completedMinutes) * 100)
+      : 0,
+    monthlyMinutes: data.monthlyMinutes,
+  }));
 
   return {
     key,
     label,
-    completedCount: items.length,
-    totalMinutes,
+    completedCount,
+    totalMinutes: completedMinutes,
     studyMinutes,
     testMinutes,
-    subjects: [...subjects.entries()]
-      .map(([subject, data]) => ({
-        subject,
-        minutes: data.minutes,
-        chapters: [...data.chapters],
-      }))
-      .sort((first, second) => second.minutes - first.minutes),
+    subjects: subjectRows.sort((first, second) =>
+      key === "all"
+        ? second.completedMinutes - first.completedMinutes
+        : second.plannedMinutes - first.plannedMinutes,
+    ),
   };
 }
 
@@ -149,22 +180,24 @@ export default async function StudentDashboard({
       parseIsoDate(plan.week_start),
     ]),
   );
-  const completedItems = (allPlanItems ?? []).filter((item) =>
-    completionMap.has(item.id),
-  ) as AnalyticsItem[];
-  const now = new Date();
-  const monthlyCompletedItems = completedItems.filter((item) => {
+  const allItemsWithDates = (allPlanItems ?? []).flatMap((item) => {
     const planStart = planStartDates.get(item.plan_id);
-    if (!planStart) return false;
-    return samePersianMonth(addDays(planStart, item.day_of_week), now);
-  });
-  const weeklyCompletedItems = completedItems.filter(
+    return planStart
+      ? [{ ...item, plannedDate: addDays(planStart, item.day_of_week) }]
+      : [];
+  }) as PlanItemWithDate[];
+  const completedItemIds = new Set(completionMap.keys());
+  const now = new Date();
+  const monthlyItems = allItemsWithDates.filter((item) =>
+    samePersianMonth(item.plannedDate, now),
+  );
+  const weeklyItems = allItemsWithDates.filter(
     (item) => item.plan_id === currentPlan?.id,
   );
   const progressScopes: ProgressScope[] = [
-    summarizeProgress("weekly", "هفتگی", weeklyCompletedItems),
-    summarizeProgress("monthly", "ماهانه", monthlyCompletedItems),
-    summarizeProgress("all", "کلی", completedItems),
+    summarizeProgress("weekly", "هفتگی", weeklyItems, completedItemIds),
+    summarizeProgress("monthly", "ماهانه", monthlyItems, completedItemIds),
+    summarizeProgress("all", "کلی", allItemsWithDates, completedItemIds),
   ];
   const grade = profile.grade
     ? `پایه ${profile.grade === 10 ? "دهم" : profile.grade === 11 ? "یازدهم" : "دوازدهم"}`
@@ -316,7 +349,9 @@ export default async function StudentDashboard({
                       </div>
                     ))
                   ) : (
-                    <span className="student-day-off">استراحت / برنامه آزاد</span>
+                    <span className="student-day-off">
+                      استراحت / برنامه آزاد
+                    </span>
                   )}
                 </article>
               );
