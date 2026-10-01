@@ -1,8 +1,15 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
+import Link from "next/link";
 export default async function CounselorDashboard() {
   const { supabase, profile } = await requireProfile(["counselor"]);
-  const [{ data: c }, { count: resources }, { count: requests }] =
+  const [
+    { data: c },
+    { count: resources },
+    { count: requests },
+    { count: students },
+    { count: plans },
+  ] =
     await Promise.all([
       supabase
         .from("counselor_profiles")
@@ -15,6 +22,14 @@ export default async function CounselorDashboard() {
         .eq("author_id", profile.id),
       supabase
         .from("consultation_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("counselor_id", profile.id),
+      supabase
+        .from("counselor_students")
+        .select("id", { count: "exact", head: true })
+        .eq("counselor_id", profile.id),
+      supabase
+        .from("weekly_plans")
         .select("id", { count: "exact", head: true })
         .eq("counselor_id", profile.id),
     ]);
@@ -36,18 +51,34 @@ export default async function CounselorDashboard() {
           <strong>{requests ?? 0}</strong>
         </article>
         <article>
-          <span>محتوای منتشرشده</span>
-          <strong>{resources ?? 0}</strong>
+          <span>دانش‌آموزان من</span>
+          <strong>{students ?? 0}</strong>
         </article>
         <article>
-          <span>وضعیت حساب</span>
-          <strong>تأییدشده</strong>
+          <span>برنامه‌های ساخته‌شده</span>
+          <strong>{plans ?? 0}</strong>
         </article>
       </div>
-      <section className="portal-card portal-wide portal-empty">
+      <section className="portal-card admin-role-card">
+        <div>
+          <span>ابزار اصلی مشاور</span>
+          <h2>برنامه هفتگی دانش‌آموز را بساز</h2>
+          <p>
+            دانش‌آموز را انتخاب کن و برای هر روز، ساعت، درس، فصل و نوع فعالیت
+            را مشخص کن.
+          </p>
+        </div>
+        <Link className="button" href="/dashboard/counselor/plans">
+          ورود به برنامه‌ریز
+        </Link>
+      </section>
+      <section className="portal-card portal-wide portal-empty counselor-secondary">
         <div className="portal-empty-icon">✦</div>
-        <h2>پنل مشاور آماده است</h2>
-        <p>مدیریت منابع و درخواست‌های دانش‌آموزان در مرحله بعد اضافه می‌شود.</p>
+        <h2>{resources ?? 0} محتوای آموزشی</h2>
+        <p>
+          مدیریت منابع و درخواست‌های مشاوره در گام بعدی تکمیل می‌شود؛ برنامه‌ریز
+          هفتگی اکنون فعال است.
+        </p>
       </section>
     </DashboardShell>
   );
