@@ -166,7 +166,11 @@ export default async function PrintWeeklyPlanPage({
                         <strong>{item.subject}</strong>
                         <b>{item.duration_minutes.toLocaleString("fa-IR")} د</b>
                       </div>
-                      <p className="print-activity-chapter">
+                      <p
+                        className={`print-activity-chapter${
+                          (item.chapter?.length || 0) > 32 ? " is-long" : ""
+                        }`}
+                      >
                         {item.chapter || "مبحث آزاد"}
                       </p>
                       <p className="print-activity-summary">
@@ -178,6 +182,11 @@ export default async function PrintWeeklyPlanPage({
                             "fa-IR",
                           )} تست`}
                       </p>
+                      {item.activity_type === "practice_tests" && (
+                        <p className="print-activity-test-result">
+                          زده‌شده: ................ تست
+                        </p>
+                      )}
                       {item.details && (
                         <p className="print-activity-details">{item.details}</p>
                       )}

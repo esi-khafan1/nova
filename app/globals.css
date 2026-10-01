@@ -517,5 +517,14 @@ main .eyebrow span{background:#9d3f06}
   html,body{width:100%!important;height:210mm!important;min-height:0!important;overflow:hidden!important}
   .print-plan-page{width:297mm;height:210mm;padding:6mm!important;overflow:hidden}
   .a4-weekly-plan{width:100%!important;height:198mm!important;overflow:hidden}
-  .print-plan-meta>div{border-radius:0}
+  .print-plan-meta>div{border-radius:2mm}
+}
+
+@media print{
+  .print-plan-header{grid-template-columns:35mm minmax(0,1fr) 35mm}
+  .print-plan-header>div:first-child{grid-column:3}
+  .print-plan-title{grid-column:2}
+  .print-activity-chapter{-webkit-line-clamp:2}
+  .print-activity-chapter.is-long{font-size:7pt;line-height:1.25}
+  .print-activity-test-result{color:#74320b;font-size:7pt;font-weight:800;line-height:1.25;white-space:nowrap}
 }
