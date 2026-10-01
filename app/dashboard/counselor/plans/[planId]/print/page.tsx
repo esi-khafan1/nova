@@ -104,11 +104,13 @@ export default async function PrintWeeklyPlanPage({
           </div>
           <div className="print-plan-title">
             <h1>{plan.title}</h1>
-            <strong>{formatPersianWeekRange(plan.week_start)}</strong>
+            <div>
+              <strong>{formatPersianWeekRange(plan.week_start)}</strong>
+              <span className={`print-plan-status ${plan.status}`}>
+                {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
+              </span>
+            </div>
           </div>
-          <span className={`print-plan-status ${plan.status}`}>
-            {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
-          </span>
         </header>
 
         <section className="print-plan-meta">
@@ -145,62 +147,51 @@ export default async function PrintWeeklyPlanPage({
           </section>
         )}
 
-        <div className="print-week-days">
+        <div className="print-week-grid">
           {weekDays.map((day, dayIndex) => {
             const dayItems = items.filter(
               (item) => item.day_of_week === dayIndex,
             );
             return (
-              <section className="print-day" key={day}>
+              <section className="print-day-column" key={day}>
                 <header>
                   <h2>{day}</h2>
                   <span>{formatPersianDay(addDays(weekStart, dayIndex))}</span>
                 </header>
-                {dayItems.length ? (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>درس و فصل</th>
-                        <th>نوع فعالیت</th>
-                        <th>مدت / هدف</th>
-                        <th>توضیحات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dayItems.map((item) => (
-                        <tr key={item.id}>
-                          <td>
-                            <strong>{item.subject}</strong>
-                            <span>{item.chapter || "مبحث آزاد"}</span>
-                          </td>
-                          <td>
-                            {activityLabels.get(item.activity_type) ||
-                              "فعالیت درسی"}
-                          </td>
-                          <td>
-                            <strong>
-                              {item.duration_minutes.toLocaleString("fa-IR")}{" "}
-                              دقیقه
-                            </strong>
-                            {item.activity_type === "practice_tests" &&
-                              item.target_test_count && (
-                                <span>
-                                  هدف:{" "}
-                                  {item.target_test_count.toLocaleString(
-                                    "fa-IR",
-                                  )}{" "}
-                                  تست
-                                </span>
-                              )}
-                          </td>
-                          <td>{item.details || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="print-day-empty">استراحت / برنامه آزاد</p>
-                )}
+                <div className="print-day-items">
+                  {dayItems.map((item) => (
+                    <article className="print-activity" key={item.id}>
+                      <div className="print-activity-title">
+                        <span aria-hidden="true">□</span>
+                        <strong>{item.subject}</strong>
+                        <b>{item.duration_minutes.toLocaleString("fa-IR")} د</b>
+                      </div>
+                      <p className="print-activity-chapter">
+                        {item.chapter || "مبحث آزاد"}
+                      </p>
+                      <p className="print-activity-summary">
+                        {activityLabels.get(item.activity_type) ||
+                          "فعالیت درسی"}
+                        {item.activity_type === "practice_tests" &&
+                          item.target_test_count &&
+                          ` · هدف ${item.target_test_count.toLocaleString(
+                            "fa-IR",
+                          )} تست`}
+                      </p>
+                      {item.details && (
+                        <p className="print-activity-details">{item.details}</p>
+                      )}
+                    </article>
+                  ))}
+                  {Array.from({
+                    length: Math.max(0, 5 - dayItems.length),
+                  }).map((_, index) => (
+                    <div
+                      className="print-activity print-activity-empty"
+                      key={`empty-${index}`}
+                    />
+                  ))}
+                </div>
               </section>
             );
           })}
