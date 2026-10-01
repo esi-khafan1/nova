@@ -26,6 +26,7 @@ type PlanItem = {
   subject: string;
   chapter: string;
   activityType: (typeof activityTypes)[number]["value"];
+  targetTestCount: number | null;
   details: string;
 };
 
@@ -43,6 +44,7 @@ export type CounselorWeeklyPlan = {
     subject: string;
     chapter: string | null;
     activity_type: PlanItem["activityType"];
+    target_test_count: number | null;
     details: string | null;
     sort_order: number;
   }>;
@@ -58,6 +60,7 @@ const newItem = (
   subject: "",
   chapter: "",
   activityType: "lesson",
+  targetTestCount: null,
   details: "",
 });
 
@@ -115,6 +118,7 @@ function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
       subject: item.subject,
       chapter: item.chapter ?? "",
       activityType: item.activity_type,
+      targetTestCount: item.target_test_count,
       details: item.details ?? "",
     }));
 }
@@ -337,6 +341,9 @@ export function WeeklyPlanBuilder({
                       <span>
                         {item.chapter || "بدون مبحث"} ·{" "}
                         {faNumber(item.durationMinutes)} دقیقه
+                        {item.activityType === "practice_tests" &&
+                          item.targetTestCount &&
+                          ` · هدف ${faNumber(item.targetTestCount)} تست`}
                       </span>
                       {item.details && <small>{item.details}</small>}
                     </article>
@@ -455,13 +462,20 @@ export function WeeklyPlanBuilder({
                           نوع فعالیت
                           <select
                             value={item.activityType}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const activityType = event.target
+                                .value as PlanItem["activityType"];
                               updateItem(
                                 item.key,
                                 "activityType",
-                                event.target.value as PlanItem["activityType"],
-                              )
-                            }
+                                activityType,
+                              );
+                              updateItem(
+                                item.key,
+                                "targetTestCount",
+                                activityType === "practice_tests" ? 20 : null,
+                              );
+                            }}
                           >
                             {activityTypes.map((activity) => (
                               <option
@@ -473,6 +487,26 @@ export function WeeklyPlanBuilder({
                             ))}
                           </select>
                         </label>
+                        {item.activityType === "practice_tests" && (
+                          <label>
+                            تعداد تست هدف
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              max={5000}
+                              value={item.targetTestCount ?? ""}
+                              onChange={(event) =>
+                                updateItem(
+                                  item.key,
+                                  "targetTestCount",
+                                  Number(event.target.value),
+                                )
+                              }
+                              required
+                            />
+                          </label>
+                        )}
                         <label className="plan-details">
                           توضیح تکمیلی
                           <input
@@ -535,6 +569,7 @@ export function WeeklyPlanBuilder({
               subject: item.subject,
               chapter: item.chapter,
               activityType: item.activityType,
+              targetTestCount: item.targetTestCount,
               details: item.details,
             })),
           )}

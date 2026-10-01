@@ -3,10 +3,16 @@ import {
   WeeklyPlanBuilder,
   type CounselorWeeklyPlan,
 } from "@/components/dashboard/weekly-plan-builder";
+import { StudentProgressSummary } from "@/components/dashboard/student-progress-summary";
 import { selectStudent } from "@/app/dashboard/actions";
 import { requireProfile } from "@/lib/auth";
 import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
-import { formatPersianWeekRange } from "@/lib/persian-date";
+import {
+  addDays,
+  formatPersianWeekRange,
+  parseIsoDate,
+} from "@/lib/persian-date";
+import { buildProgressScopes } from "@/lib/progress";
 
 type StudentDirectoryRow = {
   student_id: string;
@@ -28,7 +34,7 @@ export default async function CounselorPlansPage({
     supabase
       .from("weekly_plans")
       .select(
-        "id,student_id,week_start,title,notes,status,updated_at,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,details,sort_order)",
+        "id,student_id,week_start,title,notes,status,updated_at,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order)",
       )
       .eq("counselor_id", profile.id)
       .order("week_start", { ascending: false }),
@@ -38,6 +44,48 @@ export default async function CounselorPlansPage({
   const selectedStudents = directory.filter((student) => student.is_selected);
   const availableStudents = directory.filter((student) => !student.is_selected);
   const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
+  const requestedProgressStudent = params.progress_student;
+  const progressStudent =
+    selectedStudents.find(
+      (student) => student.student_id === requestedProgressStudent,
+    ) ?? selectedStudents[0];
+  const progressPlans = counselorPlans.filter(
+    (plan) =>
+      plan.student_id === progressStudent?.student_id &&
+      plan.status === "published",
+  );
+  const progressItems = progressPlans.flatMap((plan) =>
+    plan.weekly_plan_items.map((item) => ({
+      id: item.id,
+      planId: plan.id,
+      plannedDate: addDays(parseIsoDate(plan.week_start), item.day_of_week),
+      durationMinutes: item.duration_minutes,
+      subject: item.subject,
+      chapter: item.chapter,
+      activityType: item.activity_type,
+      targetTestCount: item.target_test_count,
+    })),
+  );
+  const progressItemIds = progressItems.map((item) => item.id);
+  const { data: progressCompletions } = progressItemIds.length
+    ? await supabase
+        .from("weekly_plan_item_completions")
+        .select("item_id,completed_test_count")
+        .in("item_id", progressItemIds)
+    : { data: [] };
+  const progressScopes = buildProgressScopes({
+    items: progressItems,
+    currentPlanId: progressPlans[0]?.id ?? null,
+    completedIds: new Set(
+      (progressCompletions ?? []).map((completion) => completion.item_id),
+    ),
+    completedTestCounts: new Map(
+      (progressCompletions ?? []).map((completion) => [
+        completion.item_id,
+        completion.completed_test_count ?? 0,
+      ]),
+    ),
+  });
   const studentNames = new Map(
     directory.map((student) => [
       student.student_id,
@@ -133,6 +181,32 @@ export default async function CounselorPlansPage({
           </p>
         )}
       </section>
+
+      {progressStudent && (
+        <section className="counselor-progress-section">
+          <form className="counselor-progress-picker">
+            <label>
+              گزارش کدام دانش‌آموز؟
+              <select
+                name="progress_student"
+                defaultValue={progressStudent.student_id}
+              >
+                {selectedStudents.map((student) => (
+                  <option key={student.student_id} value={student.student_id}>
+                    {student.full_name || "دانش‌آموز نووا"}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="button">نمایش گزارش</button>
+          </form>
+          <StudentProgressSummary
+            scopes={progressScopes}
+            eyebrow="گزارش دانش‌آموز"
+            title={`پیشرفت ${progressStudent.full_name || "دانش‌آموز نووا"}`}
+          />
+        </section>
+      )}
 
       <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} />
 

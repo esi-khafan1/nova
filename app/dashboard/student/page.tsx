@@ -1,9 +1,6 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { StudentPlanCheckbox } from "@/components/dashboard/student-plan-checkbox";
-import {
-  StudentProgressSummary,
-  type ProgressScope,
-} from "@/components/dashboard/student-progress-summary";
+import { StudentProgressSummary } from "@/components/dashboard/student-progress-summary";
 import { requireProfile } from "@/lib/auth";
 import { updateStudentProfile } from "@/app/dashboard/actions";
 import { activityTypes, studyFieldLabels, weekDays } from "@/lib/study-catalog";
@@ -11,32 +8,9 @@ import {
   addDays,
   formatPersianWeekRange,
   parseIsoDate,
-  persianParts,
-  samePersianMonth,
   toIsoDate,
 } from "@/lib/persian-date";
-
-type AnalyticsItem = {
-  id: string;
-  plan_id: string;
-  day_of_week: number;
-  duration_minutes: number;
-  subject: string;
-  chapter: string | null;
-  activity_type: string;
-};
-
-type PlanItemWithDate = AnalyticsItem & {
-  plannedDate: Date;
-};
-
-const studyActivities = new Set([
-  "lesson",
-  "notes",
-  "review",
-  "homework",
-  "summary",
-]);
+import { buildProgressScopes } from "@/lib/progress";
 
 function tehranTodayIso() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -48,82 +22,6 @@ function tehranTodayIso() {
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((item) => item.type === type)?.value ?? "";
   return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
-function summarizeProgress(
-  key: ProgressScope["key"],
-  label: string,
-  items: PlanItemWithDate[],
-  completedItemIds: Set<string>,
-): ProgressScope {
-  const subjects = new Map<
-    string,
-    {
-      plannedMinutes: number;
-      completedMinutes: number;
-      monthlyMinutes: number[];
-    }
-  >();
-  let completedCount = 0;
-  let completedMinutes = 0;
-  let studyMinutes = 0;
-  let testMinutes = 0;
-
-  for (const item of items) {
-    const subject = subjects.get(item.subject) ?? {
-      plannedMinutes: 0,
-      completedMinutes: 0,
-      monthlyMinutes: [0, 0, 0, 0, 0],
-    };
-    subject.plannedMinutes += item.duration_minutes;
-
-    if (completedItemIds.has(item.id)) {
-      completedCount += 1;
-      completedMinutes += item.duration_minutes;
-      subject.completedMinutes += item.duration_minutes;
-      if (studyActivities.has(item.activity_type))
-        studyMinutes += item.duration_minutes;
-      if (item.activity_type === "practice_tests")
-        testMinutes += item.duration_minutes;
-
-      if (key === "monthly") {
-        const weekIndex = Math.min(
-          4,
-          Math.floor((persianParts(item.plannedDate).day - 1) / 7),
-        );
-        subject.monthlyMinutes[weekIndex] += item.duration_minutes;
-      }
-    }
-
-    subjects.set(item.subject, subject);
-  }
-
-  const subjectRows = [...subjects.entries()].map(([subject, data]) => ({
-    subject,
-    plannedMinutes: data.plannedMinutes,
-    completedMinutes: data.completedMinutes,
-    completionRate: data.plannedMinutes
-      ? Math.round((data.completedMinutes / data.plannedMinutes) * 100)
-      : 0,
-    shareOfCompleted: completedMinutes
-      ? Math.round((data.completedMinutes / completedMinutes) * 100)
-      : 0,
-    monthlyMinutes: data.monthlyMinutes,
-  }));
-
-  return {
-    key,
-    label,
-    completedCount,
-    totalMinutes: completedMinutes,
-    studyMinutes,
-    testMinutes,
-    subjects: subjectRows.sort((first, second) =>
-      key === "all"
-        ? second.completedMinutes - first.completedMinutes
-        : second.plannedMinutes - first.plannedMinutes,
-    ),
-  };
 }
 
 export default async function StudentDashboard({
@@ -151,7 +49,7 @@ export default async function StudentDashboard({
     ? await supabase
         .from("weekly_plan_items")
         .select(
-          "id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,details,sort_order",
+          "id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order",
         )
         .in("plan_id", planIds)
         .order("day_of_week")
@@ -161,13 +59,19 @@ export default async function StudentDashboard({
   const { data: completions } = itemIds.length
     ? await supabase
         .from("weekly_plan_item_completions")
-        .select("item_id,completed_at")
+        .select("item_id,completed_at,completed_test_count")
         .in("item_id", itemIds)
     : { data: [] };
   const completionMap = new Map(
     (completions ?? []).map((completion) => [
       completion.item_id,
       completion.completed_at,
+    ]),
+  );
+  const completedTestCountMap = new Map(
+    (completions ?? []).map((completion) => [
+      completion.item_id,
+      completion.completed_test_count,
     ]),
   );
   const currentPlanItems = (allPlanItems ?? []).filter(
@@ -183,22 +87,32 @@ export default async function StudentDashboard({
   const allItemsWithDates = (allPlanItems ?? []).flatMap((item) => {
     const planStart = planStartDates.get(item.plan_id);
     return planStart
-      ? [{ ...item, plannedDate: addDays(planStart, item.day_of_week) }]
+      ? [
+          {
+            id: item.id,
+            planId: item.plan_id,
+            plannedDate: addDays(planStart, item.day_of_week),
+            durationMinutes: item.duration_minutes,
+            subject: item.subject,
+            chapter: item.chapter,
+            activityType: item.activity_type,
+            targetTestCount: item.target_test_count,
+          },
+        ]
       : [];
-  }) as PlanItemWithDate[];
+  });
   const completedItemIds = new Set(completionMap.keys());
-  const now = new Date();
-  const monthlyItems = allItemsWithDates.filter((item) =>
-    samePersianMonth(item.plannedDate, now),
-  );
-  const weeklyItems = allItemsWithDates.filter(
-    (item) => item.plan_id === currentPlan?.id,
-  );
-  const progressScopes: ProgressScope[] = [
-    summarizeProgress("weekly", "هفتگی", weeklyItems, completedItemIds),
-    summarizeProgress("monthly", "ماهانه", monthlyItems, completedItemIds),
-    summarizeProgress("all", "کلی", allItemsWithDates, completedItemIds),
-  ];
+  const progressScopes = buildProgressScopes({
+    items: allItemsWithDates,
+    currentPlanId: currentPlan?.id ?? null,
+    completedIds: completedItemIds,
+    completedTestCounts: new Map(
+      [...completedTestCountMap.entries()].map(([id, count]) => [
+        id,
+        count ?? 0,
+      ]),
+    ),
+  });
   const grade = profile.grade
     ? `پایه ${profile.grade === 10 ? "دهم" : profile.grade === 11 ? "یازدهم" : "دوازدهم"}`
     : "پایه مشخص نشده";
@@ -344,6 +258,11 @@ export default async function StudentDashboard({
                                 item.day_of_week,
                               ),
                             ) === todayIso
+                          }
+                          activityType={item.activity_type}
+                          targetTestCount={item.target_test_count}
+                          defaultCompletedTestCount={
+                            completedTestCountMap.get(item.id) ?? null
                           }
                         />
                       </div>

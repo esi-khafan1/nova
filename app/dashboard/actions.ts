@@ -71,6 +71,7 @@ type WeeklyPlanItemInput = {
   subject: string;
   chapter: string;
   activityType: string;
+  targetTestCount: number | null;
   details: string;
 };
 
@@ -153,6 +154,8 @@ export async function saveWeeklyPlan(fd: FormData) {
       subject: clean(item.subject as unknown as string, 100),
       chapter: clean(item.chapter as unknown as string, 160),
       activityType: clean(item.activityType as unknown as string, 30),
+      targetTestCount:
+        item.targetTestCount === null ? null : Number(item.targetTestCount),
       details: clean(item.details as unknown as string, 500),
     }))
     .filter(
@@ -165,6 +168,11 @@ export async function saveWeeklyPlan(fd: FormData) {
         item.durationMinutes <= 720 &&
         item.subject.length > 0 &&
         activityTypes.has(item.activityType) &&
+        (item.activityType === "practice_tests"
+          ? Number.isInteger(item.targetTestCount) &&
+            Number(item.targetTestCount) >= 1 &&
+            Number(item.targetTestCount) <= 5000
+          : item.targetTestCount === null) &&
         item.startTime === "" &&
         (() => {
           const plannedDay = new Date(selectedWeek);
@@ -201,6 +209,7 @@ export async function saveWeeklyPlan(fd: FormData) {
 export async function togglePlanItemCompletion(
   itemId: string,
   completed: boolean,
+  completedTestCount: number | null = null,
 ) {
   const s = await createClient();
   const {
@@ -209,9 +218,18 @@ export async function togglePlanItemCompletion(
   if (!user) redirect("/auth/sign-in");
   if (!uuidPattern.test(itemId)) return { ok: false };
 
-  const { error } = await s.rpc("set_weekly_plan_item_completed", {
+  if (
+    completedTestCount !== null &&
+    (!Number.isInteger(completedTestCount) ||
+      completedTestCount < 1 ||
+      completedTestCount > 5000)
+  )
+    return { ok: false };
+
+  const { error } = await s.rpc("set_weekly_plan_item_progress", {
     target_item_id: itemId,
     target_completed: completed,
+    target_completed_test_count: completedTestCount,
   });
 
   if (error) return { ok: false };
