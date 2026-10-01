@@ -530,3 +530,72 @@ main .eyebrow span{background:#9d3f06}
   .print-activity-chapter.is-long{font-size:7pt;line-height:1.25}
   .print-activity-test-result{color:#74320b;font-size:7pt;font-weight:800;line-height:1.25;white-space:nowrap}
 }
+
+/* High-contrast Nova theme: white canvas, bright orange brand, deep navy structure */
+:root{
+  --ink:#102a43;
+  --muted:#4b6073;
+  --primary:#f97316;
+  --primary-dark:#102a43;
+  --mint:#fff3e8;
+  --cream:#fff;
+  --line:#cbd6e2;
+  --white:#fff;
+  --orange:#ff861c;
+  --navy:#102a43;
+  --peach:#ffd2ad;
+}
+body,.hero,.soft-section,.auth-shell,.auth-main,.portal-shell,.portal-main,.dashboard-shell{background:#fff}
+.site-header{border-bottom-color:#d8e0e8;background:rgba(255,255,255,.97)}
+.logo-mark,main .logo-mark,.auth-aside .logo-mark,.portal-sidebar .logo-mark{color:#102a43;background:linear-gradient(145deg,#ff9b42,#ff7817);box-shadow:0 9px 22px rgba(249,115,22,.28),inset 0 1px 0 rgba(255,255,255,.45)}
+.logo small,main .logo small{color:#526579}
+.hero{background:#fff}
+.hero:after{background:radial-gradient(circle at 8% 20%,rgba(249,115,22,.09),transparent 24%),radial-gradient(circle at 92% 78%,rgba(16,42,67,.07),transparent 22%)}
+.hero-visual:before{background:linear-gradient(145deg,#fff3e8,#edf3f8)}
+.orbit{border-color:rgba(16,42,67,.24)}
+.button{color:#fff;background:#102a43;border-color:#102a43;box-shadow:0 10px 24px rgba(16,42,67,.17)}
+.button:hover{background:#173f66;border-color:#173f66;box-shadow:0 12px 28px rgba(16,42,67,.24)}
+.button-light{color:#102a43;background:#fff;border-color:#fff}
+.text-link:hover,.desktop-nav a:hover,.hero h1 em,.section-heading>span,.section-kicker,.eyebrow,.feature-card a{color:#c2410c}
+.eyebrow span,.auth-mode-heading>span:before,.portal-heading>div>span:before{background:#f97316}
+.hero h1 em:after{background:#ffd2ad}
+.dashboard-card,.floating-card,.feature-card,.auth-card,.portal-card,.portal-stats article{background:#fff;border-color:#cbd6e2;box-shadow:0 18px 44px rgba(16,42,67,.1)}
+.task-list>div,.field input,.portal-form input,.portal-form select{background:#fff;border-color:#b9c7d5}
+.hero-copy>p,.section-heading p,.process-grid>div>p,.feature-card p,.auth-mode-heading p,.portal-heading p,.portal-stats span,.portal-empty p,.admin-role-card p{color:#4b6073}
+.auth-aside,.portal-sidebar,.cta{background:#102a43}
+.auth-main:before,.portal-main:before{border-color:rgba(249,115,22,.28)}
+.portal-sidebar .logo small,.auth-aside .logo small{color:#ffd2ad}
+.portal-nav a{color:#dbe6ef}.portal-nav a:hover{color:#fff;background:rgba(249,115,22,.2)}
+.portal-main:before{opacity:.55}
+.portal-heading h1,.portal-card h2,.auth-mode-heading h1{color:#102a43}
+.portal-heading>div>span,.portal-card-title span,.admin-role-card span,.portal-stats strong{color:#c2410c}
+.portal-stats article:before{background:linear-gradient(#ff9b42,#f97316)}
+.portal-card,.portal-stats article{border-color:#c5d1dd}
+.portal-form label,.field label{color:#263e56}
+.portal-form input:focus,.portal-form select:focus,.field input:focus{border-color:#f97316;background:#fff;box-shadow:0 0 0 4px rgba(249,115,22,.15)}
+:focus-visible{outline-color:rgba(249,115,22,.55)}
+.print-brand{background:#ff861c;color:#102a43}
+
+/* Landing contrast overrides (higher specificity than the legacy warm palette) */
+main{color:#102a43;background:#fff}
+main .site-header{border-bottom-color:#d8e0e8;background:rgba(255,255,255,.97)}
+main .desktop-nav{color:#344b61}
+main .button-ghost{color:#102a43;border-color:#b9c7d5;background:#fff}
+main .button-ghost:hover{background:#f1f5f9}
+main .hero,main .section,main .soft-section,main footer{background:#fff}
+main .hero:after{background:radial-gradient(circle at 10% 20%,rgba(249,115,22,.1),transparent 25%),radial-gradient(circle at 88% 82%,rgba(16,42,67,.08),transparent 23%)}
+main .hero-copy>p,main .trust-row,main .section-heading p,main .process-grid>div>p,main .feature-card p,main .steps small,main .footer-grid>p{color:#4b6073}
+main .hero-visual:before{background:linear-gradient(145deg,#fff3e8,#edf3f8)}
+main .dashboard-card,main .floating-card,main .feature-card{color:#102a43;background:#fff;border-color:#cbd6e2;box-shadow:0 18px 44px rgba(16,42,67,.1)}
+main .progress-ring{background:conic-gradient(#f97316 72%,#e6edf3 0)}
+main .progress-ring:after{background:#fff}
+main .task-list>div{background:#f7f9fb}
+main .task-list .upcoming{background:#fff3e8}
+main .progress-ring small,main .task-list small,main .floating-card small,main .result-chip span{color:#526579}
+main .proof-grid span{color:#d6e0e9}
+main .feature-icon{color:#c2410c;background:#fff1e6}
+main .steps li{border-bottom-color:#d5dee7}
+main .steps li>span{color:#c2410c;border-color:#cbd6e2;background:#fff}
+main .cta span{color:#ffd2ad}
+main .cta p{color:#dbe5ee}
+main footer{border-top-color:#d8e0e8}
