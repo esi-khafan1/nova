@@ -11,14 +11,6 @@ const persianPartsFormatter = new Intl.DateTimeFormat(
   },
 );
 
-const persianMonthFormatter = new Intl.DateTimeFormat(
-  "fa-IR-u-ca-persian",
-  {
-    year: "numeric",
-    month: "long",
-  },
-);
-
 const persianFullDateFormatter = new Intl.DateTimeFormat(
   "fa-IR-u-ca-persian",
   {
@@ -29,14 +21,23 @@ const persianFullDateFormatter = new Intl.DateTimeFormat(
   },
 );
 
-const persianNumber = new Intl.NumberFormat("fa-IR");
-const persianShortDateFormatter = new Intl.DateTimeFormat(
-  "fa-IR-u-ca-persian",
-  {
-    month: "long",
-    day: "numeric",
-  },
-);
+const persianNumber = new Intl.NumberFormat("fa-IR", {
+  useGrouping: false,
+});
+const persianMonthNames = [
+  "فروردین",
+  "اردیبهشت",
+  "خرداد",
+  "تیر",
+  "مرداد",
+  "شهریور",
+  "مهر",
+  "آبان",
+  "آذر",
+  "دی",
+  "بهمن",
+  "اسفند",
+];
 
 function addDays(date: Date, days: number) {
   const result = new Date(date);
@@ -73,6 +74,19 @@ function startOfPersianMonth(anchor: Date) {
 
 function sameDay(first: Date, second: Date) {
   return toIsoDate(first) === toIsoDate(second);
+}
+
+function formatPersianMonthYear(date: Date) {
+  const parts = persianParts(date);
+  return `${persianMonthNames[parts.month - 1]} ${persianNumber.format(parts.year)}`;
+}
+
+function formatPersianWeekRange(start: Date, end: Date) {
+  const startParts = persianParts(start);
+  const endParts = persianParts(end);
+  const startLabel = `${persianNumber.format(startParts.day)} ${persianMonthNames[startParts.month - 1]}`;
+  const endLabel = `${persianNumber.format(endParts.day)} ${persianMonthNames[endParts.month - 1]}`;
+  return `${startLabel} تا ${endLabel} ${persianNumber.format(endParts.year)}`;
 }
 
 function parseIsoDate(value: string) {
@@ -123,10 +137,7 @@ export function PersianDatePicker({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span>
-          {persianShortDateFormatter.format(selected)} تا{" "}
-          {persianFullDateFormatter.format(selectedWeekEnd)}
-        </span>
+        <span>{formatPersianWeekRange(selected, selectedWeekEnd)}</span>
         <svg aria-hidden="true" viewBox="0 0 20 20">
           <path d="m5 7.5 5 5 5-5" />
         </svg>
@@ -142,7 +153,7 @@ export function PersianDatePicker({
             >
               ‹
             </button>
-            <strong>{persianMonthFormatter.format(monthStart)}</strong>
+            <strong>{formatPersianMonthYear(monthStart)}</strong>
             <button
               type="button"
               aria-label="ماه قبل"
