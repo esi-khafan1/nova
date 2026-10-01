@@ -4264,11 +4264,20 @@ a {
 }
 .social-panel {
   padding: 40px 44px;
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  align-items: center;
+  gap: 36px;
   color: var(--body);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-sm);
+}
+.social-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 .social-copy > span {
   color: var(--nova-accent-text);
@@ -4282,6 +4291,10 @@ a {
 }
 .social-link {
   padding: 18px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 14px;
   color: var(--body);
   background: var(--white);
   border: 1px solid var(--line);
@@ -4300,8 +4313,20 @@ a {
 .social-icon {
   width: 46px;
   height: 46px;
+  display: grid;
+  place-items: center;
   color: var(--white);
   border-radius: var(--r-md);
+}
+.social-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+.social-link > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
 }
 .social-link.youtube .social-icon {
   background: var(--youtube);
@@ -4319,6 +4344,8 @@ a {
   font-size: 11px;
 }
 .social-link > svg {
+  width: 18px;
+  height: 18px;
   color: var(--faint);
   transition:
     color var(--t-base) var(--ease),
