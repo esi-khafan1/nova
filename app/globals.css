@@ -513,6 +513,8 @@ main .eyebrow span{background:#9d3f06}
 .print-plan-title>div{display:flex;align-items:center;justify-content:center;gap:9px}.print-plan-title .print-plan-status{justify-self:auto;padding:5px 8px;font-size:8px}@media print{.print-plan-header{grid-template-columns:35mm 1fr}.print-plan-title .print-plan-status{padding:1mm 2mm;font-size:7pt}}
 
 /* Print-preview hardening: remove browser margin labels and keep every column inside A4 */
+.print-activity-test-result{color:#74320b;font-size:7px;font-weight:800;line-height:1.25;white-space:nowrap}
+
 @media print{
   html,body{width:100%!important;height:210mm!important;min-height:0!important;overflow:hidden!important}
   .print-plan-page{width:297mm;height:210mm;padding:6mm!important;overflow:hidden}
@@ -522,7 +524,7 @@ main .eyebrow span{background:#9d3f06}
 
 @media print{
   .print-plan-header{grid-template-columns:35mm minmax(0,1fr) 35mm}
-  .print-plan-header>div:first-child{grid-column:3}
+  .print-plan-header>div:first-child{grid-column:1}
   .print-plan-title{grid-column:2}
   .print-activity-chapter{-webkit-line-clamp:2}
   .print-activity-chapter.is-long{font-size:7pt;line-height:1.25}
