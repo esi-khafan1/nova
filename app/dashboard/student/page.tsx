@@ -16,6 +16,7 @@ import {
   formatPersianWeekRange,
   parseIsoDate,
   samePersianMonth,
+  toIsoDate,
 } from "@/lib/persian-date";
 
 type AnalyticsItem = {
@@ -35,6 +36,18 @@ const studyActivities = new Set([
   "homework",
   "summary",
 ]);
+
+function tehranTodayIso() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
 
 function summarizeProgress(
   key: ProgressScope["key"],
@@ -129,6 +142,7 @@ export default async function StudentDashboard({
   const currentPlanItems = (allPlanItems ?? []).filter(
     (item) => item.plan_id === currentPlan?.id,
   );
+  const todayIso = tehranTodayIso();
   const planStartDates = new Map(
     (publishedPlans ?? []).map((plan) => [
       plan.id,
@@ -290,6 +304,14 @@ export default async function StudentDashboard({
                         <StudentPlanCheckbox
                           itemId={item.id}
                           defaultChecked={completionMap.has(item.id)}
+                          canToggle={
+                            toIsoDate(
+                              addDays(
+                                parseIsoDate(currentPlan.week_start),
+                                item.day_of_week,
+                              ),
+                            ) === todayIso
+                          }
                         />
                       </div>
                     ))
