@@ -1,4 +1,5 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import Link from "next/link";
 import {
   WeeklyPlanBuilder,
   type CounselorWeeklyPlan,
@@ -229,9 +230,17 @@ export default async function CounselorPlansPage({
                     {plan.title} · {formatPersianWeekRange(plan.week_start)}
                   </span>
                 </div>
-                <span className={`plan-status ${plan.status}`}>
-                  {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
-                </span>
+                <div className="recent-plan-actions">
+                  <span className={`plan-status ${plan.status}`}>
+                    {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
+                  </span>
+                  <Link
+                    className="print-plan-link"
+                    href={`/dashboard/counselor/plans/${plan.id}/print`}
+                  >
+                    چاپ A4
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
