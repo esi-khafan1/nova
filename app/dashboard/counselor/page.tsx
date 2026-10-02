@@ -9,30 +9,29 @@ export default async function CounselorDashboard() {
     { count: requests },
     { count: students },
     { count: plans },
-  ] =
-    await Promise.all([
-      supabase
-        .from("counselor_profiles")
-        .select("headline,specialty,is_accepting")
-        .eq("user_id", profile.id)
-        .single(),
-      supabase
-        .from("resources")
-        .select("id", { count: "exact", head: true })
-        .eq("author_id", profile.id),
-      supabase
-        .from("consultation_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("counselor_id", profile.id),
-      supabase
-        .from("counselor_students")
-        .select("id", { count: "exact", head: true })
-        .eq("counselor_id", profile.id),
-      supabase
-        .from("weekly_plans")
-        .select("id", { count: "exact", head: true })
-        .eq("counselor_id", profile.id),
-    ]);
+  ] = await Promise.all([
+    supabase
+      .from("counselor_profiles")
+      .select("headline,specialty,is_accepting")
+      .eq("user_id", profile.id)
+      .single(),
+    supabase
+      .from("resources")
+      .select("id", { count: "exact", head: true })
+      .eq("author_id", profile.id),
+    supabase
+      .from("consultation_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("counselor_id", profile.id),
+    supabase
+      .from("counselor_students")
+      .select("id", { count: "exact", head: true })
+      .eq("counselor_id", profile.id),
+    supabase
+      .from("weekly_plans")
+      .select("id", { count: "exact", head: true })
+      .eq("counselor_id", profile.id),
+  ]);
   return (
     <DashboardShell role="counselor" name={profile.full_name}>
       <section className="portal-heading">
@@ -64,8 +63,8 @@ export default async function CounselorDashboard() {
           <span>ابزار اصلی مشاور</span>
           <h2>برنامه هفتگی دانش‌آموز را بساز</h2>
           <p>
-            دانش‌آموز را انتخاب کن و برای هر روز، ساعت، درس، فصل و نوع فعالیت
-            را مشخص کن.
+            دانش‌آموز را انتخاب کن و برای هر روز، ساعت، درس، فصل و نوع فعالیت را
+            مشخص کن.
           </p>
         </div>
         <Link className="button" href="/dashboard/counselor/plans">
@@ -76,9 +75,14 @@ export default async function CounselorDashboard() {
         <div className="portal-empty-icon">✦</div>
         <h2>{resources ?? 0} محتوای آموزشی</h2>
         <p>
-          مدیریت منابع و درخواست‌های مشاوره در گام بعدی تکمیل می‌شود؛ برنامه‌ریز
-          هفتگی اکنون فعال است.
+          مقاله آموزشی بنویس، تصویر اضافه کن و مستقیم برای دانش‌آموزان منتشر کن.
         </p>
+        <Link
+          className="button button-secondary"
+          href="/dashboard/counselor/content"
+        >
+          ورود به استودیوی محتوا
+        </Link>
       </section>
     </DashboardShell>
   );

@@ -39,9 +39,9 @@ export function MobileMenu() {
             <a href="#how" onClick={close}>
               چطور کار می‌کند؟
             </a>
-            <a href="#resources" onClick={close}>
-              منابع
-            </a>
+            <Link href="/mag" onClick={close}>
+              مجله
+            </Link>
             <a href="#about" onClick={close}>
               درباره نووا
             </a>

@@ -24,6 +24,10 @@ export function DashboardShell({
             href: "/dashboard/counselor/plans",
             label: "برنامه‌های هفتگی",
           },
+          {
+            href: "/dashboard/counselor/content",
+            label: "استودیوی محتوا",
+          },
         ]
       : []),
     ...(role === "admin"
