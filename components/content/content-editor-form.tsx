@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { upload } from "@imagekit/next";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -35,7 +35,12 @@ function ToolButton({
   onClick: () => void;
 }) {
   return (
-    <button className={active ? "active" : ""} onClick={onClick} type="button">
+    <button
+      aria-pressed={active ?? false}
+      className={active ? "active" : ""}
+      onClick={onClick}
+      type="button"
+    >
       {children}
     </button>
   );
@@ -74,6 +79,18 @@ export function ContentEditorForm({
     onUpdate: ({ editor: currentEditor }) => {
       setBody(JSON.stringify(currentEditor.getJSON()));
     },
+  });
+  const toolbarState = useEditorState({
+    editor,
+    selector: ({ editor: currentEditor }) => ({
+      bold: currentEditor?.isActive("bold") ?? false,
+      heading2:
+        currentEditor?.isActive("heading", { level: 2 }) ?? false,
+      heading3:
+        currentEditor?.isActive("heading", { level: 3 }) ?? false,
+      bulletList: currentEditor?.isActive("bulletList") ?? false,
+      link: currentEditor?.isActive("link") ?? false,
+    }),
   });
 
   function setLink() {
@@ -228,13 +245,13 @@ export function ContentEditorForm({
       <section className="portal-card content-composer">
         <div className="content-toolbar" aria-label="ابزارهای ویرایش متن">
           <ToolButton
-            active={editor?.isActive("bold")}
+            active={toolbarState?.bold}
             onClick={() => editor?.chain().focus().toggleBold().run()}
           >
             ضخیم
           </ToolButton>
           <ToolButton
-            active={editor?.isActive("heading", { level: 2 })}
+            active={toolbarState?.heading2}
             onClick={() =>
               editor?.chain().focus().toggleHeading({ level: 2 }).run()
             }
@@ -242,7 +259,7 @@ export function ContentEditorForm({
             تیتر
           </ToolButton>
           <ToolButton
-            active={editor?.isActive("heading", { level: 3 })}
+            active={toolbarState?.heading3}
             onClick={() =>
               editor?.chain().focus().toggleHeading({ level: 3 }).run()
             }
@@ -250,12 +267,12 @@ export function ContentEditorForm({
             زیرتیتر
           </ToolButton>
           <ToolButton
-            active={editor?.isActive("bulletList")}
+            active={toolbarState?.bulletList}
             onClick={() => editor?.chain().focus().toggleBulletList().run()}
           >
             فهرست
           </ToolButton>
-          <ToolButton active={editor?.isActive("link")} onClick={setLink}>
+          <ToolButton active={toolbarState?.link} onClick={setLink}>
             لینک
           </ToolButton>
           <button
