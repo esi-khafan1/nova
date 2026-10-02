@@ -284,7 +284,11 @@ export default async function Home() {
               {latestResources.map((resource) => {
                 const image = findFirstImage(parseContent(resource.body));
                 return (
-                  <article className="latest-content-card" key={resource.id}>
+                  <Link
+                    className="latest-content-card"
+                    href={`/mag/${resource.id}`}
+                    key={resource.id}
+                  >
                     {image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img alt="" loading="lazy" src={image} />
@@ -306,11 +310,11 @@ export default async function Home() {
                       </div>
                       <h3>{resource.title}</h3>
                       {resource.summary && <p>{resource.summary}</p>}
-                      <Link href={`/mag/${resource.id}`}>
+                      <span className="latest-content-readmore">
                         خواندن مقاله <ArrowLeft />
-                      </Link>
+                      </span>
                     </div>
-                  </article>
+                  </Link>
                 );
               })}
             </div>

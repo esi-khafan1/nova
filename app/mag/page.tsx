@@ -73,8 +73,9 @@ export default async function MagazinePage() {
                 resource.summary ||
                 `${extractContentText(document).slice(0, 150)}…`;
               return (
-                <article
+                <Link
                   className={`mag-card ${index === 0 ? "featured" : ""}`}
+                  href={`/mag/${resource.id}`}
                   key={resource.id}
                 >
                   {image ? (
@@ -93,9 +94,9 @@ export default async function MagazinePage() {
                     </div>
                     <h2>{resource.title}</h2>
                     <p>{summary}</p>
-                    <Link href={`/mag/${resource.id}`}>خواندن مقاله ←</Link>
+                    <span className="mag-card-readmore">خواندن مقاله ←</span>
                   </div>
-                </article>
+                </Link>
               );
             })}
           </div>

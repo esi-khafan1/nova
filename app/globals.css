@@ -5947,7 +5947,7 @@ main .feature-card:before {
   font-size: 13px;
   line-height: 1.95;
 }
-.mag-card a {
+.mag-card-readmore {
   margin-top: auto;
   color: #9d3f06;
   font-size: 12px;
@@ -6036,7 +6036,7 @@ main .feature-card:before {
   font-size: 13px;
   line-height: 1.9;
 }
-.latest-content-card a {
+.latest-content-readmore {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -6045,7 +6045,7 @@ main .feature-card:before {
   font-size: 12px;
   font-weight: 800;
 }
-.latest-content-card a svg {
+.latest-content-readmore svg {
   width: 15px;
 }
 .mag-empty {
