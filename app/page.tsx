@@ -9,6 +9,24 @@ import {
 } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { MobileMenu } from "@/components/mobile-menu";
+import {
+  findFirstImage,
+  formatPersianDate,
+  parseContent,
+  resourceTypeLabels,
+  type ResourceType,
+} from "@/lib/content";
+import { createClient } from "@/lib/supabase/server";
+
+type LatestResource = {
+  id: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  resource_type: ResourceType;
+  subject: string | null;
+  published_at: string | null;
+};
 
 const features = [
   {
@@ -35,7 +53,17 @@ const steps = [
   "با برنامه جلو برو",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resources")
+    .select("id,title,summary,body,resource_type,subject,published_at")
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(3);
+
+  const latestResources = (data ?? []) as LatestResource[];
+
   return (
     <main>
       <header className="site-header">
@@ -230,6 +258,65 @@ export default function Home() {
           </ol>
         </div>
       </section>
+
+      {latestResources.length > 0 && (
+        <section
+          className="section latest-content-section"
+          id="latest-content"
+          aria-labelledby="latest-content-title"
+        >
+          <div className="container">
+            <div className="latest-content-heading">
+              <div>
+                <span className="section-kicker">تازه‌های مجله نووا</span>
+                <h2 id="latest-content-title">آخرین چیزهایی که برایت نوشتیم</h2>
+                <p>
+                  نکته‌های کاربردی مشاوران نووا برای مطالعه، آزمون و روزهای مهم
+                  مسیر تحصیلی.
+                </p>
+              </div>
+              <Link className="button button-ghost" href="/mag">
+                مشاهده همه مقاله‌ها <ArrowLeft />
+              </Link>
+            </div>
+
+            <div className="latest-content-grid">
+              {latestResources.map((resource) => {
+                const image = findFirstImage(parseContent(resource.body));
+                return (
+                  <article className="latest-content-card" key={resource.id}>
+                    {image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img alt="" loading="lazy" src={image} />
+                    ) : (
+                      <div
+                        className="latest-content-placeholder"
+                        aria-hidden="true"
+                      >
+                        ن
+                      </div>
+                    )}
+                    <div>
+                      <div className="latest-content-meta">
+                        <span>
+                          {resourceTypeLabels[resource.resource_type]}
+                        </span>
+                        {resource.subject && <span>{resource.subject}</span>}
+                        <time>{formatPersianDate(resource.published_at)}</time>
+                      </div>
+                      <h3>{resource.title}</h3>
+                      {resource.summary && <p>{resource.summary}</p>}
+                      <Link href={`/mag/${resource.id}`}>
+                        خواندن مقاله <ArrowLeft />
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="section section-cta" id="resources">
         <div className="container cta">
