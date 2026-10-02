@@ -6,3 +6,8 @@
 .vercel
 *.log
 .DS_Store
+
+# Cloudflare Workers build output
+.open-next/
+.wrangler/
+cloudflare-env.d.ts
