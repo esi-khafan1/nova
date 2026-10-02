@@ -5793,18 +5793,16 @@ main .feature-card:before {
   font-size: 12px;
 }
 .content-editor-actions {
-  position: sticky;
-  bottom: 16px;
-  z-index: 5;
+  position: static;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 10px;
+  margin-top: 18px;
   padding: 14px;
   border: 1px solid #efc6a5;
   border-radius: 14px;
-  background: rgba(255, 254, 251, 0.94);
-  box-shadow: 0 18px 44px rgba(112, 57, 21, 0.15);
-  backdrop-filter: blur(12px);
+  background: #fffefb;
+  box-shadow: 0 8px 24px rgba(112, 57, 21, 0.07);
 }
 
 .mag-shell {
@@ -6297,7 +6295,6 @@ main .feature-card:before {
   .content-editor-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    bottom: 8px;
   }
   .mag-header {
     height: 68px;
