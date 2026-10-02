@@ -269,7 +269,7 @@ export default async function Home() {
             <div className="latest-content-heading">
               <div>
                 <span className="section-kicker">تازه‌های مجله نووا</span>
-                <h2 id="latest-content-title">آخرین چیزهایی که برایت نوشتیم</h2>
+                <h2 id="latest-content-title">راهنماهای تازه برای مسیر تحصیلی تو</h2>
                 <p>
                   نکته‌های کاربردی مشاوران نووا برای مطالعه، آزمون و روزهای مهم
                   مسیر تحصیلی.
