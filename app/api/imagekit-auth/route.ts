@@ -5,15 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
-  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
-  if (!publicKey || !privateKey) {
-    return Response.json({
-      error: "اتصال ImageKit هنوز کامل نشده است.",
-      missing: [!publicKey ? "IMAGEKIT_PUBLIC_KEY" : null, !privateKey ? "IMAGEKIT_PRIVATE_KEY" : null].filter(Boolean),
-    }, { status: 503 });
-  }
-
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: "ابتدا وارد حساب شو." }, { status: 401 });
@@ -30,5 +21,8 @@ export async function GET(request: NextRequest) {
   }
   if (!allowed) return Response.json({ error: "برای این نوع آپلود دسترسی نداری." }, { status: 403 });
 
+  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
+  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
+  if (!publicKey || !privateKey) return Response.json({ error: "اتصال ImageKit هنوز کامل نشده است." }, { status: 503 });
   return Response.json({ ...getUploadAuthParams({ publicKey, privateKey }), publicKey });
 }
