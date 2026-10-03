@@ -5,6 +5,9 @@
   "compatibility_date": "2026-10-02",
   "compatibility_flags": ["nodejs_compat"],
   "previews": {},
+  "vars": {
+    "IMAGEKIT_PUBLIC_KEY": "public_5sg1FCKeotfs2wnF8nD8fsocyYY="
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
