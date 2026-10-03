@@ -1,8 +1,8 @@
 # Nova | نووا
 
-نووا یک پلتفرم فارسی مشاوره تحصیلی و برنامه‌ریزی مطالعه برای دانش‌آموزان پایه دهم تا دوازدهم است. رابط کاربری کاملاً RTL است و نسخه عمومی روی Vercel منتشر می‌شود.
+نووا یک پلتفرم فارسی مشاوره تحصیلی و برنامه‌ریزی مطالعه برای دانش‌آموزان پایه دهم تا دوازدهم است. رابط کاربری کاملاً RTL است و نسخه عمومی روی Cloudflare Workers منتشر می‌شود.
 
-- Production: https://nova-six-steel.vercel.app/
+- Production: https://nova-academy.ir/
 - Repository: https://github.com/esi-khafan1/nova
 - شاخه اصلی: `main`
 - شاخه طراحی فعال در زمان نگارش: `feature/warm-no-gray-landing`
@@ -38,7 +38,7 @@
 - React 19 و TypeScript
 - Supabase Auth و PostgreSQL
 - Supabase SSR
-- Vercel
+- Cloudflare Workers با OpenNext
 - ESLint
 - فونت فارسی از بسته‌های `@fontsource-variable`
 
@@ -84,7 +84,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 
 کد فعلی برای سازگاری، `NEXT_PUBLIC_SUPABASE_ANON_KEY` را نیز به‌عنوان جایگزین کلید publishable می‌پذیرد.
 
-مقادیر واقعی را فقط در `.env.local`، تنظیمات Vercel یا ابزار امن مدیریت Secrets قرار دهید. هیچ کلید خصوصی، `service_role`، رمز عبور یا توکن دسترسی را داخل Git، README یا چت قرار ندهید.
+مقادیر واقعی را فقط در `.env.local`، تنظیمات Cloudflare Workers یا ابزار امن مدیریت Secrets قرار دهید. هیچ کلید خصوصی، `service_role`، رمز عبور یا توکن دسترسی را داخل Git، README یا چت قرار ندهید.
 
 ## وابستگی‌های مورد انتظار در Supabase
 
@@ -127,8 +127,8 @@ npm run build
    - `fix/...`
    - `chore/...`
 3. تغییرات فقط روی همان شاخه Push شوند.
-4. Vercel برای شاخه، Preview Deployment می‌سازد.
-5. بعد از **هر Push**، Agent باید منتظر بماند تا Deployment در Vercel به وضعیت نهایی `Ready/Success` یا `Failed` برسد؛ قبل از آن نباید کار را تکمیل‌شده اعلام کند.
+4. Cloudflare برای شاخه، Preview Deployment می‌سازد.
+5. بعد از **هر Push**، Agent باید منتظر بماند تا Deployment در Cloudflare به وضعیت نهایی `Success` یا `Failed` برسد؛ قبل از آن نباید کار را تکمیل‌شده اعلام کند.
 6. پس از موفقیت Deployment، Agent باید لینک دقیق همان Preview را در پاسخ برای صاحب پروژه ارسال کند. اگر Deployment ناموفق بود، ابتدا Build Log بررسی و خطا برطرف شود.
 7. Preview در دسکتاپ و موبایل بررسی و ایرادات برطرف شوند.
 8. پس از موفقیت `lint` و `build`، Pull Request به `main` ساخته شود.
@@ -173,35 +173,36 @@ esi-khafan1/nova
 
 از ارسال دستی رمز، access token، کلید `service_role` یا اطلاعات ورود در چت خودداری کنید.
 
-### 3. مرورگر اشتراکی و Vercel
+### 3. مرورگر اشتراکی و Cloudflare
 
-در ابتدای هر سشن، **دسترسی استفاده از مرورگر اشتراکی برای Agent باید فعال باشد**. صرفاً متصل بودن GitHub/MCP یا Supabase کافی نیست؛ Agent برای باز کردن داشبورد Vercel، بررسی Deployment، مشاهده Build Log و تست Preview به دسترسی مرورگر نیاز دارد.
+در ابتدای هر سشن، **دسترسی استفاده از مرورگر اشتراکی برای Agent باید فعال باشد**. صرفاً متصل بودن GitHub/MCP یا Supabase کافی نیست؛ Agent برای باز کردن داشبورد Cloudflare، بررسی Deployment، مشاهده Build Log و Runtime Log، مدیریت متغیرهای محیطی و تست Preview به دسترسی مرورگر نیاز دارد.
 
-پس از فعال شدن مرورگر، Agent باید صفحه ورود Vercel را باز کند، گزینه **Continue with GitHub** را بزند و با همان حساب GitHub متصل به Vercel وارد شود. نام کاربری، رمز عبور و کد تأیید باید فقط از ورودی امن مرورگر وارد شوند و هرگز در چت، Commit یا Log قرار نگیرند. بعد از ورود، پروژه `nova` و Preview مربوط به Branch فعال باز و بررسی شود. این فرایند همان ورود مرورگری Vercel از طریق حساب GitHub مالک Repository است و با اتصال Vercel/MCP تفاوت دارد.
+پس از فعال شدن مرورگر، Agent باید صفحه ورود Cloudflare را باز کند و با ایمیل و رمز عبور حساب مالک پروژه وارد شود. ایمیل، رمز عبور و کد تأیید باید فقط از ورودی امن مرورگر دریافت شوند و هرگز در چت، Commit یا Log قرار نگیرند. گزینه **Save email and login method on this device** روشن بماند. بعد از ورود، Worker با نام `nova`، آخرین Deployment و دامنه `nova-academy.ir` بررسی شوند.
 
 مراحل الزامی شروع سشن:
 
 1. دسترسی مرورگر اشتراکی را فعال کن.
-2. `https://vercel.com/login` را در مرورگر باز کن.
-3. **Continue with GitHub** را انتخاب کن.
-4. ورود GitHub و کد تأیید را فقط از ورودی امن مرورگر دریافت کن.
-5. پس از ورود، پروژه `nova`، Deployment مربوط به Branch فعال و لینک دقیق Preview را پیدا کن.
+2. `https://dash.cloudflare.com/login` را در مرورگر باز کن.
+3. ایمیل و رمز عبور Cloudflare را فقط از ورودی امن مرورگر دریافت کن و وارد شو.
+4. اگر کد تأیید درخواست شد، آن را نیز فقط از ورودی امن مرورگر دریافت کن.
+5. پس از ورود، Worker با نام `nova`، آخرین Deployment، Build Log، Runtime Log و دامنه `nova-academy.ir` را بررسی کن.
 
 موارد موردنیاز:
 
 - مشاهده Production و Preview Deploymentها
 - مشاهده Build Log و Runtime Log
-- مشاهده وضعیت Environment Variableها بدون افشای مقدار Secretها
+- مشاهده وضعیت Variables و Secrets بدون افشای مقدار Secretها
+- بررسی Domains and Routes و اتصال `nova-academy.ir`
 - Redeploy در صورت نیاز
 
-برای این پروژه، مسیر پیش‌فرض دسترسی Vercel همان ورود مرورگری با GitHub است. اتصال Vercel/MCP اختیاری است و جایگزین فعال‌سازی مرورگر و بررسی واقعی Preview نمی‌شود.
+برای این پروژه، مسیر پیش‌فرض دسترسی به Cloudflare همان ورود مرورگری با ایمیل و رمز عبور است. اطلاعات ورود باید فقط از ورودی امن مرورگر دریافت شوند.
 
 ### 4. پیام پیشنهادی شروع سشن
 
 پس از برقرار شدن اتصال‌ها، این پیام برای شروع سریع کافی است:
 
 ```text
-روی پروژه Nova در repository `esi-khafan1/nova` کار کن. ابتدا README، آخرین main، Branchهای فعال و PRهای باز را بررسی کن. دسترسی مرورگر اشتراکی را فعال کن و برای دسترسی به Vercel از صفحه Login گزینه Continue with GitHub را بزن؛ اطلاعات ورود و کد تأیید را فقط از ورودی امن مرورگر دریافت کن. پروژه nova و Preview مربوط به Branch فعال را باز کن. برای تغییرات کد از main یک Branch جدید بساز. بعد از هر Push منتظر تکمیل Deployment Vercel بمان، نتیجه را بررسی کن و لینک دقیق Preview را برای من بفرست. بدون تأیید من Merge نکن. برای دیتابیس و Auth فقط از اتصال رسمی Supabase استفاده کن. اگر باگ گزارش کردم، ابتدا Logهای Vercel و Supabase را بررسی کن و بعد کمترین اصلاح امن را انجام بده.
+روی پروژه Nova در repository `esi-khafan1/nova` کار کن. ابتدا README، آخرین main، Branchهای فعال و PRهای باز را بررسی کن. دسترسی مرورگر اشتراکی را فعال کن و صفحه ورود Cloudflare را باز کن؛ ایمیل، رمز عبور و کد تأیید را فقط از ورودی امن مرورگر دریافت کن. Worker با نام nova، آخرین Deployment، دامنه nova-academy.ir و Preview مربوط به Branch فعال را باز و بررسی کن. برای تغییرات کد از main یک Branch جدید بساز. بعد از هر Push منتظر تکمیل Deployment Cloudflare بمان، نتیجه را بررسی کن و لینک دقیق Preview را برای من بفرست. بدون تأیید من Merge نکن. برای دیتابیس و Auth فقط از اتصال رسمی Supabase استفاده کن. اگر باگ گزارش کردم، ابتدا Logهای Vercel و Supabase را بررسی کن و بعد کمترین اصلاح امن را انجام بده.
 ```
 
 اگر قرار است کار قبلی ادامه پیدا کند، نام Branch یا لینک PR را نیز در همان پیام بنویسید.
@@ -214,6 +215,6 @@ esi-khafan1/nova
 - هیچ Secret یا اطلاعات شخصی در خروجی، Log، Commit یا PR قرار نگیرد.
 - تغییرات دیتابیس ابتدا بررسی و سپس با Migration قابل بازگشت انجام شوند.
 - برای رفع باگ، ابتدا شواهد از Logها جمع‌آوری و سپس کوچک‌ترین اصلاح ممکن اعمال شود.
-- بعد از هر Push، تکمیل Deployment Vercel بررسی و لینک دقیق Preview گزارش شود.
+- بعد از هر Push، تکمیل Deployment Cloudflare بررسی و لینک دقیق Preview گزارش شود.
 - قبل از Merge، Preview و Build نهایی بررسی شوند.
 - Merge و انتشار عمومی فقط با تأیید صاحب پروژه انجام شود.
