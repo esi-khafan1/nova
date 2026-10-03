@@ -22,13 +22,22 @@ export async function saveExam(formData: FormData) {
   const status = clean(formData.get("status"), 20);
   const questionPdfUrl = clean(formData.get("question_pdf_url"), 2000) || null;
   const rawQuestions = clean(formData.get("questions"), 200_000);
+  const scheduledDate = clean(formData.get("scheduled_date"), 10);
+  const scheduledTime = clean(formData.get("scheduled_time"), 5);
+  const durationMinutes = Number(clean(formData.get("duration_minutes"), 4));
+  const startsAt = new Date(`${scheduledDate}T${scheduledTime}:00+03:30`);
 
   if (
     (examId && !uuidPattern.test(examId)) ||
     title.length < 3 ||
     !["multiple_choice", "pdf"].includes(mode) ||
     !["own_students", "all_assigned_students"].includes(audience) ||
-    !["draft", "published"].includes(status)
+    !["draft", "published"].includes(status) ||
+    Number.isNaN(startsAt.getTime()) ||
+    startsAt.getTime() <= Date.now() + 60_000 ||
+    !Number.isInteger(durationMinutes) ||
+    durationMinutes < 5 ||
+    durationMinutes > 360
   ) redirect("/dashboard/counselor/exams?error=exam");
 
   let questions: unknown[] = [];
@@ -46,6 +55,8 @@ export async function saveExam(formData: FormData) {
     target_mode: mode,
     target_audience: audience,
     target_question_pdf_url: questionPdfUrl,
+    target_starts_at: startsAt.toISOString(),
+    target_duration_minutes: durationMinutes,
     target_status: status,
     target_questions: questions,
   });

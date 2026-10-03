@@ -6500,6 +6500,40 @@ main .feature-card:before {
 }
 .exam-upload a { color: #9d3f06; font-size: 12px; font-weight: 800; }
 .exam-error { margin: 0; color: #b43f09; font-size: 12px; }
+.exam-schedule {
+  margin-top: 8px !important;
+  color: #9d3f06 !important;
+  font-weight: 800;
+  line-height: 1.9;
+}
+.exam-time-notice,
+.exam-timer {
+  padding: 11px 14px;
+  border: 1px solid #efb889;
+  border-radius: 12px;
+  background: #fff0dd;
+  color: #8f3a08;
+  font-weight: 800;
+}
+.exam-time-notice.ended {
+  background: #ffe1cc;
+  color: #8b2f08;
+}
+.exam-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.exam-timer strong {
+  color: #14263b;
+  font-size: 20px;
+  direction: ltr;
+}
+.exam-auto-submit {
+  display: none;
+}
 .exam-list,
 .exam-result-list { display: grid; gap: 10px; }
 .exam-list > article,

@@ -89,8 +89,7 @@ export function ExamPdfUpload({
           <span>{selectedFileName || "فایلی انتخاب نشده"}</span>
         </span>
       </label>
-      {uploading && <span>در حال بارگذاری PDF…</span>}
-      {value && <a href={value} target="_blank" rel="noreferrer">مشاهده فایل بارگذاری‌شده</a>}
+      {!uploading && value && <a href={value} target="_blank" rel="noreferrer">مشاهده فایل بارگذاری‌شده</a>}
       {error && <p className="exam-error">{error}</p>}
     </div>
   );

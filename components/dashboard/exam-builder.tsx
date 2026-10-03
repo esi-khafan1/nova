@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { saveExam } from "@/app/dashboard/exams/actions";
 import { ExamPdfUpload } from "@/components/dashboard/exam-pdf-upload";
+import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
+import { addDays, toIsoDate } from "@/lib/persian-date";
 
 type Question = { prompt: string; options: string[]; correctOption: number };
 const blankQuestion = (): Question => ({ prompt: "", options: ["", "", "", ""], correctOption: 0 });
@@ -11,6 +13,9 @@ export function ExamBuilder() {
   const [mode, setMode] = useState<"multiple_choice" | "pdf">("multiple_choice");
   const [questions, setQuestions] = useState<Question[]>([blankQuestion()]);
   const [pdfUrl, setPdfUrl] = useState("");
+  const today = toIsoDate(new Date());
+  const [scheduledDate, setScheduledDate] = useState(toIsoDate(addDays(new Date(), 1)));
+  const [scheduledTime, setScheduledTime] = useState("09:00");
 
   const updateQuestion = (index: number, patch: Partial<Question>) =>
     setQuestions((current) => current.map((question, itemIndex) => itemIndex === index ? { ...question, ...patch } : question));
@@ -40,6 +45,33 @@ export function ExamBuilder() {
           <select name="audience" defaultValue="own_students">
             <option value="own_students">فقط دانش‌آموزان خودم</option>
             <option value="all_assigned_students">همه دانش‌آموزانی که مشاور دارند</option>
+          </select>
+        </label>
+        <label>روز برگزاری
+          <PersianDatePicker
+            name="scheduled_date"
+            value={scheduledDate}
+            onChange={setScheduledDate}
+            selectionMode="day"
+            minDate={today}
+          />
+        </label>
+        <label>ساعت شروع
+          <input
+            type="time"
+            name="scheduled_time"
+            value={scheduledTime}
+            onChange={(event) => setScheduledTime(event.target.value)}
+            min={scheduledDate === today ? new Date(Date.now() + 5 * 60_000).toTimeString().slice(0, 5) : undefined}
+            step={300}
+            required
+          />
+        </label>
+        <label>مدت آزمون
+          <select name="duration_minutes" defaultValue="60">
+            {[15, 30, 45, 60, 90, 120, 180].map((minutes) => (
+              <option value={minutes} key={minutes}>{minutes.toLocaleString("fa-IR")} دقیقه</option>
+            ))}
           </select>
         </label>
         <label className="exam-field-wide">توضیحات<textarea name="description" maxLength={3000} rows={3} placeholder="راهنمای کوتاه آزمون" /></label>
