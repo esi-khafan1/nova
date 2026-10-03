@@ -6455,6 +6455,49 @@ main .feature-card:before {
   border-radius: 14px;
   background: #fff4e7;
 }
+.exam-file-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 6px 8px;
+  border: 1px solid #efc6a5;
+  border-radius: 12px;
+  background: #fffdf8;
+  color: #704b36;
+}
+.exam-file-input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  padding: 0 !important;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0 !important;
+}
+.exam-file-picker button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: #e06918;
+  color: #fffdf8;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+.exam-file-picker button:disabled {
+  background: #b85512;
+  cursor: wait;
+}
+.exam-file-picker > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .exam-upload a { color: #9d3f06; font-size: 12px; font-weight: 800; }
 .exam-error { margin: 0; color: #b43f09; font-size: 12px; }
 .exam-list,

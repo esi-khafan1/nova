@@ -17,6 +17,7 @@ export function ExamPdfUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState("");
 
   async function handleFile(file?: File) {
     if (!file) return;
@@ -69,13 +70,24 @@ export function ExamPdfUpload({
     <div className="exam-upload">
       <label>
         {label}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf,.pdf"
-          onChange={(event) => handleFile(event.target.files?.[0])}
-          disabled={uploading}
-        />
+        <span className="exam-file-picker">
+          <input
+            ref={inputRef}
+            className="exam-file-input"
+            type="file"
+            accept="application/pdf,.pdf"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              setSelectedFileName(file?.name || "");
+              handleFile(file);
+            }}
+            disabled={uploading}
+          />
+          <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}>
+            {uploading ? "در حال بارگذاری…" : "انتخاب فایل"}
+          </button>
+          <span>{selectedFileName || "فایلی انتخاب نشده"}</span>
+        </span>
       </label>
       {uploading && <span>در حال بارگذاری PDF…</span>}
       {value && <a href={value} target="_blank" rel="noreferrer">مشاهده فایل بارگذاری‌شده</a>}
