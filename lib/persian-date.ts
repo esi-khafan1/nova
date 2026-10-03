@@ -60,6 +60,25 @@ export function formatPersianMonthYear(date: Date) {
   return `${persianMonthNames[parts.month - 1]} ${persianNumber.format(parts.year)}`;
 }
 
+const weekdayFormatter = new Intl.DateTimeFormat("fa-IR", {
+  weekday: "long",
+});
+
+export function formatPersianWeekday(date: Date) {
+  return weekdayFormatter.format(date);
+}
+
+export function toPersianDigits(value: number | string, pad = 0): string {
+  const str = pad > 0 ? String(value).padStart(pad, "0") : String(value);
+  return str.replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
+}
+
+export function formatPersianFullDate(date: Date) {
+  const parts = persianParts(date);
+  const weekday = formatPersianWeekday(date);
+  return `${weekday}، ${persianNumber.format(parts.day)} ${persianMonthNames[parts.month - 1]} ${persianNumber.format(parts.year)}`;
+}
+
 export function formatPersianWeekRange(weekStart: string | Date) {
   const start =
     typeof weekStart === "string" ? parseIsoDate(weekStart) : weekStart;

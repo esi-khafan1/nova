@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   addDays,
+  formatPersianFullDate,
   formatPersianMonthYear,
   formatPersianWeekRange,
   parseIsoDate,
@@ -10,13 +11,6 @@ import {
   persianParts,
   toIsoDate,
 } from "@/lib/persian-date";
-
-const persianFullDateFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-});
 
 function startOfPersianMonth(anchor: Date) {
   let date = new Date(anchor);
@@ -58,6 +52,25 @@ export function PersianDatePicker({
   const minimumDate = minDate ? startOfDay(parseIsoDate(minDate)) : today;
   const [monthAnchor, setMonthAnchor] = useState(selected);
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   const monthStart = startOfPersianMonth(monthAnchor);
   const month = persianParts(monthStart);
@@ -74,7 +87,7 @@ export function PersianDatePicker({
   };
 
   return (
-    <div className="persian-date-picker">
+    <div className="persian-date-picker" ref={containerRef}>
       <input type="hidden" name={name} value={value} />
       <button
         type="button"
@@ -85,7 +98,7 @@ export function PersianDatePicker({
         <span>
           {selectionMode === "week"
             ? formatPersianWeekRange(selected)
-            : persianFullDateFormatter.format(selected)}
+            : formatPersianFullDate(selected)}
         </span>
         <svg aria-hidden="true" viewBox="0 0 20 20">
           <path d="m5 7.5 5 5 5-5" />
@@ -160,7 +173,7 @@ export function PersianDatePicker({
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                  aria-label={`${persianFullDateFormatter.format(date)}${
+                  aria-label={`${formatPersianFullDate(date)}${
                     weekStatus
                       ? weekStatus === "published"
                         ? "، برنامه منتشرشده"

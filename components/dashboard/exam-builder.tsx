@@ -4,6 +4,7 @@ import { useState } from "react";
 import { saveExam } from "@/app/dashboard/exams/actions";
 import { ExamPdfUpload } from "@/components/dashboard/exam-pdf-upload";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
+import { PersianTimePicker } from "@/components/dashboard/persian-time-picker";
 import { addDays, toIsoDate } from "@/lib/persian-date";
 
 type Question = { prompt: string; options: string[]; correctOption: number };
@@ -57,14 +58,11 @@ export function ExamBuilder() {
           />
         </label>
         <label>ساعت شروع
-          <input
-            type="time"
+          <PersianTimePicker
             name="scheduled_time"
             value={scheduledTime}
-            onChange={(event) => setScheduledTime(event.target.value)}
-            min={scheduledDate === today ? new Date(Date.now() + 5 * 60_000).toTimeString().slice(0, 5) : undefined}
-            step={300}
-            required
+            onChange={setScheduledTime}
+            minTime={scheduledDate === today ? new Date(Date.now() + 5 * 60_000).toTimeString().slice(0, 5) : undefined}
           />
         </label>
         <label>مدت آزمون

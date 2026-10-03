@@ -3373,6 +3373,216 @@ main .eyebrow span {
   color: #854019;
   font-size: 9px;
 }
+.persian-time-picker {
+  position: relative;
+}
+.persian-time-trigger {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #14263b;
+  border: 1px solid #efc6a5;
+  border-radius: 12px;
+  background: #fffdf8;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.persian-time-trigger:hover {
+  border-color: #d99a6a;
+}
+.persian-time-trigger:focus-visible,
+.persian-time-trigger[aria-expanded="true"] {
+  border-color: #e06918;
+  box-shadow: 0 0 0 3px rgba(224, 105, 24, 0.14);
+}
+.persian-time-trigger > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: #9d3f06;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.persian-time-value {
+  direction: ltr;
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.persian-time-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: min(300px, calc(100vw - 48px));
+  padding: 14px;
+  border: 1px solid #e7b991;
+  border-radius: 14px;
+  background: #fffefb;
+  box-shadow: 0 20px 44px rgba(112, 57, 21, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.persian-time-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #fff0df;
+  border: 1px solid #efc6a5;
+  border-radius: 9px;
+}
+.persian-time-title {
+  color: #854019;
+  font-size: 11px;
+  font-weight: 800;
+}
+.persian-time-preview {
+  direction: ltr;
+  color: #c65308;
+  font-size: 16px;
+  font-weight: 850;
+  letter-spacing: 1px;
+}
+.persian-time-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.persian-time-preset-btn {
+  flex: 1 1 calc(25% - 4px);
+  min-width: 52px;
+  height: 28px;
+  padding: 0 4px;
+  border: 1px solid #efc6a5;
+  border-radius: 7px;
+  background: #fffaf6;
+  color: #704b36;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  direction: ltr;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.persian-time-preset-btn:hover:not(:disabled) {
+  background: #ffdfc2;
+  color: #9d3f06;
+  border-color: #d99a6a;
+}
+.persian-time-preset-btn.active {
+  background: #c65308;
+  color: #fffaf2;
+  border-color: #c65308;
+  box-shadow: 0 2px 6px rgba(198, 83, 8, 0.2);
+}
+.persian-time-preset-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.persian-time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.persian-time-col {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f0d5c0;
+  border-radius: 10px;
+  background: #fffaf6;
+  overflow: hidden;
+}
+.persian-time-col-title {
+  padding: 6px 4px;
+  text-align: center;
+  color: #704b36;
+  font-size: 11px;
+  font-weight: 800;
+  background: #faebe0;
+  border-bottom: 1px solid #f0d5c0;
+}
+.persian-time-list {
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #e7b991 #fffaf6;
+}
+.persian-time-list button {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #14263b;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  direction: ltr;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.persian-time-list button:hover:not(.disabled) {
+  color: #9d3f06;
+  border-color: #e7b991;
+  background: #fff0df;
+}
+.persian-time-list button.selected {
+  color: #fffaf2;
+  border-color: #c65308;
+  background: #c65308;
+  box-shadow: 0 3px 8px rgba(198, 83, 8, 0.2);
+  font-weight: 850;
+}
+.persian-time-list button.disabled {
+  color: #b66b3d;
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.persian-time-confirm {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fffaf2;
+  border: none;
+  border-radius: 9px;
+  background: #c65308;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.persian-time-confirm:hover {
+  background: #bd4d08;
+}
+.exam-meta-grid .persian-date-trigger,
+.exam-meta-grid .persian-time-trigger {
+  border-radius: 12px;
+  background: #fffdf8;
+  font-size: 12px;
+}
 .all-students-selected {
   margin: 0;
   color: #854019;

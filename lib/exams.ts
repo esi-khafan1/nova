@@ -1,11 +1,11 @@
-const examDateTimeFormatter = new Intl.DateTimeFormat(
-  "fa-IR-u-ca-persian",
-  {
-    dateStyle: "full",
-    timeStyle: "short",
-    timeZone: "Asia/Tehran",
-  },
-);
+import { formatPersianFullDate } from "@/lib/persian-date";
+
+const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "Asia/Tehran",
+});
 
 export function examEndsAt(startsAt: string, durationMinutes: number) {
   return new Date(
@@ -14,7 +14,11 @@ export function examEndsAt(startsAt: string, durationMinutes: number) {
 }
 
 export function formatExamSchedule(startsAt: string) {
-  return examDateTimeFormatter.format(new Date(startsAt));
+  const date = new Date(startsAt);
+  const tehranDate = new Date(
+    date.toLocaleString("en-US", { timeZone: "Asia/Tehran" }),
+  );
+  return `${formatPersianFullDate(tehranDate)}، ساعت ${timeFormatter.format(date)}`;
 }
 
 export function formatExamDuration(durationMinutes: number) {
