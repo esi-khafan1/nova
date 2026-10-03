@@ -25,10 +25,17 @@ export function DashboardShell({
             label: "برنامه‌های هفتگی",
           },
           {
+            href: "/dashboard/counselor/exams",
+            label: "آزمون‌ها",
+          },
+          {
             href: "/dashboard/counselor/content",
             label: "استودیوی محتوا",
           },
         ]
+      : []),
+    ...(role === "student"
+      ? [{ href: "/dashboard/student/exams", label: "آزمون‌ها" }]
       : []),
     ...(role === "admin"
       ? [{ href: "/dashboard/admin/users", label: "مدیریت کاربران" }]
