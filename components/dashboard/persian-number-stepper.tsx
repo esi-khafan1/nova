@@ -5,10 +5,12 @@ const toEnglishDigits = (value: string) => value.replace(/[۰-۹]/g, (d) => Stri
 
 export function PersianNumberStepper({ value, min, max, onChange, label }: { value: number; min: number; max: number; onChange: (value: number) => void; label: string }) {
   const update = (next: number) => onChange(Math.max(min, Math.min(max, Math.round(next))));
-  const buttonStyle = { border: "1px solid #e7dccb", borderRadius: 10, background: "#fffaf2", color: "#573d25", font: "inherit", fontSize: "1.2rem", cursor: "pointer" } as const;
-  return <div role="group" aria-label={label} style={{ direction: "ltr", display: "grid", gridTemplateColumns: "2.5rem minmax(4.5rem,1fr) 2.5rem", gap: ".35rem" }}>
-    <button type="button" style={buttonStyle} onClick={() => update(value - 1)} disabled={value <= min}>−</button>
-    <input type="text" inputMode="numeric" pattern="[۰-۹٠-٩0-9]*" aria-label={label} value={toPersianDigits(value)} style={{ direction: "rtl", textAlign: "center", fontVariantNumeric: "tabular-nums" }} onChange={(event) => { const parsed = Number(toEnglishDigits(event.target.value).replace(/\D/g, "")); if (Number.isFinite(parsed)) update(parsed || min); }} />
-    <button type="button" style={buttonStyle} onClick={() => update(value + 1)} disabled={value >= max}>+</button>
+  const arrowStyle = { width: 28, height: 20, padding: 0, border: 0, background: "transparent", color: "#704b36", font: "inherit", fontSize: ".72rem", lineHeight: 1, cursor: "pointer" } as const;
+  return <div role="group" aria-label={label} style={{ position: "relative", width: "100%" }}>
+    <input type="text" inputMode="numeric" pattern="[۰-۹٠-٩0-9]*" aria-label={label} value={toPersianDigits(value)} style={{ direction: "rtl", textAlign: "right", paddingLeft: 38, fontVariantNumeric: "tabular-nums" }} onChange={(event) => { const parsed = Number(toEnglishDigits(event.target.value).replace(/\D/g, "")); if (Number.isFinite(parsed)) update(parsed || min); }} />
+    <span style={{ position: "absolute", insetInlineStart: 5, top: "50%", transform: "translateY(-50%)", display: "grid", zIndex: 2 }}>
+      <button type="button" style={arrowStyle} aria-label={`افزایش ${label}`} onClick={() => update(value + 1)} disabled={value >= max}>▲</button>
+      <button type="button" style={arrowStyle} aria-label={`کاهش ${label}`} onClick={() => update(value - 1)} disabled={value <= min}>▼</button>
+    </span>
   </div>;
 }
