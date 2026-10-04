@@ -9,59 +9,79 @@ const uuidPattern =
 const clean = (value: FormDataEntryValue | null, max = 500) =>
   String(value ?? "").trim().slice(0, max);
 
+type RawBooklet = {
+  title?: string;
+  pdfUrl?: string;
+  questionCount?: number;
+  durationMinutes?: number;
+  keyAnswers?: Record<string, number>;
+};
+
 export async function saveExam(formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/auth/sign-in");
 
   const examId = clean(formData.get("exam_id"), 50);
   const title = clean(formData.get("title"), 160);
   const description = clean(formData.get("description"), 3000);
-  const mode = clean(formData.get("mode"), 30);
   const audience = clean(formData.get("audience"), 40);
   const status = clean(formData.get("status"), 20);
-  const questionPdfUrl = clean(formData.get("question_pdf_url"), 2000) || null;
-  const rawQuestions = clean(formData.get("questions"), 200_000);
   const scheduledDate = clean(formData.get("scheduled_date"), 10);
   const scheduledTime = clean(formData.get("scheduled_time"), 5);
-  const durationMinutes = Number(clean(formData.get("duration_minutes"), 4));
+  const rawBooklets = clean(formData.get("booklets"), 500_000);
   const startsAt = new Date(`${scheduledDate}T${scheduledTime}:00+03:30`);
 
   if (
     (examId && !uuidPattern.test(examId)) ||
     title.length < 3 ||
-    !["multiple_choice", "pdf"].includes(mode) ||
     !["own_students", "all_assigned_students"].includes(audience) ||
     !["draft", "published"].includes(status) ||
     Number.isNaN(startsAt.getTime()) ||
-    startsAt.getTime() <= Date.now() + 60_000 ||
-    !Number.isInteger(durationMinutes) ||
-    durationMinutes < 5 ||
-    durationMinutes > 360
-  ) redirect("/dashboard/counselor/exams?error=exam");
+    startsAt.getTime() <= Date.now() + 60_000
+  ) {
+    redirect("/dashboard/counselor/exams?error=exam");
+  }
 
-  let questions: unknown[] = [];
+  let booklets: RawBooklet[] = [];
   try {
-    questions = JSON.parse(rawQuestions || "[]");
-    if (!Array.isArray(questions)) throw new Error("invalid");
+    booklets = JSON.parse(rawBooklets || "[]");
+    if (!Array.isArray(booklets) || booklets.length === 0) {
+      throw new Error("invalid");
+    }
   } catch {
-    redirect("/dashboard/counselor/exams?error=questions");
+    redirect("/dashboard/counselor/exams?error=booklets");
+  }
+
+  // Validate booklets
+  for (let i = 0; i < booklets.length; i++) {
+    const b = booklets[i];
+    const qCount = Number(b.questionCount);
+    const duration = Number(b.durationMinutes);
+    if (!qCount || qCount < 1 || qCount > 200 || !duration || duration < 1 || duration > 360) {
+      redirect("/dashboard/counselor/exams?error=booklet_params");
+    }
+    if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://"))) {
+      redirect("/dashboard/counselor/exams?error=booklet_pdf");
+    }
   }
 
   const { data, error } = await supabase.rpc("save_exam", {
     target_exam_id: examId || null,
     target_title: title,
-    target_description: description,
-    target_mode: mode,
+    target_description: description || null,
     target_audience: audience,
-    target_question_pdf_url: questionPdfUrl,
     target_starts_at: startsAt.toISOString(),
-    target_duration_minutes: durationMinutes,
     target_status: status,
-    target_questions: questions,
+    target_booklets: booklets,
   });
 
-  if (error || !data) redirect("/dashboard/counselor/exams?error=exam");
+  if (error || !data) {
+    redirect("/dashboard/counselor/exams?error=exam");
+  }
+
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/exams");
   revalidatePath("/dashboard/student/exams");
@@ -70,36 +90,50 @@ export async function saveExam(formData: FormData) {
 
 export async function submitExam(formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/auth/sign-in");
 
   const examId = clean(formData.get("exam_id"), 50);
-  const mode = clean(formData.get("mode"), 30);
   if (!uuidPattern.test(examId)) redirect("/dashboard/student/exams?error=exam");
 
-  if (mode === "pdf") {
-    const answerPdfUrl = clean(formData.get("answer_pdf_url"), 2000);
-    const { error } = await supabase.rpc("submit_pdf_exam", {
-      target_exam_id: examId,
-      target_answer_pdf_url: answerPdfUrl,
-    });
-    if (error) redirect(`/dashboard/student/exams/${examId}?error=submit`);
-  } else if (mode === "multiple_choice") {
-    const answers: Record<string, number> = {};
+  const answers: Record<string, number> = {};
+  const rawAnswers = clean(formData.get("answers"), 500_000);
+
+  if (rawAnswers) {
+    try {
+      const parsed = JSON.parse(rawAnswers);
+      if (typeof parsed === "object" && parsed !== null) {
+        for (const [k, v] of Object.entries(parsed)) {
+          const opt = Number(v);
+          if (Number.isInteger(opt) && opt >= 1 && opt <= 4) {
+            answers[k] = opt;
+          }
+        }
+      }
+    } catch {
+      redirect(`/dashboard/student/exams/${examId}?error=submit`);
+    }
+  } else {
+    // Fallback: parse form entries
     for (const [key, value] of formData.entries()) {
-      if (!key.startsWith("answer_") || !uuidPattern.test(key.slice(7))) continue;
+      if (!key.startsWith("q_")) continue;
+      const qNum = key.slice(2);
       const selected = Number(value);
-      if (Number.isInteger(selected) && selected >= 0 && selected <= 5) {
-        answers[key.slice(7)] = selected;
+      if (Number.isInteger(selected) && selected >= 1 && selected <= 4) {
+        answers[qNum] = selected;
       }
     }
-    const { error } = await supabase.rpc("submit_multiple_choice_exam", {
-      target_exam_id: examId,
-      target_answers: answers,
-    });
-    if (error) redirect(`/dashboard/student/exams/${examId}?error=submit`);
-  } else {
-    redirect("/dashboard/student/exams?error=exam");
+  }
+
+  const { error } = await supabase.rpc("submit_booklet_exam", {
+    target_exam_id: examId,
+    target_answers: answers,
+  });
+
+  if (error) {
+    redirect(`/dashboard/student/exams/${examId}?error=submit`);
   }
 
   revalidatePath("/dashboard/student/exams");
@@ -107,3 +141,4 @@ export async function submitExam(formData: FormData) {
   revalidatePath(`/dashboard/counselor/exams/${examId}`);
   redirect(`/dashboard/student/exams/${examId}?submitted=1`);
 }
+

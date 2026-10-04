@@ -7,6 +7,19 @@ const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
   timeZone: "Asia/Tehran",
 });
 
+export type ExamBooklet = {
+  id: string;
+  exam_id?: string;
+  title: string;
+  pdf_url: string;
+  question_count: number;
+  start_question_number: number;
+  end_question_number: number;
+  duration_minutes: number;
+  sort_order: number;
+  key_answers?: Record<string, number>;
+};
+
 export function examEndsAt(startsAt: string, durationMinutes: number) {
   return new Date(
     new Date(startsAt).getTime() + durationMinutes * 60_000,
