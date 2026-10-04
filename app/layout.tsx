@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/estedad";
 import "./globals.css";
+import "./exam-interaction-fixes.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://nova-academy.ir"),
@@ -14,15 +15,9 @@ export const metadata: Metadata = {
     locale: "fa_IR",
     type: "website",
   },
-  alternates: {
-    canonical: "https://nova-academy.ir",
-  },
+  alternates: { canonical: "https://nova-academy.ir" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="fa" dir="rtl">
-      <body>{children}</body>
-    </html>
-  );
+  return <html lang="fa" dir="rtl"><body>{children}</body></html>;
 }
