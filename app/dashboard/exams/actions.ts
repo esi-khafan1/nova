@@ -19,9 +19,7 @@ type RawBooklet = {
 
 export async function saveExam(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/sign-in");
 
   const examId = clean(formData.get("exam_id"), 50);
@@ -32,6 +30,7 @@ export async function saveExam(formData: FormData) {
   const scheduledDate = clean(formData.get("scheduled_date"), 10);
   const scheduledTime = clean(formData.get("scheduled_time"), 5);
   const rawBooklets = clean(formData.get("booklets"), 500_000);
+  const examField = clean(formData.get("exam_field"), 40);
   const startsAt = new Date(`${scheduledDate}T${scheduledTime}:00+03:30`);
 
   if (
@@ -39,33 +38,26 @@ export async function saveExam(formData: FormData) {
     title.length < 3 ||
     !["own_students", "all_assigned_students"].includes(audience) ||
     !["draft", "published"].includes(status) ||
+    !["", "mathematics", "experimental_sciences", "humanities", "arts", "foreign_languages"].includes(examField) ||
     Number.isNaN(startsAt.getTime()) ||
     startsAt.getTime() <= Date.now() + 60_000
-  ) {
-    redirect("/dashboard/counselor/exams?error=exam");
-  }
+  ) redirect("/dashboard/counselor/exams?error=exam");
 
   let booklets: RawBooklet[] = [];
   try {
     booklets = JSON.parse(rawBooklets || "[]");
-    if (!Array.isArray(booklets) || booklets.length === 0) {
-      throw new Error("invalid");
-    }
+    if (!Array.isArray(booklets) || booklets.length === 0) throw new Error("invalid");
   } catch {
     redirect("/dashboard/counselor/exams?error=booklets");
   }
 
-  // Validate booklets
-  for (let i = 0; i < booklets.length; i++) {
-    const b = booklets[i];
+  for (const b of booklets) {
     const qCount = Number(b.questionCount);
     const duration = Number(b.durationMinutes);
-    if (!qCount || qCount < 1 || qCount > 200 || !duration || duration < 1 || duration > 360) {
+    if (!qCount || qCount < 1 || qCount > 200 || !duration || duration < 1 || duration > 360)
       redirect("/dashboard/counselor/exams?error=booklet_params");
-    }
-    if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://"))) {
+    if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://")))
       redirect("/dashboard/counselor/exams?error=booklet_pdf");
-    }
   }
 
   const { data, error } = await supabase.rpc("save_exam", {
@@ -76,11 +68,9 @@ export async function saveExam(formData: FormData) {
     target_starts_at: startsAt.toISOString(),
     target_status: status,
     target_booklets: booklets,
+    target_exam_field: examField || null,
   });
-
-  if (error || !data) {
-    redirect("/dashboard/counselor/exams?error=exam");
-  }
+  if (error || !data) redirect("/dashboard/counselor/exams?error=exam");
 
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/exams");
@@ -90,55 +80,37 @@ export async function saveExam(formData: FormData) {
 
 export async function submitExam(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/sign-in");
 
   const examId = clean(formData.get("exam_id"), 50);
   if (!uuidPattern.test(examId)) redirect("/dashboard/student/exams?error=exam");
-
   const answers: Record<string, number> = {};
   const rawAnswers = clean(formData.get("answers"), 500_000);
-
   if (rawAnswers) {
     try {
       const parsed = JSON.parse(rawAnswers);
       if (typeof parsed === "object" && parsed !== null) {
         for (const [k, v] of Object.entries(parsed)) {
           const opt = Number(v);
-          if (Number.isInteger(opt) && opt >= 1 && opt <= 4) {
-            answers[k] = opt;
-          }
+          if (Number.isInteger(opt) && opt >= 1 && opt <= 4) answers[k] = opt;
         }
       }
-    } catch {
-      redirect(`/dashboard/student/exams/${examId}?error=submit`);
-    }
+    } catch { redirect(`/dashboard/student/exams/${examId}?error=submit`); }
   } else {
-    // Fallback: parse form entries
     for (const [key, value] of formData.entries()) {
       if (!key.startsWith("q_")) continue;
-      const qNum = key.slice(2);
       const selected = Number(value);
-      if (Number.isInteger(selected) && selected >= 1 && selected <= 4) {
-        answers[qNum] = selected;
-      }
+      if (Number.isInteger(selected) && selected >= 1 && selected <= 4) answers[key.slice(2)] = selected;
     }
   }
-
   const { error } = await supabase.rpc("submit_booklet_exam", {
     target_exam_id: examId,
     target_answers: answers,
   });
-
-  if (error) {
-    redirect(`/dashboard/student/exams/${examId}?error=submit`);
-  }
-
+  if (error) redirect(`/dashboard/student/exams/${examId}?error=submit`);
   revalidatePath("/dashboard/student/exams");
   revalidatePath(`/dashboard/student/exams/${examId}`);
   revalidatePath(`/dashboard/counselor/exams/${examId}`);
   redirect(`/dashboard/student/exams/${examId}?submitted=1`);
 }
-
