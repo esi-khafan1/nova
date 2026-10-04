@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { submitExam } from "@/app/dashboard/exams/actions";
 import { toPersianDigits } from "@/lib/persian-date";
 import type { ExamBooklet } from "@/lib/exams";
+import { PdfViewer } from "@/components/dashboard/pdf-viewer";
 
 export function StudentExamForm({
   examId,
@@ -217,10 +218,10 @@ export function StudentExamForm({
         {/* PDF Frame */}
         <div className="exam-pdf-container">
           {currentBooklet?.pdf_url ? (
-            <iframe
-              src={currentBooklet.pdf_url}
-              className="exam-pdf-iframe"
-              title={`دفترچه سؤالات ${currentBooklet.title}`}
+            <PdfViewer
+              key={currentBooklet.id || currentBooklet.pdf_url}
+              url={currentBooklet.pdf_url}
+              title={currentBooklet.title}
             />
           ) : (
             <div className="exam-pdf-placeholder">

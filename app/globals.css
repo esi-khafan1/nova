@@ -7118,6 +7118,8 @@ main .feature-card:before {
   overflow: hidden;
   background: #ffffff;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 .exam-pdf-iframe {
   width: 100%;
@@ -7134,6 +7136,201 @@ main .feature-card:before {
   font-size: 14px;
   font-weight: 700;
   background: #fffaf5;
+}
+
+/* Custom Canvas PDF Viewer */
+.exam-pdf-custom-viewer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #fdfaf6;
+  position: relative;
+}
+
+.exam-pdf-custom-viewer.is-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  border-radius: 0;
+}
+
+.exam-pdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff6ee;
+  border-bottom: 1px solid #fed7aa;
+  flex-wrap: wrap;
+  user-select: none;
+  z-index: 10;
+}
+
+.exam-pdf-tools-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exam-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #3f2a1d;
+  background: #ffffff;
+  border: 1px solid #fbd38d;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.exam-pdf-btn:hover:not(:disabled) {
+  background: #ffedd5;
+  border-color: #ff8c00;
+  color: #ff6b00;
+}
+
+.exam-pdf-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.exam-pdf-btn.icon-only {
+  min-width: 32px;
+  padding: 0 6px;
+  font-size: 14px;
+}
+
+.exam-pdf-btn.zoom-btn {
+  min-width: 52px;
+}
+
+.exam-pdf-btn.direct-link {
+  color: #8c3b00;
+  background: #ffffff;
+}
+
+.exam-pdf-page-counter {
+  font-size: 12px;
+  color: #523522;
+  padding: 0 4px;
+}
+
+.exam-pdf-title-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8c3b00;
+  background: #ffedd5;
+  padding: 3px 8px;
+  border-radius: 6px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exam-pdf-scroll-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 16px;
+  position: relative;
+  background: #f4eee7;
+  -webkit-overflow-scrolling: touch;
+}
+
+.exam-pdf-loading-overlay,
+.exam-pdf-error-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+  height: 100%;
+  color: #704b36;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 12px;
+  text-align: center;
+}
+
+.exam-pdf-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3.5px solid #fed7aa;
+  border-top-color: #ff6b00;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.exam-pdf-error-icon {
+  font-size: 36px;
+}
+
+.exam-pdf-error-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.exam-pdf-pages-stream {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.exam-pdf-pages-stream.is-hidden {
+  display: none;
+}
+
+.exam-pdf-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  max-width: 100%;
+}
+
+.exam-pdf-page-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(30, 20, 15, 0.65);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.exam-pdf-page-canvas {
+  display: block;
+  border-radius: 6px;
+  max-width: 100%;
+  height: auto;
 }
 
 .exam-answersheet-panel {
@@ -7541,6 +7738,25 @@ main .feature-card:before {
   .exam-pdf-container {
     height: 55vh;
     min-height: 380px;
+  }
+  .exam-pdf-toolbar {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .exam-pdf-btn {
+    height: 28px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+  .exam-pdf-btn.icon-only {
+    min-width: 28px;
+    padding: 0 4px;
+  }
+  .exam-pdf-scroll-viewport {
+    padding: 8px 4px;
+  }
+  .exam-pdf-pages-stream {
+    gap: 10px;
   }
   .exam-answersheet-panel {
     max-height: 280px;
