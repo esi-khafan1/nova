@@ -7179,6 +7179,41 @@ main .feature-card:before {
   gap: 6px;
 }
 
+.exam-pdf-view-switch {
+  display: inline-flex;
+  align-items: center;
+  background: #fdf6ec;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid #fcd9b6;
+  gap: 2px;
+}
+
+.exam-pdf-view-switch-btn {
+  border: 0;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #704b36;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.exam-pdf-view-switch-btn:hover:not(.is-active) {
+  color: #d9531e;
+  background: rgba(254, 215, 170, 0.4);
+}
+
+.exam-pdf-view-switch-btn.is-active {
+  background: #ffffff;
+  color: #c05621;
+  box-shadow: 0 1px 4px rgba(192, 86, 33, 0.18), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 .exam-pdf-btn {
   display: inline-flex;
   align-items: center;
@@ -7241,6 +7276,23 @@ main .feature-card:before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.exam-pdf-native-wrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  background: #525659;
+}
+
+.exam-pdf-native-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #525659;
 }
 
 .exam-pdf-scroll-viewport {
