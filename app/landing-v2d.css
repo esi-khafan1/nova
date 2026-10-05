@@ -52,13 +52,13 @@
   /* HERO — Orange CTA is the star; oversized button + accent color blocking */
   .landing-v2d .hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
   .landing-v2d .hero::before {
-    content: ''; position: absolute; top: -180px; left: -180px;
+    content: ''; position: absolute; top: -180px; right: auto; bottom: auto; left: -180px;
     width: 480px; height: 480px;
     background: radial-gradient(circle, var(--accent-soft) 0%, transparent 65%);
     filter: blur(40px); pointer-events: none;
   }
   .landing-v2d .hero::after {
-    content: ''; position: absolute; bottom: -100px; right: -100px;
+    content: ''; position: absolute; top: auto; right: -100px; bottom: -100px; left: auto;
     width: 380px; height: 380px;
     background: radial-gradient(circle, #FFD4B0 0%, transparent 60%);
     filter: blur(60px); pointer-events: none;
@@ -73,7 +73,7 @@
     border-radius: 999px; font-size: 13px; font-weight: 700;
     margin-bottom: 28px;
   }
-  .landing-v2d .hero h1 { font-size: 72px; line-height: 1.05; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 24px; color: var(--fg); }
+  .landing-v2d .hero h1 { font-size: 72px; line-height: 1.12; font-weight: 900; letter-spacing: -0.01em; margin-bottom: 24px; color: var(--fg); }
   .landing-v2d .hero h1 .accent { color: var(--accent); position: relative; display: inline-block; }
   .landing-v2d .hero h1 .accent::after {
     content: ''; position: absolute; bottom: 4px; left: 0; right: 0; height: 12px;
@@ -108,11 +108,11 @@
   .landing-v2d .hero-trust .dot { width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
 
   /* Visual: stacked orange CTA mockup */
-  .landing-v2d .hero-visual { position: relative; }
+  .landing-v2d .hero-visual { position: relative; height: auto; display: block; }
   .landing-v2d .visual-card {
     background: var(--bg-card); border-radius: 20px; padding: 32px;
     box-shadow: 0 30px 80px rgba(120, 80, 40, 0.12), 0 0 0 1px var(--border);
-    position: relative;
+    position: relative; width: 100%;
   }
   .landing-v2d .visual-card h3 { font-size: 16px; color: var(--fg-muted); margin-bottom: 16px; font-weight: 600; }
   .landing-v2d .visual-cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
@@ -349,7 +349,7 @@
 .landing-v2d .mobile-menu-panel { border-color: var(--border); background: var(--bg-card); color: var(--fg); }
 .landing-v2d .mobile-menu-panel > a:hover { color: var(--accent); background: var(--accent-soft); }
 .landing-v2d .mobile-menu-actions .button { background: var(--accent); color: #fff; }
-.landing-v2d .menu-button { color: var(--fg); border: 1px solid var(--border); background: var(--bg-card); }
+.landing-v2d .menu-button { color: var(--fg); border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); }
 @media (max-width: 980px) {
   .landing-v2d .nav-actions { display: none; }
   .landing-v2d .mobile-menu { display: block; }
