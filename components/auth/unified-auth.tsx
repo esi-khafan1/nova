@@ -1,12 +1,19 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthMode = "signin" | "signup";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const benefits = [
+  "برنامه اختصاصی هفتگی",
+  "مشاور تأییدشده و مناسب تو",
+  "منابع معتبر و طبقه‌بندی‌شده",
+];
 
 export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
   const router = useRouter();
@@ -29,28 +36,13 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
-    if (!email) {
-      setMessage("لطفاً ایمیل را وارد کن.");
-      return;
-    }
-    if (!emailPattern.test(email)) {
-      setMessage("لطفاً یک ایمیل معتبر وارد کن.");
-      return;
-    }
-    if (!password) {
-      setMessage("لطفاً رمز عبور را وارد کن.");
-      return;
-    }
-    if (password.length < 8) {
-      setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
-      return;
-    }
+    if (!email) return setMessage("لطفاً ایمیل را وارد کن.");
+    if (!emailPattern.test(email)) return setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+    if (!password) return setMessage("لطفاً رمز عبور را وارد کن.");
+    if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
     setLoading(true);
-    const { error } = await createClient().auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await createClient().auth.signInWithPassword({ email, password });
     if (error) {
       setMessage("ایمیل یا رمز عبور درست نیست.");
       setLoading(false);
@@ -68,26 +60,11 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
-    if (fullName.length < 2) {
-      setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
-      return;
-    }
-    if (!email) {
-      setMessage("لطفاً ایمیل را وارد کن.");
-      return;
-    }
-    if (!emailPattern.test(email)) {
-      setMessage("لطفاً یک ایمیل معتبر وارد کن.");
-      return;
-    }
-    if (!password) {
-      setMessage("لطفاً رمز عبور را وارد کن.");
-      return;
-    }
-    if (password.length < 8) {
-      setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
-      return;
-    }
+    if (fullName.length < 2) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
+    if (!email) return setMessage("لطفاً ایمیل را وارد کن.");
+    if (!emailPattern.test(email)) return setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+    if (!password) return setMessage("لطفاً رمز عبور را وارد کن.");
+    if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
     setLoading(true);
     const { error } = await createClient().auth.signUp({
@@ -108,142 +85,165 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
       return;
     }
     setSuccess(true);
-    setMessage(
-      "حساب ساخته شد. اگر تأیید ایمیل فعال باشد، صندوق ورودی‌ات را بررسی کن.",
-    );
+    setMessage("حساب ساخته شد. اگر تأیید ایمیل فعال باشد، صندوق ورودی‌ات را بررسی کن.");
     setLoading(false);
   }
 
   return (
-    <main className="auth-shell unified-auth">
-      <aside className="auth-aside">
+    <main className="auth-gradient-page">
+      <header className="auth-gradient-header">
         <Logo />
-        <div className="auth-quote">
-          <span className="auth-kicker">یک نقطه شروع، دو مسیر ساده</span>
-          <h1>وارد مسیرت شو یا همین‌جا یک حساب تازه بساز.</h1>
-          <p>
-            ورود و ثبت‌نام نووا در یک صفحه کنار هم قرار گرفته‌اند تا انتخاب و
-            ادامه مسیر ساده‌تر باشد.
-          </p>
-        </div>
-        <small>© نووا</small>
-      </aside>
+        <Link className="auth-gradient-back" href="/">
+          بازگشت به خانه <span aria-hidden="true">←</span>
+        </Link>
+      </header>
 
-      <section className="auth-main">
-        <div className="auth-card unified-auth-card">
-          <div className="auth-mode-heading">
-            <span>{mode === "signin" ? "ادامه مسیر" : "شروع مسیر"}</span>
-            <h1>{mode === "signin" ? "خوش برگشتی" : "به نووا بپیوند"}</h1>
-            <p>
-              {mode === "signin"
-                ? "اطلاعات حسابت را وارد کن."
-                : "اطلاعات اولیه‌ات را ثبت کن."}
-            </p>
-          </div>
-
-          {message && (
-            <div
-              className={`form-message${success ? " success" : ""}`}
-              role="status"
-            >
-              {message}
+      <div className="auth-gradient-wrap">
+        <div className="auth-gradient-card">
+          <section className="auth-gradient-form">
+            <div className="auth-gradient-form-head">
+              <span>ورود / ثبت‌نام</span>
+              <h1>{mode === "signin" ? "خوش برگشتی!" : "ساخت حساب تازه"}</h1>
+              <p>
+                {mode === "signin"
+                  ? "اطلاعاتت را وارد کن تا وارد مسیرت بشوی."
+                  : "چند دقیقه وقت بگذار؛ مسیر روشن شروع می‌شود."}
+              </p>
             </div>
-          )}
 
-          {mode === "signin" ? (
-            <form key="signin" onSubmit={submitSignIn} noValidate>
-              <div className="field">
-                <label htmlFor="signin-email">ایمیل</label>
-                <input
-                  id="signin-email"
-                  name="email"
-                  type="email"
-                  dir="ltr"
-                  autoComplete="email"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="signin-password">رمز عبور</label>
-                <input
-                  id="signin-password"
-                  name="password"
-                  type="password"
-                  dir="ltr"
-                  autoComplete="current-password"
-                  minLength={8}
-                  required
-                />
-              </div>
-              <button className="button" disabled={loading}>
-                {loading ? "در حال ورود..." : "ورود به حساب"}
+            <div className="auth-gradient-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
+              <button
+                className={mode === "signin" ? "active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={mode === "signin"}
+                onClick={() => changeMode("signin")}
+              >
+                ورود به حساب
               </button>
-              <p className="auth-switch">
-                حساب نداری؟{" "}
-                <button
-                  className="auth-switch-button"
-                  type="button"
-                  onClick={() => changeMode("signup")}
-                >
-                  یک حساب بساز
-                </button>
-              </p>
-            </form>
-          ) : (
-            <form key="signup" onSubmit={submitSignUp} noValidate>
-              <div className="field">
-                <label htmlFor="signup-name">نام و نام خانوادگی</label>
-                <input
-                  id="signup-name"
-                  name="fullName"
-                  autoComplete="name"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="signup-email">ایمیل</label>
-                <input
-                  id="signup-email"
-                  name="email"
-                  type="email"
-                  dir="ltr"
-                  autoComplete="email"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="signup-password">رمز عبور</label>
-                <input
-                  id="signup-password"
-                  name="password"
-                  type="password"
-                  dir="ltr"
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </div>
-              <button className="button" disabled={loading || success}>
-                {loading
-                  ? "در حال ساخت حساب..."
-                  : success
-                    ? "حساب ساخته شد"
-                    : "ثبت‌نام"}
+              <button
+                className={mode === "signup" ? "active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={mode === "signup"}
+                onClick={() => changeMode("signup")}
+              >
+                ساخت حساب جدید
               </button>
-              <p className="auth-switch">
-                قبلاً ثبت‌نام کرده‌ای؟{" "}
-                <button
-                  className="auth-switch-button"
-                  type="button"
-                  onClick={() => changeMode("signin")}
-                >
-                  وارد شو
+            </div>
+
+            {message && (
+              <div className={`auth-gradient-message${success ? " success" : ""}`} role="status">
+                {message}
+              </div>
+            )}
+
+            {mode === "signin" ? (
+              <form key="signin" onSubmit={submitSignIn} noValidate>
+                <div className="auth-gradient-field">
+                  <label htmlFor="signin-email">ایمیل</label>
+                  <input
+                    id="signin-email"
+                    name="email"
+                    type="email"
+                    dir="ltr"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+                <div className="auth-gradient-field">
+                  <label htmlFor="signin-password">رمز عبور</label>
+                  <input
+                    id="signin-password"
+                    name="password"
+                    type="password"
+                    dir="ltr"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    minLength={8}
+                    required
+                  />
+                </div>
+                <button className="auth-gradient-submit" disabled={loading}>
+                  {loading ? "در حال ورود..." : "ورود به حساب ←"}
                 </button>
-              </p>
-            </form>
-          )}
+                <p className="auth-gradient-switch">
+                  حساب نداری؟{" "}
+                  <button type="button" onClick={() => changeMode("signup")}>یک حساب بساز</button>
+                </p>
+              </form>
+            ) : (
+              <form key="signup" onSubmit={submitSignUp} noValidate>
+                <div className="auth-gradient-field">
+                  <label htmlFor="signup-name">نام و نام خانوادگی</label>
+                  <input
+                    id="signup-name"
+                    name="fullName"
+                    placeholder="مثلاً: علی رضایی"
+                    autoComplete="name"
+                    required
+                  />
+                </div>
+                <div className="auth-gradient-field">
+                  <label htmlFor="signup-email">ایمیل</label>
+                  <input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    dir="ltr"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+                <div className="auth-gradient-field">
+                  <label htmlFor="signup-password">رمز عبور</label>
+                  <input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    dir="ltr"
+                    placeholder="حداقل ۸ کاراکتر"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                  />
+                </div>
+                <button className="auth-gradient-submit" disabled={loading || success}>
+                  {loading ? "در حال ساخت حساب..." : success ? "حساب ساخته شد" : "ساخت حساب جدید ←"}
+                </button>
+                <p className="auth-gradient-switch">
+                  حساب داری؟{" "}
+                  <button type="button" onClick={() => changeMode("signin")}>وارد شو</button>
+                </p>
+              </form>
+            )}
+          </section>
+
+          <aside className="auth-gradient-side">
+            <div className="auth-gradient-side-content">
+              <Logo />
+              <span className="auth-gradient-eyebrow">● مسیر روشن موفقیت تحصیلی</span>
+              <h2>یک نقطه شروع، دو مسیر ساده</h2>
+              <p>وارد مسیرت شو یا همین‌جا یک حساب تازه بساز. نووا کنار توست، از اولین قدم تا روز نتیجه.</p>
+              <div className="auth-gradient-benefits">
+                {benefits.map((benefit) => (
+                  <div className="auth-gradient-benefit" key={benefit}>
+                    <span aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="m5 12 4 4L19 6" />
+                      </svg>
+                    </span>
+                    <b>{benefit}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <small>© ۱۴۰۵ نووا. تمام حقوق محفوظ است.</small>
+          </aside>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
