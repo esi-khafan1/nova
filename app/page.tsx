@@ -76,11 +76,8 @@ export default async function Home() {
             <a href="#about">درباره نووا</a>
           </nav>
           <div className="nav-actions">
-            <Link className="btn btn-ghost btn-small" href="/auth?mode=signin">
-              ورود
-            </Link>
-            <Link className="btn btn-primary btn-small" href="/auth?mode=signup">
-              ثبت‌نام
+            <Link className="btn btn-primary btn-small" href="/auth">
+              ورود / ثبت‌نام
             </Link>
           </div>
           <MobileMenu />
