@@ -90,20 +90,27 @@ export default async function Home() {
             <div>
               <span className="hero-eyebrow">● مسیر روشن موفقیت تحصیلی</span>
               <h1>
-                برای مسیر مهمی که پیش رو داری، <span className="accent">نووا</span> کنارت است.
+                برای مسیر مهمی که پیش رو داری،{" "}
+                <span className="accent">نووا</span> کنارت است.
               </h1>
               <p className="lead">
-                نووا کنار دانش‌آموزان دهم تا دوازدهم است؛ با مشاور متخصص، منابع معتبر و برنامه‌ای که واقعاً با زندگی تو هماهنگ است. دیگر قرار نیست مسیر موفقیت را تنهایی پیدا کنی.
+                نووا کنار دانش‌آموزان دهم تا دوازدهم است؛ با مشاور متخصص، منابع
+                معتبر و برنامه‌ای که واقعاً با زندگی تو هماهنگ است. دیگر قرار
+                نیست مسیر موفقیت را تنهایی پیدا کنی.
               </p>
               <div className="mega-cta">
                 <Link className="btn-mega" href="/auth?mode=signup">
                   ثبت‌نام در نووا <span className="arrow">←</span>
                 </Link>
-                <a className="btn btn-ghost" href="#how">آشنایی با نووا</a>
+                <a className="btn btn-ghost" href="#how">
+                  آشنایی با نووا
+                </a>
               </div>
               <div className="hero-trust" aria-label="مزیت‌های نووا">
-                <span>مشاوران تأییدشده</span><span className="dot" />
-                <span>ثبت‌نام سریع</span><span className="dot" />
+                <span>مشاوران تأییدشده</span>
+                <span className="dot" />
+                <span>ثبت‌نام سریع</span>
+                <span className="dot" />
                 <span>برنامه قابل اجرا</span>
               </div>
             </div>
@@ -116,9 +123,18 @@ export default async function Home() {
                   <div className="visual-mini-cta outline">مشاهده مشاور</div>
                 </div>
                 <div className="visual-progress">
-                  <div className="vp-row"><span>برنامه این هفته</span><span className="v">۷۲٪</span></div>
-                  <div className="vp-row"><span>مرور زیست یازدهم</span><span className="v">۸۵٪</span></div>
-                  <div className="vp-row"><span>آزمون ریاضی</span><span className="v">۶۰٪</span></div>
+                  <div className="vp-row">
+                    <span>برنامه این هفته</span>
+                    <span className="v">۷۲٪</span>
+                  </div>
+                  <div className="vp-row">
+                    <span>مرور زیست یازدهم</span>
+                    <span className="v">۸۵٪</span>
+                  </div>
+                  <div className="vp-row">
+                    <span>آزمون ریاضی</span>
+                    <span className="v">۶۰٪</span>
+                  </div>
                 </div>
                 <div className="visual-cta-big">
                   <div className="big-text">آماده‌ای شروع کنی؟</div>
@@ -132,10 +148,26 @@ export default async function Home() {
 
       <section className="proof" aria-label="مسیر تحصیلی">
         <div className="container proof-grid">
-          <div className="proof-item"><span className="step-label">دهم</span><h4>ساخت پایه قوی</h4><p>شروع درست با منابع پایه</p></div>
-          <div className="proof-item"><span className="step-label">یازدهم</span><h4>پیشروی هدفمند</h4><p>تمرکز بر نقاط قوت</p></div>
-          <div className="proof-item"><span className="step-label">دوازدهم</span><h4>جمع‌بندی مطمئن</h4><p>آزمون‌های آزمایشی</p></div>
-          <div className="proof-item"><span className="step-label">نتیجه</span><h4>تا روز نتیجه</h4><p>همراهی کامل</p></div>
+          <div className="proof-item">
+            <span className="step-label">دهم</span>
+            <h4>ساخت پایه قوی</h4>
+            <p>شروع درست با منابع پایه</p>
+          </div>
+          <div className="proof-item">
+            <span className="step-label">یازدهم</span>
+            <h4>پیشروی هدفمند</h4>
+            <p>تمرکز بر نقاط قوت</p>
+          </div>
+          <div className="proof-item">
+            <span className="step-label">دوازدهم</span>
+            <h4>جمع‌بندی مطمئن</h4>
+            <p>آزمون‌های آزمایشی</p>
+          </div>
+          <div className="proof-item">
+            <span className="step-label">نتیجه</span>
+            <h4>تا روز نتیجه</h4>
+            <p>همراهی کامل</p>
+          </div>
         </div>
       </section>
 
@@ -143,16 +175,26 @@ export default async function Home() {
         <div className="container">
           <div className="section-title">
             <span className="eyebrow">همراهی واقعی</span>
-            <h2>هر چیزی که برای <span className="accent">مسیر روشن</span> نیاز داری</h2>
-            <p>نووا ابزار، محتوا و آدم‌های درست را کنار هم می‌آورد تا انرژی تو صرف یادگیری شود، نه سردرگمی.</p>
+            <h2>
+              هر چیزی که برای <span className="accent">مسیر روشن</span> نیاز
+              داری
+            </h2>
+            <p>
+              نووا ابزار، محتوا و آدم‌های درست را کنار هم می‌آورد تا انرژی تو
+              صرف یادگیری شود، نه سردرگمی.
+            </p>
           </div>
           <div className="services-grid">
             {services.map(({ icon: Icon, title, text, action, href }) => (
               <article className="service-card" key={title}>
-                <div className="service-icon"><Icon /></div>
+                <div className="service-icon">
+                  <Icon />
+                </div>
                 <h3>{title}</h3>
                 <p>{text}</p>
-                <Link className="service-cta" href={href}>{action} ←</Link>
+                <Link className="service-cta" href={href}>
+                  {action} ←
+                </Link>
               </article>
             ))}
           </div>
@@ -163,14 +205,17 @@ export default async function Home() {
         <div className="container">
           <div className="section-title">
             <span className="eyebrow">ساده و شفاف</span>
-            <h2>از ثبت‌نام تا <span className="accent">یک برنامه قابل اجرا</span></h2>
+            <h2>
+              از ثبت‌نام تا <span className="accent">یک برنامه قابل اجرا</span>
+            </h2>
             <p>در چهار قدم کوتاه، از سردرگمی به یک مسیر مشخص می‌رسی.</p>
           </div>
           <div className="steps">
             {steps.map(([title, text], index) => (
               <article className="step" key={title}>
                 <div className="step-num">{["۱", "۲", "۳", "۴"][index]}</div>
-                <h4>{title}</h4><p>{text}</p>
+                <h4>{title}</h4>
+                <p>{text}</p>
               </article>
             ))}
           </div>
@@ -182,33 +227,61 @@ export default async function Home() {
           <div className="mag-head">
             <div className="left">
               <span className="eyebrow">تازه‌های مجله نووا</span>
-              <h2>راهنماهای تازه برای <span className="accent">مسیر تحصیلی تو</span></h2>
-              <p>نکته‌های کاربردی مشاوران نووا برای مطالعه، آزمون و روزهای مهم مسیر تحصیلی.</p>
+              <h2>
+                راهنماهای تازه برای{" "}
+                <span className="accent">مسیر تحصیلی تو</span>
+              </h2>
+              <p>
+                نکته‌های کاربردی مشاوران نووا برای مطالعه، آزمون و روزهای مهم
+                مسیر تحصیلی.
+              </p>
             </div>
-            <Link className="all-link" href="/mag">مشاهده همه ←</Link>
+            <Link className="all-link" href="/mag">
+              مشاهده همه ←
+            </Link>
           </div>
           {latestResources.length > 0 ? (
             <div className="mag-grid">
               {latestResources.map((resource) => {
                 const image = findFirstImage(parseContent(resource.body));
                 return (
-                  <Link className="mag-card" href={`/mag/${resource.id}`} key={resource.id}>
+                  <Link
+                    className="mag-card"
+                    href={`/mag/${resource.id}`}
+                    key={resource.id}
+                  >
                     <div className="img-wrap">
-                      {image ? <img alt="" loading="lazy" src={image} /> : <div className="article-placeholder" aria-hidden="true">ن</div>}
-                      <span className="badge">{resourceTypeLabels[resource.resource_type]}</span>
+                      {image ? (
+                        <img alt="" loading="lazy" src={image} />
+                      ) : (
+                        <div className="article-placeholder" aria-hidden="true">
+                          ن
+                        </div>
+                      )}
+                      <span className="badge">
+                        {resourceTypeLabels[resource.resource_type]}
+                      </span>
                     </div>
                     <div className="body">
-                      <div className="date">{formatPersianDate(resource.published_at)}{resource.subject ? ` · ${resource.subject}` : ""}</div>
+                      <div className="date">
+                        {formatPersianDate(resource.published_at)}
+                        {resource.subject ? ` · ${resource.subject}` : ""}
+                      </div>
                       <h3>{resource.title}</h3>
                       {resource.summary && <p>{resource.summary}</p>}
-                      <div className="read-more"><span>خواندن مقاله</span><span className="arr">←</span></div>
+                      <div className="read-more">
+                        <span>خواندن مقاله</span>
+                        <span className="arr">←</span>
+                      </div>
                     </div>
                   </Link>
                 );
               })}
             </div>
           ) : (
-            <div className="mag-empty">مقاله‌های تازه نووا به‌زودی اینجا منتشر می‌شوند.</div>
+            <div className="mag-empty">
+              مقاله‌های تازه نووا به‌زودی اینجا منتشر می‌شوند.
+            </div>
           )}
         </div>
       </section>
@@ -217,18 +290,54 @@ export default async function Home() {
         <div className="container">
           <div className="social-head">
             <span className="eyebrow">نووا در کنار تو</span>
-            <h2 id="social-title">در شبکه‌های اجتماعی ما را <span className="accent">دنبال کنید</span></h2>
-            <p>ویدئوهای آموزشی، نکته‌های برنامه‌ریزی و خبرهای تازه نووا را از کانال‌های رسمی دنبال کن.</p>
+            <h2 id="social-title">
+              در شبکه‌های اجتماعی ما را{" "}
+              <span className="accent">دنبال کنید</span>
+            </h2>
+            <p>
+              ویدئوهای آموزشی، نکته‌های برنامه‌ریزی و خبرهای تازه نووا را از
+              کانال‌های رسمی دنبال کن.
+            </p>
           </div>
           <div className="social-grid">
-            <a className="social-card yt" href="https://www.youtube.com/@novayas" target="_blank" rel="noreferrer">
-              <span className="icon-box"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.8 2.8 0 0 0-2-2C17.9 4.7 12 4.7 12 4.7s-5.9 0-7.6.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .4 4.8 2.8 2.8 0 0 0 2 2c1.7.5 7.6.5 7.6.5s5.9 0 7.6-.5a2.8 2.8 0 0 0 2-2A29 29 0 0 0 22 12a29 29 0 0 0-.4-4.8ZM10 15.4V8.6l5.8 3.4-5.8 3.4Z" /></svg></span>
-              <span className="text"><strong>یوتیوب نووا</strong><small>ویدئوهای آموزشی و مسیر مطالعه — هر هفته محتوای تازه برای یادگیری بهتر.</small></span>
+            <a
+              className="social-card yt"
+              href="https://www.youtube.com/@novayas"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span className="icon-box">
+                <svg viewBox="0 0 24 24">
+                  <path d="M21.6 7.2a2.8 2.8 0 0 0-2-2C17.9 4.7 12 4.7 12 4.7s-5.9 0-7.6.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .4 4.8 2.8 2.8 0 0 0 2 2c1.7.5 7.6.5 7.6.5s5.9 0 7.6-.5a2.8 2.8 0 0 0 2-2A29 29 0 0 0 22 12a29 29 0 0 0-.4-4.8ZM10 15.4V8.6l5.8 3.4-5.8 3.4Z" />
+                </svg>
+              </span>
+              <span className="text">
+                <strong>یوتیوب نووا</strong>
+                <small>
+                  ویدئوهای آموزشی و مسیر مطالعه — هر هفته محتوای تازه برای
+                  یادگیری بهتر.
+                </small>
+              </span>
               <span className="follow-cta">دنبال کردن ←</span>
             </a>
-            <a className="social-card tg" href="https://t.me/novayasyoutube" target="_blank" rel="noreferrer">
-              <span className="icon-box"><svg viewBox="0 0 24 24"><path d="m20.7 4.2-3 15c-.2 1.1-.9 1.4-1.8.9l-4.6-3.4-2.2 2.1c-.2.2-.5.5-1 .5l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L5.8 13.3l-4.6-1.4c-1-.3-1-1 .2-1.5l17.9-6.9c.8-.3 1.6.2 1.4.7Z" /></svg></span>
-              <span className="text"><strong>تلگرام نووا</strong><small>اعلان‌ها، فایل‌ها و تازه‌ترین محتوا — اولین نفری باش که از خبرهای نووا مطلع می‌شوی.</small></span>
+            <a
+              className="social-card tg"
+              href="https://t.me/novayasyoutube"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span className="icon-box">
+                <svg viewBox="0 0 24 24">
+                  <path d="m20.7 4.2-3 15c-.2 1.1-.9 1.4-1.8.9l-4.6-3.4-2.2 2.1c-.2.2-.5.5-1 .5l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L5.8 13.3l-4.6-1.4c-1-.3-1-1 .2-1.5l17.9-6.9c.8-.3 1.6.2 1.4.7Z" />
+                </svg>
+              </span>
+              <span className="text">
+                <strong>تلگرام نووا</strong>
+                <small>
+                  اعلان‌ها، فایل‌ها و تازه‌ترین محتوا — اولین نفری باش که از
+                  خبرهای نووا مطلع می‌شوی.
+                </small>
+              </span>
               <span className="follow-cta">دنبال کردن ←</span>
             </a>
           </div>
@@ -238,18 +347,47 @@ export default async function Home() {
       <section className="cta-block">
         <div className="container cta-content">
           <h2>شروع یک مسیر تازه</h2>
-          <p>آماده‌ای این بار با برنامه جلو بروی؟ حسابت را بساز؛ اولین قدم فقط چند دقیقه زمان می‌برد.</p>
-          <Link className="btn-light" href="/auth?mode=signup">ثبت‌نام در نووا ←</Link>
+          <p>
+            آماده‌ای این بار با برنامه جلو بروی؟ حسابت را بساز؛ اولین قدم فقط
+            چند دقیقه زمان می‌برد.
+          </p>
+          <Link className="btn-light" href="/auth?mode=signup">
+            ثبت‌نام در نووا ←
+          </Link>
         </div>
       </section>
 
       <footer className="site-footer" id="about">
         <div className="container">
           <div className="footer-grid">
-            <div className="footer-about"><Logo /><p>نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی روشن.</p></div>
-            <div className="footer-col"><h5>نووا</h5><a href="#about">درباره ما</a><a href="#services">خدمات</a><Link href="/mag">مجله</Link><Link href="/auth">ورود</Link></div>
-            <div className="footer-col"><h5>خدمات</h5><a href="#services">مشاوره تحصیلی</a><a href="#how">برنامه‌ریزی</a><Link href="/mag">منابع</Link><Link href="/auth?mode=signup">شروع مسیر</Link></div>
-            <div className="footer-col"><h5>ارتباط</h5><a href="https://www.youtube.com/@novayas" target="_blank" rel="noreferrer">یوتیوب</a><a href="https://t.me/novayasyoutube" target="_blank" rel="noreferrer">تلگرام</a></div>
+            <div className="footer-about">
+              <Logo />
+              <p>
+                نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی
+                روشن.
+              </p>
+            </div>
+            <div className="footer-col">
+              <h5>نووا</h5>
+              <Link href="/about">درباره ما</Link>
+              <a href="#services">خدمات</a>
+              <Link href="/mag">مجله</Link>
+              <Link href="/auth">ورود</Link>
+            </div>
+            <div className="footer-col">
+              <h5>خدمات</h5>
+              <a href="#services">مشاوره تحصیلی</a>
+              <a href="#how">برنامه‌ریزی</a>
+              <Link href="/mag">منابع</Link>
+              <Link href="/auth?mode=signup">شروع مسیر</Link>
+            </div>
+            <div className="footer-col">
+              <h5>قوانین و ارتباط</h5>
+              <Link href="/contact">تماس با ما</Link>
+              <Link href="/terms">شرایط استفاده</Link>
+              <Link href="/privacy">حریم خصوصی</Link>
+              <Link href="/refund">بازگشت وجه</Link>
+            </div>
           </div>
           <div className="footer-bottom">© ۱۴۰۵ نووا. تمام حقوق محفوظ است.</div>
         </div>
