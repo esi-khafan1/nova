@@ -16,12 +16,15 @@ export function StudentProgressSummary({
   scopes,
   title = "مطالعه‌های انجام‌شده",
   eyebrow = "گزارش پیشرفت",
+  initialScopeKey = "weekly",
 }: {
   scopes: ProgressScope[];
   title?: string;
   eyebrow?: string;
+  initialScopeKey?: ProgressScope["key"];
 }) {
-  const [activeKey, setActiveKey] = useState<ProgressScope["key"]>("weekly");
+  const [activeKey, setActiveKey] =
+    useState<ProgressScope["key"]>(initialScopeKey);
   const [metric, setMetric] = useState<"time" | "tests">("time");
   const [selectedSubject, setSelectedSubject] = useState("");
   const active = scopes.find((scope) => scope.key === activeKey) ?? scopes[0];

@@ -1,3 +1,4 @@
+import "./auth-gradient.css";
 import { UnifiedAuth } from "@/components/auth/unified-auth";
 
 export default async function AuthPage({

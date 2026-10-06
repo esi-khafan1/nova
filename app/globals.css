@@ -7821,3 +7821,28 @@ main .feature-card:before {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.student-profile-card {
+  margin-bottom: 20px;
+}
+
+.student-daily-empty {
+  margin-top: 20px;
+}
+
+.student-day-focus > article {
+  padding: 18px;
+  border: 1px solid #efd5bf;
+  border-radius: 12px;
+  background: #fffaf6;
+}
+
+.student-day-focus h3 {
+  margin: 0 0 10px;
+  color: #14263b;
+  font-size: 16px;
+}
+
+.student-daily-plan .student-plan-item {
+  padding: 14px 0;
+}

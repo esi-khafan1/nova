@@ -399,3 +399,6 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-v2d *, .landing-v2d *::before, .landing-v2d *::after { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* The v2d dashboard card stands on its own, without the legacy halo. */
+.landing-v2d .hero-visual::before { display: none; }
