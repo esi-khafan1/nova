@@ -244,10 +244,6 @@ export default async function StudentDashboard({
     if (!rest) return `${hours.toLocaleString("fa-IR")} ساعت`;
     return `${hours.toLocaleString("fa-IR")} ساعت و ${rest.toLocaleString("fa-IR")} دقیقه`;
   };
-  const gradeLabel = profile.grade
-    ? `${Number(profile.grade).toLocaleString("fa-IR")}م`
-    : "پایه ثبت نشده";
-
   return (
     <DashboardShell role="student" name={profile.full_name} variant="student-focus">
       <StudentDashboardRefresh currentDate={todayIso} />
@@ -271,7 +267,7 @@ export default async function StudentDashboard({
             <span>● تمرکز امروز</span>
             <h2>{todayPlanItems.length.toLocaleString("fa-IR")} فعالیت · {formatMinutes(todayPlannedMinutes)}</h2>
             <div>
-              <p><strong>{todayCompletedCount.toLocaleString("fa-IR")} <small>/ {todayPlanItems.length.toLocaleString("fa-IR")}</small></strong><span>انجام‌شده</span></p>
+              <p><strong className="student-focus-ratio" dir="ltr"><span>{todayCompletedCount.toLocaleString("fa-IR")}</span><span>/</span><span>{todayPlanItems.length.toLocaleString("fa-IR")}</span></strong><span>انجام‌شده</span></p>
               <p><strong>{todayProgressPercent.toLocaleString("fa-IR")}٪</strong><span>پیشرفت روز</span></p>
               <p><strong>{dailyProgress.targetTests.toLocaleString("fa-IR")} <small>تست</small></strong><span>هدف تست‌زنی</span></p>
             </div>
@@ -354,7 +350,7 @@ export default async function StudentDashboard({
             </section>
 
             <section className="portal-card student-profile-card">
-              <div className="portal-card-title"><div><span>پروفایل تحصیلی</span><h2>اطلاعات پایه</h2></div><small>{gradeLabel}</small></div>
+              <div className="portal-card-title"><div><span>پروفایل تحصیلی</span><h2>اطلاعات پایه</h2></div></div>
               <form action={updateStudentProfile} className="portal-form">
                 <label>نام و نام خانوادگی<input name="full_name" defaultValue={profile.full_name} required minLength={2} /></label>
                 <label>پایه تحصیلی<select name="grade" defaultValue={profile.grade ?? ""}><option value="">انتخاب کن</option><option value="10">دهم</option><option value="11">یازدهم</option><option value="12">دوازدهم</option></select></label>

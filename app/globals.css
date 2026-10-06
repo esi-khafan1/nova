@@ -8180,3 +8180,19 @@ main .feature-card:before {
 }
 .student-focus-shell .student-plan-item > small { display: none; }
 .student-focus-shell .student-plan-item > p { grid-column: 1; }
+
+/* Student Today Focus final alignment fixes */
+.student-focus-shell .student-plan-item.completed .student-plan-item-main > strong {
+  text-decoration: none;
+}
+.student-focus-shell .student-focus-ratio {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  direction: ltr;
+}
+.student-focus-shell .student-focus-ratio > span {
+  color: inherit;
+  font: inherit;
+  opacity: 1;
+}
