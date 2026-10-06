@@ -18,7 +18,6 @@ export async function updateStudentProfile(fd: FormData) {
   } = await s.auth.getUser();
   if (!user) redirect("/auth/sign-in");
   const full_name = clean(fd.get("full_name"), 100),
-    phone = clean(fd.get("phone"), 20) || null,
     n = Number(fd.get("grade")),
     grade = [10, 11, 12].includes(n) ? n : null,
     field = clean(fd.get("study_field"), 40),
@@ -34,7 +33,7 @@ export async function updateStudentProfile(fd: FormData) {
   if (full_name.length < 2) redirect("/dashboard/student?error=profile");
   const { error } = await s
     .from("profiles")
-    .update({ full_name, phone, grade, study_field })
+    .update({ full_name, grade, study_field })
     .eq("id", user.id);
   if (error) redirect("/dashboard/student?error=profile");
   revalidatePath("/dashboard");

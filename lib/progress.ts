@@ -1,4 +1,8 @@
-import { persianParts, samePersianMonth } from "@/lib/persian-date";
+import {
+  persianParts,
+  samePersianMonth,
+  toIsoDate,
+} from "@/lib/persian-date";
 
 export type ProgressSourceItem = {
   id: string;
@@ -24,7 +28,7 @@ export type ProgressChapter = {
 };
 
 export type ProgressScope = {
-  key: "weekly" | "monthly" | "all";
+  key: "daily" | "weekly" | "monthly" | "all";
   label: string;
   completedCount: number;
   totalMinutes: number;
@@ -149,19 +153,25 @@ export function buildProgressScopes({
   completedIds,
   completedTestCounts,
   now = new Date(),
+  includeDaily = false,
 }: {
   items: ProgressSourceItem[];
   currentPlanId: string | null;
   completedIds: Set<string>;
   completedTestCounts: Map<string, number>;
   now?: Date;
+  includeDaily?: boolean;
 }): ProgressScope[] {
+  const todayIso = toIsoDate(now);
+  const dailyItems = items.filter(
+    (item) => toIsoDate(item.plannedDate) === todayIso,
+  );
   const weeklyItems = items.filter((item) => item.planId === currentPlanId);
   const monthlyItems = items.filter((item) =>
     samePersianMonth(item.plannedDate, now),
   );
 
-  return [
+  const scopes: ProgressScope[] = [
     buildScope(
       "weekly",
       "هفتگی",
@@ -178,4 +188,17 @@ export function buildProgressScopes({
     ),
     buildScope("all", "کلی", items, completedIds, completedTestCounts),
   ];
+
+  return includeDaily
+    ? [
+        buildScope(
+          "daily",
+          "امروز",
+          dailyItems,
+          completedIds,
+          completedTestCounts,
+        ),
+        ...scopes,
+      ]
+    : scopes;
 }

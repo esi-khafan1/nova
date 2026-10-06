@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { togglePlanItemCompletion } from "@/app/dashboard/actions";
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
@@ -20,6 +21,7 @@ export function StudentPlanCheckbox({
   targetTestCount: number | null;
   defaultCompletedTestCount: number | null;
 }) {
+  const router = useRouter();
   const isTestActivity = activityType === "practice_tests";
   const [checked, setChecked] = useState(defaultChecked);
   const [completedTestCount, setCompletedTestCount] = useState(
@@ -51,7 +53,9 @@ export function StudentPlanCheckbox({
       if (!result.ok) {
         setChecked(!nextChecked);
         setHasError(true);
+        return;
       }
+      router.refresh();
     });
   };
 
