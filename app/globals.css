@@ -8121,3 +8121,62 @@ main .feature-card:before {
   .student-focus-shell .student-plan-check > strong { display: none; }
   .student-focus-shell .student-test-count { min-width: 120px; }
 }
+
+/* Student Today Focus refinements */
+.student-focus-shell .portal-sidebar .logo-mark {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.student-focus-shell .portal-sidebar .logo-mark svg {
+  width: 36px;
+  height: 36px;
+}
+.student-focus-shell .portal-sidebar .logo-mark .comet-star {
+  fill: var(--sf-primary);
+}
+.student-focus-shell .portal-sidebar .logo-mark .comet-tail,
+.student-focus-shell .portal-sidebar .logo-mark .comet-tail-wide {
+  stroke: var(--sf-primary);
+}
+.student-focus-shell .portal-sidebar .logo-mark .comet-tail { opacity: .55; }
+.student-focus-shell .portal-sidebar .logo-mark .comet-tail-wide { opacity: .85; }
+.student-focus-shell .portal-sidebar .logo strong { color: var(--sf-ink); }
+.student-focus-shell .student-compact-stat > small.down { color: #dc2626; }
+.student-focus-shell .student-plan-item.completed:before {
+  background: var(--sf-success);
+}
+.student-focus-shell .student-plan-item-main { gap: 6px; }
+.student-focus-shell .student-plan-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.student-focus-shell .student-plan-item-meta .student-activity-tag {
+  padding: 3px 9px;
+  color: var(--sf-primary-deep);
+  border-radius: 6px;
+  background: var(--sf-primary-cream);
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.student-focus-shell .student-plan-item-meta .student-meta-dot {
+  color: var(--sf-muted);
+  font-size: 10px;
+}
+.student-focus-shell .student-plan-item-meta > small {
+  width: max-content;
+  padding: 4px 10px;
+  color: var(--sf-primary-deep);
+  border-radius: 999px;
+  background: var(--sf-primary-soft);
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.student-focus-shell .student-plan-item > small { display: none; }
+.student-focus-shell .student-plan-item > p { grid-column: 1; }

@@ -1,7 +1,6 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { StudentDashboardRefresh } from "@/components/dashboard/student-dashboard-refresh";
 import { StudentPlanCheckbox } from "@/components/dashboard/student-plan-checkbox";
-import { StudentProgressSummary } from "@/components/dashboard/student-progress-summary";
 import { requireProfile } from "@/lib/auth";
 import { updateStudentProfile } from "@/app/dashboard/actions";
 import { activityTypes, studyFieldLabels, weekDays } from "@/lib/study-catalog";
@@ -57,12 +56,19 @@ export default async function StudentDashboard({
         .order("sort_order")
     : { data: [] };
   const itemIds = (allPlanItems ?? []).map((item) => item.id);
-  const { data: completions } = itemIds.length
-    ? await supabase
-        .from("weekly_plan_item_completions")
-        .select("item_id,completed_at,completed_test_count")
-        .in("item_id", itemIds)
-    : { data: [] };
+  const [{ data: completions }, { data: examAttempts }] = await Promise.all([
+    itemIds.length
+      ? supabase
+          .from("weekly_plan_item_completions")
+          .select("item_id,completed_at,completed_test_count")
+          .in("item_id", itemIds)
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("exam_attempts")
+      .select("score,submitted_at")
+      .eq("student_id", profile.id)
+      .not("score", "is", null),
+  ]);
   const completionMap = new Map(
     (completions ?? []).map((completion) => [
       completion.item_id,
@@ -126,8 +132,10 @@ export default async function StudentDashboard({
     now: todayDate,
     includeDaily: true,
   });
-  const dailyProgress = progressScopes.find((scope) => scope.key === "daily") ?? progressScopes[0];
-  const weeklyProgress = progressScopes.find((scope) => scope.key === "weekly") ?? progressScopes[0];
+  const dailyProgress =
+    progressScopes.find((scope) => scope.key === "daily") ?? progressScopes[0];
+  const weeklyProgress =
+    progressScopes.find((scope) => scope.key === "weekly") ?? progressScopes[0];
   const todayPlannedMinutes = todayPlanItems.reduce(
     (sum, item) => sum + item.duration_minutes,
     0,
@@ -152,9 +160,83 @@ export default async function StudentDashboard({
     );
     return {
       name: subject.subject,
-      percent: planned ? Math.min(100, Math.round((completed / planned) * 100)) : 0,
+      percent: planned
+        ? Math.min(100, Math.round((completed / planned) * 100))
+        : 0,
     };
   });
+  const currentWeekStart = addDays(todayDate, -((todayDate.getDay() + 1) % 7));
+  const currentWeekStartIso = toIsoDate(currentWeekStart);
+  const previousWeekStartIso = toIsoDate(addDays(currentWeekStart, -7));
+  const previousWeekEndIso = toIsoDate(addDays(currentWeekStart, -1));
+  const sumCompletedMinutes = (startIso: string, endIso: string) =>
+    allItemsWithDates.reduce((sum, item) => {
+      const plannedIso = toIsoDate(item.plannedDate);
+      return completedItemIds.has(item.id) &&
+        startIso <= plannedIso &&
+        plannedIso <= endIso
+        ? sum + item.durationMinutes
+        : sum;
+    }, 0);
+  const currentWeekStudyMinutes = sumCompletedMinutes(
+    currentWeekStartIso,
+    todayIso,
+  );
+  const previousWeekStudyMinutes = sumCompletedMinutes(
+    previousWeekStartIso,
+    previousWeekEndIso,
+  );
+  const trendPercent = (current: number, previous: number) =>
+    previous
+      ? Math.round(((current - previous) / previous) * 100)
+      : current
+        ? 100
+        : 0;
+  const studyTrend = trendPercent(
+    currentWeekStudyMinutes,
+    previousWeekStudyMinutes,
+  );
+  const totalCompletedTests = [...completedTestCountMap.values()].reduce(
+    (sum, value) => sum + (value ?? 0),
+    0,
+  );
+  const currentWeekCompletedTests = allItemsWithDates.reduce((sum, item) => {
+    const plannedIso = toIsoDate(item.plannedDate);
+    return currentWeekStartIso <= plannedIso && plannedIso <= todayIso
+      ? sum + (completedTestCountMap.get(item.id) ?? 0)
+      : sum;
+  }, 0);
+  const scoredAttempts = (examAttempts ?? []) as {
+    score: number | null;
+    submitted_at: string;
+  }[];
+  const averageScore = (attempts: typeof scoredAttempts) =>
+    attempts.length
+      ? Math.round(
+          attempts.reduce((sum, attempt) => sum + (attempt.score ?? 0), 0) /
+            attempts.length,
+        )
+      : 0;
+  const overallExamAverage = averageScore(scoredAttempts);
+  const currentWeekExamAverage = averageScore(
+    scoredAttempts.filter((attempt) => {
+      const submittedIso = attempt.submitted_at.slice(0, 10);
+      return currentWeekStartIso <= submittedIso && submittedIso <= todayIso;
+    }),
+  );
+  const previousWeekAttempts = scoredAttempts.filter((attempt) => {
+    const submittedIso = attempt.submitted_at.slice(0, 10);
+    return (
+      previousWeekStartIso <= submittedIso &&
+      submittedIso <= previousWeekEndIso
+    );
+  });
+  const previousWeekExamAverage = averageScore(previousWeekAttempts);
+  const examTrend = previousWeekAttempts.length
+    ? currentWeekExamAverage - previousWeekExamAverage
+    : currentWeekExamAverage
+      ? currentWeekExamAverage
+      : 0;
   const formatMinutes = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const rest = minutes % 60;
@@ -197,20 +279,24 @@ export default async function StudentDashboard({
           <article className="student-compact-stat">
             <i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12l2 2 4-4M3 6l2 2 4-4M3 18l2 2 4-4M13 6h8M13 12h8M13 18h8"/></svg></i>
             <span>زمان مطالعه این هفته</span>
-            <strong>{formatMinutes(weeklyProgress.totalMinutes)}</strong>
-            <small>از {formatMinutes(weeklyPlannedMinutes)} برنامه‌ریزی‌شده</small>
+            <strong>{formatMinutes(currentWeekStudyMinutes)}</strong>
+            <small className={studyTrend < 0 ? "down" : ""}>
+              {studyTrend < 0 ? "▼" : "▲"} {Math.abs(studyTrend).toLocaleString("fa-IR")}٪ نسبت به هفته قبل
+            </small>
           </article>
           <article className="student-compact-stat">
             <i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></i>
             <span>تست‌های انجام‌شده</span>
-            <strong>{weeklyProgress.completedTests.toLocaleString("fa-IR")} تست</strong>
-            <small>هدف هفته: {weeklyProgress.targetTests.toLocaleString("fa-IR")} تست</small>
+            <strong>{totalCompletedTests.toLocaleString("fa-IR")} تست</strong>
+            <small>▲ {currentWeekCompletedTests.toLocaleString("fa-IR")} تست جدید</small>
           </article>
           <article className="student-compact-stat">
             <i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></i>
-            <span>فعالیت‌های کامل‌شده</span>
-            <strong>{weeklyProgress.completedCount.toLocaleString("fa-IR")}</strong>
-            <small>در برنامه هفتگی جاری</small>
+            <span>امتیاز میانگین آزمون</span>
+            <strong>{overallExamAverage.toLocaleString("fa-IR")}٪</strong>
+            <small className={examTrend < 0 ? "down" : ""}>
+              {examTrend < 0 ? "▼" : "▲"} {Math.abs(examTrend).toLocaleString("fa-IR")}٪ نسبت به هفته قبل
+            </small>
           </article>
         </section>
 
@@ -229,9 +315,16 @@ export default async function StudentDashboard({
                     <div className={`student-plan-item${completionMap.has(item.id) ? " completed" : ""}`} key={item.id}>
                       <div className="student-plan-item-main">
                         <strong>{item.subject}</strong>
-                        <span>{item.chapter || "مبحث آزاد"} · {activityTypes.find((activity) => activity.value === item.activity_type)?.label || "فعالیت درسی"}</span>
+                        <div className="student-plan-item-meta">
+                          <span className="student-activity-tag">
+                            {activityTypes.find((activity) => activity.value === item.activity_type)?.label || "فعالیت درسی"}
+                          </span>
+                          <span className="student-meta-dot">•</span>
+                          <span>{item.chapter || "مبحث آزاد"}</span>
+                          <span className="student-meta-dot">•</span>
+                          <small>{item.duration_minutes.toLocaleString("fa-IR")} دقیقه</small>
+                        </div>
                       </div>
-                      <small>{item.duration_minutes.toLocaleString("fa-IR")} دقیقه</small>
                       {item.details && <p>{item.details}</p>}
                       <StudentPlanCheckbox itemId={item.id} defaultChecked={completionMap.has(item.id)} canToggle activityType={item.activity_type} targetTestCount={item.target_test_count} defaultCompletedTestCount={completedTestCountMap.get(item.id) ?? null} />
                     </div>
@@ -271,11 +364,6 @@ export default async function StudentDashboard({
             </section>
           </aside>
         </section>
-      <StudentProgressSummary
-        scopes={progressScopes}
-        initialScopeKey="daily"
-        title="گزارش پیشرفت"
-      />
       </div>
     </DashboardShell>
   );
