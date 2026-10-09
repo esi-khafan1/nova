@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Book, Compass, Users } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingHero } from "@/components/landing-hero";
+import { WhyNova, type WhyNovaVariant } from "@/components/why-nova";
 import {
   findFirstImage,
   formatPersianDate,
@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import "./landing-v2d.css";
 import "./landing-approved.css";
+import "./why-nova.css";
 
 type LatestResource = {
   id: string;
@@ -24,30 +25,6 @@ type LatestResource = {
   published_at: string | null;
 };
 
-const services = [
-  {
-    icon: Compass,
-    title: "مسیر اختصاصی",
-    text: "برنامه‌ای متناسب با پایه، هدف و شرایط درسی واقعی خودت.",
-    action: "انتخاب مسیر",
-    href: "#how",
-  },
-  {
-    icon: Users,
-    title: "مشاور تأییدشده",
-    text: "مشاوری که سبک یادگیری و هدف تو را می‌شناسد.",
-    action: "رزرو جلسه",
-    href: "/auth?mode=signup",
-  },
-  {
-    icon: Book,
-    title: "منابع معتبر",
-    text: "محتوای انتخاب‌شده توسط تیم کارشناسی نووا.",
-    action: "مشاهده منابع",
-    href: "/mag",
-  },
-];
-
 const steps = [
   ["پروفایلت را کامل کن", "هدف و شرایط درسی‌ات را به ما بگو."],
   ["مشاور مناسب را پیدا کن", "تخصص و سبک همخوان با تو انتخاب می‌شود."],
@@ -55,7 +32,9 @@ const steps = [
   ["پیشرفت را ببین", "هر هفته گزارش شفاف از مسیرت."],
 ];
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = await searchParams;
+  const whyVariant: WhyNovaVariant = params.why === "cards" || params.why === "navy" ? params.why : "open";
   const supabase = await createClient();
   const { data } = await supabase
     .from("resources")
@@ -97,35 +76,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="section" id="services">
-        <div className="container">
-          <div className="section-title">
-            <span className="eyebrow">همراهی واقعی</span>
-            <h2>
-              هر چیزی که برای <span className="accent">مسیر روشن</span> نیاز
-              داری
-            </h2>
-            <p>
-              نووا ابزار، محتوا و آدم‌های درست را کنار هم می‌آورد تا انرژی تو
-              صرف یادگیری شود، نه سردرگمی.
-            </p>
-          </div>
-          <div className="services-grid">
-            {services.map(({ icon: Icon, title, text, action, href }) => (
-              <article className="service-card" key={title}>
-                <div className="service-icon">
-                  <Icon />
-                </div>
-                <h3>{title}</h3>
-                <p>{text}</p>
-                <Link className="service-cta" href={href}>
-                  {action} ←
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      <WhyNova variant={whyVariant} />
 
       <section className="section how" id="how">
         <div className="container">
