@@ -1,5 +1,5 @@
 /* Approved NOVA header + supplied panoramic hero. Scoped: existing lower sections stay intact. */
-.nova-site-header{height:104px;background:#fff;position:relative;z-index:60;border-bottom:1px solid #e3edf8}
+.nova-site-header{height:104px;background:#fff;position:sticky;top:0;z-index:60;border-bottom:1px solid #e3edf8}
 .nova-header-inner{max-width:1280px;height:100%;margin:auto;padding:0 24px;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center}
 .nova-icon-button{display:inline-flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:48px;min-height:48px;border-radius:12px;border:0;background:transparent;color:#123b63;cursor:pointer}
 .nova-icon-button svg{width:24px;height:24px;flex-shrink:0}.nova-icon-button:hover{background:#eef6ff}.nova-menu-trigger{justify-self:start}.nova-header-brand{justify-self:center}.nova-header-brand img{display:block;width:84px;height:84px;object-fit:contain}.nova-header-tools{display:flex;justify-self:end;gap:12px}.nova-header-tools .nova-icon-button{border:1px solid #dceafb}
@@ -17,3 +17,13 @@
 @media(max-width:1100px) and (min-width:701px){.nova-approved-hero{min-height:430px}.nova-hero-copy{width:47%;margin-right:7%;padding:0}.nova-hero-copy h1{font-size:35px}.nova-hero-lead{font-size:14px}.nova-hero-actions{margin-top:20px;gap:12px}.nova-primary,.nova-secondary{font-size:13px;padding:12px 18px}.nova-eyebrow{font-size:14px}}
 @media(max-width:700px){.nova-site-header{height:86px}.nova-header-inner{padding:0 16px;grid-template-columns:1fr auto 1fr}.nova-header-brand img{width:66px;height:66px}.nova-icon-button{width:44px;min-width:44px;height:44px;min-height:44px}.nova-header-tools{gap:0}.nova-header-tools .nova-icon-button{border:0}.nova-header-tools svg{width:21px}.nova-approved-hero{height:820px;min-height:0;aspect-ratio:auto;background:#eef6ff}.nova-hero-background{top:auto;bottom:0;height:405px;object-position:18% bottom}.nova-hero-inner{position:relative;inset:auto;margin:0;padding:28px 24px;display:block}.nova-hero-copy{width:100%;margin:0;padding:0}.nova-hero-copy h1{font-size:37px;line-height:1.65;letter-spacing:-1px}.nova-eyebrow{font-size:14px}.nova-hero-lead{font-size:14px;line-height:2;margin-top:18px}.nova-hero-lead br{display:none}.nova-hero-actions{margin-top:24px;gap:10px}.nova-primary,.nova-secondary{font-size:12px;padding:12px 16px;gap:10px;min-height:50px}}
 @media(prefers-reduced-motion:no-preference){.nova-icon-button,.nova-menu-panel a,.nova-primary,.nova-secondary{transition:background .15s,border-color .15s}}
+
+/* Navbar stays in document flow and visible at every scroll position. */
+.landing-v2d{--nova-header-height:104px}
+.landing-v2d [id]{scroll-margin-top:calc(var(--nova-header-height) + 20px)}
+@media(max-width:700px){.landing-v2d{--nova-header-height:86px}}
+
+/* Footer uses the exact N artwork already approved in the centered navbar. */
+.landing-v2d .nova-footer-brand{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:12px}
+.landing-v2d .nova-footer-brand img{display:block;width:84px;height:84px;object-fit:contain}
+.landing-v2d .nova-footer-brand:focus-visible{outline:3px solid #176bce;outline-offset:4px}

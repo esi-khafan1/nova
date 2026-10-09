@@ -1,0 +1,22 @@
+/* Owner-approved white/open benefits. Kept stable while the following section is explored. */
+.landing-v2d .nova-why#services{--why-ink:#123b63;--why-secondary:#315a7d;--why-blue:#176bce;--why-line:#dceafb;--why-canvas:#fff;background:var(--why-canvas);color:var(--why-ink);min-height:calc(100svh - var(--nova-header-height));padding:72px 24px;display:flex;align-items:center}
+.nova-why-inner{width:min(1120px,100%);margin-inline:auto}
+.nova-why-heading{text-align:center;margin:0 auto 48px;max-width:900px}
+.nova-why-eyebrow{margin:0 0 16px;color:var(--why-blue);font-size:15px;font-weight:650;line-height:1.8}
+.nova-why-heading h2{margin:0;color:var(--why-ink);font-size:38px;font-weight:850;line-height:1.7;letter-spacing:-1px}
+.nova-why-intro{margin:16px auto 0;max-width:640px;font-size:16px;line-height:2;color:var(--why-secondary)}
+.nova-why-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:40px;row-gap:40px}
+.nova-why-item{position:relative;cursor:default;min-width:0}
+.nova-why-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--why-blue)}
+.nova-why-icon svg{width:36px;height:36px}
+.nova-why-copy h3{margin:20px 0 12px;font-size:19px;font-weight:750;line-height:1.8;color:var(--why-ink)}
+.nova-why-copy p{margin:0;font-size:15px;line-height:2;color:var(--why-secondary)}
+/* 01 — closest to the reference: airy, open, no fake interactive affordances. */
+.nova-why--open .nova-why-item{text-align:center;padding:16px 12px 24px}
+.nova-why--open .nova-why-icon{margin-inline:auto}
+.nova-why--open .nova-why-item:nth-child(3n + 2) .nova-why-icon{color:#b34800}
+.nova-why--open .nova-why-copy p{max-width:290px;margin-inline:auto}
+
+@media(min-width:1600px){.nova-why-heading h2{font-size:42px}.nova-why-inner{width:min(1200px,100%)}}
+@media(max-width:1000px){.nova-why-grid{gap:24px}.nova-why-copy h3{font-size:17px}}
+@media(max-width:700px){.landing-v2d .nova-why#services{min-height:auto;padding:48px 24px}.nova-why-heading{margin-bottom:32px}.nova-why-eyebrow{font-size:14px;margin-bottom:12px}.nova-why-heading h2{font-size:27px;line-height:1.8;letter-spacing:-.6px}.nova-why-intro{font-size:15px;line-height:2}.nova-why-grid{grid-template-columns:1fr;gap:0}.nova-why-copy h3{font-size:18px;margin-top:0;margin-bottom:8px}.nova-why-copy p{font-size:15px}.nova-why--open .nova-why-item{padding:24px 0;display:flex;gap:20px;text-align:right;border-bottom:1px solid var(--why-line)}.nova-why--open .nova-why-item:last-child{border-bottom:0}.nova-why--open .nova-why-icon{margin:0;width:40px;height:40px}.nova-why--open .nova-why-copy p{max-width:none}}

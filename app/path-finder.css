@@ -1,0 +1,88 @@
+/* Sky uses the user-approved transparent cluster artwork; other previews retain original NOVA geometry. */
+.landing-v2d .nova-path{--path-ink:#123b63;--path-copy:#315a7d;--path-line:#c1d8f1;--path-accent:#176bce;position:relative;isolation:isolate;min-height:calc(100svh - var(--nova-header-height));display:flex;align-items:center;justify-content:center;padding:72px 24px;background:#eef6ff;color:var(--path-ink);overflow:hidden}
+.nova-path-inner{position:relative;z-index:1;width:min(1120px,100%);margin-inline:auto}
+.nova-path-stars{position:absolute;inset:0;z-index:0;pointer-events:none;color:#c7dff9}
+.nova-path-stars svg{position:absolute;opacity:.75}
+.nova-path-stars svg:nth-child(3n){color:#ffd1a5;opacity:.85}
+.nova-path-panel{width:min(800px,100%);margin-inline:auto;border:2px solid #b8d5f6;border-radius:28px;background:#fff;box-shadow:0 12px 40px rgba(18,59,99,.045);min-height:510px;padding:56px}
+.nova-path-content{text-align:center;min-width:0}
+.nova-path-symbol{width:64px;height:64px;margin:0 auto 28px;color:var(--path-accent)}
+.nova-path-symbol svg{width:100%;height:100%}
+.nova-path-heading{margin:0 auto 32px;text-align:center;max-width:840px}
+.nova-path-eyebrow{font-size:14px;line-height:1.9;font-weight:650;color:var(--path-accent);margin:0 0 12px}
+.nova-path-heading h2{font-size:34px;line-height:1.7;font-weight:850;letter-spacing:-.8px;color:var(--path-ink);margin:0;outline:none}
+.nova-path-heading h2:focus-visible{outline:2px solid var(--path-accent);outline-offset:8px;border-radius:4px}
+.nova-path-subtitle{font-size:16px;line-height:2.1;color:var(--path-copy);margin:16px 0 0}
+.nova-path-primary,.nova-path-secondary{min-height:54px;min-width:145px;display:inline-flex;justify-content:center;align-items:center;gap:20px;padding:12px 24px;border-radius:12px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.nova-path-primary{background:#ff7a1a;color:#123b63;border:1px solid #ff7a1a}
+.nova-path-primary:hover:not(:disabled){background:#ff8e3b;border-color:#ff8e3b}
+.nova-path-primary:disabled{color:#735034;background:#ffe3cc;border-color:#efc8a9;cursor:not-allowed}
+.nova-path-secondary{border:1px solid #c1d8f1;background:#fff;color:#123b63}
+.nova-path-secondary:hover{background:#eef6ff}
+.nova-path-primary:focus-visible,.nova-path-secondary:focus-visible,.nova-path-resource-link:focus-visible{outline:3px solid #176bce;outline-offset:4px}
+.nova-path-panel.is-intro .nova-path-primary{margin-top:20px;min-width:178px}
+.nova-path-footnote{font-size:14px;line-height:1.9;color:#315a7d;margin:20px 0 0}
+.nova-path-steps{margin:0 0 32px;padding:0;display:flex;justify-content:center;gap:24px;list-style:none;color:#315a7d}
+.nova-path-steps li{display:flex;gap:8px;align-items:center;font-size:14px;line-height:1.8}
+.nova-path-steps li>span{width:28px;height:28px;display:inline-flex;justify-content:center;align-items:center;border:1px solid #c1d8f1;border-radius:50%;color:#315a7d;flex-shrink:0}
+.nova-path-steps li.is-active{color:#176bce;font-weight:700}
+.nova-path-steps li.is-active>span{background:#e8f3ff;border-color:#176bce;color:#176bce}
+.nova-path-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;border:0;padding:0;margin:0;min-width:0}
+.nova-path-choice{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;min-height:140px;border:1.5px solid #c1d8f1;border-radius:16px;background:#fff;padding:24px 12px;cursor:pointer;color:#123b63}
+/* Pointer hover is neutral; selection stays blue and touch has no sticky hover. */
+@media(hover:hover) and (pointer:fine){.nova-path-choice:not(.is-selected):hover{background:#fafafa}}
+.nova-path-choice.is-selected{background:#e8f3ff;border-color:#176bce}
+.nova-path-choice strong{font-size:16px;font-weight:700;line-height:1.7}
+.nova-path-choice input{position:absolute;opacity:0;width:1px;height:1px}
+.nova-path-choice:has(input:focus-visible){outline:3px solid #176bce;outline-offset:4px}
+.nova-path-choice-mark{height:40px;font-size:32px;font-weight:750;color:#176bce;display:flex;align-items:center;justify-content:center}
+.nova-path-choice-mark svg{width:34px;height:34px}
+.nova-path-math{font-family:Georgia,serif;font-size:32px}
+.nova-path-actions{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:32px}
+.nova-path-result dl{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0}
+.nova-path-result dl>div{border:1px solid #c1d8f1;background:#eef6ff;padding:24px 16px;border-radius:16px}
+.nova-path-result dt{font-size:14px;line-height:1.9;color:#315a7d;margin-bottom:8px}
+.nova-path-result dd{margin:0;font-size:22px;line-height:1.9;font-weight:750;color:#123b63}
+.nova-path-preview-note{font-size:14px;line-height:2;color:#315a7d;margin:24px 0 0;padding:16px;border-radius:12px;border:1px solid #f1d1b2;background:#fff7ef}
+.nova-path-resource-link{display:inline-flex;align-items:center;gap:16px;margin-top:20px;font-size:15px;color:#176bce;font-weight:700;min-height:44px}
+.nova-path-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+/* 02 — a warm split composition with a quiet identity panel. */
+.landing-v2d .nova-path--peach{background:#fff2e8}
+.nova-path--peach .nova-path-stars{color:#f3ccaa}
+.nova-path--peach .nova-path-stars svg:nth-child(3n){color:#c5dcf7}
+.nova-path--peach .nova-path-panel{border:1px solid #efcfb5;border-radius:24px;width:min(1000px,100%)}
+.nova-path--peach .nova-path-panel.is-intro{display:flex;flex-direction:row-reverse;gap:48px;align-items:center;padding:48px;min-height:470px}
+.nova-path-identity{width:31%;padding:40px 16px;background:#fff4ea;border-radius:20px;min-height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.nova-path-orbit{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center;border:1px solid #f0ceb2;border-radius:50%;color:#176bce}
+.nova-path-orbit>svg:first-child{width:82px;height:82px}
+.nova-path-orbit-star{position:absolute;color:#b34800}
+.nova-path-orbit-star.one{width:32px;top:-6px;left:6px}.nova-path-orbit-star.two{width:18px;bottom:8px;right:8px}.nova-path-orbit-star.three{width:12px;top:30px;right:-6px;color:#176bce}
+.nova-path-identity p{font-size:14px;line-height:2.2;text-align:center;color:#315a7d;margin:28px 0 0}.nova-path-identity strong{font-size:16px;color:#123b63}
+.nova-path--peach .is-intro .nova-path-content{flex:1;text-align:right}
+.nova-path--peach .is-intro .nova-path-heading{text-align:right}
+.nova-path--peach .is-intro .nova-path-heading h2{font-size:32px}
+.nova-path--peach .is-intro .nova-path-symbol{width:48px;height:48px;margin-right:0;margin-left:auto}
+/* 03 — an open heading with a panoramic two-tone horizon behind the panel. */
+.landing-v2d .nova-path--horizon{background:linear-gradient(120deg,#fff1e5 0%,#fff8f1 22%,#ffffff 44%,#eef6ff 64%,#e3f1ff 100%)}
+.nova-path--horizon .nova-path-stars{color:#a7cbee}
+.nova-path--horizon .nova-path-inner>.nova-path-heading{margin-bottom:40px}
+.nova-path--horizon .nova-path-panel{min-height:0;max-width:920px;border:1px solid #b8d5f6;border-radius:24px;padding:40px 48px}
+.nova-path--horizon .is-intro .nova-path-symbol{display:none}
+.nova-path-intro-points{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-bottom:24px}
+.nova-path-intro-points p{margin:0;padding:16px 8px;font-size:16px;line-height:1.8;font-weight:650;display:flex;align-items:center;flex-direction:column;gap:16px;color:#123b63}
+.nova-path-intro-points p+p{border-inline-start:1px solid #d9e8f7}
+.nova-path-intro-points span{font-size:30px;font-weight:750;line-height:1.5;color:#176bce}
+.nova-path-intro-points svg{width:36px;height:44px;color:#b34800}
+@media(max-width:1000px){.nova-path--peach .nova-path-panel.is-intro{padding:32px;gap:32px}.nova-path--peach .is-intro .nova-path-heading h2{font-size:28px}.nova-path-identity{width:29%}.nova-path-panel{padding:40px}.nova-path-heading h2{font-size:30px}}
+@media(max-width:700px){.landing-v2d .nova-path{min-height:calc(100svh - var(--nova-header-height));padding:48px 20px;overflow:clip}.nova-path-panel,.nova-path--peach .nova-path-panel,.nova-path--horizon .nova-path-panel{padding:32px 20px;min-height:0;border-radius:20px}.nova-path-heading{margin-bottom:24px}.nova-path-heading h2,.nova-path--peach .is-intro .nova-path-heading h2{font-size:26px;line-height:1.8}.nova-path-subtitle{font-size:15px;line-height:2}.nova-path-symbol{width:52px;height:52px;margin-bottom:24px}.nova-path-panel.is-intro .nova-path-primary{margin-top:16px}.nova-path-footnote{font-size:14px}.nova-path-stars svg{opacity:.6;max-width:38px;max-height:38px}.nova-path-steps{gap:12px;margin-bottom:24px}.nova-path-steps li{font-size:14px;gap:6px;flex-direction:column;text-align:center;flex:1;min-width:0}.nova-path-steps li>span{width:24px;height:24px}.nova-path-choices{gap:10px}.nova-path-choice{min-height:118px;padding:20px 8px;gap:12px;border-radius:12px}.nova-path-choice-mark{font-size:27px;height:32px}.nova-path-choice strong{font-size:14px}.field-choices{grid-template-columns:1fr;gap:12px}.field-choices .nova-path-choice{flex-direction:row;justify-content:flex-start;padding:16px 24px;min-height:74px;gap:20px}.field-choices .nova-path-choice strong{font-size:16px}.nova-path-actions{gap:12px;margin-top:24px}.nova-path-primary,.nova-path-secondary{font-size:14px;min-width:0;min-height:52px;padding:12px 18px;gap:10px}.nova-path-result dl{gap:12px}.nova-path-result dl>div{padding:20px 12px}.nova-path-result dd{font-size:17px}.nova-path--peach .nova-path-panel.is-intro{display:block;padding:32px 24px}.nova-path--peach .is-intro .nova-path-content,.nova-path--peach .is-intro .nova-path-heading{text-align:center}.nova-path--peach .is-intro .nova-path-symbol{margin-inline:auto}.nova-path-identity{display:none}.nova-path--horizon .nova-path-inner>.nova-path-heading{margin-bottom:28px}.nova-path-intro-points{gap:12px;margin-bottom:24px}.nova-path-intro-points p{font-size:14px;padding:8px 0;gap:12px}.nova-path-intro-points span{font-size:24px}.nova-path-intro-points svg{width:28px;height:36px}}
+@media(prefers-reduced-motion:no-preference){.nova-path-choice,.nova-path-primary,.nova-path-secondary{transition:background .15s,border-color .15s}}
+
+/* Keep the intro headline balanced on narrow screens; no orphaned final word. */
+.nova-path-title-tail{white-space:nowrap}
+@media(max-width:700px){.nova-path--sky .nova-path-title-tail,.nova-path--peach .nova-path-title-tail{display:block}}
+@media(min-width:701px){.nova-path--peach .is-intro .nova-path-symbol{display:none}}
+
+/* Approved gray artwork is decorative only; keep its internal rhythm intact. */
+.nova-path-approved-clusters{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("/images/approved-star-clusters.svg");background-repeat:no-repeat;background-position:center;background-size:cover;opacity:.15}
+.nova-path-approved-clusters>span{display:none}
+@media(max-width:700px){.nova-path-approved-clusters{background-image:none}.nova-path-approved-clusters>span{display:block;position:absolute;background-image:url("/images/approved-star-clusters.svg");background-repeat:no-repeat;background-size:760px auto}.nova-path-approved-clusters .cluster-left{width:320px;height:300px;left:-150px;top:55%;background-position:-45px -155px}.nova-path-approved-clusters .cluster-upper{width:240px;height:200px;right:-100px;top:6%;background-position:-430px -45px}.nova-path-approved-clusters .cluster-lower{width:190px;height:160px;right:-80px;bottom:2%;background-position:-520px -300px}}

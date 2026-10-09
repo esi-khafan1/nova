@@ -16,6 +16,10 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: { canonical: "https://nova-academy.ir" },
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "96x96" }],
+    shortcut: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,0 +1,38 @@
+/* Shared equal-card geometry; themes change colors only. */
+.landing-v2d .nova-magazine{--mag-surface:#fff;--mag-card:#fff;--mag-ink:#123b63;--mag-copy:#315a7d;--mag-line:#d6e6f7;--mag-blue:#176bce;--mag-hover:#8dbbef;--mag-button:#fff;--mag-button-hover:#eef6ff;--mag-tag-bg:#eef6ff;--mag-tag-text:#176bce;--mag-exam-bg:#fff1e5;--mag-exam-text:#a34300;--mag-focus:#176bce;--mag-cover:#eef6ff;--mag-cover-ink:#176bce;padding:88px 24px;background:var(--mag-surface);color:var(--mag-ink);border-bottom:1px solid var(--mag-line)}
+.nova-mag-container{width:min(1120px,100%);margin-inline:auto}
+.nova-mag-header{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;margin-bottom:40px}
+.nova-mag-eyebrow{font-size:14px;line-height:1.9;font-weight:650;color:var(--mag-blue);margin:0 0 12px}
+.nova-mag-header h2{font-size:38px;line-height:1.7;font-weight:850;color:var(--mag-ink);margin:0;letter-spacing:-.7px}
+.nova-mag-header h2 span{color:var(--mag-blue)}
+.nova-mag-description{font-size:16px;line-height:2;color:var(--mag-copy);margin:12px 0 0}
+.nova-mag-all{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:48px;padding:10px 20px;border:1px solid var(--mag-line);border-radius:12px;color:var(--mag-blue);background:var(--mag-button);font-weight:700;font-size:15px;white-space:nowrap}
+.nova-mag-all:hover{background:var(--mag-button-hover)}
+.nova-mag-layout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.nova-mag-article{min-width:0}
+.nova-mag-card{display:flex;flex-direction:column;height:100%;border:1px solid var(--mag-line);border-radius:20px;overflow:hidden;background:var(--mag-card);color:var(--mag-ink)}
+.nova-mag-cover{position:relative;aspect-ratio:16/10;background:var(--mag-cover);overflow:hidden;flex-shrink:0}
+.nova-mag-cover img{width:100%;height:100%;object-fit:cover}
+.nova-mag-cover-fallback{width:100%;height:100%;display:grid;place-items:center;color:var(--mag-cover-ink);background:var(--mag-cover)}.nova-mag-cover-fallback svg{width:64px;height:64px}
+.nova-mag-body{display:flex;flex-direction:column;flex:1;min-width:0;padding:24px}
+.nova-mag-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.nova-mag-category{padding:3px 10px;border-radius:6px;background:var(--mag-tag-bg);color:var(--mag-tag-text);font-size:14px;font-weight:650;line-height:1.8}
+.nova-mag-category.is-exam{background:var(--mag-exam-bg);color:var(--mag-exam-text)}
+.nova-mag-card h3{margin:0;color:var(--mag-ink);font-size:20px;line-height:1.85;font-weight:750;overflow-wrap:anywhere}
+.nova-mag-summary{font-size:15px;line-height:2;color:var(--mag-copy);margin:12px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.nova-mag-card-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:auto;padding-top:24px;font-size:14px;line-height:1.8;color:var(--mag-copy)}
+.nova-mag-read{display:inline-flex;align-items:center;gap:10px;font-weight:700;color:var(--mag-blue);min-height:24px}
+.nova-mag-card:hover{border-color:var(--mag-hover)}.nova-mag-card:hover h3{color:var(--mag-blue)}
+.nova-mag-card:focus-visible,.nova-mag-all:focus-visible,.nova-mag-empty a:focus-visible{outline:3px solid var(--mag-focus);outline-offset:4px}
+.nova-mag-empty{border:1px dashed var(--mag-line);border-radius:20px;padding:48px 24px;background:var(--mag-card);text-align:center;font-size:16px;line-height:2;color:var(--mag-copy)}.nova-mag-empty p{margin:0 0 16px}.nova-mag-empty a{display:inline-flex;align-items:center;gap:16px;min-height:44px;color:var(--mag-blue);font-weight:700}
+/* Sky: continuity with the accepted path finder, clear white reading surfaces. */
+.landing-v2d .nova-magazine--sky{--mag-surface:#eef6ff;--mag-line:#bfd8f2;--mag-button:#176bce;--mag-button-hover:#1258ad}
+.nova-magazine--sky .nova-mag-all{color:#fff;border-color:#176bce}
+/* Warm: cream surface, peach lines and restrained orange editorial accents. */
+.landing-v2d .nova-magazine--warm{--mag-surface:#fff8f1;--mag-line:#f0d4bd;--mag-blue:#a34300;--mag-hover:#d2915f;--mag-button:#ff7a1a;--mag-button-hover:#ff8e3b;--mag-tag-bg:#fff1e5;--mag-tag-text:#a34300;--mag-cover:#fff1e5;--mag-cover-ink:#a34300}
+.nova-magazine--warm .nova-mag-all{color:#0e3154;border-color:#ff7a1a}
+/* Navy: fixed branded dark section, without changing the rest of the site. */
+.landing-v2d .nova-magazine--navy{--mag-surface:#123b63;--mag-card:#194970;--mag-ink:#fff;--mag-copy:#d4e7fb;--mag-line:#396787;--mag-blue:#b8d9ff;--mag-hover:#a7cbf2;--mag-button:#194970;--mag-button-hover:#25577e;--mag-tag-bg:#cfe3fb;--mag-tag-text:#123b63;--mag-exam-bg:#ffe3cc;--mag-exam-text:#7d3300;--mag-focus:#ffb978;--mag-cover:#25577e;--mag-cover-ink:#cfe3fb}
+@media(max-width:1100px){.nova-mag-header h2{font-size:34px}.nova-mag-body{padding:20px}.nova-mag-layout{gap:20px}}
+@media(max-width:700px){.landing-v2d .nova-magazine{padding:56px 24px}.nova-mag-header{display:block;margin-bottom:32px}.nova-mag-header h2{font-size:28px;line-height:1.8}.nova-mag-description{font-size:15px}.nova-mag-all{margin-top:20px;font-size:14px}.nova-mag-layout{grid-template-columns:1fr;gap:24px}.nova-mag-body{padding:20px}.nova-mag-card h3{font-size:21px}.nova-mag-card-footer{padding-top:20px}.nova-mag-empty{padding:32px 20px}}
+@media(prefers-reduced-motion:no-preference){.nova-mag-card,.nova-mag-card h3,.nova-mag-all{transition:border-color .15s,color .15s,background .15s}}
