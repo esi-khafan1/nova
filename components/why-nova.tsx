@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 
-export type WhyNovaVariant = "open" | "cards" | "navy";
-
 const benefits = [
   { icon: "plan", title: "برنامه‌ای متناسب با تو", text: "برنامه هفتگی با توجه به پایه، هدف و شرایط درسی تو تنظیم می‌شود." },
   { icon: "advisor", title: "همراهی مشاور", text: "برای تصمیم‌های درسی و مسیر مطالعه، یک مشاور کنارت است." },
@@ -24,8 +22,8 @@ function BenefitIcon({ name }: { name: string }) {
 }
 
 /** Informational benefits only: deliberately no links, buttons or clickable-card styling. */
-export function WhyNova({ variant = "open" }: { variant?: WhyNovaVariant }) {
-  return <section id="services" className={`nova-why nova-why--${variant}`} aria-labelledby="nova-why-title" data-design={variant}>
+export function WhyNova() {
+  return <section id="services" className="nova-why nova-why--open" aria-labelledby="nova-why-title" data-design="open">
     <div className="nova-why-inner">
       <header className="nova-why-heading">
         <p className="nova-why-eyebrow">همراه مسیر تو، از برنامه تا پیشرفت</p>
@@ -33,13 +31,11 @@ export function WhyNova({ variant = "open" }: { variant?: WhyNovaVariant }) {
         <p className="nova-why-intro">چون مسیر درس خواندن، با یک برنامه روشن و همراهی درست ساده‌تر می‌شود.</p>
       </header>
       <div className="nova-why-grid">
-        {benefits.map((item, index) => <article className="nova-why-item" key={item.icon}>
+        {benefits.map((item) => <article className="nova-why-item" key={item.icon}>
           <div className="nova-why-icon"><BenefitIcon name={item.icon} /></div>
-          {variant !== "open" && <span className="nova-why-number" aria-hidden="true">{["۰۱", "۰۲", "۰۳", "۰۴", "۰۵", "۰۶"][index]}</span>}
           <div className="nova-why-copy"><h3>{item.title}</h3><p>{item.text}</p></div>
         </article>)}
       </div>
-      {variant === "navy" && <p className="nova-why-signoff">برنامه‌ریزی روشن <span aria-hidden="true">·</span> همراهی انسانی <span aria-hidden="true">·</span> پیشرفت قابل مشاهده</p>}
     </div>
   </section>;
 }

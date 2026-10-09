@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingHero } from "@/components/landing-hero";
-import { WhyNova, type WhyNovaVariant } from "@/components/why-nova";
+import { WhyNova } from "@/components/why-nova";
+import { PathFinder, type PathFinderDesign } from "@/components/path-finder";
 import {
   findFirstImage,
   formatPersianDate,
@@ -14,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import "./landing-v2d.css";
 import "./landing-approved.css";
 import "./why-nova.css";
+import "./path-finder.css";
 
 type LatestResource = {
   id: string;
@@ -34,7 +36,7 @@ const steps = [
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
-  const whyVariant: WhyNovaVariant = params.why === "cards" || params.why === "navy" ? params.why : "open";
+  const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
   const supabase = await createClient();
   const { data } = await supabase
     .from("resources")
@@ -76,7 +78,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         </div>
       </section>
 
-      <WhyNova variant={whyVariant} />
+      <WhyNova />
+
+      <PathFinder design={pathDesign} />
 
       <section className="section how" id="how">
         <div className="container">

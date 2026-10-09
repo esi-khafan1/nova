@@ -1,4 +1,4 @@
-/* Three isolated second-fold directions, selectable on the feature preview with ?why=. */
+/* Owner-approved white/open benefits. Kept stable while the following section is explored. */
 .landing-v2d .nova-why#services{--why-ink:#123b63;--why-secondary:#315a7d;--why-blue:#176bce;--why-line:#dceafb;--why-canvas:#fff;background:var(--why-canvas);color:var(--why-ink);min-height:calc(100svh - var(--nova-header-height));padding:72px 24px;display:flex;align-items:center}
 .nova-why-inner{width:min(1120px,100%);margin-inline:auto}
 .nova-why-heading{text-align:center;margin:0 auto 48px;max-width:900px}
@@ -16,31 +16,7 @@
 .nova-why--open .nova-why-icon{margin-inline:auto}
 .nova-why--open .nova-why-item:nth-child(3n + 2) .nova-why-icon{color:#b34800}
 .nova-why--open .nova-why-copy p{max-width:290px;margin-inline:auto}
-/* 02 — warm cards that pick up the orange/blue of the existing hero. */
-.landing-v2d .nova-why--cards#services{--why-canvas:#fff8f2;padding-block:64px}
-.nova-why--cards .nova-why-grid{gap:24px}
-.nova-why--cards .nova-why-item{padding:28px;border:1px solid #e0ebf8;border-radius:20px;background:#fff;min-height:226px}
-.nova-why--cards .nova-why-item:nth-child(2),.nova-why--cards .nova-why-item:nth-child(6){background:#eef6ff}
-.nova-why--cards .nova-why-item:nth-child(3),.nova-why--cards .nova-why-item:nth-child(4){background:#fff0e4;border-color:#f3d7bd}
-.nova-why--cards .nova-why-icon{width:52px;height:52px;border-radius:14px;background:#e7f2ff}
-.nova-why--cards .nova-why-item:nth-child(3) .nova-why-icon,.nova-why--cards .nova-why-item:nth-child(4) .nova-why-icon{color:#b34800;background:#ffe2c9}
-.nova-why-number{position:absolute;top:34px;left:28px;direction:ltr;font-size:15px;font-weight:600;color:#315a7d}
-.nova-why--cards .nova-why-copy h3{margin-top:20px}
-/* 03 — editorial navy, a deliberate contrast to the light first fold. */
-.landing-v2d .nova-why--navy#services{--why-canvas:#123b63;--why-ink:#fff;--why-secondary:#dceafb;--why-blue:#a4cfff;--why-line:#48739a;padding-block:64px}
-.nova-why--navy .nova-why-heading{max-width:none;text-align:right;display:grid;grid-template-columns:1.4fr 1fr;column-gap:48px;align-items:end;margin-bottom:40px}
-.nova-why--navy .nova-why-eyebrow{grid-column:1/-1;margin-bottom:12px;color:#ffc898}
-.nova-why--navy .nova-why-heading h2{font-size:36px}
-.nova-why--navy .nova-why-intro{margin:0;max-width:400px}
-.nova-why--navy .nova-why-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
-.nova-why--navy .nova-why-item{padding:28px 24px 32px;border-top:1px solid var(--why-line);border-inline-start:1px solid var(--why-line)}
-.nova-why--navy .nova-why-item:nth-child(3n+1){border-inline-start:0;padding-inline-start:0}
-.nova-why--navy .nova-why-item:nth-child(3n){padding-inline-end:0}
-.nova-why--navy .nova-why-number{color:#ffc898;top:38px;left:24px}
-.nova-why--navy .nova-why-item:nth-child(3n) .nova-why-number{left:0}
-.nova-why--navy .nova-why-copy h3{margin-top:20px}
-.nova-why-signoff{margin:24px 0 0;padding-top:24px;border-top:1px solid var(--why-line);font-size:15px;line-height:2;color:#dceafb;text-align:center;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
-.nova-why-signoff span{color:#ffc898}
+
 @media(min-width:1600px){.nova-why-heading h2{font-size:42px}.nova-why-inner{width:min(1200px,100%)}}
-@media(max-width:1000px){.nova-why-grid{gap:24px}.nova-why-copy h3{font-size:17px}.nova-why--cards .nova-why-item{padding:24px}.nova-why--navy .nova-why-heading{display:block}.nova-why--navy .nova-why-intro{max-width:600px;margin-top:16px}.nova-why--navy .nova-why-heading h2{font-size:32px}}
-@media(max-width:700px){.landing-v2d .nova-why#services{min-height:auto;padding:48px 24px}.nova-why-heading{margin-bottom:32px}.nova-why-eyebrow{font-size:14px;margin-bottom:12px}.nova-why-heading h2,.nova-why--navy .nova-why-heading h2{font-size:27px;line-height:1.8;letter-spacing:-.6px}.nova-why-intro{font-size:15px;line-height:2}.nova-why-grid{grid-template-columns:1fr;gap:0}.nova-why-copy h3{font-size:18px;margin-top:0;margin-bottom:8px}.nova-why-copy p{font-size:15px}.nova-why--open .nova-why-item{padding:24px 0;display:flex;gap:20px;text-align:right;border-bottom:1px solid var(--why-line)}.nova-why--open .nova-why-item:last-child{border-bottom:0}.nova-why--open .nova-why-icon{margin:0;width:40px;height:40px}.nova-why--open .nova-why-copy p{max-width:none}.nova-why--cards .nova-why-grid{gap:16px}.nova-why--cards .nova-why-item{padding:24px;min-height:0}.nova-why--cards .nova-why-number{top:34px;left:24px}.nova-why--cards .nova-why-copy h3{margin-top:16px}.nova-why--navy .nova-why-grid{grid-template-columns:1fr}.nova-why--navy .nova-why-item,.nova-why--navy .nova-why-item:nth-child(3n+1),.nova-why--navy .nova-why-item:nth-child(3n){padding:24px 0;border-inline-start:0}.nova-why--navy .nova-why-number,.nova-why--navy .nova-why-item:nth-child(3n) .nova-why-number{top:36px;left:0}.nova-why--navy .nova-why-copy h3{margin-top:16px}.nova-why--navy .nova-why-heading{margin-bottom:32px}.nova-why-signoff{display:block;font-size:14px;margin-top:12px;padding-top:20px}.nova-why-signoff span{margin-inline:8px}}
+@media(max-width:1000px){.nova-why-grid{gap:24px}.nova-why-copy h3{font-size:17px}}
+@media(max-width:700px){.landing-v2d .nova-why#services{min-height:auto;padding:48px 24px}.nova-why-heading{margin-bottom:32px}.nova-why-eyebrow{font-size:14px;margin-bottom:12px}.nova-why-heading h2{font-size:27px;line-height:1.8;letter-spacing:-.6px}.nova-why-intro{font-size:15px;line-height:2}.nova-why-grid{grid-template-columns:1fr;gap:0}.nova-why-copy h3{font-size:18px;margin-top:0;margin-bottom:8px}.nova-why-copy p{font-size:15px}.nova-why--open .nova-why-item{padding:24px 0;display:flex;gap:20px;text-align:right;border-bottom:1px solid var(--why-line)}.nova-why--open .nova-why-item:last-child{border-bottom:0}.nova-why--open .nova-why-icon{margin:0;width:40px;height:40px}.nova-why--open .nova-why-copy p{max-width:none}}
