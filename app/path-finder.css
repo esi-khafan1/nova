@@ -29,7 +29,8 @@
 .nova-path-steps li.is-active>span{background:#e8f3ff;border-color:#176bce;color:#176bce}
 .nova-path-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;border:0;padding:0;margin:0;min-width:0}
 .nova-path-choice{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;min-height:140px;border:1.5px solid #c1d8f1;border-radius:16px;background:#fff;padding:24px 12px;cursor:pointer;color:#123b63}
-.nova-path-choice:hover{background:#f3f9ff;border-color:#176bce}
+/* Pointer hover is neutral; selection stays blue and touch has no sticky hover. */
+@media(hover:hover) and (pointer:fine){.nova-path-choice:not(.is-selected):hover{background:#fafafa}}
 .nova-path-choice.is-selected{background:#e8f3ff;border-color:#176bce}
 .nova-path-choice strong{font-size:16px;font-weight:700;line-height:1.7}
 .nova-path-choice input{position:absolute;opacity:0;width:1px;height:1px}
