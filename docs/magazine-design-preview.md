@@ -1,12 +1,7 @@
-# NOVA latest magazine design previews
+# NOVA latest magazine theme previews
 
-Removed the entire homepage four-step “از ثبت‌نام تا یک برنامه قابل اجرا” section and its unused CSS/data. Footer programming anchor now points to the retained path finder.
+The user accepted the structure of option 1: exactly three equal-width/equal-height cards in one desktop row. All themes now share that geometry, typography, real articles, crops, date metadata and single-column mobile layout. Removed lead/secondary hierarchy entirely.
 
-Three server-rendered layouts selectable by `?mag=cards|editorial|digest#mag`:
-1. White minimal three-card grid (default).
-2. Warm cream editorial layout, newest story large and two compact stories.
-3. Pale-blue open digest with lead story and ruled thumbnail list.
+Query themes: `?mag=cards#mag` keeps the white baseline; `?mag=sky#mag` is pale blue + white cards with blue CTA; `?mag=warm#mag` is cream + white cards with peach borders/orange CTA; `?mag=navy#mag` is a fixed navy section with slightly lighter navy cards and high-contrast text. Only theme colors change. The rest of the landing theme remains fixed.
 
-All use the same real, latest three published Supabase resources, dates, cover images and `/mag/:id` links. No new articles, invented metadata, fake reading times, newsletter forms, filters or backend writes. A real empty state and image-free cover fallback are included. Alt is empty on redundant decorative cover images because the adjacent article title labels the single link. Native article/date/headings and keyboard focus. Image uses Next Image unoptimized to preserve existing remote URLs without new provider config.
-
-Hero, sticky nav, accepted white benefits and approved star selector are unchanged. Preview only, no main merge or production publication.
+The four-step section remains removed. Accepted hero/sticky header, white benefits and approved gray-star selector are retained. Real latest three published Supabase resources and `/mag/:id` links only; no backend writes, fabricated metadata or publishing changes. Empty and cover-free fallback remain included. Draft PR24 only; no main merge or production deployment.

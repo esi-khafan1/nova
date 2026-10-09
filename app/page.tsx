@@ -15,7 +15,7 @@ import "./magazine-latest.css";
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
-  const magDesign: MagazineDesign = params.mag === "editorial" || params.mag === "digest" ? params.mag : "cards";
+  const magDesign: MagazineDesign = params.mag === "sky" || params.mag === "warm" || params.mag === "navy" ? params.mag : "cards";
   const supabase = await createClient();
   const { data } = await supabase
     .from("resources")
