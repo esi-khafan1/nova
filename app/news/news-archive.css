@@ -1,0 +1,206 @@
+/* Dedicated archive layout; scoped so magazine and landing styles stay untouched. */
+.news-archive .news-archive-hero {
+  padding: 48px 0 56px;
+}
+.news-archive .news-archive-hero::after {
+  display: none;
+}
+.news-archive-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  color: #704b36;
+  font-size: 14px;
+}
+.news-archive .news-archive-breadcrumb span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #704b36;
+}
+.news-archive-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.news-archive-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 24px;
+  color: #9d3f06;
+  font-size: 14px;
+  font-weight: 700;
+}
+.news-archive .mag-content {
+  padding-block: 40px 80px;
+}
+.news-archive-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.news-archive-list-heading h2 {
+  font-size: 24px;
+  margin: 0;
+  color: #14263b;
+}
+.news-archive-list-heading p {
+  color: #704b36;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.9;
+}
+.news-archive .news-archive-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.news-archive .news-archive-card {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  box-shadow: none;
+  transition: border-color 0.15s;
+}
+.news-archive .news-archive-card:hover {
+  transform: none;
+  border-color: #c87339;
+  box-shadow: none;
+}
+.news-archive .news-archive-card.is-lead {
+  grid-column: 1/-1;
+  grid-template-columns: 1.05fr 1fr;
+  grid-template-rows: auto;
+}
+.news-archive .news-archive-cover {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 3/2;
+  object-fit: cover;
+  object-position: center bottom;
+}
+.news-archive .is-lead .news-archive-cover {
+  height: 100%;
+  min-height: 320px;
+  aspect-ratio: auto;
+  object-position: left bottom;
+}
+.news-archive .news-archive-card-body {
+  padding: 32px;
+}
+.news-archive .is-lead .news-archive-card-body {
+  justify-content: center;
+  padding: 40px;
+}
+.news-archive .news-archive-meta {
+  gap: 12px;
+  font-size: 14px;
+  color: #704b36;
+  line-height: 1.8;
+}
+.news-archive .news-archive-meta span,
+.news-archive .news-archive-meta time {
+  font-size: 14px;
+}
+.news-archive .news-archive-meta .news-archive-featured-label {
+  color: #9d3f06;
+  background: #fff1e5;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-weight: 750;
+}
+.news-archive .news-archive-card h2 {
+  font-size: 25px;
+  line-height: 1.8;
+  margin: 16px 0 12px;
+  overflow-wrap: anywhere;
+}
+.news-archive .is-lead h2 {
+  font-size: 30px;
+}
+.news-archive .news-archive-card p {
+  font-size: 16px;
+  line-height: 2;
+  margin-bottom: 24px;
+}
+.news-archive .news-archive-readmore {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 14px;
+}
+.news-archive .is-lead .news-archive-readmore {
+  margin-top: 0;
+}
+.news-archive .news-archive-placeholder {
+  font-size: 28px;
+  min-height: 260px;
+  height: auto;
+}
+.news-archive-card:focus-visible,
+.news-archive-back:focus-visible,
+.news-archive-breadcrumb a:focus-visible {
+  outline: 3px solid #176bce;
+  outline-offset: 4px;
+}
+@media (max-width: 1000px) {
+  .news-archive .is-lead .news-archive-card-body {
+    padding: 28px;
+  }
+  .news-archive .is-lead h2 {
+    font-size: 26px;
+  }
+  .news-archive .news-archive-card-body {
+    padding: 24px;
+  }
+  .news-archive .news-archive-card h2 {
+    font-size: 22px;
+  }
+}
+@media (max-width: 700px) {
+  .news-archive .news-archive-hero {
+    padding: 24px 0 36px;
+  }
+  .news-archive-breadcrumb {
+    margin-bottom: 20px;
+  }
+  .news-archive .news-archive-hero h1 {
+    font-size: 34px;
+    line-height: 1.7;
+  }
+  .news-archive .news-archive-grid {
+    grid-template-columns: 1fr;
+  }
+  .news-archive .news-archive-card.is-lead {
+    grid-template-columns: 1fr;
+  }
+  .news-archive .is-lead .news-archive-cover {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 3/2;
+  }
+  .news-archive .is-lead .news-archive-card-body {
+    padding: 24px;
+  }
+  .news-archive .is-lead h2 {
+    font-size: 24px;
+  }
+  .news-archive-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .news-archive .mag-content {
+    padding-block: 32px 56px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .news-archive .news-archive-card {
+    transition: none;
+  }
+}
