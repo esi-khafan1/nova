@@ -61,10 +61,20 @@ Before production activation, verify against staging Supabase (mock UI tests can
 
 ## News archive refinement
 
-The `/news` route now has a dedicated archive layout, independent from `KonkurNewsLatest`: a page-level H1, breadcrumb/back link, latest-story spotlight and a full two-column archive. The landing still shows its existing three equal warm cards and its all-news CTA; the archive no longer repeats that CTA. All additional CSS is scoped under `.news-archive`; existing magazine/global styles are unchanged.
+The initial `/news` refinement used a dedicated archive layout, independent from `KonkurNewsLatest`: a page-level H1, breadcrumb/back link, latest-story spotlight and a full two-column archive. The latest revision below supersedes that spotlight/two-column layout. The landing still shows its existing three equal warm cards and its all-news CTA; the archive no longer repeats that CTA. All additional CSS is scoped under `.news-archive`; existing magazine/global styles are unchanged.
 
 Migration `024_konkur_news_source_images.sql` adds each original Mehr story photograph to the three editorial seeds, with source credit. It preserves existing text, publication dates, status and author, skips records that already have an image, and never modifies counselor-authored news. Images are referenced at their original source URLs, retaining source branding; availability depends on that source.
 
 Archive QA: production build, TypeScript and changed-file lint passed; browser tests checked the landing→archive navigation, missing self-CTA, source images, three detail pages, desktop/tablet/mobile layouts, empty/error states and unchanged magazine. Photos were loaded from locally cached copies of the exact source images for deterministic visual testing.
 
 Migration 024 was applied to the connected Nova database in this follow-up; all three source-image URLs and credit links were verified. No deployment or main-branch write/merge was performed.
+
+
+## Latest revision: equal cards and original illustrations
+
+- Desktop archive now matches the magazine geometry: three equally sized cards per row, uniform 220px covers and aligned card footers. No spotlight/oversized first card. Tablet uses two columns, mobile one. The independent H1, breadcrumb and home link remain; there is no repeated all-news CTA inside the archive.
+- Three original conceptual photographs were generated with the image tool for results, academic records and subjects. Navy/orange/cream palette, no text, branding or watermarks. These are illustrations, not photographs of a real event.
+- Assets live in `public/news/generated/*.svg`: each file is a text-safe SVG **container for an optimized generated WebP photograph**, not a hand-drawn SVG approximation. This packaging allows the UTF-8 GitHub MCP to persist the actual generated raster image without corrupting binary files. Files are 35–103 KB and contain no scripts or external embedded resources.
+- Migration 025 replaces only the known source-photo and source-credit pairs in the three editorial news records. The image caption explicitly discloses AI illustration and removes the incorrect photo credit to Mehr; news source credit remains unchanged. Other text, dates, authors and publication status remain unchanged. Custom images/editorial changes are protected by exact-match guards.
+- Database image URLs use the immutable public GitHub asset commit `9606bbb182d0e5a916b944e6b3c349951a7d7568`; the image changes do not require a frontend deployment and do not depend on an image-generation download URL. New environments should apply migrations 022, 023, 024, 025 in order.
+- No main-branch push/merge or deployment was performed.

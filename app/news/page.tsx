@@ -75,7 +75,7 @@ export default async function NewsPage() {
               <NewsArchiveCard
                 key={item.id}
                 news={item}
-                featured={index === 0}
+                priority={index === 0}
               />
             ))}
           </div>

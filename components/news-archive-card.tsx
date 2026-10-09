@@ -10,10 +10,10 @@ import type { KonkurNews } from "@/lib/news";
 
 export function NewsArchiveCard({
   news,
-  featured = false,
+  priority = false,
 }: {
   news: KonkurNews;
-  featured?: boolean;
+  priority?: boolean;
 }) {
   const document = parseContent(news.body);
   const image = findFirstImage(document);
@@ -21,7 +21,7 @@ export function NewsArchiveCard({
     news.summary || `${extractContentText(document).slice(0, 180)}…`;
   return (
     <Link
-      className={`mag-card news-archive-card${featured ? " is-lead" : ""}`}
+      className="mag-card news-archive-card"
       href={`/news/${news.id}`}
       prefetch={false}
     >
@@ -33,12 +33,8 @@ export function NewsArchiveCard({
           width={1280}
           height={853}
           unoptimized
-          priority={featured}
-          sizes={
-            featured
-              ? "(max-width:700px) 100vw, 560px"
-              : "(max-width:700px) 100vw, 540px"
-          }
+          priority={priority}
+          sizes="(max-width:700px) 100vw, (max-width:1000px) 50vw, 33vw"
         />
       ) : (
         <div
@@ -50,9 +46,6 @@ export function NewsArchiveCard({
       )}
       <div className="news-archive-card-body">
         <div className="mag-card-meta news-archive-meta">
-          {featured && (
-            <span className="news-archive-featured-label">تازه‌ترین خبر</span>
-          )}
           <span>{news.source_name}</span>
           <time dateTime={news.source_published_at}>
             {formatPersianDate(news.source_published_at)}
