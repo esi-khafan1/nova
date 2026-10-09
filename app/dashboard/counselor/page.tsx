@@ -84,6 +84,12 @@ export default async function CounselorDashboard() {
           ورود به استودیوی محتوا
         </Link>
       </section>
+      <section className="portal-card portal-empty counselor-secondary">
+        <div className="portal-empty-icon">✎</div>
+        <h2>اخبار کنکور</h2>
+        <p>خبر معتبر را همراه با لینک منبع و تاریخ انتشار برای دانش‌آموزان بنویس.</p>
+        <Link className="button button-secondary" href="/dashboard/counselor/news">مدیریت و نوشتن اخبار کنکور</Link>
+      </section>
     </DashboardShell>
   );
 }

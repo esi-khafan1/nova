@@ -11,6 +11,9 @@ import "./landing-approved.css";
 import "./why-nova.css";
 import "./path-finder.css";
 import "./magazine-latest.css";
+import "./konkur-news.css";
+import { KonkurNewsLatest } from "@/components/konkur-news-latest";
+import { getPublishedNews } from "@/lib/news";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
@@ -25,6 +28,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     .limit(3);
 
   const latestResources = (data ?? []) as LatestResource[];
+  const { news, error: newsUnavailable } = await getPublishedNews(3);
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
@@ -62,6 +66,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
       <PathFinder design={pathDesign} />
 
       <MagazineLatest resources={latestResources} design={magDesign} />
+
+      <KonkurNewsLatest news={news} unavailable={newsUnavailable} />
 
       <section className="social-section" aria-labelledby="social-title">
         <div className="container">

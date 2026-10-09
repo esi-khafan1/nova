@@ -11,6 +11,7 @@ import {
   type ContentActionState,
 } from "@/app/dashboard/counselor/content/actions";
 import { emptyContent, parseContent } from "@/lib/content";
+import { saveNewsAction } from "@/app/dashboard/counselor/news/actions";
 
 type EditableResource = {
   id: string;
@@ -21,6 +22,9 @@ type EditableResource = {
   grade: number | null;
   subject: string | null;
   status: "draft" | "published" | "archived";
+  source_name?: string;
+  source_url?: string;
+  source_published_at?: string;
 };
 
 const initialState: ContentActionState = {};
@@ -48,11 +52,13 @@ function ToolButton({
 
 export function ContentEditorForm({
   resource,
+  news = false,
 }: {
   resource?: EditableResource;
+  news?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
-    saveResourceAction,
+    news ? saveNewsAction : saveResourceAction,
     initialState,
   );
   const [body, setBody] = useState(
@@ -61,6 +67,7 @@ export function ContentEditorForm({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const newsIntentRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -168,12 +175,13 @@ export function ContentEditorForm({
     <form action={formAction} className="content-editor-form">
       {resource && <input name="id" type="hidden" value={resource.id} />}
       <input name="body" type="hidden" value={body} />
+      {news && <input ref={newsIntentRef} name="intent" type="hidden" defaultValue="draft" />}
 
       <section className="portal-card content-editor-meta">
         <div className="portal-card-title">
           <div>
-            <span>مشخصات محتوا</span>
-            <h2>{resource ? "ویرایش محتوا" : "محتوای تازه"}</h2>
+            <span>{news ? "مشخصات خبر کنکور" : "مشخصات محتوا"}</span>
+            <h2>{news ? (resource ? "ویرایش خبر" : "خبر تازه") : (resource ? "ویرایش محتوا" : "محتوای تازه")}</h2>
           </div>
           {resource && (
             <span className={`content-status ${resource.status}`}>
@@ -194,7 +202,7 @@ export function ContentEditorForm({
               maxLength={160}
               minLength={3}
               name="title"
-              placeholder="مثلاً چطور آزمون آزمایشی را تحلیل کنیم؟"
+              placeholder={news ? "مثلاً اعلام شرایط آزمون سراسری" : "مثلاً چطور آزمون آزمایشی را تحلیل کنیم؟"}
               required
             />
           </label>
@@ -208,6 +216,11 @@ export function ContentEditorForm({
               rows={3}
             />
           </label>
+          {news ? <>
+            <label className="content-field"><span>نام منبع معتبر</span><input name="sourceName" defaultValue={resource?.source_name ?? ""} maxLength={120} required placeholder="مثلاً سازمان سنجش یا خبرگزاری مهر" /></label>
+            <label className="content-field"><span>لینک خبر در منبع</span><input name="sourceUrl" type="url" dir="ltr" defaultValue={resource?.source_url ?? ""} maxLength={2048} required placeholder="https://" /></label>
+            <label className="content-field"><span>تاریخ انتشار در منبع (میلادی)</span><input name="sourcePublishedAt" type="date" defaultValue={resource?.source_published_at?.slice(0, 10) ?? ""} required /><small>این تاریخ روی کارت خبر به شمسی نمایش داده می‌شود.</small></label>
+          </> : <>
           <label className="content-field">
             <span>دسته‌بندی</span>
             <select
@@ -239,6 +252,7 @@ export function ContentEditorForm({
               placeholder="مثلاً ریاضی، برنامه‌ریزی یا مدیریت زمان"
             />
           </label>
+          </>}
         </div>
       </section>
 
@@ -305,7 +319,8 @@ export function ContentEditorForm({
         <button
           className="button button-secondary"
           disabled={pending || uploading}
-          name="intent"
+          name={news ? undefined : "intent"}
+          onClick={news ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "draft"; } : undefined}
           type="submit"
           value="draft"
         >
@@ -314,11 +329,12 @@ export function ContentEditorForm({
         <button
           className="button"
           disabled={pending || uploading}
-          name="intent"
+          name={news ? undefined : "intent"}
+          onClick={news ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "publish"; } : undefined}
           type="submit"
           value="publish"
         >
-          {pending ? "در حال ذخیره..." : "انتشار محتوا"}
+          {pending ? "در حال ذخیره..." : news ? "انتشار خبر" : "انتشار محتوا"}
         </button>
       </div>
     </form>
