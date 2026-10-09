@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import Image from "next/image";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingHero } from "@/components/landing-hero";
 import { WhyNova } from "@/components/why-nova";
@@ -15,7 +15,7 @@ import "./magazine-latest.css";
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
-  const magDesign: MagazineDesign = params.mag === "sky" || params.mag === "warm" || params.mag === "navy" ? params.mag : "cards";
+  const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
   const { data } = await supabase
     .from("resources")
@@ -138,7 +138,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <div className="container">
           <div className="footer-grid">
             <div className="footer-about">
-              <Logo />
+              <Link className="nova-footer-brand" href="/" aria-label="صفحه اصلی نووا"><Image src="/nova/mark.svg" width={84} height={84} alt="لوگوی N نووا" unoptimized /></Link>
               <p>
                 نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی
                 روشن.

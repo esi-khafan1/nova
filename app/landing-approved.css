@@ -22,3 +22,8 @@
 .landing-v2d{--nova-header-height:104px}
 .landing-v2d [id]{scroll-margin-top:calc(var(--nova-header-height) + 20px)}
 @media(max-width:700px){.landing-v2d{--nova-header-height:86px}}
+
+/* Footer uses the exact N artwork already approved in the centered navbar. */
+.landing-v2d .nova-footer-brand{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:12px}
+.landing-v2d .nova-footer-brand img{display:block;width:84px;height:84px;object-fit:contain}
+.landing-v2d .nova-footer-brand:focus-visible{outline:3px solid #176bce;outline-offset:4px}
