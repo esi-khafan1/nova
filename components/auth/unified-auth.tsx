@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
+import { safeReturnPath } from "@/lib/return-path";
 
 type AuthMode = "signin" | "signup";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +16,8 @@ const benefits = [
   "منابع معتبر و طبقه‌بندی‌شده",
 ];
 
-export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
+export function UnifiedAuth({ initialMode, returnTo = "/dashboard" }: { initialMode: AuthMode; returnTo?: string }) {
+  const destination = safeReturnPath(returnTo);
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
     setMode(nextMode);
     setMessage("");
     setSuccess(false);
-    window.history.replaceState(null, "", `/auth?mode=${nextMode}`);
+    window.history.replaceState(null, "", `/auth?mode=${nextMode}&next=${encodeURIComponent(destination)}`);
   }
 
   async function submitSignIn(event: FormEvent<HTMLFormElement>) {
@@ -48,7 +50,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
       setLoading(false);
       return;
     }
-    router.push("/dashboard");
+    router.push(destination);
     router.refresh();
   }
 
@@ -71,7 +73,7 @@ export function UnifiedAuth({ initialMode }: { initialMode: AuthMode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination)}`,
         data: { full_name: fullName },
       },
     });

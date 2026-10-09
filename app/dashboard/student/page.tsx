@@ -298,7 +298,7 @@ export default async function StudentDashboard({
 
         <section className="student-focus-main-grid">
           {currentPlan ? (
-            <section className="student-weekly-plan student-daily-plan">
+            <section id="daily-plan" className="student-weekly-plan student-daily-plan">
               <header>
                 <div><span>برنامه امروز</span><h2>برنامه روزانه</h2></div>
                 <strong>{formatPersianFullDate(todayDate)}</strong>
@@ -329,7 +329,7 @@ export default async function StudentDashboard({
               </div>
             </section>
           ) : (
-            <section className="portal-card portal-empty student-daily-empty">
+            <section id="daily-plan" className="portal-card portal-empty student-daily-empty">
               <span>برنامه امروز</span><h2>برای امروز برنامه‌ای منتشر نشده</h2>
               <p>وقتی مشاور برای امروز فعالیتی تعیین و منتشر کند، همین‌جا نمایش داده می‌شود.</p>
             </section>
