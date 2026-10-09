@@ -48,7 +48,7 @@ export function PathFinder({ design = "sky" }: { design?: PathFinderDesign }) {
   </header>;
 
   return <section id="find-path" className={`nova-path nova-path--${design}`} aria-labelledby="nova-path-title" data-design={design} data-step={step}>
-    <BackgroundStars />
+    {design === "sky" ? <div className="nova-path-approved-clusters" aria-hidden="true"><span className="cluster-left" /><span className="cluster-upper" /><span className="cluster-lower" /></div> : <BackgroundStars />}
     <div className="nova-path-inner">
       {design === "horizon" && introHeading}
       <div className={`nova-path-panel ${step === "intro" ? "is-intro" : "is-selecting"}`}>

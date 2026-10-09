@@ -1,4 +1,4 @@
-/* Original NOVA star geometry: no Alpha assets or styles are copied. */
+/* Sky uses the user-approved transparent cluster artwork; other previews retain original NOVA geometry. */
 .landing-v2d .nova-path{--path-ink:#123b63;--path-copy:#315a7d;--path-line:#c1d8f1;--path-accent:#176bce;position:relative;isolation:isolate;min-height:calc(100svh - var(--nova-header-height));display:flex;align-items:center;justify-content:center;padding:72px 24px;background:#eef6ff;color:var(--path-ink);overflow:hidden}
 .nova-path-inner{position:relative;z-index:1;width:min(1120px,100%);margin-inline:auto}
 .nova-path-stars{position:absolute;inset:0;z-index:0;pointer-events:none;color:#c7dff9}
@@ -81,3 +81,8 @@
 .nova-path-title-tail{white-space:nowrap}
 @media(max-width:700px){.nova-path--sky .nova-path-title-tail,.nova-path--peach .nova-path-title-tail{display:block}}
 @media(min-width:701px){.nova-path--peach .is-intro .nova-path-symbol{display:none}}
+
+/* Approved gray artwork is decorative only; keep its internal rhythm intact. */
+.nova-path-approved-clusters{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("/images/approved-star-clusters.svg");background-repeat:no-repeat;background-position:center;background-size:cover;opacity:.15}
+.nova-path-approved-clusters>span{display:none}
+@media(max-width:700px){.nova-path-approved-clusters{background-image:none}.nova-path-approved-clusters>span{display:block;position:absolute;background-image:url("/images/approved-star-clusters.svg");background-repeat:no-repeat;background-size:760px auto}.nova-path-approved-clusters .cluster-left{width:320px;height:300px;left:-150px;top:55%;background-position:-45px -155px}.nova-path-approved-clusters .cluster-upper{width:240px;height:200px;right:-100px;top:6%;background-position:-430px -45px}.nova-path-approved-clusters .cluster-lower{width:190px;height:160px;right:-80px;bottom:2%;background-position:-520px -300px}}

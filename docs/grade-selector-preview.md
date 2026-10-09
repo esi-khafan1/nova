@@ -24,3 +24,7 @@
 گزینه‌های پایه و رشته واقعاً قابل انتخاب‌اند. دکمهٔ ادامه تا انتخاب معتبر غیرفعال است. بازگشت، حفظ انتخاب در رفت‌وبرگشت و شروع دوباره پیاده‌سازی شده‌اند. گزینه‌های رشته، سه مسیر رایج موجود در مدل پروژه‌اند: ریاضی و فیزیک، علوم تجربی و علوم انسانی.
 
 این انتخاب‌گر فعلاً بک‌اند، ذخیرهٔ انتخاب یا پیشنهاد دوره ندارد؛ هیچ درخواست ثبت اطلاعات ارسال نمی‌کند و هیچ دوره، قیمت یا موجودی ساختگی نشان نمی‌دهد. نتیجه، خلاصهٔ انتخاب و توضیح صریح پیش‌نمایش را نمایش می‌دهد؛ تنها لینک محتوا به صفحهٔ واقعی مجله نووا است. اتصال به فهرست دوره‌ها نیازمند درخواست جداگانهٔ صاحب پروژه است.
+
+
+## Approved sky cluster artwork
+The sky option replaces scattered blue/peach stars with the exact user-supplied transparent PNG, losslessly embedded in a self-contained SVG. Gray decoration is an explicitly requested exception to the previous brand palette. The supplied internal layout and colors are unchanged; 15% CSS opacity keeps decoration subordinate to the white card. No generated replacements, animations, glow, or hotlinked resources. Peach/horizon are unchanged. Mobile uses three cropped windows of the same asset and repositions whole clusters around the card, never individual stars.
