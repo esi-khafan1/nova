@@ -4,39 +4,18 @@ import { LandingHeader } from "@/components/landing-header";
 import { LandingHero } from "@/components/landing-hero";
 import { WhyNova } from "@/components/why-nova";
 import { PathFinder, type PathFinderDesign } from "@/components/path-finder";
-import {
-  findFirstImage,
-  formatPersianDate,
-  parseContent,
-  resourceTypeLabels,
-  type ResourceType,
-} from "@/lib/content";
+import { MagazineLatest, type MagazineDesign, type LatestResource } from "@/components/magazine-latest";
 import { createClient } from "@/lib/supabase/server";
 import "./landing-v2d.css";
 import "./landing-approved.css";
 import "./why-nova.css";
 import "./path-finder.css";
-
-type LatestResource = {
-  id: string;
-  title: string;
-  summary: string | null;
-  body: string;
-  resource_type: ResourceType;
-  subject: string | null;
-  published_at: string | null;
-};
-
-const steps = [
-  ["پروفایلت را کامل کن", "هدف و شرایط درسی‌ات را به ما بگو."],
-  ["مشاور مناسب را پیدا کن", "تخصص و سبک همخوان با تو انتخاب می‌شود."],
-  ["برنامه هفتگی بگیر", "یک برنامه واقعی، نه یک لیست غیرقابل اجرا."],
-  ["پیشرفت را ببین", "هر هفته گزارش شفاف از مسیرت."],
-];
+import "./magazine-latest.css";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
+  const magDesign: MagazineDesign = params.mag === "editorial" || params.mag === "digest" ? params.mag : "cards";
   const supabase = await createClient();
   const { data } = await supabase
     .from("resources")
@@ -82,90 +61,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <PathFinder design={pathDesign} />
 
-      <section className="section how" id="how">
-        <div className="container">
-          <div className="section-title">
-            <span className="eyebrow">ساده و شفاف</span>
-            <h2>
-              از ثبت‌نام تا <span className="accent">یک برنامه قابل اجرا</span>
-            </h2>
-            <p>در چهار قدم کوتاه، از سردرگمی به یک مسیر مشخص می‌رسی.</p>
-          </div>
-          <div className="steps">
-            {steps.map(([title, text], index) => (
-              <article className="step" key={title}>
-                <div className="step-num">{["۱", "۲", "۳", "۴"][index]}</div>
-                <h4>{title}</h4>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mag-section" id="mag">
-        <div className="container">
-          <div className="mag-head">
-            <div className="left">
-              <span className="eyebrow">تازه‌های مجله نووا</span>
-              <h2>
-                راهنماهای تازه برای{" "}
-                <span className="accent">مسیر تحصیلی تو</span>
-              </h2>
-              <p>
-                نکته‌های کاربردی مشاوران نووا برای مطالعه، آزمون و روزهای مهم
-                مسیر تحصیلی.
-              </p>
-            </div>
-            <Link className="all-link" href="/mag">
-              مشاهده همه ←
-            </Link>
-          </div>
-          {latestResources.length > 0 ? (
-            <div className="mag-grid">
-              {latestResources.map((resource) => {
-                const image = findFirstImage(parseContent(resource.body));
-                return (
-                  <Link
-                    className="mag-card"
-                    href={`/mag/${resource.id}`}
-                    key={resource.id}
-                  >
-                    <div className="img-wrap">
-                      {image ? (
-                        <img alt="" loading="lazy" src={image} />
-                      ) : (
-                        <div className="article-placeholder" aria-hidden="true">
-                          ن
-                        </div>
-                      )}
-                      <span className="badge">
-                        {resourceTypeLabels[resource.resource_type]}
-                      </span>
-                    </div>
-                    <div className="body">
-                      <div className="date">
-                        {formatPersianDate(resource.published_at)}
-                        {resource.subject ? ` · ${resource.subject}` : ""}
-                      </div>
-                      <h3>{resource.title}</h3>
-                      {resource.summary && <p>{resource.summary}</p>}
-                      <div className="read-more">
-                        <span>خواندن مقاله</span>
-                        <span className="arr">←</span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="mag-empty">
-              مقاله‌های تازه نووا به‌زودی اینجا منتشر می‌شوند.
-            </div>
-          )}
-        </div>
-      </section>
+      <MagazineLatest resources={latestResources} design={magDesign} />
 
       <section className="social-section" aria-labelledby="social-title">
         <div className="container">
@@ -258,7 +154,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
             <div className="footer-col">
               <h5>خدمات</h5>
               <a href="#services">مشاوره تحصیلی</a>
-              <a href="#how">برنامه‌ریزی</a>
+              <a href="#find-path">برنامه‌ریزی</a>
               <Link href="/mag">منابع</Link>
               <Link href="/auth?mode=signup">شروع مسیر</Link>
             </div>

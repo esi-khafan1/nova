@@ -1,0 +1,61 @@
+/* Three previews, same real published articles. Scoped to the homepage magazine. */
+.landing-v2d .nova-magazine{--mag-ink:#123b63;--mag-copy:#315a7d;--mag-line:#d6e6f7;--mag-blue:#176bce;padding:88px 24px;background:#fff;color:var(--mag-ink);border-bottom:1px solid var(--mag-line)}
+.nova-mag-container{width:min(1120px,100%);margin-inline:auto}
+.nova-mag-header{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;margin-bottom:40px}
+.nova-mag-eyebrow{font-size:14px;line-height:1.9;font-weight:650;color:var(--mag-blue);margin:0 0 12px}
+.nova-mag-header h2{font-size:38px;line-height:1.7;font-weight:850;color:var(--mag-ink);margin:0;letter-spacing:-.7px}
+.nova-mag-header h2 span{color:var(--mag-blue)}
+.nova-mag-description{font-size:16px;line-height:2;color:var(--mag-copy);margin:12px 0 0}
+.nova-mag-all{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:48px;padding:10px 20px;border:1px solid #b8d5f6;border-radius:12px;color:var(--mag-blue);background:#fff;font-weight:700;font-size:15px;white-space:nowrap}
+.nova-mag-all:hover{background:#eef6ff}
+.nova-mag-layout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.nova-mag-article{min-width:0}
+.nova-mag-card{display:flex;flex-direction:column;height:100%;border:1px solid var(--mag-line);border-radius:20px;overflow:hidden;background:#fff;color:var(--mag-ink)}
+.nova-mag-cover{position:relative;aspect-ratio:16/10;background:#eef6ff;overflow:hidden;flex-shrink:0}
+.nova-mag-cover img{width:100%;height:100%;object-fit:cover}
+.nova-mag-cover-fallback{width:100%;height:100%;display:grid;place-items:center;color:#176bce;background:#eef6ff}.nova-mag-cover-fallback svg{width:64px;height:64px}
+.nova-mag-body{display:flex;flex-direction:column;flex:1;min-width:0;padding:24px}
+.nova-mag-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.nova-mag-category{padding:3px 10px;border-radius:6px;background:#eef6ff;color:#176bce;font-size:14px;font-weight:650;line-height:1.8}
+.nova-mag-category.is-exam{background:#fff1e5;color:#a34300}
+.nova-mag-latest-label{font-size:14px;line-height:1.8;color:#315a7d}
+.nova-mag-card h3{margin:0;color:#123b63;font-size:20px;line-height:1.85;font-weight:750;overflow-wrap:anywhere}
+.nova-mag-summary{font-size:15px;line-height:2;color:#315a7d;margin:12px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.nova-mag-card-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:auto;padding-top:24px;font-size:14px;line-height:1.8;color:#315a7d}
+.nova-mag-read{display:inline-flex;align-items:center;gap:10px;font-weight:700;color:#176bce;min-height:24px}
+.nova-mag-card:hover{border-color:#8dbbef}.nova-mag-card:hover h3{color:#176bce}
+.nova-mag-card:focus-visible,.nova-mag-all:focus-visible,.nova-mag-empty a:focus-visible{outline:3px solid #176bce;outline-offset:4px}
+.nova-mag-empty{border:1px dashed #b8d5f6;border-radius:20px;padding:48px 24px;background:#eef6ff;text-align:center;font-size:16px;line-height:2;color:#315a7d}.nova-mag-empty p{margin:0 0 16px}.nova-mag-empty a{display:inline-flex;align-items:center;gap:16px;min-height:44px;color:#176bce;font-weight:700}
+/* 2: editorial hierarchy, lead article right and two compact stories left. */
+.landing-v2d .nova-magazine--editorial{background:#fff8f1}
+.nova-magazine--editorial .nova-mag-layout{grid-template-columns:1.18fr 1fr;gap:24px}
+.nova-magazine--editorial .is-lead{grid-row:span 2}
+.nova-magazine--editorial .is-lead .nova-mag-cover{aspect-ratio:16/8.4}
+.nova-magazine--editorial .is-lead h3{font-size:24px}
+.nova-magazine--editorial .is-secondary .nova-mag-card{display:grid;grid-template-columns:38% 1fr;min-height:220px}
+.nova-magazine--editorial .is-secondary .nova-mag-cover{height:100%;aspect-ratio:auto}
+.nova-magazine--editorial .is-secondary .nova-mag-body{padding:24px 20px}
+.nova-magazine--editorial .is-secondary h3{font-size:18px}
+.nova-magazine--editorial .is-secondary .nova-mag-summary{-webkit-line-clamp:2;font-size:14px}
+.nova-magazine--editorial .is-secondary .nova-mag-card-footer{font-size:14px;padding-top:16px;gap:8px}
+/* 3: open editorial digest, without card boxes. */
+.landing-v2d .nova-magazine--digest{background:#eef6ff}
+.nova-magazine--digest .nova-mag-header{align-items:center}
+.nova-magazine--digest .nova-mag-layout{grid-template-columns:1.1fr 1fr;gap:0 48px}
+.nova-magazine--digest .is-lead{grid-row:span 2;padding-inline-end:48px;border-inline-end:1px solid #bfd8f2}
+.nova-magazine--digest .nova-mag-card{border:0;border-radius:0;background:transparent}
+.nova-magazine--digest .nova-mag-cover{border-radius:16px}
+.nova-magazine--digest .nova-mag-body{padding:24px 0 0}
+.nova-magazine--digest .nova-mag-category{background:#fff}
+.nova-magazine--digest .is-lead h3{font-size:24px}
+.nova-magazine--digest .is-secondary{padding:24px 0}
+.nova-magazine--digest .is-secondary+.is-secondary{border-top:1px solid #bfd8f2}
+.nova-magazine--digest .is-secondary .nova-mag-card{display:grid;grid-template-columns:120px 1fr;gap:24px;align-items:start}
+.nova-magazine--digest .is-secondary .nova-mag-cover{aspect-ratio:1;height:120px}
+.nova-magazine--digest .is-secondary .nova-mag-body{padding:0}
+.nova-magazine--digest .is-secondary h3{font-size:19px}
+.nova-magazine--digest .is-secondary .nova-mag-summary{-webkit-line-clamp:2;font-size:14px}
+.nova-magazine--digest .is-secondary .nova-mag-card-footer{padding-top:16px}
+@media(max-width:1100px){.nova-mag-header h2{font-size:34px}.nova-mag-body{padding:20px}.nova-mag-layout{gap:20px}.nova-magazine--editorial .is-secondary .nova-mag-card{grid-template-columns:1fr}.nova-magazine--editorial .is-secondary .nova-mag-cover{aspect-ratio:16/7;height:auto}.nova-magazine--editorial .is-lead .nova-mag-cover{aspect-ratio:4/3}.nova-magazine--digest .nova-mag-layout{gap:0 28px}.nova-magazine--digest .is-lead{padding-inline-end:28px}.nova-magazine--digest .is-secondary .nova-mag-card{grid-template-columns:96px 1fr;gap:16px}.nova-magazine--digest .is-secondary .nova-mag-cover{height:96px}}
+@media(max-width:700px){.landing-v2d .nova-magazine{padding:56px 24px}.nova-mag-header{display:block;margin-bottom:32px}.nova-mag-header h2{font-size:28px;line-height:1.8}.nova-mag-description{font-size:15px}.nova-mag-all{margin-top:20px;font-size:14px}.nova-mag-layout,.nova-magazine--editorial .nova-mag-layout,.nova-magazine--digest .nova-mag-layout{grid-template-columns:1fr;gap:24px}.nova-mag-body{padding:20px}.nova-mag-card h3,.nova-magazine--editorial .is-lead h3,.nova-magazine--digest .is-lead h3{font-size:21px}.nova-mag-card-footer{padding-top:20px}.nova-magazine--editorial .is-lead,.nova-magazine--digest .is-lead{grid-row:auto}.nova-magazine--editorial .is-lead .nova-mag-cover{aspect-ratio:16/10}.nova-magazine--editorial .is-secondary .nova-mag-card{grid-template-columns:1fr;min-height:0}.nova-magazine--editorial .is-secondary .nova-mag-cover{aspect-ratio:16/9}.nova-magazine--editorial .is-secondary h3{font-size:20px}.nova-magazine--editorial .is-secondary .nova-mag-summary{font-size:15px;-webkit-line-clamp:3}.nova-magazine--digest .is-lead{padding-inline-end:0;border-inline-end:0}.nova-magazine--digest .is-secondary{padding:24px 0 0;border-top:1px solid #bfd8f2}.nova-magazine--digest .is-secondary .nova-mag-card{grid-template-columns:88px 1fr;gap:16px}.nova-magazine--digest .is-secondary .nova-mag-cover{height:88px}.nova-magazine--digest .is-secondary h3{font-size:18px}.nova-magazine--digest .is-secondary .nova-mag-card-footer{flex-wrap:wrap;gap:8px}.nova-magazine--digest .nova-mag-body{padding:20px 0 0}.nova-mag-empty{padding:32px 20px}}
+@media(prefers-reduced-motion:no-preference){.nova-mag-card,.nova-mag-card h3,.nova-mag-all{transition:border-color .15s,color .15s,background .15s}}
