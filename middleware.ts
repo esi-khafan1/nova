@@ -16,7 +16,15 @@ export async function middleware(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard/student")) {
+    const signIn = new URL("/auth", request.url);
+    signIn.searchParams.set("mode", "signin");
+    signIn.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    const redirectResponse = NextResponse.redirect(signIn);
+    response.cookies.getAll().forEach(cookie => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
+  }
   return response;
 }
 

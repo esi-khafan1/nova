@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Book, Compass, Users } from "@/components/icons";
 import { Logo } from "@/components/logo";
-import { MobileMenu } from "@/components/mobile-menu";
+import { LandingHeader } from "@/components/landing-header";
+import { LandingHero } from "@/components/landing-hero";
 import {
   findFirstImage,
   formatPersianDate,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/content";
 import { createClient } from "@/lib/supabase/server";
 import "./landing-v2d.css";
+import "./landing-approved.css";
 
 type LatestResource = {
   id: string;
@@ -63,88 +65,12 @@ export default async function Home() {
     .limit(3);
 
   const latestResources = (data ?? []) as LatestResource[];
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <main className="landing-v2d">
-      <header className="site-header">
-        <div className="container nav-wrap">
-          <Logo />
-          <nav className="desktop-nav" aria-label="ناوبری اصلی">
-            <a href="#services">خدمات</a>
-            <a href="#how">چطور کار می‌کند؟</a>
-            <a href="#mag">مجله</a>
-            <a href="#about">درباره نووا</a>
-          </nav>
-          <div className="nav-actions">
-            <Link className="btn btn-primary btn-small" href="/auth">
-              ورود / ثبت‌نام
-            </Link>
-          </div>
-          <MobileMenu />
-        </div>
-      </header>
-
-      <section className="hero">
-        <div className="container">
-          <div className="hero-grid">
-            <div>
-              <span className="hero-eyebrow">● مسیر روشن موفقیت تحصیلی</span>
-              <h1>
-                برای مسیر مهمی که پیش رو داری،{" "}
-                <span className="accent">نووا</span> کنارت است.
-              </h1>
-              <p className="lead">
-                نووا کنار دانش‌آموزان دهم تا دوازدهم است؛ با مشاور متخصص، منابع
-                معتبر و برنامه‌ای که واقعاً با زندگی تو هماهنگ است. دیگر قرار
-                نیست مسیر موفقیت را تنهایی پیدا کنی.
-              </p>
-              <div className="mega-cta">
-                <Link className="btn-mega" href="/auth?mode=signup">
-                  ثبت‌نام در نووا <span className="arrow">←</span>
-                </Link>
-                <a className="btn btn-ghost" href="#how">
-                  آشنایی با نووا
-                </a>
-              </div>
-              <div className="hero-trust" aria-label="مزیت‌های نووا">
-                <span>مشاوران تأییدشده</span>
-                <span className="dot" />
-                <span>ثبت‌نام سریع</span>
-                <span className="dot" />
-                <span>برنامه قابل اجرا</span>
-              </div>
-            </div>
-
-            <div className="hero-visual" aria-label="نمونه داشبورد پیشرفت نووا">
-              <div className="visual-card">
-                <h3>داشبورد پیشرفت</h3>
-                <div className="visual-cta-row">
-                  <div className="visual-mini-cta fill">شروع برنامه</div>
-                  <div className="visual-mini-cta outline">مشاهده مشاور</div>
-                </div>
-                <div className="visual-progress">
-                  <div className="vp-row">
-                    <span>برنامه این هفته</span>
-                    <span className="v">۷۲٪</span>
-                  </div>
-                  <div className="vp-row">
-                    <span>مرور زیست یازدهم</span>
-                    <span className="v">۸۵٪</span>
-                  </div>
-                  <div className="vp-row">
-                    <span>آزمون ریاضی</span>
-                    <span className="v">۶۰٪</span>
-                  </div>
-                </div>
-                <div className="visual-cta-big">
-                  <div className="big-text">آماده‌ای شروع کنی؟</div>
-                  <div className="sub-text">اولین قدم فقط چند دقیقه</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <LandingHeader isAuthenticated={Boolean(user)} />
+      <LandingHero />
 
       <section className="proof" aria-label="مسیر تحصیلی">
         <div className="container proof-grid">
