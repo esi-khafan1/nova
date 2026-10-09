@@ -104,6 +104,11 @@ export function DashboardShell({
             label: "استودیوی محتوا",
             icon: "content" as const,
           },
+          {
+            href: "/dashboard/counselor/news",
+            label: "اخبار کنکور",
+            icon: "content" as const,
+          },
         ]
       : []),
     ...(role === "student"
