@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    { url: `${baseUrl}/podcasts`, changeFrequency: "daily", priority: 0.9 },
     ...["about", "contact", "terms", "privacy", "refund"].map((path) => ({
       url: `${baseUrl}/${path}`,
       lastModified: new Date(),
@@ -39,6 +40,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const supabase = await createClient();
+    const { data: podcasts } = await supabase.from("podcasts").select("id,updated_at").eq("status", "published");
+    staticRoutes.push(...(podcasts ?? []).map(p => ({url: `${baseUrl}/podcasts/${p.id}`, lastModified: new Date(p.updated_at), changeFrequency: "weekly" as const, priority: 0.8})));
     const { data: resources } = await supabase
       .from("resources")
       .select("id, published_at")

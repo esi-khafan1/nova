@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const items = [
+  { label: "پادکست‌های نووا", href: "/podcasts", icon: "about", private: false },
   { label: "آزمون های من", href: "/dashboard/student/exams", icon: "exam", private: true },
   { label: "برنامه هفتگی", href: "/dashboard/student", icon: "week", private: true },
   { label: "دریافت برنامه روزانه", href: "/dashboard/student#daily-plan", icon: "day", private: true },

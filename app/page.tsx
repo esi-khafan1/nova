@@ -13,6 +13,9 @@ import "./path-finder.css";
 import "./magazine-latest.css";
 import "./konkur-news.css";
 import { KonkurNewsLatest } from "@/components/konkur-news-latest";
+import { PodcastsLatest } from "@/components/podcasts-latest";
+import { getPublishedPodcasts } from "@/lib/podcasts";
+import "./podcasts/podcasts.css";
 import { getPublishedNews } from "@/lib/news";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -29,6 +32,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
   const latestResources = (data ?? []) as LatestResource[];
   const { news, error: newsUnavailable } = await getPublishedNews(3);
+  const { podcasts, error: podcastsUnavailable } = await getPublishedPodcasts(3);
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
@@ -68,6 +72,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
       <MagazineLatest resources={latestResources} design={magDesign} />
 
       <KonkurNewsLatest news={news} unavailable={newsUnavailable} />
+
+      <PodcastsLatest podcasts={podcasts} unavailable={podcastsUnavailable} />
 
       <section className="social-section" aria-labelledby="social-title">
         <div className="container">
@@ -155,6 +161,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <Link href="/about">درباره ما</Link>
               <a href="#services">خدمات</a>
               <Link href="/mag">مجله</Link>
+              <Link href="/podcasts">پادکست‌ها</Link>
               <Link href="/auth">ورود</Link>
             </div>
             <div className="footer-col">

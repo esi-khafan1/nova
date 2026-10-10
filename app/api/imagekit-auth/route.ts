@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   let allowed = false;
   if (profile?.role === "counselor") {
     const { data: counselor } = await supabase.from("counselor_profiles").select("approval_status").eq("user_id", user.id).single();
-    allowed = counselor?.approval_status === "approved" && ["content", "exam-question"].includes(purpose);
+    allowed = counselor?.approval_status === "approved" && ["content", "exam-question", "podcast-audio"].includes(purpose);
   } else if (profile?.role === "student" && purpose === "exam-answer") {
     const { count } = await supabase.from("counselor_students").select("id", { count: "exact", head: true }).eq("student_id", user.id);
     allowed = Boolean(count);

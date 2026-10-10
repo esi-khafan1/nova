@@ -11,6 +11,8 @@ import {
   type ContentActionState,
 } from "@/app/dashboard/counselor/content/actions";
 import { emptyContent, parseContent } from "@/lib/content";
+import { PodcastAudioUpload } from "@/components/content/podcast-audio-upload";
+import { savePodcastAction } from "@/app/dashboard/counselor/podcasts/actions";
 import { saveNewsAction } from "@/app/dashboard/counselor/news/actions";
 
 type EditableResource = {
@@ -22,6 +24,8 @@ type EditableResource = {
   grade: number | null;
   subject: string | null;
   status: "draft" | "published" | "archived";
+  audio_url?: string | null;
+  audio_seconds?: number | null;
   source_name?: string;
   source_url?: string;
   source_published_at?: string;
@@ -53,18 +57,28 @@ function ToolButton({
 export function ContentEditorForm({
   resource,
   news = false,
+  podcast = false,
 }: {
   resource?: EditableResource;
   news?: boolean;
+  podcast?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
-    news ? saveNewsAction : saveResourceAction,
+    podcast ? savePodcastAction : news ? saveNewsAction : saveResourceAction,
     initialState,
   );
+  const [podcastMetadata, setPodcastMetadata] = useState({
+    title: resource?.title ?? "", summary: resource?.summary ?? "",
+    resourceType: resource?.resource_type ?? "konkur", grade: resource?.grade?.toString() ?? "", subject: resource?.subject ?? "",
+  });
+  function updatePodcastMetadata(key: keyof typeof podcastMetadata, value: string) {
+    setPodcastMetadata(previous => ({...previous, [key]: value}));
+  }
   const [body, setBody] = useState(
     JSON.stringify(resource ? parseContent(resource.body) : emptyContent),
   );
   const [uploading, setUploading] = useState(false);
+  const [audioUploading, setAudioUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const newsIntentRef = useRef<HTMLInputElement>(null);
@@ -175,13 +189,13 @@ export function ContentEditorForm({
     <form action={formAction} className="content-editor-form">
       {resource && <input name="id" type="hidden" value={resource.id} />}
       <input name="body" type="hidden" value={body} />
-      {news && <input ref={newsIntentRef} name="intent" type="hidden" defaultValue="draft" />}
+      {(news || podcast) && <input ref={newsIntentRef} name="intent" type="hidden" defaultValue="draft" />}
 
       <section className="portal-card content-editor-meta">
         <div className="portal-card-title">
           <div>
-            <span>{news ? "مشخصات خبر کنکور" : "مشخصات محتوا"}</span>
-            <h2>{news ? (resource ? "ویرایش خبر" : "خبر تازه") : (resource ? "ویرایش محتوا" : "محتوای تازه")}</h2>
+            <span>{podcast ? "مشخصات پادکست" : news ? "مشخصات خبر کنکور" : "مشخصات محتوا"}</span>
+            <h2>{podcast ? (resource ? "ویرایش پادکست" : "پادکست تازه") : news ? (resource ? "ویرایش خبر" : "خبر تازه") : (resource ? "ویرایش محتوا" : "محتوای تازه")}</h2>
           </div>
           {resource && (
             <span className={`content-status ${resource.status}`}>
@@ -198,18 +212,22 @@ export function ContentEditorForm({
           <label className="content-field content-field-wide">
             <span>عنوان</span>
             <input
-              defaultValue={resource?.title ?? ""}
+              defaultValue={podcast ? undefined : resource?.title ?? ""}
+              value={podcast ? podcastMetadata.title : undefined}
+              onChange={podcast ? event => updatePodcastMetadata("title", event.target.value) : undefined}
               maxLength={160}
               minLength={3}
               name="title"
-              placeholder={news ? "مثلاً اعلام شرایط آزمون سراسری" : "مثلاً چطور آزمون آزمایشی را تحلیل کنیم؟"}
+              placeholder={podcast ? "مثلاً برنامه هفتگی که واقعاً اجرا می‌شود" : news ? "مثلاً اعلام شرایط آزمون سراسری" : "مثلاً چطور آزمون آزمایشی را تحلیل کنیم؟"}
               required
             />
           </label>
           <label className="content-field content-field-wide">
             <span>خلاصه</span>
             <textarea
-              defaultValue={resource?.summary ?? ""}
+              defaultValue={podcast ? undefined : resource?.summary ?? ""}
+              value={podcast ? podcastMetadata.summary : undefined}
+              onChange={podcast ? event => updatePodcastMetadata("summary", event.target.value) : undefined}
               maxLength={400}
               name="summary"
               placeholder="در دو جمله بگو این محتوا چه کمکی به دانش‌آموز می‌کند."
@@ -224,7 +242,9 @@ export function ContentEditorForm({
           <label className="content-field">
             <span>دسته‌بندی</span>
             <select
-              defaultValue={resource?.resource_type ?? "konkur"}
+              defaultValue={podcast ? undefined : resource?.resource_type ?? "konkur"}
+              value={podcast ? podcastMetadata.resourceType : undefined}
+              onChange={podcast ? event => updatePodcastMetadata("resourceType", event.target.value) : undefined}
               name="resourceType"
             >
               <option value="konkur">کنکور</option>
@@ -234,7 +254,9 @@ export function ContentEditorForm({
           <label className="content-field">
             <span>پایه</span>
             <select
-              defaultValue={resource?.grade?.toString() ?? ""}
+              defaultValue={podcast ? undefined : resource?.grade?.toString() ?? ""}
+              value={podcast ? podcastMetadata.grade : undefined}
+              onChange={podcast ? event => updatePodcastMetadata("grade", event.target.value) : undefined}
               name="grade"
             >
               <option value="">همه پایه‌ها</option>
@@ -246,7 +268,9 @@ export function ContentEditorForm({
           <label className="content-field">
             <span>درس یا موضوع</span>
             <input
-              defaultValue={resource?.subject ?? ""}
+              defaultValue={podcast ? undefined : resource?.subject ?? ""}
+              value={podcast ? podcastMetadata.subject : undefined}
+              onChange={podcast ? event => updatePodcastMetadata("subject", event.target.value) : undefined}
               maxLength={100}
               name="subject"
               placeholder="مثلاً ریاضی، برنامه‌ریزی یا مدیریت زمان"
@@ -255,6 +279,8 @@ export function ContentEditorForm({
           </>}
         </div>
       </section>
+
+      {podcast && <PodcastAudioUpload initialUrl={resource?.audio_url ?? ""} initialSeconds={resource?.audio_seconds ?? null} onBusyChange={setAudioUploading} disabled={pending} />}
 
       <section className="portal-card content-composer">
         <div className="content-toolbar" aria-label="ابزارهای ویرایش متن">
@@ -318,9 +344,9 @@ export function ContentEditorForm({
       <div className="content-editor-actions">
         <button
           className="button button-secondary"
-          disabled={pending || uploading}
-          name={news ? undefined : "intent"}
-          onClick={news ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "draft"; } : undefined}
+          disabled={pending || uploading || audioUploading}
+          name={news || podcast ? undefined : "intent"}
+          onClick={news || podcast ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "draft"; } : undefined}
           type="submit"
           value="draft"
         >
@@ -328,13 +354,13 @@ export function ContentEditorForm({
         </button>
         <button
           className="button"
-          disabled={pending || uploading}
-          name={news ? undefined : "intent"}
-          onClick={news ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "publish"; } : undefined}
+          disabled={pending || uploading || audioUploading}
+          name={news || podcast ? undefined : "intent"}
+          onClick={news || podcast ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "publish"; } : undefined}
           type="submit"
           value="publish"
         >
-          {pending ? "در حال ذخیره..." : news ? "انتشار خبر" : "انتشار محتوا"}
+          {pending ? "در حال ذخیره..." : podcast ? "انتشار پادکست" : news ? "انتشار خبر" : "انتشار محتوا"}
         </button>
       </div>
     </form>
