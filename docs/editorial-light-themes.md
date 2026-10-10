@@ -1,5 +1,7 @@
-# Approved editorial palette and social concepts
+# Approved homepage palettes
 
-Ice is now the default for all three homepage editorial sections: magazine, podcasts, Konkur news. Order, cards, content, audio behavior and upper landing remain unchanged. Other editorial queries remain comparison previews.
+Ice is the default for magazine, podcasts and Konkur news. Their order, cards, content, audio and upper landing remain unchanged.
 
-Social concepts are opt-in with `?social=cards|rows|split#social`: blue/orange/white only, two accessible YouTube/Telegram links with original external destinations. Without this query the existing social section remains unchanged. No main merge is included.
+The approved social layout is rows (option 2), now the default. Original YouTube/Telegram destinations remain intact. Other social/editorial choices remain available as comparison query previews.
+
+The entire “شروع یک مسیر تازه” CTA section has been removed. The social section is followed directly by the existing footer, whose content is preserved. No main merge is included.

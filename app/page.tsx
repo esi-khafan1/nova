@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const params = await searchParams;
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
   const editorialTheme = ["ice", "paper", "peach"].includes(String(params.editorial)) ? String(params.editorial) : "ice";
-  const socialTheme = ["cards", "rows", "split"].includes(String(params.social)) ? String(params.social) : null;
+  const socialTheme = ["cards", "rows", "split"].includes(String(params.social)) ? String(params.social) : "rows";
   const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
   const { data } = await supabase
@@ -134,19 +134,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <span className="follow-cta">{socialTheme ? "رفتن به کانال ←" : "دنبال کردن ←"}</span>
             </a>
           </div>
-        </div>
-      </section>
-
-      <section className="cta-block">
-        <div className="container cta-content">
-          <h2>شروع یک مسیر تازه</h2>
-          <p>
-            آماده‌ای این بار با برنامه جلو بروی؟ حسابت را بساز؛ اولین قدم فقط
-            چند دقیقه زمان می‌برد.
-          </p>
-          <Link className="btn-light" href="/auth?mode=signup">
-            ثبت‌نام در نووا ←
-          </Link>
         </div>
       </section>
 
