@@ -16,7 +16,7 @@ export function StudentExamReview({ questions }: { questions: ExamReviewQuestion
   const filters: ReviewFilter[] = ["all", "correct", "incorrect", "unanswered", ...(counts.ungraded ? ["ungraded" as const] : [])];
   return <section id="exam-review" className="portal-card student-exam-review" aria-labelledby="exam-review-title">
     <div className="review-heading"><div><span className="review-eyebrow">بعد از آزمون، یک قدم روشن‌تر</span><h2 id="exam-review-title">بررسی پاسخ‌های آزمون</h2><p>انتخاب ثبت‌شدهٔ خودت را با پاسخ صحیح مقایسه کن. پاسخ‌ها در این بخش قابل تغییر نیستند.</p></div>
-      <label className="review-booklet-label">دفترچه<select value={bookletId} onChange={event => setBookletId(event.target.value)}><option value="all">همهٔ دفترچه‌ها</option>{booklets.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}</select></label>
+      <label className="review-booklet-label">دفترچه<select aria-label="دفترچه" value={bookletId} onChange={event => setBookletId(event.target.value)}><option value="all">همهٔ دفترچه‌ها</option>{booklets.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}</select></label>
     </div>
     <div className="review-filters" role="group" aria-label="فیلتر وضعیت پاسخ‌ها">{filters.map(status => <button key={status} type="button" aria-pressed={filter === status} className={`review-filter review-filter--${status}`} onClick={() => setFilter(status)}>{labels[status]}<span>{toPersianDigits(counts[status])}</span></button>)}</div>
     <p className="review-visible-count" role="status">{toPersianDigits(visible.length)} سؤال نمایش داده می‌شود</p>
