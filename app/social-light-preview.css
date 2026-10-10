@@ -30,7 +30,7 @@
 .landing-v2d .social-preview--rows .social-card .text {flex:1;}
 .landing-v2d .social-preview--rows .social-card .text strong {font-size:22px;margin-bottom:6px;}
 .landing-v2d .social-preview--rows .social-card .follow-cta {margin:0;align-self:center;border:none;padding-inline:0;background:transparent;}
-.landing-v2d .social-preview--rows .social-card:hover .follow-cta {color:#174c8d;}
+.landing-v2d .social-preview--rows .social-card:hover .follow-cta {color:#174c8d;background:transparent;}
 /* 3: headline beside a single blue community panel */
 .landing-v2d .social-preview--split .container {display:grid;grid-template-columns:.85fr 1.15fr;gap:48px;align-items:center;}
 .landing-v2d .social-preview--split .social-head {text-align:right;margin:0;}
