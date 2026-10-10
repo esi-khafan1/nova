@@ -1,9 +1,5 @@
-# Branded light editorial theme exploration
+# Approved editorial palette and social concepts
 
-Preview-only comparison for the magazine, podcast and Konkur news landing sections. All use only the Nova blue/orange brand palette with white; no green or purple.
+Ice is now the default for all three homepage editorial sections: magazine, podcasts, Konkur news. Order, cards, content, audio behavior and upper landing remain unchanged. Other editorial queries remain comparison previews.
 
-- `?editorial=ice#mag`: ice-blue/white surfaces, blue actions and tiny orange accents. Closest continuity with the upper blue sections.
-- `?editorial=paper#mag`: mostly white with pale blue, dark navy type, outlined actions, orange editorial details and smaller 12px corners. Quietest option.
-- `?editorial=peach#mag`: white magazine, very pale peach podcast surface, light-blue news, navy actions and small orange accents. Balanced blue/orange without an orange-dominant background.
-
-The default URL and invalid query values retain the approved warm theme. No database changes, content changes or main merge. All other sections, archive/detail pages and dashboards remain unchanged. Three-card layout, images, dates, links and section order stay fixed for fair comparison. Existing covers are reused.
+Social concepts are opt-in with `?social=cards|rows|split#social`: blue/orange/white only, two accessible YouTube/Telegram links with original external destinations. Without this query the existing social section remains unchanged. No main merge is included.
