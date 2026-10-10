@@ -1,0 +1,80 @@
+/* Preview-only branded light options; only blue/orange/white. Opt-in query:
+   editorial=ice|paper|peach. Default and other routes remain unchanged. */
+.landing-v2d.editorial-theme--ice .nova-magazine {
+  --mag-surface: #f2f7ff;
+  --mag-card: #ffffff;
+  --mag-ink: #15324f;
+  --mag-copy: #4c6279;
+  --mag-line: #d6e3f4;
+  --mag-blue: #1e5faf;
+  --mag-hover: #86a9d2;
+  --mag-button: #1e5faf;
+  --mag-button-hover: #174c8d;
+  --mag-tag-bg: #eaf2ff;
+  --mag-tag-text: #245fa6;
+  --mag-exam-bg: #fff2e8;
+  --mag-exam-text: #a74409;
+  --mag-focus: #1e5faf;
+  --mag-cover: #eaf2ff;
+  --mag-cover-ink: #245fa6;
+}
+.landing-v2d.editorial-theme--ice .nova-podcasts {--mag-surface: #ffffff;}
+.landing-v2d.editorial-theme--ice .nova-konkur-news {--mag-surface: #edf5ff;}
+.landing-v2d.editorial-theme--paper .nova-magazine {
+  --mag-surface: #ffffff;
+  --mag-card: #ffffff;
+  --mag-ink: #182f49;
+  --mag-copy: #52677d;
+  --mag-line: #e0e8f1;
+  --mag-blue: #182f49;
+  --mag-hover: #839bb5;
+  --mag-button: #ffffff;
+  --mag-button-hover: #f0f5fb;
+  --mag-tag-bg: #eff4fa;
+  --mag-tag-text: #315675;
+  --mag-exam-bg: #fff4eb;
+  --mag-exam-text: #a74409;
+  --mag-focus: #1e5faf;
+  --mag-cover: #eff4fa;
+  --mag-cover-ink: #315675;
+}
+.landing-v2d.editorial-theme--paper .nova-podcasts {--mag-surface: #f7faff;}
+.landing-v2d.editorial-theme--paper .nova-mag-card {border-radius: 12px;}
+.landing-v2d.editorial-theme--paper .nova-mag-header h2 span {color: var(--mag-ink);}
+.landing-v2d.editorial-theme--paper .nova-mag-category {border-radius: 4px;}
+.landing-v2d.editorial-theme--peach .nova-magazine {
+  --mag-surface: #f3f8ff;
+  --mag-card: #ffffff;
+  --mag-ink: #123b63;
+  --mag-copy: #46647e;
+  --mag-line: #d9e6f4;
+  --mag-blue: #19568d;
+  --mag-hover: #85a8cb;
+  --mag-button: #123b63;
+  --mag-button-hover: #0e2f50;
+  --mag-tag-bg: #eef5ff;
+  --mag-tag-text: #19568d;
+  --mag-exam-bg: #fff1e5;
+  --mag-exam-text: #a34300;
+  --mag-focus: #19568d;
+  --mag-cover: #eef5ff;
+  --mag-cover-ink: #19568d;
+}
+.landing-v2d.editorial-theme--peach #mag {--mag-surface: #ffffff;}
+.landing-v2d.editorial-theme--peach .nova-podcasts {--mag-surface: #fff8f2;--mag-line: #eedaca;}
+.landing-v2d.editorial-theme--peach .nova-mag-card {border-radius: 24px;}
+.landing-v2d:is(.editorial-theme--ice,.editorial-theme--paper,.editorial-theme--peach) .nova-mag-all {
+  color: var(--mag-blue);
+  border-color: var(--mag-blue);
+  background: var(--mag-button);
+}
+.landing-v2d:is(.editorial-theme--ice,.editorial-theme--peach) .nova-mag-all {color: #ffffff;border-color: var(--mag-button);}
+.landing-v2d:is(.editorial-theme--ice,.editorial-theme--paper,.editorial-theme--peach) .nova-mag-all:hover {background: var(--mag-button-hover);}
+.landing-v2d:is(.editorial-theme--ice,.editorial-theme--paper,.editorial-theme--peach) .nova-mag-eyebrow {color: #a74409;}
+.landing-v2d:is(.editorial-theme--ice,.editorial-theme--paper,.editorial-theme--peach) .podcast-cover-badge {
+  color: #a74409;
+  background: #ffffff;
+  border-color: #f2c9aa;
+}
+.landing-v2d.editorial-theme--paper .nova-mag-read {color: #a74409;}
+.landing-v2d.editorial-theme--paper .nova-mag-header h2 span {text-decoration:underline;text-decoration-color:#f8b483;text-decoration-thickness:3px;text-underline-offset:12px;}

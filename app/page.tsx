@@ -16,11 +16,15 @@ import { KonkurNewsLatest } from "@/components/konkur-news-latest";
 import { PodcastsLatest } from "@/components/podcasts-latest";
 import { getPublishedPodcasts } from "@/lib/podcasts";
 import "./podcasts/podcasts.css";
+import "./editorial-light-themes.css";
+import "./social-light-preview.css";
 import { getPublishedNews } from "@/lib/news";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
+  const editorialTheme = ["ice", "paper", "peach"].includes(String(params.editorial)) ? String(params.editorial) : "ice";
+  const socialTheme = ["cards", "rows", "split"].includes(String(params.social)) ? String(params.social) : "rows";
   const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
   const { data } = await supabase
@@ -36,7 +40,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <main className="landing-v2d">
+    <main className={`landing-v2d${editorialTheme ? ` editorial-theme--${editorialTheme}` : ""}`}>
       <LandingHeader isAuthenticated={Boolean(user)} />
       <LandingHero />
 
@@ -75,7 +79,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <KonkurNewsLatest news={news} unavailable={newsUnavailable} />
 
-      <section className="social-section" aria-labelledby="social-title">
+      <section id="social" className={`social-section${socialTheme ? ` social-preview social-preview--${socialTheme}` : ""}`} aria-labelledby="social-title">
         <div className="container">
           <div className="social-head">
             <span className="eyebrow">نووا در کنار تو</span>
@@ -96,7 +100,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               rel="noreferrer"
             >
               <span className="icon-box">
-                <svg viewBox="0 0 24 24">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M21.6 7.2a2.8 2.8 0 0 0-2-2C17.9 4.7 12 4.7 12 4.7s-5.9 0-7.6.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .4 4.8 2.8 2.8 0 0 0 2 2c1.7.5 7.6.5 7.6.5s5.9 0 7.6-.5a2.8 2.8 0 0 0 2-2A29 29 0 0 0 22 12a29 29 0 0 0-.4-4.8ZM10 15.4V8.6l5.8 3.4-5.8 3.4Z" />
                 </svg>
               </span>
@@ -107,7 +111,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                   یادگیری بهتر.
                 </small>
               </span>
-              <span className="follow-cta">دنبال کردن ←</span>
+              <span className="follow-cta">{socialTheme ? "رفتن به کانال ←" : "دنبال کردن ←"}</span>
             </a>
             <a
               className="social-card tg"
@@ -116,7 +120,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               rel="noreferrer"
             >
               <span className="icon-box">
-                <svg viewBox="0 0 24 24">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m20.7 4.2-3 15c-.2 1.1-.9 1.4-1.8.9l-4.6-3.4-2.2 2.1c-.2.2-.5.5-1 .5l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L5.8 13.3l-4.6-1.4c-1-.3-1-1 .2-1.5l17.9-6.9c.8-.3 1.6.2 1.4.7Z" />
                 </svg>
               </span>
@@ -127,22 +131,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                   خبرهای نووا مطلع می‌شوی.
                 </small>
               </span>
-              <span className="follow-cta">دنبال کردن ←</span>
+              <span className="follow-cta">{socialTheme ? "رفتن به کانال ←" : "دنبال کردن ←"}</span>
             </a>
           </div>
-        </div>
-      </section>
-
-      <section className="cta-block">
-        <div className="container cta-content">
-          <h2>شروع یک مسیر تازه</h2>
-          <p>
-            آماده‌ای این بار با برنامه جلو بروی؟ حسابت را بساز؛ اولین قدم فقط
-            چند دقیقه زمان می‌برد.
-          </p>
-          <Link className="btn-light" href="/auth?mode=signup">
-            ثبت‌نام در نووا ←
-          </Link>
         </div>
       </section>
 
