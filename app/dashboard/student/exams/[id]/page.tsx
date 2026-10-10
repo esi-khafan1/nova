@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { StudentExamReview } from "@/components/dashboard/student-exam-review";
+import type { ExamReviewQuestion } from "@/lib/exam-review";
 import { StudentExamForm } from "@/components/dashboard/student-exam-form";
 import { requireProfile } from "@/lib/auth";
 import {
@@ -48,6 +50,10 @@ export default async function StudentExamPage({
   );
   const timeState = getExamTimeState(exam.starts_at, exam.duration_minutes);
 
+  const { data: reviewData, error: reviewError } = attempt && exam.mode === "booklet"
+    ? await supabase.rpc("student_exam_review", { target_exam_id: id })
+    : { data: null, error: null };
+
   return (
     <DashboardShell role="student" name={profile.full_name}>
       <section className="portal-heading">
@@ -70,6 +76,7 @@ export default async function StudentExamPage({
       )}
 
       {attempt ? (
+        <>
         <section className="portal-card exam-submitted">
           <h2>پاسخ‌های شما با موفقیت ثبت شده است ✅</h2>
           {attempt.score !== null ? (
@@ -102,6 +109,12 @@ export default async function StudentExamPage({
             <p>پاسخ شما برای بررسی مشاور ثبت گردید.</p>
           )}
         </section>
+        {exam.mode === "booklet" && (reviewError
+          ? <div className="portal-alert error" role="alert">بررسی پاسخ‌ها فعلاً در دسترس نیست. دوباره صفحه را باز کن؛ پاسخ‌های ثبت‌شده محفوظ‌اند.</div>
+          : reviewData?.length
+            ? <StudentExamReview questions={reviewData as ExamReviewQuestion[]} />
+            : <p className="portal-card">برای این آزمون سؤال قابل بررسی وجود ندارد.</p>)}
+        </>
       ) : timeState === "upcoming" ? (
         <section className="portal-card exam-gate">
           <h2>آزمون هنوز شروع نشده است</h2>

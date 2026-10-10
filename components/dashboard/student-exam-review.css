@@ -1,0 +1,36 @@
+.student-exam-review{margin-top:24px;color:#15324f;}
+.student-exam-review .review-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;}
+.student-exam-review .review-eyebrow{color:#a74409;font-size:14px;font-weight:700;}
+.student-exam-review h2{font-size:26px;margin:8px 0;}
+.student-exam-review .review-heading p{color:#4c6279;line-height:1.9;font-size:16px;max-width:650px;}
+.student-exam-review .review-booklet-label{display:grid;gap:8px;font-size:14px;font-weight:700;min-width:190px;}
+.student-exam-review select{min-height:46px;padding:8px 12px;border:1px solid #86a9d2;border-radius:8px;background:#fff;color:#15324f;font:inherit;width:100%;}
+.student-exam-review .review-filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;}
+.student-exam-review .review-filter{display:inline-flex;align-items:center;gap:12px;min-height:46px;border:1px solid #d6e3f4;border-radius:8px;padding:10px 16px;background:#fff;color:#15324f;font:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.student-exam-review .review-filter span{font-size:14px;}
+.student-exam-review .review-filter[aria-pressed=true]{background:#1e5faf;border-color:#1e5faf;color:#fff;}
+.student-exam-review button:focus-visible,.student-exam-review select:focus-visible,.student-exam-review a:focus-visible{outline:3px solid #1e5faf;outline-offset:3px;}
+.student-exam-review .review-visible-count{font-size:14px;margin:16px 0;color:#4c6279;}
+.student-exam-review .review-note{background:#fff2e8;color:#8b390b;line-height:1.9;padding:16px;border-radius:8px;font-size:14px;}
+.student-exam-review .review-booklet{margin-top:24px;}
+.student-exam-review .review-booklet-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px;}
+.student-exam-review h3{font-size:20px;margin:0;}
+.student-exam-review .review-booklet-heading a{color:#1e5faf;font-size:14px;min-height:44px;display:inline-flex;align-items:center;}
+.student-exam-review .review-question-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+.student-exam-review .review-question{background:#fff;border:1px solid #d6e3f4;border-radius:12px;padding:16px;}
+.student-exam-review .review-question--correct{border-top:3px solid #1e5faf;background:#f2f7ff;}
+.student-exam-review .review-question--incorrect{border-top:3px solid #b74a0b;background:#fff8f2;}
+.student-exam-review .review-question--unanswered{border-top:3px solid #7b8b9b;}
+.student-exam-review .review-question--ungraded{border-top:3px solid #a74409;}
+.student-exam-review .review-question-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.student-exam-review h4{margin:0;font-size:16px;}
+.student-exam-review .review-status{display:inline-flex;gap:8px;font-size:14px;font-weight:700;color:#4c6279;}
+.student-exam-review .review-question--correct .review-status{color:#1e5faf;}
+.student-exam-review .review-question--incorrect .review-status,.student-exam-review .review-question--ungraded .review-status{color:#a74409;}
+.student-exam-review dl{margin:0;display:grid;gap:12px;}
+.student-exam-review dl div{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.student-exam-review dt{font-size:14px;color:#4c6279;}
+.student-exam-review dd{font-size:16px;font-weight:700;margin:0;}
+.student-exam-review .review-empty{text-align:center;padding:32px 16px;background:#f2f7ff;border-radius:12px;color:#4c6279;}
+@media(max-width:1050px){.student-exam-review .review-question-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.student-exam-review .review-heading{flex-wrap:wrap;}}
+@media(max-width:600px){.student-exam-review .review-question-grid{grid-template-columns:1fr;}.student-exam-review h2{font-size:22px;}.student-exam-review .review-booklet-label{width:100%;}.student-exam-review .review-booklet-heading{align-items:flex-start;flex-direction:column;gap:0;}.student-exam-review .review-filter{padding-inline:12px;}.student-exam-review .review-heading{gap:16px;}}

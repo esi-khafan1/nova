@@ -122,6 +122,7 @@ export default async function StudentExamsPage({
                   {attempt ? (
                     <div className="exam-completed">
                       <strong>آزمون داده شد ✅</strong>
+                      <Link className="button secondary" href={`/dashboard/student/exams/${exam.id}#exam-review`}>بررسی آزمون و پاسخ‌ها</Link>
                       {attempt.score !== null && (
                         <span>
                           درصد کنکوری: {toPersianDigits(attempt.score)}٪
