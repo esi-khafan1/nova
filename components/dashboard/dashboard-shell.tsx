@@ -109,6 +109,7 @@ export function DashboardShell({
             label: "اخبار کنکور",
             icon: "content" as const,
           },
+          {href: "/dashboard/counselor/podcasts", label: "پادکست‌ها", icon: "content" as const},
         ]
       : []),
     ...(role === "student"

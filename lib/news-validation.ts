@@ -14,7 +14,7 @@ export function isSafeNewsUrl(value: string) {
   }
 }
 
-function validDocument(node: unknown, depth = 0): node is ContentNode {
+export function validDocument(node: unknown, depth = 0): node is ContentNode {
   if (!node || typeof node !== "object" || depth > 30) return false;
   const item = node as ContentNode;
   if (
