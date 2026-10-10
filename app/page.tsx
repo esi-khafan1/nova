@@ -16,11 +16,13 @@ import { KonkurNewsLatest } from "@/components/konkur-news-latest";
 import { PodcastsLatest } from "@/components/podcasts-latest";
 import { getPublishedPodcasts } from "@/lib/podcasts";
 import "./podcasts/podcasts.css";
+import "./editorial-light-themes.css";
 import { getPublishedNews } from "@/lib/news";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
+  const editorialTheme = ["ice", "paper", "peach"].includes(String(params.editorial)) ? String(params.editorial) : null;
   const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
   const { data } = await supabase
@@ -36,7 +38,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <main className="landing-v2d">
+    <main className={`landing-v2d${editorialTheme ? ` editorial-theme--${editorialTheme}` : ""}`}>
       <LandingHeader isAuthenticated={Boolean(user)} />
       <LandingHero />
 
