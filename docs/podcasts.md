@@ -2,7 +2,7 @@
 
 ## Public experience
 
-- The landing adds a warm full-section `PodcastsLatest` directly after the latest Konkur news section. It reuses magazine card geometry and colors without altering the article/news tables or those components' behavior.
+- The landing adds a warm full-section `PodcastsLatest` directly after the magazine and before the latest Konkur news section. It reuses magazine card geometry and colors without altering the article/news tables or those components' behavior.
 - `/podcasts` shows three equal cards per desktop row, two on tablets, one on mobile. Cards have an image, category, duration, title, summary and publication date.
 - `/podcasts/[id]` shows a native accessible audio player, direct audio link, rich text and images. Playback is user-initiated, never autoplay; audio uses `preload="none"`. Player errors have a retry/direct-link fallback. Published-only queries protect draft/archived pages.
 - Sitemap includes the podcast archive and published podcast entries.
@@ -44,3 +44,9 @@ Because the GitHub MCP writes UTF-8 text rather than binary, the original MP3 by
 - Local production browser tests with a mock backend verified: section placement/viewport fit at 1440/1366/1024px and mobile; equal archive geometry at desktop/tablet/mobile; actual immutable image hosting; all three MP3s decode/play/seek and HTTP 206 range responses; anonymous counselor redirect; no-audio publish rejection; MIME rejection; draft/publish/edit/archive; upload progress path and persistence with a mocked ImageKit provider; missing/empty/backend-error states; unchanged article/news form defaults.
 - Real Supabase policy tests ran inside a rollback-only transaction: an approved counselor can create/update own draft, another approved counselor cannot update it or forge its author, a student cannot insert, anonymous reads see exactly the three published samples and not the temporary draft. All test writes rolled back.
 - Real ImageKit upload using a signed-in counselor account has not been exercised; the provider was mocked for browser workflow tests. Verify one real upload before release if the integration's production configuration has changed.
+
+## Follow-up: OGG compatibility and placement
+
+- OGG file labels now accept application/ogg, audio/x-ogg and audio/opus as well as audio/ogg. MIME matching is case-insensitive and ignores codec parameters. A missing or generic application/octet-stream label is allowed only with an existing allowlisted audio extension; the native browser decode/duration check still runs before upload. HTML MIME, unknown extensions, empty/oversized files and corrupt non-audio payloads remain rejected.
+- Podcast cards sit between magazine and Konkur news in the landing.
+- The hamburger link is removed. The section's all-podcasts link, footer link and counselor dashboard navigation remain available.

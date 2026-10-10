@@ -4,7 +4,7 @@ const audioTypes: Record<string, string[]> = {
   mp3: ["audio/mpeg", "audio/mp3"],
   m4a: ["audio/mp4", "audio/x-m4a"],
   wav: ["audio/wav", "audio/x-wav", "audio/wave"],
-  ogg: ["audio/ogg"],
+  ogg: ["audio/ogg", "application/ogg", "audio/x-ogg", "audio/opus"],
   webm: ["audio/webm"],
 };
 export function validateAudioFile(file: {
@@ -13,9 +13,14 @@ export function validateAudioFile(file: {
   size: number;
 }) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  // Browser/OS MIME labels differ for Ogg/Opus voice notes. Parameters are
+  // not part of the base media type. Native decoding still validates the file
+  // before upload, including when the OS reports a generic binary MIME.
+  const mime = file.type.split(";", 1)[0].trim().toLowerCase();
+  const generic = !mime || mime === "application/octet-stream";
   if (
     !audioTypes[extension] ||
-    (file.type && !audioTypes[extension].includes(file.type))
+    (!generic && !audioTypes[extension].includes(mime))
   )
     return "فایل صوتی MP3، M4A، WAV، OGG یا WebM انتخاب کن.";
   if (file.size <= 0 || file.size > MAX_PODCAST_AUDIO_BYTES)

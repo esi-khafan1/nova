@@ -128,7 +128,7 @@ export function PodcastAudioUpload({
         ref={input}
         id="podcast-audio-file"
         type="file"
-        accept="audio/mpeg,audio/mp4,audio/wav,audio/x-wav,audio/ogg,audio/webm,.mp3,.m4a,.wav,.ogg,.webm"
+        accept="audio/mpeg,audio/mp4,audio/wav,audio/x-wav,audio/ogg,application/ogg,audio/x-ogg,audio/opus,audio/webm,.mp3,.m4a,.wav,.ogg,.webm"
         disabled={busy || disabled}
         onChange={(e) => {
           const file = e.target.files?.[0];

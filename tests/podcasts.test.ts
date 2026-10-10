@@ -163,3 +163,41 @@ test("isolated storage has RLS, author ownership, approval and publish constrain
   assert.equal(sql.includes("alter table public.resources"), false);
   assert.equal(sql.includes("alter table public.konkur_news"), false);
 });
+
+test("OGG voice notes accept common browser MIME labels and codec parameters", () => {
+  for (const type of [
+    "audio/ogg",
+    "application/ogg",
+    "audio/x-ogg",
+    "audio/opus",
+    "audio/ogg; codecs=opus",
+    "APPLICATION/OGG",
+    "application/octet-stream",
+    "",
+  ]) {
+    assert.equal(
+      validateAudioFile({ name: "voice.OGG", type, size: 1024 }),
+      null,
+      type,
+    );
+  }
+  assert.ok(
+    validateAudioFile({ name: "voice.ogg", type: "text/html", size: 1024 }),
+  );
+  assert.ok(
+    validateAudioFile({
+      name: "not-audio.exe",
+      type: "application/octet-stream",
+      size: 1024,
+    }),
+  );
+});
+test("landing order is magazine, podcasts, news; hamburger omits podcasts", () => {
+  const page = readFileSync("app/page.tsx", "utf8");
+  const magazine = page.indexOf("<MagazineLatest");
+  const podcasts = page.indexOf("<PodcastsLatest");
+  const news = page.indexOf("<KonkurNewsLatest");
+  assert.ok(magazine >= 0 && magazine < podcasts && podcasts < news);
+  const header = readFileSync("components/landing-header.tsx", "utf8");
+  assert.equal(header.includes('href: "/podcasts"'), false);
+});

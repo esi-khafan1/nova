@@ -71,9 +71,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <MagazineLatest resources={latestResources} design={magDesign} />
 
-      <KonkurNewsLatest news={news} unavailable={newsUnavailable} />
-
       <PodcastsLatest podcasts={podcasts} unavailable={podcastsUnavailable} />
+
+      <KonkurNewsLatest news={news} unavailable={newsUnavailable} />
 
       <section className="social-section" aria-labelledby="social-title">
         <div className="container">
