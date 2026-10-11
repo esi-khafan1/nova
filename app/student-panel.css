@@ -39,3 +39,5 @@
 .student-portal .sp-task .student-test-count{grid-column:2;justify-self:end;justify-content:flex-end}
 @media(max-width:900px){.student-portal .sp-task .student-progress-control{display:flex;flex-direction:column;align-items:flex-start}.student-portal .sp-task .student-test-count{justify-content:flex-start;width:100%}}
 @media(max-width:900px){.student-portal .sp-task .student-plan-check{align-self:flex-start}}
+/* On narrow screens enter the test count before marking the activity done. */
+@media(max-width:900px){.student-portal .sp-task .student-test-count{order:-1}}
