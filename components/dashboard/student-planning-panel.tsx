@@ -10,7 +10,7 @@ const fa=(value:number)=>value.toLocaleString("fa-IR");
 const time=(minutes:number)=>`${fa(Math.floor(minutes/60))} ساعت${minutes%60?` و ${fa(minutes%60)} دقیقه`:""}`;
 function SubjectTitle({subject}:{subject:string}){
  const match=subject.match(/^(.*?)\s+([۰-۹0-9]+)$/u);
- return <strong className="sp-subject-title"><span>{match?match[1]:subject}</span>{match&&<span className="sp-book-number">کتاب {match[2]}</span>}</strong>;
+ return <strong className="sp-subject-title"><span>{match?match[1]:subject}</span>{match&&<span className="sp-subject-number">{match[2]}</span>}</strong>;
 }
 type Profile={full_name:string;grade:number|null;study_field:StudyField|null};
 function Summary({items,done,label}:{items:StudyItem[];done:Map<string,StudyCompletion>;label:string}){
