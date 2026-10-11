@@ -50,7 +50,7 @@ export default async function StudentExamPage({
   );
   const timeState = getExamTimeState(exam.starts_at, exam.duration_minutes);
 
-  const { data: reviewData, error: reviewError } = attempt && exam.mode === "booklet"
+  const { data: reviewData, error: reviewError } = attempt && timeState === "ended" && exam.mode === "booklet"
     ? await supabase.rpc("student_exam_review", { target_exam_id: id })
     : { data: null, error: null };
 
@@ -79,7 +79,7 @@ export default async function StudentExamPage({
         <>
         <section className="portal-card exam-submitted">
           <h2>پاسخ‌های شما با موفقیت ثبت شده است ✅</h2>
-          {attempt.score !== null ? (
+          {timeState === "ended" && attempt.score !== null ? (
             <div className="exam-result-summary">
               <div className="exam-result-score-box">
                 <span>درصد نهایی (با نمره منفی)</span>
@@ -106,10 +106,10 @@ export default async function StudentExamPage({
               </div>
             </div>
           ) : (
-            <p>پاسخ شما برای بررسی مشاور ثبت گردید.</p>
+            <p>{timeState !== "ended" ? "بررسی پاسخ‌برگ و نتیجه، بعد از پایان زمان آزمون برای همه فعال می‌شود." : "پاسخ شما برای بررسی مشاور ثبت گردید."}</p>
           )}
         </section>
-        {exam.mode === "booklet" && (reviewError
+        {exam.mode === "booklet" && timeState === "ended" && (reviewError
           ? <div className="portal-alert error" role="alert">بررسی پاسخ‌ها فعلاً در دسترس نیست. دوباره صفحه را باز کن؛ پاسخ‌های ثبت‌شده محفوظ‌اند.</div>
           : reviewData?.length
             ? <StudentExamReview questions={reviewData as ExamReviewQuestion[]} />

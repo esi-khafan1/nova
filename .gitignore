@@ -11,3 +11,8 @@
 .open-next/
 .wrangler/
 cloudflare-env.d.ts
+
+# Generated from the pinned pdfjs-dist dependency by prebuild/predev
+/public/pdfjs/pdf.worker.min.js
+/public/pdfjs/cmaps/
+/public/pdfjs/standard_fonts/
