@@ -122,7 +122,8 @@ export default async function StudentExamsPage({
                   {attempt ? (
                     <div className="exam-completed">
                       <strong>آزمون داده شد ✅</strong>
-                      {attempt.score !== null && (
+                      <Link className="button secondary" href={`/dashboard/student/exams/${exam.id}#exam-review`}>{timeState === "ended" ? "بررسی دفترچه و پاسخ‌برگ" : "مشاهدهٔ وضعیت ثبت آزمون"}</Link>
+                      {timeState === "ended" && attempt.score !== null && (
                         <span>
                           درصد کنکوری: {toPersianDigits(attempt.score)}٪
                         </span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { hasCompleteExamKeys, countBookletKeys } from "@/lib/exam-key-validation";
 import { saveExam } from "@/app/dashboard/exams/actions";
 import { ExamPdfUpload } from "@/components/dashboard/exam-pdf-upload";
 import { PersianNumberStepper } from "@/components/dashboard/persian-number-stepper";
@@ -31,6 +32,8 @@ export function ExamBuilder() {
   const applyExamField = (field: StudyField | "") => { setExamField(field); if (field) setBooklets(konkurBookletPresets[field].map((preset, index) => ({ id: `${uid}-${field}-${index}-${Date.now()}`, title: preset.title, pdfUrl: "", questionCount: preset.questionCount, durationMinutes: preset.durationMinutes, keyAnswers: {} }))); };
   const allBookletsHavePdf = booklets.every((b) => Boolean(b.pdfUrl?.startsWith("https://")));
 
+  const allKeysComplete = hasCompleteExamKeys(booklets);
+
   return <form action={saveExam} className="portal-card exam-builder">
     <input type="hidden" name="booklets" value={JSON.stringify(booklets)} /><input type="hidden" name="exam_field" value={examField} />
     <div className="portal-card-title"><div><span>آزمون کنکوری</span><h2>ساخت آزمون دفترچه‌ای</h2></div><div className="exam-summary-pill"><span>{toPersianDigits(booklets.length)} دفترچه</span><span>·</span><span>{toPersianDigits(totalQuestions)} سؤال</span><span>·</span><span>{toPersianDigits(totalDuration)} دقیقه</span></div></div>
@@ -47,9 +50,9 @@ export function ExamBuilder() {
         <div className="exam-booklet-header"><div className="exam-booklet-header-title"><span className="exam-booklet-badge">دفترچه {toPersianDigits(bIndex + 1)}</span><span className="exam-booklet-range">سؤالات {toPersianDigits(range.start)} تا {toPersianDigits(range.end)}</span><span className="exam-booklet-time">{toPersianDigits(booklet.durationMinutes)} دقیقه</span></div>{booklets.length > 1 && <button type="button" className="exam-booklet-delete" onClick={() => removeBooklet(bIndex)}>حذف دفترچه</button>}</div>
         <div className="exam-booklet-fields"><label>عنوان دفترچه<select required value={booklet.title} onChange={(e) => updateBooklet(bIndex, { title: e.target.value })}>{titleSuggestions.map((title) => <option key={title} value={title}>{title}</option>)}</select></label><label>تعداد سؤالات این دفترچه<PersianNumberStepper min={1} max={200} value={booklet.questionCount} label={`تعداد سؤالات ${booklet.title}`} onChange={(value) => updateBooklet(bIndex, { questionCount: value })} /></label><label>مدت پاسخگویی این دفترچه (دقیقه)<PersianNumberStepper min={1} max={360} value={booklet.durationMinutes} label={`مدت پاسخگویی ${booklet.title}`} onChange={(value) => updateBooklet(bIndex, { durationMinutes: value })} /></label></div>
         <div className="exam-booklet-upload"><ExamPdfUpload purpose="exam-question" value={booklet.pdfUrl} onChange={(url) => updateBooklet(bIndex, { pdfUrl: url })} label={`فایل PDF سؤالات ${booklet.title}`} /></div>
-        <details className="exam-key-accordion" open><summary><span>کلید سؤالات {toPersianDigits(range.start)} تا {toPersianDigits(range.end)} (تصحیح خودکار)</span><span className="exam-key-count">{toPersianDigits(Object.keys(booklet.keyAnswers).length)} از {toPersianDigits(range.count)} تعیین شده</span></summary><div className="exam-key-content"><div className="exam-key-grid">{qList.map((qNum) => { const selected = booklet.keyAnswers[String(qNum)]; return <div key={qNum} className="exam-key-item"><span className="exam-key-num">{toPersianDigits(qNum)}</span><div className="exam-key-options">{[1,2,3,4].map((opt) => <button type="button" key={opt} className={`exam-key-btn ${selected === opt ? "selected" : ""}`} onClick={() => setQuestionKey(bIndex, qNum, opt)}>{toPersianDigits(opt)}</button>)}</div></div>; })}</div></div></details>
+        <details className="exam-key-accordion" open><summary><span>کلید سؤالات {toPersianDigits(range.start)} تا {toPersianDigits(range.end)} (تصحیح خودکار)</span><span className="exam-key-count">{toPersianDigits(countBookletKeys(booklet.keyAnswers, range.start, range.count))} از {toPersianDigits(range.count)} تعیین شده</span></summary><div className="exam-key-content"><div className="exam-key-grid">{qList.map((qNum) => { const selected = booklet.keyAnswers[String(qNum)]; return <div key={qNum} className="exam-key-item"><span className="exam-key-num">{toPersianDigits(qNum)}</span><div className="exam-key-options">{[1,2,3,4].map((opt) => <button type="button" key={opt} className={`exam-key-btn ${selected === opt ? "selected" : ""}`} onClick={() => setQuestionKey(bIndex, qNum, opt)}>{toPersianDigits(opt)}</button>)}</div></div>; })}</div></div></details>
       </article>; })}
     </div><button type="button" className="button secondary exam-add-booklet-btn" onClick={addBooklet}>+ افزودن دفترچه جدید</button></div>
-    <div className="exam-actions"><button className="button secondary" name="status" value="draft">ذخیره پیش‌نویس</button><button className="button" name="status" value="published" disabled={!allBookletsHavePdf} title={!allBookletsHavePdf ? "لطفاً ابتدا PDF تمام دفترچه‌ها را بارگذاری کنید" : undefined}>انتشار آزمون کنکوری</button></div>
+    <p role="status">{!allKeysComplete && "برای انتشار آزمون، گزینهٔ صحیح تمام سؤال‌ها را مشخص کن. ذخیرهٔ پیش‌نویس با کلید ناقص ممکن است."}</p><div className="exam-actions"><button className="button secondary" name="status" value="draft">ذخیره پیش‌نویس</button><button className="button" name="status" value="published" disabled={!allBookletsHavePdf || !allKeysComplete} title={!allBookletsHavePdf ? "لطفاً ابتدا PDF تمام دفترچه‌ها را بارگذاری کنید" : !allKeysComplete ? "گزینهٔ صحیح تمام سؤال‌ها باید مشخص شود" : undefined}>انتشار آزمون کنکوری</button></div>
   </form>;
 }

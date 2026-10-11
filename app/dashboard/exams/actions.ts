@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { hasCompleteExamKeys } from "@/lib/exam-key-validation";
 import { createClient } from "@/lib/supabase/server";
 
 const uuidPattern =
@@ -46,7 +47,7 @@ export async function saveExam(formData: FormData) {
   let booklets: RawBooklet[] = [];
   try {
     booklets = JSON.parse(rawBooklets || "[]");
-    if (!Array.isArray(booklets) || booklets.length === 0) throw new Error("invalid");
+    if (!Array.isArray(booklets) || booklets.length === 0 || booklets.some(b => !b || typeof b !== "object" || Array.isArray(b))) throw new Error("invalid");
   } catch {
     redirect("/dashboard/counselor/exams?error=booklets");
   }
@@ -54,11 +55,14 @@ export async function saveExam(formData: FormData) {
   for (const b of booklets) {
     const qCount = Number(b.questionCount);
     const duration = Number(b.durationMinutes);
-    if (!qCount || qCount < 1 || qCount > 200 || !duration || duration < 1 || duration > 360)
+    if (!Number.isInteger(qCount) || qCount < 1 || qCount > 200 || !Number.isInteger(duration) || duration < 1 || duration > 360)
       redirect("/dashboard/counselor/exams?error=booklet_params");
     if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://")))
       redirect("/dashboard/counselor/exams?error=booklet_pdf");
   }
+
+  if (status === "published" && !hasCompleteExamKeys(booklets))
+    redirect("/dashboard/counselor/exams?error=incomplete_key");
 
   const { data, error } = await supabase.rpc("save_exam", {
     target_exam_id: examId || null,

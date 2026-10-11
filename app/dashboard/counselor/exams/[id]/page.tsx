@@ -11,11 +11,13 @@ export default async function CounselorExamResultsPage({ params }: { params: Pro
   const { id } = await params;
   const { supabase, profile } = await requireProfile(["counselor"]);
   const [{ data: exam }, { data: attemptsData }] = await Promise.all([
-    supabase.from("exams").select("id,title,mode,audience,status,description,starts_at,duration_minutes,exam_booklets(id,title,pdf_url,question_count,start_question_number,end_question_number,duration_minutes,sort_order,key_answers)").eq("id", id).eq("counselor_id", profile.id).single(),
+    supabase.from("exams").select("id,title,mode,audience,status,description,starts_at,duration_minutes,exam_booklets(id,title,pdf_url,question_count,start_question_number,end_question_number,duration_minutes,sort_order)").eq("id", id).eq("counselor_id", profile.id).single(),
     supabase.rpc("exam_attempts_for_counselor", { target_exam_id: id }),
   ]);
   if (!exam) notFound();
-  const booklets = ((exam.exam_booklets ?? []) as ExamBooklet[]).sort((a, b) => a.sort_order - b.sort_order);
+  const { data: reviewBooklets, error: bookletError } = await supabase.rpc("exam_booklets_for_counselor", { target_exam_id: id });
+  if (bookletError) throw new Error("Exam booklet review unavailable");
+  const booklets = ((reviewBooklets ?? []) as ExamBooklet[]).sort((a, b) => a.sort_order - b.sort_order);
   const attempts = (attemptsData ?? []) as Attempt[];
   const totalQuestions = booklets.reduce((acc, b) => acc + (b.question_count || 0), 0);
   return <DashboardShell role="counselor" name={profile.full_name}>

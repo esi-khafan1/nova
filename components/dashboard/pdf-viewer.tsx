@@ -34,6 +34,7 @@ interface PdfJsLib {
   };
   getDocument: (options: {
     data: Uint8Array;
+    isEvalSupported?: boolean;
     cMapUrl?: string;
     cMapPacked?: boolean;
     standardFontDataUrl?: string;
@@ -243,6 +244,7 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
         try {
           const loadingTask = lib.getDocument({
             data: new Uint8Array(buffer),
+            isEvalSupported: false,
             cMapUrl: "/pdfjs/cmaps/",
             cMapPacked: true,
             standardFontDataUrl: "/pdfjs/standard_fonts/",
