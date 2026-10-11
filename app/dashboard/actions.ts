@@ -110,23 +110,13 @@ export async function saveWeeklyPlan(fd: FormData) {
     `${tehranPart("year")}-${tehranPart("month")}-${tehranPart("day")}T12:00:00Z`,
   );
   const selectedWeek = new Date(`${weekStart}T12:00:00Z`);
-  const currentWeekStart = new Date(today);
-  currentWeekStart.setUTCDate(
-    currentWeekStart.getUTCDate() - ((currentWeekStart.getUTCDay() + 1) % 7),
-  );
-
-  if (
-    Number.isNaN(selectedWeek.getTime()) ||
-    selectedWeek.getUTCDay() !== 6 ||
-    selectedWeek < currentWeekStart
-  ) {
-    redirect("/dashboard/counselor/plans?error=week");
-  }
+  const endOfPeriod = new Date(selectedWeek); endOfPeriod.setUTCDate(endOfPeriod.getUTCDate()+6);
+  if (Number.isNaN(selectedWeek.getTime()) || selectedWeek.toISOString().slice(0,10)!==weekStart || (!planId && selectedWeek<today) || endOfPeriod<today) redirect("/dashboard/counselor/plans?error=week");
 
   let items: WeeklyPlanItemInput[] = [];
   try {
     const parsed = JSON.parse(rawItems);
-    if (!Array.isArray(parsed)) throw new Error("Invalid items");
+    if (!Array.isArray(parsed) || parsed.some(item => !item || typeof item!=="object" || Array.isArray(item))) throw new Error("Invalid items");
     items = parsed;
   } catch {
     redirect("/dashboard/counselor/plans?error=plan");
@@ -162,7 +152,7 @@ export async function saveWeeklyPlan(fd: FormData) {
         Number.isInteger(item.dayOfWeek) &&
         item.dayOfWeek >= 0 &&
         item.dayOfWeek <= 6 &&
-        Number.isFinite(item.durationMinutes) &&
+        Number.isInteger(item.durationMinutes) &&
         item.durationMinutes >= 15 &&
         item.durationMinutes <= 720 &&
         item.subject.length > 0 &&
@@ -186,7 +176,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   )
     redirect("/dashboard/counselor/plans?error=items");
 
-  const { error } = await s.rpc("save_weekly_plan_v2", {
+  const { error } = await s.rpc("save_weekly_plan_v3", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,
@@ -196,7 +186,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     target_items: safeItems,
   });
 
-  if (error) redirect("/dashboard/counselor/plans?error=plan");
+  if (error) redirect(`/dashboard/counselor/plans?error=${error.code === "23P01" ? "overlap" : "plan"}`);
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student");

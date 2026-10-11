@@ -155,7 +155,7 @@ export default async function PrintWeeklyPlanPage({
             return (
               <section className="print-day-column" key={day}>
                 <header>
-                  <h2>{day}</h2>
+                  <h2>{new Intl.DateTimeFormat("fa-IR", { weekday: "long" }).format(addDays(weekStart, dayIndex))}</h2>
                   <span>{formatPersianDay(addDays(weekStart, dayIndex))}</span>
                 </header>
                 <div className="print-day-items">

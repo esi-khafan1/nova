@@ -113,8 +113,8 @@ export function StudentPlanCheckbox({
         <strong>
           {canToggle
             ? checked
-              ? "انجام شد"
-              : "ثبت انجام"
+              ? "انجام داده‌ام"
+              : "انجام داده‌ام"
             : checked
               ? "انجام‌شده"
               : "فقط در روز خودش قابل ثبت است"}
