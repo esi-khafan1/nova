@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
+import { formatPersianFullDate, parseIsoDate } from "@/lib/persian-date";
 import { saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import {
@@ -66,43 +68,10 @@ const newItem = (
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
 
-function toIsoDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function currentWeekSaturday() {
-  const date = new Date();
-  date.setHours(12, 0, 0, 0);
-  date.setDate(date.getDate() - ((date.getDay() + 1) % 7));
-  return toIsoDate(date);
-}
-
-function dayDate(weekStart: string, dayIndex: number) {
-  const [year, month, day] = weekStart.split("-").map(Number);
-  const date = new Date(year, month - 1, day, 12);
-  date.setDate(date.getDate() + dayIndex);
-  return date;
-}
-
-function isPastDay(weekStart: string, dayIndex: number) {
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-  return dayDate(weekStart, dayIndex) < today;
-}
-
-function isTodayOrPast(weekStart: string, dayIndex: number) {
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-  return dayDate(weekStart, dayIndex) <= today;
-}
-
-function firstAvailableDay(weekStart: string) {
-  return weekDays.findIndex((_, index) => !isPastDay(weekStart, index));
-}
-
+function dayDate(weekStart:string,dayIndex:number){return parseIsoDate(dayIso(weekStart,dayIndex));}
+function isPastDay(start:string,offset:number){return dayIso(start,offset)<tehranToday();}
+function isTodayOrPast(start:string,offset:number){return dayIso(start,offset)<=tehranToday();}
+function firstAvailableDay(start:string){return Math.max(0,weekDays.findIndex((_,i)=>!isPastDay(start,i)));}
 function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
   return [...plan.weekly_plan_items]
     .sort(
@@ -131,11 +100,11 @@ export function WeeklyPlanBuilder({
   plans: CounselorWeeklyPlan[];
 }) {
   const [studentIndex, setStudentIndex] = useState(0);
-  const [weekStart, setWeekStart] = useState(currentWeekSaturday);
+  const [weekStart, setWeekStart] = useState(tehranToday);
   const initialPlan = plans.find(
     (plan) =>
       plan.student_id === students[0]?.student_id &&
-      plan.week_start === currentWeekSaturday(),
+      plan.week_start === tehranToday(),
   );
   const [planId, setPlanId] = useState(initialPlan?.id ?? "");
   const [planStatus, setPlanStatus] = useState<"draft" | "published" | null>(
@@ -146,7 +115,7 @@ export function WeeklyPlanBuilder({
   const [items, setItems] = useState<PlanItem[]>(() => [
     ...(initialPlan
       ? planItems(initialPlan)
-      : [newItem(firstAvailableDay(currentWeekSaturday()), "initial-item")]),
+      : [newItem(firstAvailableDay(tehranToday()), "initial-item")]),
   ]);
 
   const student = students[studentIndex] ?? students[0];
@@ -186,6 +155,8 @@ export function WeeklyPlanBuilder({
       ? isTodayOrPast(weekStart, dayIndex)
       : isPastDay(weekStart, dayIndex);
 
+  const periodEnded = dayIso(weekStart, 6) < tehranToday();
+  const hasOverlap = overlapsWindow(weekStart, plans, student?.student_id ?? "", planId);
   const editableItems = items.filter((item) => !isLockedDay(item.dayOfWeek));
 
   const updateItem = <K extends keyof PlanItem>(
@@ -218,9 +189,10 @@ export function WeeklyPlanBuilder({
         <div className="portal-card-title">
           <div>
             <span>تنظیمات برنامه</span>
-            <h2>برنامه برای چه هفته‌ای است؟</h2>
+            <h2>برنامهٔ هفت‌روزه از چه روزی شروع شود؟</h2>
           </div>
         </div>
+        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();setWeekStart(start);loadPlan(student.student_id,start);}}><option value="">ساخت برنامهٔ جدید</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{p.title} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
         <div className="plan-basics-grid">
           <label>
             دانش‌آموز
@@ -244,11 +216,12 @@ export function WeeklyPlanBuilder({
             </select>
           </label>
           <label>
-            شروع هفته
+            شروع برنامهٔ هفت‌روزه
             <PersianDatePicker
               name="week_start"
               value={weekStart}
               plannedWeeks={plannedWeeks}
+              selectionMode="range"
               onChange={(nextWeek) => {
                 setWeekStart(nextWeek);
                 loadPlan(student.student_id, nextWeek);
@@ -300,6 +273,7 @@ export function WeeklyPlanBuilder({
         )}
       </section>
 
+      {hasOverlap && <div className="portal-alert error" role="alert">این بازه با برنامهٔ دیگری هم‌پوشانی دارد. تاریخ شروع را بعد از پایان برنامهٔ قبلی انتخاب کن.</div>}
       <div className="weekly-days">
         {weekDays.map((day, dayIndex) => {
           const dayIsLocked = isLockedDay(dayIndex);
@@ -312,7 +286,7 @@ export function WeeklyPlanBuilder({
               <header>
                 <div>
                   <span>روز {faNumber(dayIndex + 1)}</span>
-                  <h2>{day}</h2>
+                  <h2>{formatPersianFullDate(dayDate(weekStart, dayIndex))}</h2>
                 </div>
                 {!dayIsLocked && (
                   <button
@@ -580,7 +554,7 @@ export function WeeklyPlanBuilder({
               className="button button-secondary"
               name="status"
               value="draft"
-              disabled={!editableItems.length}
+              disabled={periodEnded || hasOverlap || !editableItems.length}
             >
               ذخیره پیش‌نویس
             </button>
@@ -589,7 +563,7 @@ export function WeeklyPlanBuilder({
             className="button"
             name="status"
             value="published"
-            disabled={!editableItems.length && !planId}
+            disabled={periodEnded || hasOverlap || (!editableItems.length && !planId)}
           >
             {planStatus === "published"
               ? "انتشار دوباره تغییرات"

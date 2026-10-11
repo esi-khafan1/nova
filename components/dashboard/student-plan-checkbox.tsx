@@ -61,6 +61,36 @@ export function StudentPlanCheckbox({
 
   return (
     <div className={`student-progress-control${canToggle ? "" : " locked"}`}>
+      <label
+        className={`student-plan-check${checked ? " checked" : ""}${
+          canToggle ? "" : " locked"
+        }`}
+        title={canToggle ? undefined : "فقط فعالیت‌های امروز قابل تغییر هستند"}
+      >
+        <input
+          type="checkbox"
+          aria-label={
+            canToggle
+              ? checked
+                ? "برداشتن علامت انجام فعالیت"
+                : "ثبت انجام فعالیت"
+              : "این فعالیت امروز نیست و قابل تغییر نیست"
+          }
+          checked={checked}
+          disabled={isPending || !canToggle}
+          onChange={(event) => saveProgress(event.target.checked)}
+        />
+        <span aria-hidden="true">{checked ? "✓" : ""}</span>
+        <strong>
+          {canToggle
+            ? checked
+              ? "انجام داده‌ام"
+              : "انجام داده‌ام"
+            : checked
+              ? "انجام‌شده"
+              : "فقط در روز خودش قابل ثبت است"}
+        </strong>
+      </label>
       {isTestActivity && (
         <div className="student-test-count">
           <span>
@@ -90,36 +120,6 @@ export function StudentPlanCheckbox({
           )}
         </div>
       )}
-      <label
-        className={`student-plan-check${checked ? " checked" : ""}${
-          canToggle ? "" : " locked"
-        }`}
-        title={canToggle ? undefined : "فقط فعالیت‌های امروز قابل تغییر هستند"}
-      >
-        <input
-          type="checkbox"
-          aria-label={
-            canToggle
-              ? checked
-                ? "برداشتن علامت انجام فعالیت"
-                : "ثبت انجام فعالیت"
-              : "این فعالیت امروز نیست و قابل تغییر نیست"
-          }
-          checked={checked}
-          disabled={isPending || !canToggle}
-          onChange={(event) => saveProgress(event.target.checked)}
-        />
-        <span aria-hidden="true">{checked ? "✓" : ""}</span>
-        <strong>
-          {canToggle
-            ? checked
-              ? "انجام شد"
-              : "ثبت انجام"
-            : checked
-              ? "انجام‌شده"
-              : "فقط در روز خودش قابل ثبت است"}
-        </strong>
-      </label>
     </div>
   );
 }

@@ -41,14 +41,14 @@ export function PersianDatePicker({
   value: string;
   onChange: (value: string) => void;
   plannedWeeks?: Record<string, "draft" | "published">;
-  selectionMode?: "week" | "day";
+  selectionMode?: "week" | "day" | "range";
   minDate?: string;
 }) {
   const selected = parseIsoDate(value);
   const today = startOfDay(new Date());
   const currentWeekStart = addDays(today, -((today.getDay() + 1) % 7));
   const selectedRangeEnd =
-    selectionMode === "week" ? addDays(selected, 6) : selected;
+    selectionMode !== "day" ? addDays(selected, 6) : selected;
   const minimumDate = minDate ? startOfDay(parseIsoDate(minDate)) : today;
   const [monthAnchor, setMonthAnchor] = useState(selected);
   const [open, setOpen] = useState(false);
@@ -96,7 +96,7 @@ export function PersianDatePicker({
         onClick={() => setOpen((current) => !current)}
       >
         <span>
-          {selectionMode === "week"
+          {selectionMode !== "day"
             ? formatPersianWeekRange(selected)
             : formatPersianFullDate(selected)}
         </span>
@@ -144,18 +144,20 @@ export function PersianDatePicker({
                 parts.year === month.year && parts.month === month.month;
               const isSelected = sameDay(date, selected);
               const isSaturday = date.getDay() === 6;
-              const weekStatus = isSaturday
+              const weekStatus = selectionMode === "range" || isSaturday
                 ? plannedWeeks[toIsoDate(date)]
                 : undefined;
               const isToday = sameDay(date, today);
               const isInSelectedWeek =
-                selectionMode === "week" &&
+                selectionMode !== "day" &&
                 date >= selected &&
                 date <= selectedRangeEnd;
               const isDisabled =
                 selectionMode === "week"
                   ? !isSaturday || startOfDay(date) < currentWeekStart
-                  : startOfDay(date) < minimumDate;
+                  : selectionMode === "range"
+                    ? startOfDay(date) < today && !(weekStatus && addDays(date, 6) >= today)
+                    : startOfDay(date) < minimumDate;
               return (
                 <button
                   type="button"
@@ -166,7 +168,7 @@ export function PersianDatePicker({
                     isToday ? "today" : "",
                     isInSelectedWeek ? "selected-week" : "",
                     selectionMode === "week" && isSaturday ? "week-start" : "",
-                    selectionMode === "week" && weekStatus
+                    selectionMode !== "day" && weekStatus
                       ? `has-plan ${weekStatus}`
                       : "",
                     isDisabled ? "disabled" : "",
@@ -195,7 +197,7 @@ export function PersianDatePicker({
           </div>
           <div className="persian-calendar-legend">
             <span className="today-key">امروز</span>
-            {selectionMode === "week" && (
+            {selectionMode !== "day" && (
               <>
                 <span className="week-key">هفته انتخاب‌شده</span>
                 <span className="published-key">برنامه منتشرشده</span>
@@ -206,7 +208,7 @@ export function PersianDatePicker({
           <p>
             {selectionMode === "week"
               ? "فقط شنبه هفته جاری یا هفته‌های آینده قابل انتخاب است."
-              : "روزهای گذشته قابل انتخاب نیستند."}
+              : selectionMode === "range" ? "هر روز دلخواه را انتخاب کن؛ برنامه از آن روز تا شش روز بعد ادامه دارد." : minDate ? "روز دلخواه را برای مشاهده انتخاب کن." : "روزهای گذشته قابل انتخاب نیستند."}
           </p>
         </div>
       )}

@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { LandingHeader } from "@/components/landing-header";
+import "@/app/landing-approved.css";
+import "@/app/student-panel.css";
 import { signOut } from "@/app/dashboard/actions";
 import type { AppRole } from "@/lib/auth";
 
@@ -137,6 +140,7 @@ export function DashboardShell({
       : []),
     { href: "/", label: "مشاهده سایت", icon: "site" },
   ];
+  if (role === "student") return <div className="student-portal"><LandingHeader isAuthenticated studentPanel /><main className="student-portal-main">{children}</main><footer className="student-portal-footer"><Link href="/dashboard/student">پنل من</Link><Link href="/dashboard/student/account">حساب کاربری</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
   const isStudentFocus = variant === "student-focus";
 
   return (
