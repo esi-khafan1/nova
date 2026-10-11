@@ -22,3 +22,13 @@
 @media(max-width:600px){.sp-subject table{min-width:0;table-layout:fixed}.sp-subject th,.sp-subject td{padding:12px 8px;overflow-wrap:anywhere}.sp-subject th:first-child{width:44%}.sp-subject th:not(:first-child){width:28%}}
 
 .student-portal .persian-calendar-days button{font-size:14px;min-height:44px}.student-portal .persian-calendar header strong,.student-portal .persian-calendar footer{font-size:14px}
+
+/* Keep seven calendar columns within the popup even when rows are 44px tall. */
+.student-portal .persian-calendar-weekdays,.student-portal .persian-calendar-days{grid-template-columns:repeat(7,minmax(0,1fr));width:100%;min-width:0}
+.student-portal .persian-calendar-days button{width:100%;min-width:0;height:44px;min-height:44px;aspect-ratio:auto;padding:0;line-height:1}
+.student-portal .persian-calendar-weekdays span{min-width:0}
+.sp-subject summary .sp-subject-title{display:inline-flex;align-items:center;flex-wrap:wrap;gap:10px;margin-inline-end:24px;vertical-align:middle}
+.sp-book-number{display:inline-block;font-size:14px;font-weight:500;line-height:1.5;padding:4px 8px;border:1px solid var(--sp-line);border-radius:6px;white-space:nowrap;unicode-bidi:isolate;background:#fff}
+.sp-subject summary .sp-subject-metrics{display:inline-flex;align-items:center;flex-wrap:wrap;gap:12px 28px;vertical-align:middle}
+.sp-subject-metrics>span{unicode-bidi:isolate;white-space:nowrap}
+@media(max-width:600px){.sp-subject summary .sp-subject-title{display:flex;margin:0 0 12px}.sp-subject summary .sp-subject-metrics{display:flex;align-items:flex-start;flex-direction:column;gap:8px;margin:0}}
