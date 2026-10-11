@@ -61,35 +61,6 @@ export function StudentPlanCheckbox({
 
   return (
     <div className={`student-progress-control${canToggle ? "" : " locked"}`}>
-      {isTestActivity && (
-        <div className="student-test-count">
-          <span>
-            هدف مشاور: {targetTestCount ? faNumber(targetTestCount) : "—"} تست
-          </span>
-          <label>
-            تعداد تست انجام‌شده
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={5000}
-              value={completedTestCount}
-              disabled={!canToggle || isPending}
-              onChange={(event) => {
-                setCompletedTestCount(event.target.value);
-                setHasError(false);
-              }}
-              onBlur={() => {
-                if (checked && validTestCount) saveProgress(true);
-              }}
-              placeholder="مثلاً ۳۰"
-            />
-          </label>
-          {hasError && (
-            <small>برای ثبت انجام، تعداد تست معتبر را وارد کن.</small>
-          )}
-        </div>
-      )}
       <label
         className={`student-plan-check${checked ? " checked" : ""}${
           canToggle ? "" : " locked"
@@ -120,6 +91,35 @@ export function StudentPlanCheckbox({
               : "فقط در روز خودش قابل ثبت است"}
         </strong>
       </label>
+      {isTestActivity && (
+        <div className="student-test-count">
+          <span>
+            هدف مشاور: {targetTestCount ? faNumber(targetTestCount) : "—"} تست
+          </span>
+          <label>
+            تعداد تست انجام‌شده
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={5000}
+              value={completedTestCount}
+              disabled={!canToggle || isPending}
+              onChange={(event) => {
+                setCompletedTestCount(event.target.value);
+                setHasError(false);
+              }}
+              onBlur={() => {
+                if (checked && validTestCount) saveProgress(true);
+              }}
+              placeholder="مثلاً ۳۰"
+            />
+          </label>
+          {hasError && (
+            <small>برای ثبت انجام، تعداد تست معتبر را وارد کن.</small>
+          )}
+        </div>
+      )}
     </div>
   );
 }
