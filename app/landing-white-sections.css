@@ -1,0 +1,8 @@
+/* White backgrounds only for the four approved landing sections. */
+.landing-v2d #mag,
+.landing-v2d #podcasts,
+.landing-v2d #konkur-news {
+  --mag-surface: #ffffff;
+  background: #ffffff;
+}
+.landing-v2d #social {background: #ffffff;}

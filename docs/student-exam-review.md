@@ -22,3 +22,11 @@ The detail/list UI withholds review and scores until `starts_at + duration_minut
 ## Verification
 
 TypeScript and the actual server-page harness cover active submitted attempts (no review RPC/no UI score), ended submitted attempts, errors, absent/unfinished attempts and exam gates. Rollback-only database fixtures cover active/upcoming review denial despite submitted attempts, exact-end access, correct/wrong/blank/unknown keys, other/unsubmitted students, counselor ownership and anonymous denial. Local React+real PDF.js browser tests cover full PDF display, status filters, booklet switching, static answer bubbles, empty state and 390/1440 responsive widths. Signed-in real-student production end-to-end testing remains to be done; fixture tests are not a substitute.
+
+## Approved palette and white sections
+
+The answer sheet stays pure white (including rows). Palette 3 uses a narrow orange top edge, navy selected choices, blue key rings/checks, pale orange only inside incorrect selected bubbles, and a white active filter outlined in orange. Landing CSS is scoped by IDs to #mag, #podcasts, #konkur-news and #social, changing only section backgrounds to white; editorial colors, cards, icons, other sections and archive routes remain unchanged.
+
+## Complete published keys
+
+Migration 031 requires a numeric 1..4 key for every globally numbered question in every booklet when publishing. It has been applied and does not rewrite existing records; incomplete drafts remain allowed. The builder disables publish until all PDFs and all actual question keys are present, and the server action separately validates completion. Out-of-range extra keys cannot make a booklet appear complete. Legacy incomplete booklets show the original PDF with a general review-unavailable message, not fabricated right/wrong results or an unknown-key tab. The current key-completeness rollout does not replace pending migration 029 for legacy key-column confidentiality at main rollout.

@@ -59,7 +59,7 @@ export default async function CounselorExamsPage({
 
       {params.error && (
         <div className="portal-alert error">
-          ذخیره آزمون انجام نشد. لطفاً اطلاعات دفترچه‌ها و فایل‌های PDF را بررسی کنید.
+          {params.error === "incomplete_key" ? "برای انتشار آزمون باید گزینهٔ صحیح تمام سؤال‌ها مشخص شود." : "ذخیره آزمون انجام نشد. لطفاً اطلاعات دفترچه‌ها و فایل‌های PDF را بررسی کنید."}
         </div>
       )}
 
