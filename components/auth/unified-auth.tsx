@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
+import { emailConfirmationUrl } from "@/lib/auth-urls";
 
 type AuthMode = "signin" | "signup";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -73,7 +74,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard" }: { initialM
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination)}`,
+        emailRedirectTo: emailConfirmationUrl(destination),
         data: { full_name: fullName },
       },
     });
