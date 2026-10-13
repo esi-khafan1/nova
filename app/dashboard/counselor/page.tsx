@@ -48,15 +48,15 @@ export default async function CounselorDashboard() {
       <div className="portal-stats">
         <article>
           <span>درخواست‌های مشاوره</span>
-          <strong>{requests ?? 0}</strong>
+          <strong>{(requests ?? 0).toLocaleString("fa-IR")}</strong>
         </article>
         <article>
           <span>دانش‌آموزان من</span>
-          <strong>{students ?? 0}</strong>
+          <strong>{(students ?? 0).toLocaleString("fa-IR")}</strong>
         </article>
         <article>
           <span>برنامه‌های ساخته‌شده</span>
-          <strong>{plans ?? 0}</strong>
+          <strong>{(plans ?? 0).toLocaleString("fa-IR")}</strong>
         </article>
       </div>
       <section className="portal-card admin-role-card">
@@ -64,7 +64,7 @@ export default async function CounselorDashboard() {
           <span>ابزار اصلی مشاور</span>
           <h2>برنامه هفتگی دانش‌آموز را بساز</h2>
           <p>
-            دانش‌آموز را انتخاب کن و برای هر روز، ساعت، درس، فصل و نوع فعالیت را
+            دانش‌آموز را انتخاب کن و برای هر روز، مدت، درس، فصل و نوع فعالیت را
             مشخص کن.
           </p>
         </div>
@@ -73,8 +73,8 @@ export default async function CounselorDashboard() {
         </Link>
       </section>
       <section className="portal-card portal-wide portal-empty counselor-secondary">
-        <div className="portal-empty-icon">✦</div>
-        <h2>{resources ?? 0} محتوای آموزشی</h2>
+        <div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg></div>
+        <h2>{(resources ?? 0).toLocaleString("fa-IR")} محتوای آموزشی</h2>
         <p>
           مقاله آموزشی بنویس، تصویر اضافه کن و مستقیم برای دانش‌آموزان منتشر کن.
         </p>
@@ -86,12 +86,12 @@ export default async function CounselorDashboard() {
         </Link>
       </section>
       <section className="portal-card portal-empty counselor-secondary">
-        <div className="portal-empty-icon">✎</div>
+        <div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h8M8 18h4"/></svg></div>
         <h2>اخبار کنکور</h2>
         <p>خبر معتبر را همراه با لینک منبع و تاریخ انتشار برای دانش‌آموزان بنویس.</p>
         <Link className="button button-secondary" href="/dashboard/counselor/news">مدیریت و نوشتن اخبار کنکور</Link>
       </section>
-    <section className="portal-card portal-empty counselor-secondary"><div className="portal-empty-icon">♫</div><h2>پادکست‌های نووا</h2><p>محتوای آموزشی را با تصویر، متن و ویس برای دانش‌آموزان منتشر کن.</p><Link className="button button-secondary" href="/dashboard/counselor/podcasts">مدیریت و ساخت پادکست</Link></section>
+    <section className="portal-card portal-empty counselor-secondary"><div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></div><h2>پادکست‌های نووا</h2><p>محتوای آموزشی را با تصویر، متن و ویس برای دانش‌آموزان منتشر کن.</p><Link className="button button-secondary" href="/dashboard/counselor/podcasts">مدیریت و ساخت پادکست</Link></section>
     </DashboardShell>
   );
 }
