@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
 import { formatPersianFullDate, parseIsoDate } from "@/lib/persian-date";
 import { saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import {
   activityTypes,
-  studyCatalog,
   studyFieldLabels,
   weekDays,
   type StudyField,
 } from "@/lib/study-catalog";
+
+import { availableGrades, curriculumBooks, inferItemGrade, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
 
 type Student = {
   student_id: string;
@@ -30,6 +31,8 @@ type PlanItem = {
   activityType: (typeof activityTypes)[number]["value"];
   targetTestCount: number | null;
   details: string;
+  sourceGrade: Grade|null;
+  preparationTrack: PreparationTrack;
 };
 
 export type CounselorWeeklyPlan = {
@@ -49,6 +52,9 @@ export type CounselorWeeklyPlan = {
     target_test_count: number | null;
     details: string | null;
     sort_order: number;
+    source_grade?:Grade|null;
+    preparation_track?:PreparationTrack;
+    exam_year?:number|null;
   }>;
 };
 
@@ -64,6 +70,8 @@ const newItem = (
   activityType: "lesson",
   targetTestCount: null,
   details: "",
+  sourceGrade:null,
+  preparationTrack:"konkur",
 });
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
@@ -89,21 +97,25 @@ function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
       activityType: item.activity_type,
       targetTestCount: item.target_test_count,
       details: item.details ?? "",
+      sourceGrade:item.source_grade??null,
+      preparationTrack:item.preparation_track??"konkur",
     }));
 }
 
 export function WeeklyPlanBuilder({
   students,
   plans,
+  initialStudentId,
 }: {
   students: Student[];
   plans: CounselorWeeklyPlan[];
+  initialStudentId?:string;
 }) {
-  const [studentIndex, setStudentIndex] = useState(0);
+  const [studentIndex, setStudentIndex] = useState(Math.max(0,students.findIndex(s=>s.student_id===initialStudentId)));
   const [weekStart, setWeekStart] = useState(tehranToday);
   const initialPlan = plans.find(
     (plan) =>
-      plan.student_id === students[0]?.student_id &&
+      plan.student_id === students[Math.max(0,students.findIndex(s=>s.student_id===initialStudentId))]?.student_id &&
       plan.week_start === tehranToday(),
   );
   const [planId, setPlanId] = useState(initialPlan?.id ?? "");
@@ -119,15 +131,10 @@ export function WeeklyPlanBuilder({
   ]);
 
   const student = students[studentIndex] ?? students[0];
-  const books = useMemo(() => {
-    if (!student?.study_field || !student.grade) return [];
-    return (
-      studyCatalog[student.study_field][student.grade as 10 | 11 | 12] ?? []
-    );
-  }, [student]);
-
-  const chapters = (subject: string) =>
-    books.find((book) => book.subject === subject)?.chapters ?? [];
+  const itemGrade=(item:PlanItem)=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??student?.grade as Grade;
+  const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
+  const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
+  const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:""}:item));
 
   const loadPlan = (studentId: string, nextWeek: string) => {
     const plan = plans.find(
@@ -250,13 +257,14 @@ export function WeeklyPlanBuilder({
               ? studyFieldLabels[student.study_field]
               : "ثبت نشده"}
           </span>
-          {!books.length && (
+          {!student?.study_field || !student?.grade && (
             <strong>
               برای پیشنهاد درس و فصل، دانش‌آموز باید پایه و رشته‌اش را در
               پروفایل ثبت کند.
             </strong>
           )}
         </div>
+        {student?.study_field&&["arts","foreign_languages"].includes(student.study_field)&&<p className="sp-notice">برای تعیین دروس نهاییِ مؤثر در کنکور هنر یا زبان، نوع دیپلم دانش‌آموز باید مشخص باشد؛ فهرست نهایی از گروه کنکور حدس زده نمی‌شود. برنامه‌ریزی کنکوری همچنان در دسترس است.</p>}
         {planStatus && (
           <div className={`plan-edit-notice ${planStatus}`}>
             <strong>
@@ -333,6 +341,8 @@ export function WeeklyPlanBuilder({
                         {faNumber(index + 1)}
                       </div>
                       <div className="plan-item-fields">
+                        <label>پایهٔ درس<select value={itemGrade(item)??""} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{availableGrades(student?.grade??null).map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label>مسیر آمادگی<select value={item.preparationTrack} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>امتحان نهاییِ مؤثر در کنکور ۱۴۰۶</option></select></label>
                         <label>
                           مدت (دقیقه)
                           <select
@@ -356,7 +366,7 @@ export function WeeklyPlanBuilder({
                         </label>
                         <label>
                           درس
-                          {books.length ? (
+                          {itemBooks(item).length ? (
                             <select
                               value={item.subject}
                               onChange={(event) => {
@@ -370,7 +380,8 @@ export function WeeklyPlanBuilder({
                               required
                             >
                               <option value="">انتخاب درس</option>
-                              {books.map((book) => (
+                              {item.subject&&!itemBooks(item).some(b=>b.subject===item.subject)&&<option value={item.subject}>{item.subject} (ثبت قبلی)</option>}
+                              {itemBooks(item).map((book) => (
                                 <option key={book.subject} value={book.subject}>
                                   {book.subject}
                                 </option>
@@ -394,7 +405,7 @@ export function WeeklyPlanBuilder({
                         </label>
                         <label>
                           فصل یا مبحث
-                          {books.length ? (
+                          {chapters(item).length ? (
                             <select
                               value={item.chapter}
                               onChange={(event) =>
@@ -411,7 +422,8 @@ export function WeeklyPlanBuilder({
                                   ? "انتخاب فصل یا مبحث"
                                   : "ابتدا درس را انتخاب کن"}
                               </option>
-                              {chapters(item.subject).map((chapter) => (
+                              {item.chapter&&!chapters(item).includes(item.chapter)&&<option value={item.chapter}>{item.chapter} (ثبت قبلی)</option>}
+                              {chapters(item).map((chapter) => (
                                 <option key={chapter} value={chapter}>
                                   {chapter}
                                 </option>
@@ -427,7 +439,7 @@ export function WeeklyPlanBuilder({
                                   event.target.value,
                                 )
                               }
-                              placeholder="فصل یا مبحث را وارد کن"
+                              placeholder="نام فصل، درس یا مبحث را وارد کن"
                               maxLength={160}
                             />
                           )}
@@ -545,6 +557,9 @@ export function WeeklyPlanBuilder({
               activityType: item.activityType,
               targetTestCount: item.targetTestCount,
               details: item.details,
+              sourceGrade:item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??(!item.id?student?.grade:null),
+              preparationTrack:item.preparationTrack,
+              examYear:item.preparationTrack==="final_exam"?1406:null,
             })),
           )}
         />

@@ -26,7 +26,9 @@ function Icon({ type }: { type: string }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{drawings[type]}</svg>;
 }
 
-export function LandingHeader({ isAuthenticated, studentPanel = false }: { isAuthenticated: boolean; studentPanel?: boolean }) {
+const counselorItems = [{label:"نمای کلی",href:"/dashboard/counselor",icon:"about",private:true},{label:"دانش‌آموزان و گزارش‌ها",href:"/dashboard/counselor/students",icon:"day",private:true},{label:"برنامه‌های هفتگی",href:"/dashboard/counselor/plans",icon:"week",private:true},{label:"آزمون‌ها",href:"/dashboard/counselor/exams",icon:"exam",private:true},{label:"استودیوی محتوا",href:"/dashboard/counselor/content",icon:"exam",private:true},{label:"اخبار کنکور",href:"/dashboard/counselor/news",icon:"exam",private:true},{label:"پادکست‌ها",href:"/dashboard/counselor/podcasts",icon:"about",private:true},{label:"مشاهده سایت",href:"/",icon:"about",private:false}];
+
+export function LandingHeader({ isAuthenticated, studentPanel = false, counselorPanel = false }: { isAuthenticated: boolean; studentPanel?: boolean; counselorPanel?: boolean }) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
@@ -58,7 +60,7 @@ export function LandingHeader({ isAuthenticated, studentPanel = false }: { isAut
         <button ref={trigger} type="button" className="nova-icon-button nova-menu-trigger" aria-label="باز کردن منو" aria-expanded={open} aria-controls="nova-navigation" onClick={() => setOpen(true)}><Icon type="menu" /></button>
         <Link href="/" className="nova-header-brand" aria-label="صفحه اصلی نوا"><img src="/nova/mark.svg" width="84" height="84" alt="لوگوی N نوا" /></Link>
         <div className="nova-header-tools">
-          <Link href={studentPanel ? "/dashboard/student/account" : isAuthenticated ? "/dashboard" : "/auth?mode=signin"} className="nova-icon-button" aria-label="حساب کاربری"><Icon type="account" /></Link>
+          <Link href={counselorPanel ? "/dashboard/counselor" : studentPanel ? "/dashboard/student/account" : isAuthenticated ? "/dashboard" : "/auth?mode=signin"} className="nova-icon-button" aria-label="حساب کاربری"><Icon type="account" /></Link>
           <button type="button" className="nova-icon-button" aria-label="سبد خرید" onClick={() => cart.current?.showModal()}><Icon type="cart" /></button>
         </div>
       </div>
@@ -67,7 +69,7 @@ export function LandingHeader({ isAuthenticated, studentPanel = false }: { isAut
       <button type="button" className="nova-menu-scrim" aria-label="بستن منو" onClick={close} />
       <aside ref={panel} id="nova-navigation" className="nova-menu-panel" role="dialog" aria-modal="true" aria-labelledby="nova-menu-title">
         <div className="nova-panel-heading"><strong id="nova-menu-title">نوا، همراه مسیر تو</strong><button className="nova-icon-button" type="button" aria-label="بستن منو" onClick={close}><Icon type="close" /></button></div>
-        <nav aria-label="منوی اصلی">{items.map(item => <Link key={item.href} href={studentPanel && item.icon === "week" ? "/dashboard/student#weekly-plan" : item.private && !isAuthenticated ? `/auth?mode=signin&next=${encodeURIComponent(item.href)}` : item.href} prefetch={false} onClick={close}><Icon type={item.icon} /><span>{item.label}</span></Link>)}</nav>
+        <nav aria-label="منوی اصلی">{(counselorPanel ? counselorItems : items).map(item => <Link key={item.href} href={studentPanel && item.icon === "week" ? "/dashboard/student#weekly-plan" : item.private && !isAuthenticated ? `/auth?mode=signin&next=${encodeURIComponent(item.href)}` : item.href} prefetch={false} onClick={close}><Icon type={item.icon} /><span>{item.label}</span></Link>)}</nav>
         <p>آموزش، برنامه‌ریزی و یک آینده روشن‌تر.</p>
       </aside>
     </>}
