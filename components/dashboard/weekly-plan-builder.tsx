@@ -264,6 +264,7 @@ export function WeeklyPlanBuilder({
             </strong>
           )}
         </div>
+        {student?.study_field&&["arts","foreign_languages"].includes(student.study_field)&&<p className="sp-notice">برای تعیین دروس نهاییِ مؤثر در کنکور هنر یا زبان، نوع دیپلم دانش‌آموز باید مشخص باشد؛ فهرست نهایی از گروه کنکور حدس زده نمی‌شود. برنامه‌ریزی کنکوری همچنان در دسترس است.</p>}
         {planStatus && (
           <div className={`plan-edit-notice ${planStatus}`}>
             <strong>
