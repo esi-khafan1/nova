@@ -4,16 +4,12 @@ import {
   WeeklyPlanBuilder,
   type CounselorWeeklyPlan,
 } from "@/components/dashboard/weekly-plan-builder";
-import { StudentProgressSummary } from "@/components/dashboard/student-progress-summary";
 import { selectStudent } from "@/app/dashboard/actions";
 import { requireProfile } from "@/lib/auth";
 import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 import {
-  addDays,
   formatPersianWeekRange,
-  parseIsoDate,
 } from "@/lib/persian-date";
-import { buildProgressScopes } from "@/lib/progress";
 
 type StudentDirectoryRow = {
   student_id: string;
@@ -30,16 +26,10 @@ export default async function CounselorPlansPage({
 }) {
   const { supabase, profile } = await requireProfile(["counselor"]);
   const params = await searchParams;
-  const [{ data: directoryData }, { data: plans }] = await Promise.all([
-    supabase.rpc("counselor_student_directory"),
-    supabase
-      .from("weekly_plans")
-      .select(
-        "id,student_id,week_start,title,notes,status,updated_at,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order)",
-      )
-      .eq("counselor_id", profile.id)
-      .order("week_start", { ascending: false }),
-  ]);
+  const {data:directoryData,error:directoryError}=await supabase.rpc("counselor_student_directory");
+  const plans:CounselorWeeklyPlan[]=[];let plansFailed=false;
+  for(let from=0;;from+=200){const {data,error}=await supabase.from("weekly_plans").select("id,student_id,week_start,title,notes,status,updated_at,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order,source_grade,preparation_track,exam_year)").eq("counselor_id",profile.id).order("week_start",{ascending:false}).order("id").range(from,from+199);if(error){plansFailed=true;break;}plans.push(...(data??[]) as CounselorWeeklyPlan[]);if(!data||data.length<200)break;}
+  if(directoryError||plansFailed)return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
 
   const directory = (directoryData ?? []) as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
@@ -50,43 +40,6 @@ export default async function CounselorPlansPage({
     selectedStudents.find(
       (student) => student.student_id === requestedProgressStudent,
     ) ?? selectedStudents[0];
-  const progressPlans = counselorPlans.filter(
-    (plan) =>
-      plan.student_id === progressStudent?.student_id &&
-      plan.status === "published",
-  );
-  const progressItems = progressPlans.flatMap((plan) =>
-    plan.weekly_plan_items.map((item) => ({
-      id: item.id,
-      planId: plan.id,
-      plannedDate: addDays(parseIsoDate(plan.week_start), item.day_of_week),
-      durationMinutes: item.duration_minutes,
-      subject: item.subject,
-      chapter: item.chapter,
-      activityType: item.activity_type,
-      targetTestCount: item.target_test_count,
-    })),
-  );
-  const progressItemIds = progressItems.map((item) => item.id);
-  const { data: progressCompletions } = progressItemIds.length
-    ? await supabase
-        .from("weekly_plan_item_completions")
-        .select("item_id,completed_test_count")
-        .in("item_id", progressItemIds)
-    : { data: [] };
-  const progressScopes = buildProgressScopes({
-    items: progressItems,
-    currentPlanId: progressPlans[0]?.id ?? null,
-    completedIds: new Set(
-      (progressCompletions ?? []).map((completion) => completion.item_id),
-    ),
-    completedTestCounts: new Map(
-      (progressCompletions ?? []).map((completion) => [
-        completion.item_id,
-        completion.completed_test_count ?? 0,
-      ]),
-    ),
-  });
   const studentNames = new Map(
     directory.map((student) => [
       student.student_id,
@@ -201,15 +154,11 @@ export default async function CounselorPlansPage({
             </label>
             <button className="button">نمایش گزارش</button>
           </form>
-          <StudentProgressSummary
-            scopes={progressScopes}
-            eyebrow="گزارش دانش‌آموز"
-            title={`پیشرفت ${progressStudent.full_name || "دانش‌آموز نووا"}`}
-          />
+          <div className="portal-card cp-report-cta"><div><h2>گزارش {progressStudent.full_name}</h2><p>روزانه، هفتگی، سوابق هفته‌ها و مسیر مطالعه به تفکیک درس و فصل</p></div><Link className="button" href={`/dashboard/counselor/students/${progressStudent.student_id}`}>نمایش گزارش کامل</Link></div>
         </section>
       )}
 
-      <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} />
+      <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} initialStudentId={params.student} />
 
       {counselorPlans.length > 0 && (
         <section className="portal-card recent-plans">

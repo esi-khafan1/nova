@@ -1,4 +1,6 @@
 "use server";
+
+import { curriculumBooks, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -72,6 +74,9 @@ type WeeklyPlanItemInput = {
   activityType: string;
   targetTestCount: number | null;
   details: string;
+  sourceGrade?:Grade|null;
+  preparationTrack?:PreparationTrack;
+  examYear?:number|null;
 };
 
 export async function saveWeeklyPlan(fd: FormData) {
@@ -146,6 +151,9 @@ export async function saveWeeklyPlan(fd: FormData) {
       targetTestCount:
         item.targetTestCount === null ? null : Number(item.targetTestCount),
       details: clean(item.details as unknown as string, 500),
+      sourceGrade:item.sourceGrade==null?null:Number(item.sourceGrade),
+      preparationTrack:item.preparationTrack??"konkur",
+      examYear:item.examYear??null,
     }))
     .filter(
       (item) =>
@@ -176,7 +184,10 @@ export async function saveWeeklyPlan(fd: FormData) {
   )
     redirect("/dashboard/counselor/plans?error=items");
 
-  const { error } = await s.rpc("save_weekly_plan_v3", {
+  const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
+  const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
+  if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&(![10,11,12].includes(item.sourceGrade)||!student.grade||item.sourceGrade>student.grade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==1406||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
+  const { error } = await s.rpc("save_weekly_plan_v4", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,

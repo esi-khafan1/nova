@@ -44,6 +44,7 @@ export default async function CounselorDashboard() {
           {c?.is_accepting ? "پذیرش فعال" : "پذیرش غیرفعال"}
         </span>
       </section>
+      <section className="portal-card cp-report-cta"><div><span className="sp-eyebrow">تصویر کامل مسیر دانش‌آموز</span><h2>برنامه، گزارش و مسیر مطالعه</h2><p>گزارش روزها و هفته‌های قبل، میزان تحقق فعالیت‌ها، ساعت مطالعه و تعداد تست هر درس و فصل را ببین.</p></div><Link className="button" href="/dashboard/counselor/students">دانش‌آموزان و گزارش‌ها</Link></section>
       <div className="portal-stats">
         <article>
           <span>درخواست‌های مشاوره</span>
