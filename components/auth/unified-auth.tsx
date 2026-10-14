@@ -98,8 +98,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
       <LandingHeader isAuthenticated={false} />
       <main className="nova-auth-main" id="auth-content">
         <div className="nova-auth-topline">
-          <span className="nova-auth-topline-caption"><span className="nova-auth-topline-lead">یک شروع روشن، </span>به سبک خودت</span>
-          <Link href="/">بازگشت به خانه <AuthIcon name="arrow" /></Link>
+          <span className="nova-auth-topline-caption">یک شروع روشن، به سبک خودت</span>
+          <Link href="/"><span>بازگشت<span className="nova-auth-home-label"> به خانه</span></span> <AuthIcon name="arrow" /></Link>
         </div>
         <div className="nova-auth-card">
           <section className="nova-auth-form-panel" aria-labelledby="nova-auth-title">

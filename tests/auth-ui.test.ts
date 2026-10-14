@@ -21,9 +21,13 @@ assert.match(css,/\.nova-auth-story \{ display: none; \}/);
 assert.doesNotMatch(css,/overflow-y:\s*(hidden|clip)|(?:^|[;{])\s*height:\s*100(?:s|d)?vh;/m);
 console.log('Compact, image-free auth UI reuses the exact landing navbar, removes the old logo, scopes styles and preserves confirmation/return-path wiring.');
 
-assert.match(ui, /<Link href="\/">بازگشت به خانه <AuthIcon name="arrow" \/><\/Link>/);
+assert.match(ui, /<Link href="\/">[\s\S]*?بازگشت<span className="nova-auth-home-label"> به خانه<\/span>/);
 assert.match(css, /\.nova-auth-topline > a \{[^}]*min-height: 44px/);
 
 assert.match(ui, /nova-auth-topline-caption/);
 assert.match(ui, /یک شروع روشن، /);
 assert.match(css, /\.nova-auth-topline \{[^}]*justify-content: space-between/);
+
+assert.match(ui, /<span className="nova-auth-topline-caption">یک شروع روشن، به سبک خودت<\/span>/);
+assert.doesNotMatch(css, /nova-auth-topline-lead/);
+assert.match(css, /\.nova-auth-home-label \{ display: none; \}/);
