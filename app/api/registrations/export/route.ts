@@ -4,7 +4,7 @@ import { csvCell, registrationLabels } from "@/lib/registration";
 import { studyFieldLabels } from "@/lib/study-catalog";
 import { AUTH_SITE_ORIGIN } from "@/lib/auth-urls";
 export async function GET(){
- const {supabase}=await requireProfile(["admin","counselor"]);
+ const {supabase}=await requireProfile(["admin"]);
  const headers={"Cache-Control":"private, no-store","Content-Type":"text/csv; charset=utf-8","Content-Disposition":'attachment; filename="nova-students.csv"'};
  try{
   const rows=await loadRegistrationDirectory(supabase);

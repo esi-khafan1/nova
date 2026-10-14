@@ -5,8 +5,8 @@ import { registrationLabels } from "@/lib/registration";
 import { studyFieldLabels } from "@/lib/study-catalog";
 import { activateStudent } from "@/app/dashboard/admin/registrations/actions";
 import "@/app/registration.css";
-export async function RegistrationDirectory({audience}:{audience:"admin"|"counselor"}){
- const {supabase}=await requireProfile([audience]);
+export async function RegistrationDirectory({audience}:{audience:"admin"}){
+ const {supabase}=await requireProfile(["admin"]);
  const {data:sheetLinks}=await supabase.rpc("my_google_sheet_links");
  let rows:Awaited<ReturnType<typeof loadRegistrationDirectory>>;
  try{rows=await loadRegistrationDirectory(supabase);}catch{return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;}
