@@ -12,7 +12,7 @@ import {
   type StudyField,
 } from "@/lib/study-catalog";
 
-import { availableGrades, curriculumBooks, inferItemGrade, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
+import { planningGrades, curriculumBooks, inferItemGrade, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
 
 type Student = {
   student_id: string;
@@ -131,7 +131,7 @@ export function WeeklyPlanBuilder({
   ]);
 
   const student = students[studentIndex] ?? students[0];
-  const itemGrade=(item:PlanItem)=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??student?.grade as Grade;
+  const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
   const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:""}:item));
@@ -183,7 +183,7 @@ export function WeeklyPlanBuilder({
         <div className="portal-empty-icon">✦</div>
         <h2>اول یک دانش‌آموز انتخاب کن</h2>
         <p>
-          از فهرست دانش‌آموزان، یک نفر را به لیست مشاوره‌ات اضافه کن تا بتوانی
+          منتظر تخصیص دانش‌آموز توسط ادمین باش تا بتوانی
           برنامه هفتگی او را بسازی.
         </p>
       </section>
@@ -341,7 +341,7 @@ export function WeeklyPlanBuilder({
                         {faNumber(index + 1)}
                       </div>
                       <div className="plan-item-fields">
-                        <label>پایهٔ درس<select value={itemGrade(item)??""} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{availableGrades(student?.grade??null).map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
                         <label>مسیر آمادگی<select value={item.preparationTrack} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         <label>
                           مدت (دقیقه)
@@ -557,7 +557,7 @@ export function WeeklyPlanBuilder({
               activityType: item.activityType,
               targetTestCount: item.targetTestCount,
               details: item.details,
-              sourceGrade:item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??(!item.id?student?.grade:null),
+              sourceGrade:itemGrade(item),
               preparationTrack:item.preparationTrack,
               examYear:null,
             })),

@@ -2,6 +2,8 @@ import { studyCatalog, type StudyField, type StudyBook } from "@/lib/study-catal
 import { schoolBooks } from "./school-catalog";
 import { type StudyItem } from "@/lib/student-planning";
 export type Grade = 10|11|12;
+// Planning is independent of the student’s enrolled grade.
+export const planningGrades:readonly Grade[]=[10,11,12];
 export type PreparationTrack = "konkur"|"final_exam";
 export function availableGrades(grade:number|null):Grade[]{return [10,11,12].filter(g=>grade!==null&&g<=grade) as Grade[];}
 export function curriculumBooks(field:StudyField|null,grade:Grade,track:PreparationTrack):StudyBook[]{

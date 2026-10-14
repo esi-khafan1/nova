@@ -7,7 +7,7 @@ export async function submitRegistration(_state:{error?:string},fd:FormData):Pro
  const {supabase,profile}=await requireProfile(["student"],true);
  if(profile.registration_status==="active")redirect("/dashboard/student");
  const text=(name:string)=>String(fd.get(name)??"").trim();
- const values={first_name:text("first_name"),last_name:text("last_name"),phone:normalizeDigits(text("phone")).replace(/[\s-]/g,""),telegram_id:text("telegram_id").replace(/^@/,""),grade:Number(text("grade")),study_field:text("study_field"),province:text("province"),city:text("city")};
+ const values={full_name:text("full_name").replace(/\s+/g," "),phone:normalizeDigits(text("phone")).replace(/[\s-]/g,""),telegram_id:text("telegram_id").replace(/^@/,""),grade:Number(text("grade")),study_field:text("study_field"),province:text("province"),city:text("city")};
  const invalid=validateRegistration(values);if(invalid)return {error:invalid};
  const {data:previous,error:readError}=await supabase.from("student_registrations").select("receipt_path,receipt_name").eq("student_id",profile.id).maybeSingle();
  if(readError)return {error:"اطلاعات قبلی دریافت نشد؛ دوباره تلاش کن."};
