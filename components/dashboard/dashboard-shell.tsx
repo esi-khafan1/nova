@@ -132,7 +132,6 @@ export function DashboardShell({
       : []),
     ...(role === "admin"
       ? [
-          {href:"/dashboard/admin/google-sheets",label:"اتصال گوگل‌شیت",icon:"admin" as const},
           {href:"/dashboard/admin/registrations",label:"فعال‌سازی دانش‌آموزها",icon:"admin" as const},
           {
             href: "/dashboard/admin/users",

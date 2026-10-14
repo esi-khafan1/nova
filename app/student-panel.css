@@ -41,3 +41,15 @@
 @media(max-width:900px){.student-portal .sp-task .student-plan-check{align-self:flex-start}}
 /* On narrow screens enter the test count before marking the activity done. */
 @media(max-width:900px){.student-portal .sp-task .student-test-count{order:-1}}
+
+/* Account cards share a consistent width and a real layout gap. */
+.student-account-layout{display:grid;gap:24px;width:100%;max-width:960px;margin-inline:auto;min-width:0}
+.student-account-layout>.portal-heading{margin:0;align-items:start}
+.student-account-layout>.portal-card{width:100%;max-width:none;margin:0;min-width:0}
+.student-account-layout .student-account-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:none;margin-top:24px}
+.student-account-form>label:first-child{grid-column:1/-1}
+.student-account-form :is(input,select){width:100%;min-width:0}
+.student-account-form>.button{grid-column:1/-1;justify-self:start;min-height:44px;margin-top:4px}
+.student-account-layout .account-delete-box{min-width:0;gap:14px}
+.student-account-layout .account-delete-box input{width:100%;min-width:0}
+@media(max-width:600px){.student-account-layout{gap:20px}.student-account-layout .student-account-form{grid-template-columns:1fr;gap:18px}.student-account-form>.button{width:100%}.student-account-layout .account-delete-box{padding:16px}}

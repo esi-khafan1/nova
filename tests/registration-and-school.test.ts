@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { normalizeDigits,validateRegistration,receiptImageType,csvCell } from "../lib/registration";
 import { schoolBooks } from "../lib/school-catalog";
-import { curriculumBooks,journeyGroups } from "../lib/planning-curriculum";
+import { curriculumBooks,journeyGroups,planningGrades } from "../lib/planning-curriculum";
 import type { StudyItem } from "../lib/student-planning";
 const valid={first_name:"علی",last_name:"احمدی",phone:"09121234567",telegram_id:"student_1",grade:11,study_field:"humanities",province:"تهران",city:"تهران"};
 assert.equal(validateRegistration(valid),null);
@@ -19,4 +19,10 @@ const base={id:"one",plan_id:"plan",day_of_week:0,duration_minutes:60,subject:"�
 const groups=journeyGroups([base,{...base,id:"two",preparation_track:"final_exam"}],"experimental_sciences",11);
 assert.equal(groups.filter(g=>g.subject==='ریاضی ۱').length,1);assert.equal(groups.find(g=>g.subject==='ریاضی ۱')?.items.length,2);
 assert.ok(groups.some(g=>g.subject==='فارسی ۱'));assert.ok(!groups.some(g=>g.grade===12));
+assert.equal(validateRegistration({...valid,full_name:"سارا محمدی راد"}),null);
+assert.equal(validateRegistration({...valid,first_name:undefined,last_name:undefined,full_name:"سارا محمدی راد"}),null);
+assert.notEqual(validateRegistration({...valid,full_name:""}),null);
+assert.notEqual(validateRegistration({...valid,full_name:"سارا"}),null);
+assert.deepEqual(planningGrades,[10,11,12]);
+assert.ok(journeyGroups([{...base,source_grade:12,subject:"شیمی ۳"}],"experimental_sciences",10).some(g=>g.grade===12&&g.items.length===1));
 console.log('Registration, CSV safety, and school curriculum tests passed.');

@@ -166,7 +166,7 @@ export async function saveWeeklyPlan(fd: FormData) {
 
   const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
-  if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&(![10,11,12].includes(item.sourceGrade)||!student.grade||item.sourceGrade>student.grade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
+  if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
   const { error } = await s.rpc("save_weekly_plan_v4", {
     target_plan_id: planId || null,
     target_student_id: studentId,
