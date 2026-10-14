@@ -52,7 +52,7 @@
 .nova-auth-input-wrap input[type="password"]::placeholder { direction: rtl; text-align: right; font-size: 14px; }
 .nova-auth-input-wrap input:focus { border-color: var(--auth-blue); box-shadow: 0 0 0 3px #e7f1ff; }
 .nova-auth-input-icon { position: absolute; inset: 0 15px 0 auto; display: flex; align-items: center; color: #5279a3; pointer-events: none; }
-.nova-auth-reveal { position: absolute; inset: 1px auto 1px 1px; width: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #5279a3; cursor: pointer; }
+.nova-auth-reveal { position: absolute; inset: 0 auto 0 1px; width: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #5279a3; cursor: pointer; }
 .nova-auth-reveal:hover { background: #eef6ff; color: var(--auth-blue); }
 .nova-auth-submit { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px 20px; border: 1px solid var(--auth-orange); border-radius: 11px; background: var(--auth-orange); color: #10365b; font: inherit; font-size: 15px; font-weight: 750; cursor: pointer; }
 .nova-auth-submit:hover:not(:disabled) { background: #ff8e3b; border-color: #ff8e3b; }
