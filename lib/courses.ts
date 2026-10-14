@@ -22,5 +22,5 @@ export function courseRegistrationPath(selection: CourseSelection): string {
 export function courseTypeLabel(value: unknown): string { return courseTypes.find(c => c.value === value)?.label ?? ""; }
 export function courseDurationLabel(value: unknown): string { return courseDurations.find(d => d.value === value)?.label ?? ""; }
 export function coursesFor(grade: number, field: string): CourseSelection[] {
-  return courseTypes.flatMap(course => courseDurations.map(duration => parseCourseSelection({ grade, field, course: course.value, months: duration.value }))).filter((c): c is CourseSelection => c !== null);
+  return courseDurations.flatMap(duration => courseTypes.map(course => parseCourseSelection({ grade, field, course: course.value, months: duration.value }))).filter((c): c is CourseSelection => c !== null);
 }
