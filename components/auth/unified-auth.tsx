@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { LandingHeader } from "@/components/landing-header";
 import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
@@ -96,6 +97,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     <div className="nova-auth-page">
       <LandingHeader isAuthenticated={false} />
       <main className="nova-auth-main" id="auth-content">
+        <div className="nova-auth-topline">
+          <Link href="/">بازگشت به خانه <AuthIcon name="arrow" /></Link>
+        </div>
         <div className="nova-auth-card">
           <section className="nova-auth-form-panel" aria-labelledby="nova-auth-title">
             <div className="nova-auth-heading">

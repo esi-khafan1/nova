@@ -21,6 +21,8 @@
   color: var(--auth-ink);
   padding: 16px 0;
 }
+.nova-auth-topline { display: flex; justify-content: flex-end; flex-shrink: 0; margin-bottom: 8px; }
+.nova-auth-topline > a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--auth-ink); font-size: 14px; }
 .nova-auth-main svg { width: 20px; height: 20px; flex-shrink: 0; }
 .nova-auth-card {
   display: grid;
@@ -77,6 +79,8 @@
 .nova-auth-main :is(button,a):focus-visible { outline: 3px solid #176bce; outline-offset: 3px; }
 /* Keep the form readable on short screens; never conceal overflow or fix a card height. */
 @media (min-width: 801px) and (max-height: 780px) {
+  .nova-auth-main { padding-block: 4px; }
+  .nova-auth-topline { margin-bottom: 0; }
   .nova-auth-form-panel { padding: 20px 32px; }
   .nova-auth-heading > .nova-auth-eyebrow { display: none; }
   .nova-auth-heading h1 { margin-top: 0; font-size: 28px; }
@@ -99,7 +103,8 @@
   .nova-auth-page { --auth-header-height: 86px; }
 }
 @media (max-width: 800px) and (max-height: 740px) {
-  .nova-auth-main { padding-block: 8px; }
+  .nova-auth-main { padding-block: 4px; }
+  .nova-auth-topline { margin-bottom: 0; }
   .nova-auth-form-panel { padding: 16px 20px; }
   .nova-auth-heading { margin-bottom: 12px; }
   .nova-auth-heading h1 { margin: 0; font-size: 26px; }

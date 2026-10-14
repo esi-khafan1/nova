@@ -20,3 +20,6 @@ assert.match(css,/grid-template-areas: "story form"/);
 assert.match(css,/\.nova-auth-story \{ display: none; \}/);
 assert.doesNotMatch(css,/overflow-y:\s*(hidden|clip)|(?:^|[;{])\s*height:\s*100(?:s|d)?vh;/m);
 console.log('Compact, image-free auth UI reuses the exact landing navbar, removes the old logo, scopes styles and preserves confirmation/return-path wiring.');
+
+assert.match(ui, /<Link href="\/">بازگشت به خانه <AuthIcon name="arrow" \/><\/Link>/);
+assert.match(css, /\.nova-auth-topline > a \{[^}]*min-height: 44px/);
