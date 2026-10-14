@@ -264,7 +264,7 @@ export function WeeklyPlanBuilder({
             </strong>
           )}
         </div>
-        {student?.study_field&&["arts","foreign_languages"].includes(student.study_field)&&<p className="sp-notice">برای تعیین دروس نهاییِ مؤثر در کنکور هنر یا زبان، نوع دیپلم دانش‌آموز باید مشخص باشد؛ فهرست نهایی از گروه کنکور حدس زده نمی‌شود. برنامه‌ریزی کنکوری همچنان در دسترس است.</p>}
+        {student?.study_field&&["arts","foreign_languages"].includes(student.study_field)&&<p className="sp-notice">دروس مدرسه برای رشته‌های ریاضی، تجربی و انسانی در دسترس است؛ برای هنر یا زبان، رشتهٔ دیپلم باید مشخص باشد.</p>}
         {planStatus && (
           <div className={`plan-edit-notice ${planStatus}`}>
             <strong>
@@ -342,7 +342,7 @@ export function WeeklyPlanBuilder({
                       </div>
                       <div className="plan-item-fields">
                         <label>پایهٔ درس<select value={itemGrade(item)??""} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{availableGrades(student?.grade??null).map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
-                        <label>مسیر آمادگی<select value={item.preparationTrack} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>امتحان نهاییِ مؤثر در کنکور ۱۴۰۶</option></select></label>
+                        <label>مسیر آمادگی<select value={item.preparationTrack} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         <label>
                           مدت (دقیقه)
                           <select
@@ -383,7 +383,7 @@ export function WeeklyPlanBuilder({
                               {item.subject&&!itemBooks(item).some(b=>b.subject===item.subject)&&<option value={item.subject}>{item.subject} (ثبت قبلی)</option>}
                               {itemBooks(item).map((book) => (
                                 <option key={book.subject} value={book.subject}>
-                                  {book.subject}
+                                  {book.subject}{item.preparationTrack==="final_exam"?" — مدرسه":""}
                                 </option>
                               ))}
                             </select>
@@ -559,7 +559,7 @@ export function WeeklyPlanBuilder({
               details: item.details,
               sourceGrade:item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??(!item.id?student?.grade:null),
               preparationTrack:item.preparationTrack,
-              examYear:item.preparationTrack==="final_exam"?1406:null,
+              examYear:null,
             })),
           )}
         />

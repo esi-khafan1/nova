@@ -1,0 +1,7 @@
+import { requireProfile } from "@/lib/auth";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { RegistrationDirectory } from "@/components/dashboard/registration-directory";
+export default async function Registrations({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}){
+ const {profile}=await requireProfile(["admin"]);const params=await searchParams;
+ return <DashboardShell role="admin" name={profile.full_name}><section className="portal-heading"><div><span>مدیریت نووا</span><h1>فعال‌سازی دانش‌آموزها</h1></div></section>{params.error&&<p className="portal-alert error" role="alert">تأیید انجام نشد؛ اطلاعات و فیش باید کامل باشند و مشاور تأییدشده انتخاب شود. اگر فیش تغییر کرده، دوباره آن را بررسی کن.</p>}{params.saved&&<p className="portal-alert success" role="status">حساب فعال و مشاور اختصاص داده شد.</p>}<RegistrationDirectory audience="admin"/></DashboardShell>;
+}

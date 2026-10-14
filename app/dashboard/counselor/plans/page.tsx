@@ -4,7 +4,6 @@ import {
   WeeklyPlanBuilder,
   type CounselorWeeklyPlan,
 } from "@/components/dashboard/weekly-plan-builder";
-import { selectStudent } from "@/app/dashboard/actions";
 import { requireProfile } from "@/lib/auth";
 import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 import {
@@ -33,7 +32,6 @@ export default async function CounselorPlansPage({
 
   const directory = (directoryData ?? []) as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
-  const availableStudents = directory.filter((student) => !student.is_selected);
   const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
   const requestedProgressStudent = params.progress_student;
   const progressStudent =
@@ -109,31 +107,7 @@ export default async function CounselorPlansPage({
           </div>
         )}
 
-        {availableStudents.length > 0 ? (
-          <form action={selectStudent} className="student-select-form">
-            <label>
-              افزودن دانش‌آموز جدید
-              <select name="student_id" required defaultValue="">
-                <option value="" disabled>
-                  یک دانش‌آموز را انتخاب کن
-                </option>
-                {availableStudents.map((student) => (
-                  <option key={student.student_id} value={student.student_id}>
-                    {student.full_name || "دانش‌آموز نووا"}
-                    {student.grade
-                      ? ` — پایه ${student.grade.toLocaleString("fa-IR")}`
-                      : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="button">افزودن به مشاوره</button>
-          </form>
-        ) : (
-          <p className="all-students-selected">
-            همه دانش‌آموزان موجود در فهرست مشاوره تو هستند.
-          </p>
-        )}
+        {!selectedStudents.length&&<p className="all-students-selected">هنوز دانش‌آموزی توسط ادمین به شما اختصاص داده نشده است.</p>}
       </section>
 
       {progressStudent && (

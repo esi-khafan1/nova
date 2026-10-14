@@ -4,6 +4,7 @@ import { curriculumBooks, type Grade, type PreparationTrack } from "@/lib/planni
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
   String(v ?? "")
     .trim()
@@ -14,7 +15,7 @@ export async function signOut() {
   redirect("/");
 }
 export async function updateStudentProfile(fd: FormData) {
-  const s = await createClient();
+  const {supabase:s} = await requireProfile(["student"]);
   const {
     data: { user },
   } = await s.auth.getUser();
@@ -44,27 +45,6 @@ export async function updateStudentProfile(fd: FormData) {
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-export async function selectStudent(fd: FormData) {
-  const s = await createClient();
-  const {
-    data: { user },
-  } = await s.auth.getUser();
-  if (!user) redirect("/auth/sign-in");
-
-  const studentId = clean(fd.get("student_id"), 50);
-  if (!uuidPattern.test(studentId))
-    redirect("/dashboard/counselor/plans?error=student");
-
-  const { error } = await s.rpc("counselor_select_student", {
-    target_student_id: studentId,
-  });
-
-  if (error) redirect("/dashboard/counselor/plans?error=student");
-  revalidatePath("/dashboard/counselor");
-  revalidatePath("/dashboard/counselor/plans");
-  redirect("/dashboard/counselor/plans?selected=1");
-}
 
 type WeeklyPlanItemInput = {
   dayOfWeek: number;
@@ -186,7 +166,7 @@ export async function saveWeeklyPlan(fd: FormData) {
 
   const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
-  if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&(![10,11,12].includes(item.sourceGrade)||!student.grade||item.sourceGrade>student.grade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==1406||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
+  if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&(![10,11,12].includes(item.sourceGrade)||!student.grade||item.sourceGrade>student.grade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
   const { error } = await s.rpc("save_weekly_plan_v4", {
     target_plan_id: planId || null,
     target_student_id: studentId,
@@ -211,11 +191,9 @@ export async function togglePlanItemCompletion(
   completed: boolean,
   completedTestCount: number | null = null,
 ) {
-  const s = await createClient();
-  const {
-    data: { user },
-  } = await s.auth.getUser();
-  if (!user) redirect("/auth/sign-in");
+  const {supabase:s} = await requireProfile(["student"]);
+  const {data:{user}}=await s.auth.getUser();
+  if(!user)redirect("/auth/sign-in");
   if (!uuidPattern.test(itemId)) return { ok: false };
 
   if (
