@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {canEditStudentProgress} from '../lib/student-planning';
+const today='2026-10-14';
+assert.equal(canEditStudentProgress('student','2026-10-10',today),true);
+assert.equal(canEditStudentProgress('student',today,today),true);
+assert.equal(canEditStudentProgress('student','2026-10-15',today),false);
+assert.equal(canEditStudentProgress('counselor','2026-10-10',today),false);
+const panel=readFileSync('components/dashboard/student-planning-panel.tsx','utf8');
+assert.ok(!panel.includes('فقط خواندنی'));
+assert.ok(!panel.includes('sp-footnote'));
+assert.ok(panel.includes('canEditStudentProgress(audience,date,today)'));
+assert.ok(panel.includes('canEditStudentProgress(audience,selectedWeekDate,today)'));
+console.log('Daily/weekly past progress permission and report-copy checks passed');
