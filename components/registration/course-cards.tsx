@@ -7,7 +7,6 @@ import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 export function CourseCards({ grade, field }: { grade: number; field: string }) {
   const track = useRef<HTMLDivElement>(null);
   const trackId = useId();
-  const hintId = useId();
   const [limits, setLimits] = useState({ previous: false, next: true });
   useEffect(() => {
     const element = track.current;
@@ -31,13 +30,16 @@ export function CourseCards({ grade, field }: { grade: number; field: string }) 
     element.scrollBy({ left: (next ? -1 : 1) * (element.clientWidth + gap), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }
   return <section className="nova-course-carousel" aria-label="دوره‌های مناسب پایه و رشتهٔ انتخاب‌شده">
-    <div ref={track} id={trackId} className="nova-course-grid" dir="rtl" tabIndex={0} role="region" aria-label="۹ دوره، قابل پیمایش افقی" aria-describedby={hintId} onKeyDown={event => {
+    <div className="nova-course-viewport">
+    <div ref={track} id={trackId} className="nova-course-grid" dir="rtl" tabIndex={0} role="region" aria-label="۹ دوره، قابل پیمایش افقی" onKeyDown={event => {
       if (event.target !== event.currentTarget) return;
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); move(event.key === "ArrowLeft"); }
     }}>{coursesFor(grade, field).map(course => <article className="nova-course-card" key={`${course.course}-${course.months}`} data-duration={course.months}>
       <Image unoptimized src={`/courses/${course.course}-${course.field}.svg`} alt={`${courseTypeLabel(course.course)} ویژهٔ ${studyFieldLabels[course.field as StudyField]}`} width={512} height={512} loading="lazy" />
       <div className="nova-course-body"><span>پایهٔ {course.grade.toLocaleString("fa-IR")} · {studyFieldLabels[course.field as StudyField]}</span><h3>{courseTypeLabel(course.course)}</h3><p className="nova-course-duration">{courseDurationLabel(course.months)}</p><Link className="nova-path-primary" href={courseRegistrationPath(course)}>انتخاب دوره <span aria-hidden="true">←</span></Link></div>
     </article>)}</div>
-    <div className="nova-course-scroll-tools"><p id={hintId}>برای دیدن بقیهٔ دوره‌ها، افقی ورق بزن.</p><div><button type="button" aria-label="دوره‌های قبلی" aria-controls={trackId} disabled={!limits.previous} onClick={() => move(false)}><span aria-hidden="true">→</span></button><button type="button" aria-label="دوره‌های بعدی" aria-controls={trackId} disabled={!limits.next} onClick={() => move(true)}><span aria-hidden="true">←</span></button></div></div>
+    <span className="nova-course-edge nova-course-edge--right" data-visible={limits.previous} aria-hidden="true" />
+    <span className="nova-course-edge nova-course-edge--left" data-visible={limits.next} aria-hidden="true" />
+    </div>
   </section>;
 }

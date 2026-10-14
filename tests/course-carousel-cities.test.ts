@@ -33,3 +33,13 @@ assert.ok(css.includes('--course-columns:2'));
 assert.ok(css.includes('overflow-x:auto'));
 assert.ok(!css.includes('max-width:1160px'));
 console.log("Duration-first carousel, all 31 province catalogs, dependent selection and existing receipt requirements passed.");
+
+const cards=readFileSync("components/registration/course-cards.tsx","utf8");
+assert.ok(!cards.includes("nova-course-scroll-tools"));
+assert.ok(!cards.includes("aria-describedby"));
+assert.ok(cards.includes('data-visible={limits.previous}'));
+assert.ok(cards.includes('data-visible={limits.next}'));
+assert.ok(cards.includes('event.key === "ArrowLeft"'));
+assert.ok(css.includes('pointer-events:none'));
+assert.ok(css.includes('height:var(--path-panel-height)'));
+console.log("Quiet edge cues, keyboard navigation and shared responsive panel-height guards passed.");

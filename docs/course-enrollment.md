@@ -51,3 +51,11 @@
 - تست مرورگر در عرض‌های ۱۴۴۰، ۸۱۶، ۳۹۰ و ۳۲۰: ترتیب صحیح، یک ردیف، ۳/۲ کارت، عرض ثابت بین مراحل، پیمایش تا آخرین دوره و حفظ انتخاب در لینک ثبت‌نام؛ بدون اسکرول افقی صفحه و بدون خطای JavaScript.
 - انتخاب شهر، پاک‌شدن شهر پس از تغییر استان، ورود دستی و حفظ شهر قدیمی در عرض‌های ۱۴۴۰، ۳۹۰ و ۳۲۰ تست شد.
 - این اصلاحات هیچ migration یا تغییر در داده‌های Supabase، فیش‌ها، دسترسی‌ها یا فعال‌سازی مدیر ندارد.
+
+## Follow-up: quieter carousel and stable panel height
+
+- Removed visible carousel arrows and instruction text. A light, non-interactive edge fade appears only on a side with more courses; it updates on scroll/resize, with correct RTL limits.
+- Kept native touch/trackpad scrolling and focused-region left/right keyboard navigation. Course selection and duration-first ordering are unchanged.
+- Removed redundant result-only eyebrow, description, step indicators and large grade/field summary tiles. Grade and field remain visible on each course card and in enrollment.
+- Applied a shared responsive height to the three selecting stages. Results use the available interior space, preserving full artwork rather than cropping it, with three desktop/two mobile cards.
+- Scope: presentation only; no database, receipt, activation, account form, or production deployment changes.
