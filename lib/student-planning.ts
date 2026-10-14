@@ -23,3 +23,6 @@ export function summarizeItems(items:StudyItem[], completions:Map<string,StudyCo
 export function overlapsWindow(start:string, plans:{id:string;week_start:string;student_id:string;status:string}[],studentId:string,excludeId='') {
  const end=dayIso(start,6);return plans.some(p=>p.id!==excludeId&&p.student_id===studentId&&['draft','published'].includes(p.status)&&p.week_start<=end&&dayIso(p.week_start,6)>=start);
 }
+
+// Only a student's own progress controls are shown; past days stay editable.
+export function canEditStudentProgress(audience:"student"|"counselor",date:string,today:string){return audience==="student"&&date<=today;}
