@@ -14,6 +14,7 @@ type CounselorExam = {
   audience: "own_students" | "all_assigned_students";
   status: "draft" | "published" | "archived";
   starts_at: string;
+  start_window_ends_at: string | null;
   duration_minutes: number;
   created_at: string;
   exam_booklets: { id: string; question_count: number }[];
@@ -31,7 +32,7 @@ export default async function CounselorExamsPage({
   const { data } = await supabase
     .from("exams")
     .select(
-      "id,title,description,mode,audience,status,starts_at,duration_minutes,created_at,exam_booklets(id,question_count),exam_attempts(id)",
+      "id,title,description,mode,audience,status,starts_at,start_window_ends_at,duration_minutes,created_at,exam_booklets(id,question_count),exam_attempts(id)",
     )
     .eq("counselor_id", profile.id)
     .order("created_at", { ascending: false });
@@ -104,7 +105,7 @@ export default async function CounselorExamsPage({
                         : "همه دانش‌آموزان دارای مشاور"}
                     </p>
                     <p className="exam-schedule">
-                      شروع: {formatExamSchedule(exam.starts_at)} · مدت:{" "}
+                      شروع: {formatExamSchedule(exam.starts_at)} {exam.start_window_ends_at && `· مهلت شروع تا: ${formatExamSchedule(exam.start_window_ends_at)}`} · مدت:{" "}
                       {formatExamDuration(exam.duration_minutes)}
                     </p>
                   </div>

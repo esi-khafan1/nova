@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getFloatingExamEntryState, type FloatingExamSession } from "@/lib/floating-exams";
 import { StudentServiceNotice } from "@/components/dashboard/student-service-notice";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
@@ -12,6 +13,7 @@ type StudentExam = {
   mode: string;
   audience: string;
   starts_at: string;
+  start_window_ends_at: string | null;
   duration_minutes: number;
   created_at: string;
   exam_booklets?: { id: string; question_count: number }[];
@@ -35,7 +37,7 @@ export default async function StudentExamsPage({
   if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و انتشار مشاور در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status}/></DashboardShell>;
 
 
-  const [{ data: assignment }, { data: examsData }, { data: attemptsData }] =
+  const [{ data: assignment }, { data: examsData }, { data: attemptsData }, {data:sessionsData}] =
     await Promise.all([
       supabase
         .from("counselor_students")
@@ -45,7 +47,7 @@ export default async function StudentExamsPage({
       supabase
         .from("exams")
         .select(
-          "id,title,description,mode,audience,starts_at,duration_minutes,created_at,exam_booklets(id,question_count)",
+          "id,title,description,mode,audience,starts_at,start_window_ends_at,duration_minutes,created_at,exam_booklets(id,question_count)",
         )
         .eq("status", "published")
         .order("starts_at", { ascending: true }),
@@ -53,8 +55,10 @@ export default async function StudentExamsPage({
         .from("exam_attempts")
         .select("exam_id,score,correct_answers,total_questions,submitted_at")
         .eq("student_id", profile.id),
+      supabase.from("exam_sessions").select("exam_id,expires_at").eq("student_id",profile.id),
     ]);
 
+  const sessions = new Map(((sessionsData ?? []) as Pick<FloatingExamSession,"exam_id"|"expires_at">[]).map(session=>[session.exam_id,session]));
   const hasCounselor = Boolean(assignment?.length);
   const exams = (examsData ?? []) as StudentExam[];
   const attempts = new Map(
@@ -93,8 +97,9 @@ export default async function StudentExamsPage({
               const attempt = attempts.get(exam.id);
               const timeState = getExamTimeState(
                 exam.starts_at,
-                exam.duration_minutes,
+                exam.duration_minutes,new Date(),exam.start_window_ends_at,
               );
+              const floatingEntry=exam.start_window_ends_at ? getFloatingExamEntryState(exam.starts_at,exam.start_window_ends_at,sessions.get(exam.id)) : null;
               const bookletCount = exam.exam_booklets?.length ?? 0;
               const totalQuestions =
                 exam.exam_booklets?.reduce(
@@ -120,6 +125,7 @@ export default async function StudentExamsPage({
                     شروع: {formatExamSchedule(exam.starts_at)}
                     <br />
                     مدت: {formatExamDuration(exam.duration_minutes)}
+                    {exam.start_window_ends_at && <><br/>مهلت شروع تا: {formatExamSchedule(exam.start_window_ends_at)}</>}
                   </p>
 
                   {attempt ? (
@@ -132,6 +138,10 @@ export default async function StudentExamsPage({
                         </span>
                       )}
                     </div>
+                  ) : exam.start_window_ends_at ? (
+                    floatingEntry === "startable" || floatingEntry === "resumable" || floatingEntry === "expired"
+                      ? <Link className="button" href={`/dashboard/student/exams/${exam.id}`}>{floatingEntry === "resumable" ? "ادامهٔ آزمون" : floatingEntry === "expired" ? "ثبت پاسخ‌های ذخیره‌شده" : "مشاهده و شروع آزمون"}</Link>
+                      : <div className="exam-time-notice">{floatingEntry === "upcoming" ? "بازهٔ شروع هنوز باز نشده است." : "مهلت شروع آزمون تمام شده است."}</div>
                   ) : timeState === "active" ? (
                     <Link
                       className="button"

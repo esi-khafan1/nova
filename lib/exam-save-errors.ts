@@ -1,4 +1,6 @@
 const messages: Record<string, string> = {
+  window: "پایان بازهٔ شروع باید بعد از شروع بازه و در همان روز باشد؛ ساعت‌ها به وقت تهران هستند.",
+  started_exam: "آزمونی که دانش‌آموز شروع کرده است قابل ویرایش نیست؛ برای تغییرات، آزمون جدید بساز.",
   metadata: "عنوان، مخاطبان یا رشتهٔ آزمون معتبر نیست. اطلاعات اصلی آزمون را بررسی کن.",
   schedule: "تاریخ و ساعت شروع آزمون باید معتبر و حداقل یک دقیقه در آینده باشد. ساعت‌ها به وقت تهران هستند.",
   booklets: "آزمون باید حداقل یک دفترچهٔ معتبر داشته باشد.",
@@ -17,6 +19,8 @@ export function examSaveErrorMessage(code: string | undefined): string {
 // Never expose raw database errors, SQL, or submitted exam content to readers.
 export function examSaveErrorCode(error: { message: string; code?: string }): string {
   const message = error.message.toLowerCase();
+  if (message.includes("floating start window")) return "window";
+  if (message.includes("started sessions cannot be edited")) return "started_exam";
   if (message.includes("only approved counselors") || error.code === "42501") return "permission";
   if (message.includes("metadata or schedule")) return "schedule";
   if (message.includes("total exam duration")) return "duration_total";
