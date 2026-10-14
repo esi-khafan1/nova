@@ -1,8 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { LandingHeader } from "@/components/landing-header";
 import { createClient } from "@/lib/supabase/client";
@@ -98,10 +96,6 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     <div className="nova-auth-page">
       <LandingHeader isAuthenticated={false} />
       <main className="nova-auth-main" id="auth-content">
-        <div className="nova-auth-topline">
-          <span>یک شروع روشن، به سبک خودت</span>
-          <Link href="/">بازگشت به خانه <AuthIcon name="arrow" /></Link>
-        </div>
         <div className="nova-auth-card">
           <section className="nova-auth-form-panel" aria-labelledby="nova-auth-title">
             <div className="nova-auth-heading">
@@ -144,16 +138,14 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                 </div>
                 <div className="nova-auth-field">
                   <label htmlFor={`${mode}-password`}>رمز عبور</label>
-                  <div className="nova-auth-input-wrap nova-auth-password"><span className="nova-auth-input-icon"><AuthIcon name="lock" /></span><input id={`${mode}-password`} name="password" type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} aria-describedby={mode === "signup" ? "auth-password-hint" : undefined} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
-                  {mode === "signup" && <p id="auth-password-hint" className="nova-auth-field-hint">رمزی با حداقل ۸ کاراکتر انتخاب کن.</p>}
+                  <div className="nova-auth-input-wrap nova-auth-password"><span className="nova-auth-input-icon"><AuthIcon name="lock" /></span><input id={`${mode}-password`} name="password" type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
                 </div>
                 <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
                   <span>{loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
-                <p className="nova-auth-switch">{mode === "signin" ? "هنوز حساب نداری؟" : "قبلاً ثبت‌نام کردی؟"} <button type="button" disabled={loading} onClick={() => changeMode(mode === "signin" ? "signup" : "signin")}>{mode === "signin" ? "ثبت‌نام در نووا" : "وارد حسابت شو"}</button></p>
               </form>
             </div>
-            <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>{mode === "signup" ? "بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی." : "اینجا، ادامهٔ مسیر توست."}</span></div>
+            {mode === "signup" && <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی.</span></div>}
           </section>
 
           <aside className="nova-auth-story" aria-labelledby="nova-auth-story-title">
@@ -162,11 +154,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
               <h2 id="nova-auth-story-title">آیندهٔ روشن،<br /><em>از همین‌جا.</em></h2>
               <p>هدف تو، مسیر تو، برنامهٔ تو.<br />با نووا، قدم بعدی را مطمئن‌تر بردار.</p>
             </div>
-            <div className="nova-auth-art"><Image src="/nova/hero.svg" width={2172} height={724} unoptimized alt="شخصیت دانش‌آموز نووا، با کتاب و کوله‌پشتی در مسیر دانشگاه" /></div>
             <div className="nova-auth-benefits">{benefits.map(benefit => <div key={benefit.title}><span className="nova-auth-benefit-icon"><AuthIcon name="check" /></span><div><strong>{benefit.title}</strong><p>{benefit.detail}</p></div></div>)}</div>
           </aside>
         </div>
-        <p className="nova-auth-bottom">نووا؛ همراه مسیر روشن تو</p>
       </main>
     </div>
   );

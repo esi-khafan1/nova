@@ -1,9 +1,10 @@
 # Ice-blue account entry UI
 
 - `/auth` uses the unchanged `LandingHeader` component and the exact `landing-approved.css` stylesheet used by `/`. The centered blue N artwork remains `/nova/mark.svg`; no alternate navbar or logo was introduced.
-- The former comet `Logo` component is removed from this page only. The existing approved landing illustration `/nova/hero.svg` is reused as a student mascot, not as a second logo.
-- Styling is isolated under `.nova-auth-*` in the auth stylesheet. The form comes before the brand panel on phones. No dashboard, course, receipt, exam or global stylesheet is modified.
+- The former comet `Logo` component is removed from this page only. The auth illustration was removed at the user’s request; the landing illustration asset itself is untouched.
+- Styling is isolated under `.nova-auth-*` in the auth stylesheet. On desktop, the blue story panel is on the right and the form is on the left. On phones/tablets up to 800px, only the form is shown; the promotional story panel is hidden as requested. No dashboard, course, receipt, exam or global stylesheet is modified.
 - Both sign-in and sign-up submission handlers are unchanged. Email confirmation URLs, metadata, validation, safe return destinations and Supabase calls remain the same. The existing signed-in server redirect is preserved.
-- Password visibility and keyboard-operable tabs are UI conveniences only. Messages, busy/disabled states and standard autocomplete roles are retained.
+- Password visibility and keyboard-operable tabs are UI conveniences only. Messages, busy/disabled states and standard autocomplete roles are retained. Duplicate mode-switch links, decorative top/bottom copy and the redundant password-length hint were removed to reduce height; the password placeholder still explains the eight-character minimum.
 - QA uses the real components with the backend mocked: 1440, 816, 390 and 320px layouts; shared menu focus/Escape and cart dialog; validation; failed/successful auth responses; password visibility; selected-course continuation through tab changes and confirmation callback; unsafe redirects; no real signup or auth writes.
+- The card uses natural content height, viewport-aware spacing and no body/page overflow suppression. Short-screen mode removes nonessential introductory/helper text, not form inputs, alerts or actions. Normal sign-in/signup states are verified at 320×568, 360×640, 375×667, 390×844, 430×932, 768×1024, 816×768, 1024×768, 1280×720, 1366×768 and 1440×900. Browser zoom, an open software keyboard or unusually long alerts may require natural scrolling rather than clipping controls.
 - This redesign requires no database migration. Deploy to the existing feature preview; merging main requires separate approval.

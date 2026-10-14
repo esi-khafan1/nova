@@ -15,4 +15,8 @@ assert.match(ui,/autoComplete=\{mode === "signin" \? "current-password" : "new-p
 assert.match(ui,/aria-controls="auth-form-panel"/);
 assert.match(ui,/"ArrowLeft", "ArrowRight", "Home", "End"/);
 assert.match(css,/prefers-reduced-motion/);
-console.log('Auth UI reuses the exact landing navbar, removes the old logo, scopes styles and preserves confirmation/return-path wiring.');
+assert.doesNotMatch(ui,/nova-auth-art|\/nova\/hero\.svg|next\/image/);
+assert.match(css,/grid-template-areas: "story form"/);
+assert.match(css,/\.nova-auth-story \{ display: none; \}/);
+assert.doesNotMatch(css,/overflow-y:\s*(hidden|clip)|(?:^|[;{])\s*height:\s*100(?:s|d)?vh;/m);
+console.log('Compact, image-free auth UI reuses the exact landing navbar, removes the old logo, scopes styles and preserves confirmation/return-path wiring.');
