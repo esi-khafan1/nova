@@ -35,6 +35,6 @@
 .nova-course-card>img{max-height:calc(var(--path-panel-height) - 48px - 4px - 42px - 32px - 54px - 168px);object-fit:contain;background:#f5f9ff}
 @media(max-width:1000px) and (min-width:701px){.nova-path{--path-panel-height:541px}}
 @media(max-width:700px){.nova-path{--path-panel-height:655px}.nova-path[data-step=result] .nova-path-panel{padding-block:32px}.nova-path[data-step=result] .nova-path-heading h2{font-size:26px;line-height:1.6}.nova-course-edge{width:24px}.nova-course-card>img{max-height:calc(var(--path-panel-height) - 64px - 4px - 42px - 32px - 52px - 198px)}}
-@media(max-width:360px){.nova-path{--path-panel-height:701px}}
+@media(max-width:360px){.nova-path{--path-panel-height:701px}.nova-path-panel.is-selecting .nova-path-heading h2{font-size:24px}}
 
 .nova-path--horizon[data-step=result] .nova-path-content{grid-template-rows:minmax(0,1fr) auto}
