@@ -21,7 +21,8 @@
   color: var(--auth-ink);
   padding: 16px 0;
 }
-.nova-auth-topline { display: flex; justify-content: flex-end; flex-shrink: 0; margin-bottom: 8px; }
+.nova-auth-topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-shrink: 0; margin-bottom: 8px; }
+.nova-auth-topline-caption { color: var(--auth-muted); font-size: 14px; line-height: 1.5; }
 .nova-auth-topline > a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--auth-ink); font-size: 14px; }
 .nova-auth-main svg { width: 20px; height: 20px; flex-shrink: 0; }
 .nova-auth-card {
@@ -92,6 +93,7 @@
 }
 @media (max-width: 800px) {
   .nova-auth-main { width: min(460px, calc(100% - 32px)); }
+  .nova-auth-topline-lead { display: none; }
   .nova-auth-card { grid-template-columns: 1fr; grid-template-areas: "form"; border-radius: 20px; }
   .nova-auth-form-panel { padding: 24px; }
   .nova-auth-story { display: none; }

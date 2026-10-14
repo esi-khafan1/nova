@@ -23,3 +23,7 @@ console.log('Compact, image-free auth UI reuses the exact landing navbar, remove
 
 assert.match(ui, /<Link href="\/">بازگشت به خانه <AuthIcon name="arrow" \/><\/Link>/);
 assert.match(css, /\.nova-auth-topline > a \{[^}]*min-height: 44px/);
+
+assert.match(ui, /nova-auth-topline-caption/);
+assert.match(ui, /یک شروع روشن، /);
+assert.match(css, /\.nova-auth-topline \{[^}]*justify-content: space-between/);
