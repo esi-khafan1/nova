@@ -7,6 +7,7 @@ export type CurrentProfile = {
   role: AppRole;
   grade: number | null;
   phone: string | null;
+  registration_status: "incomplete"|"pending"|"active";
   study_field:
     | "mathematics"
     | "experimental_sciences"
@@ -15,7 +16,7 @@ export type CurrentProfile = {
     | "foreign_languages"
     | null;
 };
-export async function requireProfile(allowed?: AppRole[]) {
+export async function requireProfile(allowed?: AppRole[], allowInactive = false) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -23,11 +24,12 @@ export async function requireProfile(allowed?: AppRole[]) {
   if (!user) redirect("/auth/sign-in");
   const { data } = await supabase
     .from("profiles")
-    .select("id,full_name,role,grade,phone,study_field")
+    .select("id,full_name,role,grade,phone,study_field,registration_status")
     .eq("id", user.id)
     .single();
   if (!data) redirect("/auth/sign-in");
   const profile = data as CurrentProfile;
   if (allowed && !allowed.includes(profile.role)) redirect("/dashboard");
+  if(profile.role === "student" && profile.registration_status !== "active" && !allowInactive) redirect("/dashboard/registration");
   return { supabase, user, profile };
 }

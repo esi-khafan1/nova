@@ -248,7 +248,7 @@ export function ContentEditorForm({
               name="resourceType"
             >
               <option value="konkur">کنکور</option>
-              <option value="final_exam">امتحان نهایی</option>
+              <option value="final_exam">دروس مدرسه</option>
             </select>
           </label>
           <label className="content-field">

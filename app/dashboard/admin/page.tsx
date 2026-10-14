@@ -19,6 +19,7 @@ export default async function AdminDashboard() {
 
   return (
     <DashboardShell role="admin" name={profile.full_name}>
+      <section className="portal-card"><h2>ثبت‌نام و فعال‌سازی دانش‌آموزها</h2><p>اطلاعات و فیش را بررسی کن و با اختصاص مشاور، حساب را فعال کن.</p><Link className="button" href="/dashboard/admin/registrations">بررسی ثبت‌نام‌ها و تخصیص مشاور</Link></section>
       <section className="portal-heading">
         <div>
           <span>مدیریت نووا</span>

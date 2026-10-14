@@ -132,6 +132,7 @@ export function DashboardShell({
       : []),
     ...(role === "admin"
       ? [
+          {href:"/dashboard/admin/registrations",label:"فعال‌سازی دانش‌آموزها",icon:"admin" as const},
           {
             href: "/dashboard/admin/users",
             label: "مدیریت کاربران",

@@ -21,7 +21,7 @@ export const emptyContent: ContentNode = {
 
 export const resourceTypeLabels: Record<ResourceType, string> = {
   konkur: "کنکور",
-  final_exam: "امتحان نهایی",
+  final_exam: "دروس مدرسه",
 };
 
 export const contentStatusLabels: Record<ContentStatus, string> = {

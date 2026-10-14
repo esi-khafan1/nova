@@ -65,7 +65,7 @@ export function StudentPlanCheckbox({
         className={`student-plan-check${checked ? " checked" : ""}${
           canToggle ? "" : " locked"
         }`}
-        title={canToggle ? undefined : "فقط فعالیت‌های امروز قابل تغییر هستند"}
+        title={canToggle ? undefined : "ثبت انجام فعالیت‌های آینده هنوز فعال نیست"}
       >
         <input
           type="checkbox"
@@ -74,7 +74,7 @@ export function StudentPlanCheckbox({
               ? checked
                 ? "برداشتن علامت انجام فعالیت"
                 : "ثبت انجام فعالیت"
-              : "این فعالیت امروز نیست و قابل تغییر نیست"
+              : "هنوز موعد انجام این فعالیت نرسیده"
           }
           checked={checked}
           disabled={isPending || !canToggle}
@@ -88,7 +88,7 @@ export function StudentPlanCheckbox({
               : "انجام داده‌ام"
             : checked
               ? "انجام‌شده"
-              : "فقط در روز خودش قابل ثبت است"}
+              : "هنوز موعدش نرسیده"}
         </strong>
       </label>
       {isTestActivity && (

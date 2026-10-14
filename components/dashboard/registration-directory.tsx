@@ -1,0 +1,19 @@
+import Link from "next/link";
+import { requireProfile } from "@/lib/auth";
+import { loadRegistrationDirectory } from "@/lib/load-registration-directory";
+import { registrationLabels } from "@/lib/registration";
+import { studyFieldLabels } from "@/lib/study-catalog";
+import { activateStudent } from "@/app/dashboard/admin/registrations/actions";
+import "@/app/registration.css";
+export async function RegistrationDirectory({audience}:{audience:"admin"|"counselor"}){
+ const {supabase}=await requireProfile([audience]);
+ let rows:Awaited<ReturnType<typeof loadRegistrationDirectory>>;
+ try{rows=await loadRegistrationDirectory(supabase);}catch{return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;}
+ let counselors:{id:string;full_name:string}[]=[];
+ if(audience==="admin"){
+  const {data,error}=await supabase.from("profiles").select("id,full_name,counselor_profiles!inner(approval_status)").eq("role","counselor").eq("counselor_profiles.approval_status","approved").order("full_name");
+  if(error)return <p className="portal-alert error" role="alert">فهرست مشاورها دریافت نشد؛ برای جلوگیری از تخصیص ناقص، دوباره تلاش کن.</p>;
+  counselors=(data??[]) as {id:string;full_name:string}[];
+ }
+ return <section className="portal-card registration-directory"><div className="portal-card-title"><div><h2>{audience==="admin"?"ثبت‌نام، فیش و تخصیص مشاور":"وضعیت دانش‌آموزان من"}</h2><p>{audience==="admin"?"فعال‌سازی فقط با تأیید اطلاعات کامل، فیش و اختصاص مشاور انجام می‌شود.":"فقط اطلاعات دانش‌آموزهایی که ادمین به شما اختصاص داده نمایش داده می‌شود."}</p></div><a className="button button-secondary" href="/api/registrations/export">خروجی برای گوگل‌شیت</a></div><small>خروجی شامل لینک خصوصی فیش است؛ بازکردن لینک به ورود و دسترسی مجاز نیاز دارد. این خروجی همگام‌سازی آنلاین شیت نیست.</small>{!rows.length?<p>هنوز دانش‌آموزی در این فهرست نیست.</p>:<div className="registration-table-wrap"><table><thead><tr><th>دانش‌آموز و تماس</th><th>پایه و رشته</th><th>محل سکونت</th><th>وضعیت و فیش</th><th>مشاور{audience==="admin"?" و فعال‌سازی":""}</th></tr></thead><tbody>{rows.map(row=><tr key={row.student_id}><td><strong>{row.full_name||"نام ثبت نشده"}</strong><small dir="ltr">{row.phone||"شماره ثبت نشده"}</small><small dir="ltr">{row.telegram_id?`@${row.telegram_id}`:"تلگرام ثبت نشده"}</small></td><td>{row.grade?`پایه ${row.grade.toLocaleString("fa-IR")}`:"—"}<small>{row.study_field?studyFieldLabels[row.study_field]:"رشته ثبت نشده"}</small></td><td>{row.province||"—"}<small>{row.city||"—"}</small></td><td><strong>{registrationLabels[row.registration_status]??row.registration_status}</strong>{row.receipt_path?<Link href={`/api/registrations/${row.student_id}/receipt`} target="_blank" rel="noopener">مشاهده فیش واریزی</Link>:<small>{row.registration_status==="active"?"حساب فعلی — نیاز به ثبت‌نام مجدد ندارد":"فیش ارسال نشده"}</small>}</td><td><small>{row.counselor_name||"هنوز اختصاص داده نشده"}</small>{audience==="admin"&&<form action={activateStudent}><input name="student_id" type="hidden" value={row.student_id}/><input name="receipt_path" type="hidden" value={row.receipt_path??""}/><select name="counselor_id" required defaultValue="" disabled={row.registration_status==="incomplete"}><option value="" disabled>انتخاب مشاور</option>{counselors.map(c=><option key={c.id} value={c.id}>{c.full_name||"مشاور نووا"}</option>)}</select>{row.registration_status==="pending"&&<label><input type="checkbox" required/> اطلاعات و فیش بررسی و تأیید شد</label>}<button className="button" disabled={row.registration_status==="incomplete"||!counselors.length||row.registration_status==="pending"&&!row.receipt_path}>{row.registration_status==="active"?"ذخیره تخصیص مشاور":"تأیید و فعال‌سازی"}</button></form>}</td></tr>)}</tbody></table></div>}</section>;
+}
