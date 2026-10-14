@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { remapBookletKeys } from "@/lib/exam-booklet-editing";
 import { hasCompleteExamKeys, countBookletKeys } from "@/lib/exam-key-validation";
 import { saveExam } from "@/app/dashboard/exams/actions";
 import { ExamPdfUpload } from "@/components/dashboard/exam-pdf-upload";
@@ -24,15 +25,16 @@ export function ExamBuilder() {
   const bookletRanges = booklets.map((b) => { const start = currentStart; const count = Math.max(1, Number(b.questionCount) || 1); const end = start + count - 1; currentStart = end + 1; return { start, end, count }; });
   const totalQuestions = bookletRanges.reduce((acc, r) => acc + r.count, 0);
   const totalDuration = booklets.reduce((acc, b) => acc + (Number(b.durationMinutes) || 0), 0);
-  const updateBooklet = (index: number, patch: Partial<BookletItem>) => setBooklets((prev) => prev.map((item, idx) => idx === index ? { ...item, ...patch } : item));
+  const updateBooklet = (index: number, patch: Partial<BookletItem>) => setBooklets((prev) => remapBookletKeys(prev, prev.map((item, idx) => idx === index ? { ...item, ...patch } : item)));
   const setQuestionKey = (bookletIndex: number, questionNumber: number, option: number) => setBooklets((prev) => prev.map((item, idx) => { if (idx !== bookletIndex) return item; const nextKeys = { ...item.keyAnswers }; if (item.keyAnswers[String(questionNumber)] === option) delete nextKeys[String(questionNumber)]; else nextKeys[String(questionNumber)] = option; return { ...item, keyAnswers: nextKeys }; }));
   const titleSuggestions = examField ? konkurBookletPresets[examField].map((item) => item.title) : allKonkurBookletTitles;
   const addBooklet = () => setBooklets((prev) => [...prev, { id: `${uid}-b${Date.now()}`, title: titleSuggestions[0], pdfUrl: "", questionCount: 25, durationMinutes: 35, keyAnswers: {} }]);
-  const removeBooklet = (index: number) => { if (booklets.length > 1) setBooklets((prev) => prev.filter((_, idx) => idx !== index)); };
+  const removeBooklet = (index: number) => { if (booklets.length > 1) setBooklets((prev) => remapBookletKeys(prev, prev.filter((_, idx) => idx !== index))); };
   const applyExamField = (field: StudyField | "") => { setExamField(field); if (field) setBooklets(konkurBookletPresets[field].map((preset, index) => ({ id: `${uid}-${field}-${index}-${Date.now()}`, title: preset.title, pdfUrl: "", questionCount: preset.questionCount, durationMinutes: preset.durationMinutes, keyAnswers: {} }))); };
   const allBookletsHavePdf = booklets.every((b) => Boolean(b.pdfUrl?.startsWith("https://")));
 
   const allKeysComplete = hasCompleteExamKeys(booklets);
+  const durationValid = totalDuration <= 600;
 
   return <form action={saveExam} className="portal-card exam-builder">
     <input type="hidden" name="booklets" value={JSON.stringify(booklets)} /><input type="hidden" name="exam_field" value={examField} />
@@ -53,6 +55,6 @@ export function ExamBuilder() {
         <details className="exam-key-accordion" open><summary><span>کلید سؤالات {toPersianDigits(range.start)} تا {toPersianDigits(range.end)} (تصحیح خودکار)</span><span className="exam-key-count">{toPersianDigits(countBookletKeys(booklet.keyAnswers, range.start, range.count))} از {toPersianDigits(range.count)} تعیین شده</span></summary><div className="exam-key-content"><div className="exam-key-grid">{qList.map((qNum) => { const selected = booklet.keyAnswers[String(qNum)]; return <div key={qNum} className="exam-key-item"><span className="exam-key-num">{toPersianDigits(qNum)}</span><div className="exam-key-options">{[1,2,3,4].map((opt) => <button type="button" key={opt} className={`exam-key-btn ${selected === opt ? "selected" : ""}`} onClick={() => setQuestionKey(bIndex, qNum, opt)}>{toPersianDigits(opt)}</button>)}</div></div>; })}</div></div></details>
       </article>; })}
     </div><button type="button" className="button secondary exam-add-booklet-btn" onClick={addBooklet}>+ افزودن دفترچه جدید</button></div>
-    <p role="status">{!allKeysComplete && "برای انتشار آزمون، گزینهٔ صحیح تمام سؤال‌ها را مشخص کن. ذخیرهٔ پیش‌نویس با کلید ناقص ممکن است."}</p><div className="exam-actions"><button className="button secondary" name="status" value="draft">ذخیره پیش‌نویس</button><button className="button" name="status" value="published" disabled={!allBookletsHavePdf || !allKeysComplete} title={!allBookletsHavePdf ? "لطفاً ابتدا PDF تمام دفترچه‌ها را بارگذاری کنید" : !allKeysComplete ? "گزینهٔ صحیح تمام سؤال‌ها باید مشخص شود" : undefined}>انتشار آزمون کنکوری</button></div>
+    <p role="status">{!durationValid ? "مجموع زمان دفترچه‌ها نباید بیشتر از ۶۰۰ دقیقه باشد." : !allKeysComplete && "برای انتشار آزمون، گزینهٔ صحیح تمام سؤال‌ها را مشخص کن. ذخیرهٔ پیش‌نویس با کلید ناقص ممکن است."}</p><div className="exam-actions"><button className="button secondary" name="status" value="draft" disabled={!durationValid}>ذخیره پیش‌نویس</button><button className="button" name="status" value="published" disabled={!allBookletsHavePdf || !allKeysComplete || !durationValid} title={!durationValid ? "مجموع زمان دفترچه‌ها بیشتر از ۶۰۰ دقیقه است" : !allBookletsHavePdf ? "لطفاً ابتدا PDF تمام دفترچه‌ها را بارگذاری کنید" : !allKeysComplete ? "گزینهٔ صحیح تمام سؤال‌ها باید مشخص شود" : undefined}>انتشار آزمون کنکوری</button></div>
   </form>;
 }

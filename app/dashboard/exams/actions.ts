@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { examSaveErrorCode } from "@/lib/exam-save-errors";
 import { hasCompleteExamKeys } from "@/lib/exam-key-validation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
@@ -41,9 +42,11 @@ export async function saveExam(formData: FormData) {
     !["own_students", "all_assigned_students"].includes(audience) ||
     !["draft", "published"].includes(status) ||
     !["", "mathematics", "experimental_sciences", "humanities", "arts", "foreign_languages"].includes(examField) ||
-    Number.isNaN(startsAt.getTime()) ||
-    startsAt.getTime() <= Date.now() + 60_000
-  ) redirect("/dashboard/counselor/exams?error=exam");
+    description.length > 3000
+  ) redirect("/dashboard/counselor/exams?error=metadata");
+
+  if (Number.isNaN(startsAt.getTime()) || startsAt.getTime() <= Date.now() + 60_000)
+    redirect("/dashboard/counselor/exams?error=schedule");
 
   let booklets: RawBooklet[] = [];
   try {
@@ -53,14 +56,18 @@ export async function saveExam(formData: FormData) {
     redirect("/dashboard/counselor/exams?error=booklets");
   }
 
+  let totalDuration = 0;
   for (const b of booklets) {
     const qCount = Number(b.questionCount);
     const duration = Number(b.durationMinutes);
     if (!Number.isInteger(qCount) || qCount < 1 || qCount > 200 || !Number.isInteger(duration) || duration < 1 || duration > 360)
       redirect("/dashboard/counselor/exams?error=booklet_params");
+    totalDuration += duration;
     if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://")))
       redirect("/dashboard/counselor/exams?error=booklet_pdf");
   }
+
+  if (totalDuration > 600) redirect("/dashboard/counselor/exams?error=duration_total");
 
   if (status === "published" && !hasCompleteExamKeys(booklets))
     redirect("/dashboard/counselor/exams?error=incomplete_key");
@@ -75,7 +82,12 @@ export async function saveExam(formData: FormData) {
     target_booklets: booklets,
     target_exam_field: examField || null,
   });
-  if (error || !data) redirect("/dashboard/counselor/exams?error=exam");
+  if (error) {
+    const category = examSaveErrorCode(error);
+    console.error("[nova:save_exam]", { code: error.code, category });
+    redirect(`/dashboard/counselor/exams?error=${category}`);
+  }
+  if (!data) redirect("/dashboard/counselor/exams?error=save_failed");
 
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/exams");

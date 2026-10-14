@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { examSaveErrorMessage } from "@/lib/exam-save-errors";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ExamBuilder } from "@/components/dashboard/exam-builder";
 import { requireProfile } from "@/lib/auth";
@@ -59,7 +60,7 @@ export default async function CounselorExamsPage({
 
       {params.error && (
         <div className="portal-alert error">
-          {params.error === "incomplete_key" ? "برای انتشار آزمون باید گزینهٔ صحیح تمام سؤال‌ها مشخص شود." : "ذخیره آزمون انجام نشد. لطفاً اطلاعات دفترچه‌ها و فایل‌های PDF را بررسی کنید."}
+          {examSaveErrorMessage(params.error)}
         </div>
       )}
 
