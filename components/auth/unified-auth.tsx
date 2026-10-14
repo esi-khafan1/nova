@@ -17,12 +17,12 @@ const benefits = [
   "منابع معتبر و طبقه‌بندی‌شده",
 ];
 
-export function UnifiedAuth({ initialMode, returnTo = "/dashboard" }: { initialMode: AuthMode; returnTo?: string }) {
+export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessage = "" }: { initialMode: AuthMode; returnTo?: string; initialMessage?: string }) {
   const destination = safeReturnPath(returnTo);
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessage);
   const [success, setSuccess] = useState(false);
 
   function changeMode(nextMode: AuthMode) {

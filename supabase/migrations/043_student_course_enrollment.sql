@@ -1,0 +1,66 @@
+-- Additive migration: do not reset existing enrollments, activation or assignments.
+alter table public.student_registrations
+ add column course_type text,
+ add column course_duration_months smallint,
+ add column additional_notes text not null default '',
+ add constraint registration_course_selection_check check (
+  (course_type is null and course_duration_months is null) or
+  (course_type is not null and course_duration_months is not null and course_type in ('with_exam','with_support','simple_consultant') and course_duration_months in (3,6,12))
+ ),
+ add constraint registration_notes_length_check check(char_length(additional_notes)<=2000);
+
+-- Normal account completion must not manufacture a receipt or payment approval.
+create table public.student_account_details (
+ student_id uuid primary key references public.profiles(id) on delete cascade,
+ full_name text not null check(char_length(btrim(full_name)) between 3 and 121 and position(' ' in btrim(full_name))>0),
+ phone text not null check(phone ~ '^09[0-9]{9}$'),
+ telegram_id text not null check(telegram_id ~ '^[A-Za-z][A-Za-z0-9_]{4,31}$'),
+ grade smallint not null check(grade in (10,11,12)),
+ study_field public.study_field not null,
+ province text not null check(char_length(btrim(province)) between 2 and 60),
+ city text not null check(char_length(btrim(city)) between 2 and 60),
+ additional_notes text not null default '' check(char_length(additional_notes)<=2000),
+ updated_at timestamptz not null default now()
+);
+alter table public.student_account_details enable row level security;
+revoke all on public.student_account_details from anon,authenticated;
+grant select on public.student_account_details to authenticated;
+create policy account_details_owner_or_admin_read on public.student_account_details for select to authenticated using(student_id=(select auth.uid()) or (select private.current_user_role())='admin');
+
+create function public.save_student_account_details(payload jsonb) returns void language plpgsql security definer set search_path='' as $$
+declare me uuid:=(select auth.uid()); name_value text;
+begin
+ if not exists(select 1 from public.profiles p join auth.users u on u.id=p.id where p.id=me and p.role='student' and u.email_confirmed_at is not null) then raise exception 'Confirmed student required';end if;
+ perform 1 from public.profiles where id=me for update;
+ name_value:=regexp_replace(btrim(payload->>'full_name'),'\s+',' ','g');
+ insert into public.student_account_details(student_id,full_name,phone,telegram_id,grade,study_field,province,city,additional_notes)
+ values(me,name_value,payload->>'phone',payload->>'telegram_id',(payload->>'grade')::smallint,(payload->>'study_field')::public.study_field,btrim(payload->>'province'),btrim(payload->>'city'),coalesce(payload->>'additional_notes',''))
+ on conflict(student_id) do update set full_name=excluded.full_name,phone=excluded.phone,telegram_id=excluded.telegram_id,grade=excluded.grade,study_field=excluded.study_field,province=excluded.province,city=excluded.city,additional_notes=excluded.additional_notes,updated_at=now();
+ update public.profiles set full_name=name_value,phone=payload->>'phone',grade=(payload->>'grade')::smallint,study_field=(payload->>'study_field')::public.study_field where id=me;
+ -- Deliberately leave registration_status and counselor_students untouched.
+end;$$;
+revoke all on function public.save_student_account_details(jsonb) from public,anon;
+grant execute on function public.save_student_account_details(jsonb) to authenticated;
+
+create or replace function public.submit_student_registration(payload jsonb) returns void language plpgsql security definer set search_path='' as $$
+declare me uuid:=(select auth.uid()); current_status text; full_name_value text; receipt text; g smallint; f public.study_field; selected_course text; selected_months smallint;
+begin
+ select registration_status into current_status from public.profiles where id=me and role='student' for update;
+ if current_status is null or current_status='active' then raise exception 'Registration not editable';end if;
+ if not exists(select 1 from auth.users where id=me and email_confirmed_at is not null) then raise exception 'Confirmed email required';end if;
+ if nullif(btrim(payload->>'full_name'),'') is null and (nullif(btrim(payload->>'first_name'),'') is null or nullif(btrim(payload->>'last_name'),'') is null) then raise exception 'Complete full name required';end if;
+ full_name_value:=regexp_replace(btrim(coalesce(nullif(btrim(payload->>'full_name'),''),btrim(payload->>'first_name')||' '||btrim(payload->>'last_name'))),'\s+',' ','g');
+ if full_name_value is null or char_length(full_name_value) not between 3 and 121 or position(' ' in full_name_value)=0 then raise exception 'Complete full name required';end if;
+ receipt:=payload->>'receipt_path';g:=(payload->>'grade')::smallint;f:=(payload->>'study_field')::public.study_field;
+ selected_course:=nullif(payload->>'course_type','');selected_months:=nullif(payload->>'course_duration_months','')::smallint;
+ -- Allow old callers/old pending registrations, but never a half-filled selection.
+ if (selected_course is null)<>(selected_months is null) then raise exception 'Complete course selection required';end if;
+ if selected_course is not null and (selected_course not in ('with_exam','with_support','simple_consultant') or selected_months not in (3,6,12)) then raise exception 'Invalid course selection';end if;
+ if receipt is null or split_part(receipt,'/',1)<>me::text or not exists(select 1 from storage.objects o where o.bucket_id='registration-receipts' and o.name=receipt) then raise exception 'A private receipt upload is required';end if;
+ insert into public.student_registrations(student_id,full_name,first_name,last_name,phone,telegram_id,grade,study_field,province,city,receipt_path,receipt_name,course_type,course_duration_months,additional_notes)
+ values(me,full_name_value,btrim(payload->>'first_name'),btrim(payload->>'last_name'),payload->>'phone',payload->>'telegram_id',g,f,btrim(payload->>'province'),btrim(payload->>'city'),receipt,left(payload->>'receipt_name',150),selected_course,selected_months,coalesce(payload->>'additional_notes',''))
+ on conflict(student_id) do update set full_name=excluded.full_name,first_name=excluded.first_name,last_name=excluded.last_name,phone=excluded.phone,telegram_id=excluded.telegram_id,grade=excluded.grade,study_field=excluded.study_field,province=excluded.province,city=excluded.city,receipt_path=excluded.receipt_path,receipt_name=excluded.receipt_name,course_type=coalesce(excluded.course_type,student_registrations.course_type),course_duration_months=coalesce(excluded.course_duration_months,student_registrations.course_duration_months),additional_notes=excluded.additional_notes,submitted_at=now();
+ perform public.save_student_account_details(payload||jsonb_build_object('full_name',full_name_value));
+ update public.profiles set registration_status='pending' where id=me;
+end;$$;
+-- Keep existing grants, admin activation checks, receipt policies and assignments.

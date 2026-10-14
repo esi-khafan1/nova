@@ -10,6 +10,7 @@ import "./landing-v2d.css";
 import "./landing-approved.css";
 import "./why-nova.css";
 import "./path-finder.css";
+import "./courses.css";
 import "./magazine-latest.css";
 import "./konkur-news.css";
 import { KonkurNewsLatest } from "@/components/konkur-news-latest";

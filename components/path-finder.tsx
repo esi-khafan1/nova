@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { CourseCards } from "@/components/registration/course-cards";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 export type PathFinderDesign = "sky" | "peach" | "horizon";
@@ -40,11 +40,11 @@ export function PathFinder({ design = "sky" }: { design?: PathFinderDesign }) {
   function navigate(next:Step) { hasNavigated.current = true; setStep(next); }
   function reset() { setGrade(null);setField(null);navigate("intro"); }
 
-  const title = step === "intro" ? "مسیر مناسب خودت رو پیدا کن" : step === "grade" ? "انتخاب پایه تحصیلی" : step === "field" ? "انتخاب رشته تحصیلی" : "انتخابت مشخص شد";
+  const title = step === "intro" ? "مسیر مناسب خودت رو پیدا کن" : step === "grade" ? "انتخاب پایه تحصیلی" : step === "field" ? "انتخاب رشته تحصیلی" : "دوره‌های مناسب تو";
   const introHeading = <header className="nova-path-heading">
     <p className="nova-path-eyebrow">یک شروع روشن، به سبک خودت</p>
     <h2 id="nova-path-title" ref={heading} tabIndex={-1}>{step === "intro" ? <><span>مسیر مناسب خودت رو</span>{" "}<span className="nova-path-title-tail">پیدا کن</span></> : title}</h2>
-    <p className="nova-path-subtitle">{step === "intro" ? "با دو انتخاب ساده، پایه و رشته‌ات رو مشخص کن." : step === "grade" ? "الان در کدام پایه درس می‌خوانی؟" : step === "field" ? "رشته تحصیلی‌ات رو مشخص کن تا انتخابت کامل بشه." : "پایه و رشته‌ای که انتخاب کردی، این‌ها هستند."}</p>
+    <p className="nova-path-subtitle">{step === "intro" ? "با دو انتخاب ساده، پایه و رشته‌ات رو مشخص کن." : step === "grade" ? "الان در کدام پایه درس می‌خوانی؟" : step === "field" ? "رشته تحصیلی‌ات رو مشخص کن تا انتخابت کامل بشه." : "برای پایه و رشتهٔ تو، سه نوع دوره در سه بازهٔ زمانی آماده است."}</p>
   </header>;
 
   return <section id="find-path" className={`nova-path nova-path--${design}`} aria-labelledby="nova-path-title" data-design={design} data-step={step}>
@@ -61,10 +61,10 @@ export function PathFinder({ design = "sky" }: { design?: PathFinderDesign }) {
             <button type="button" className="nova-path-primary" onClick={()=>navigate("grade")}>شروع کن <span aria-hidden="true">←</span></button>
             <p className="nova-path-footnote">فقط برای پایه‌های دهم، یازدهم و دوازدهم</p>
           </> : <>
-            <ol className="nova-path-steps" aria-label="مراحل انتخاب">{["پایه تحصیلی","رشته تحصیلی","انتخاب تو"].map((label,i)=><li key={label} aria-current={stepIndex === i ? "step" : undefined} className={stepIndex >= i ? "is-active" : ""}><span aria-hidden="true">{["۱","۲","۳"][i]}</span>{label}</li>)}</ol>
+            <ol className="nova-path-steps" aria-label="مراحل انتخاب">{["پایه تحصیلی","رشته تحصیلی","انتخاب دوره"].map((label,i)=><li key={label} aria-current={stepIndex === i ? "step" : undefined} className={stepIndex >= i ? "is-active" : ""}><span aria-hidden="true">{["۱","۲","۳"][i]}</span>{label}</li>)}</ol>
             {step === "grade" && <fieldset className="nova-path-choices grade-choices"><legend className="nova-path-sr-only">انتخاب پایه تحصیلی</legend>{grades.map(g=><label className={`nova-path-choice ${grade===g.value ? "is-selected" : ""}`} key={g.value}><input type="radio" name={`grade-${design}`} value={g.value} checked={grade===g.value} aria-label={`پایه ${g.label}`} onChange={()=>setGrade(g.value)} /><span className="nova-path-choice-mark" aria-hidden="true">{g.number}</span><strong>{g.label}</strong></label>)}</fieldset>}
             {step === "field" && <fieldset className="nova-path-choices field-choices"><legend className="nova-path-sr-only">انتخاب رشته تحصیلی</legend>{fields.map(f=><label className={`nova-path-choice ${field===f.value ? "is-selected" : ""}`} key={f.value}><input type="radio" name={`field-${design}`} value={f.value} checked={field===f.value} aria-label={f.label} onChange={()=>setField(f.value)} /><span className="nova-path-choice-mark"><FieldMark symbol={f.symbol} /></span><strong>{f.label}</strong></label>)}</fieldset>}
-            {step === "result" && <div className="nova-path-result"><dl><div><dt>پایه تحصیلی</dt><dd>{currentGrade?.label}</dd></div><div><dt>رشته تحصیلی</dt><dd>{currentField?.label}</dd></div></dl><p role="status" className="nova-path-preview-note">این بخش فعلاً پیش‌نمایش طراحی است؛ انتخاب‌ها ذخیره نمی‌شوند و هنوز پیشنهاد دورهٔ واقعی نمایش داده نمی‌شود.</p><Link href="/mag" className="nova-path-resource-link">مطالعهٔ راهنماهای نووا <span aria-hidden="true">←</span></Link></div>}
+            {step === "result" && <div className="nova-path-result"><dl><div><dt>پایه تحصیلی</dt><dd>{currentGrade?.label}</dd></div><div><dt>رشته تحصیلی</dt><dd>{currentField?.label}</dd></div></dl>{grade && field && <CourseCards grade={grade} field={field}/>}</div>}
             <div className="nova-path-actions"><button type="button" className="nova-path-secondary" onClick={()=>navigate(step === "grade" ? "intro" : step === "field" ? "grade" : "field")}>بازگشت</button>{step === "result" ? <button type="button" className="nova-path-primary" onClick={reset}>انتخاب دوباره</button> : <button type="button" className="nova-path-primary" disabled={step === "grade" ? grade===null : field===null} onClick={()=>navigate(step === "grade" ? "field" : "result")}>{step === "grade" ? "ادامه" : "دیدن نتیجه انتخاب"}<span aria-hidden="true">←</span></button>}</div>
           </>}
         </div>

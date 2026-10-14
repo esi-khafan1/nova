@@ -3,6 +3,7 @@ import { Logo } from "@/components/logo";
 import { LandingHeader } from "@/components/landing-header";
 import "@/app/landing-approved.css";
 import "@/app/student-panel.css";
+import "@/app/courses.css";
 import "@/app/counselor-panel.css";
 import { signOut } from "@/app/dashboard/actions";
 import type { AppRole } from "@/lib/auth";

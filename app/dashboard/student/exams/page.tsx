@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StudentServiceNotice } from "@/components/dashboard/student-service-notice";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
 import { formatExamDuration, formatExamSchedule, getExamTimeState } from "@/lib/exams";
@@ -29,8 +30,10 @@ export default async function StudentExamsPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const { supabase, profile } = await requireProfile(["student"]);
+  const { supabase, profile } = await requireProfile(["student"], true);
   const params = await searchParams;
+  if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و انتشار مشاور در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status}/></DashboardShell>;
+
 
   const [{ data: assignment }, { data: examsData }, { data: attemptsData }] =
     await Promise.all([

@@ -29,6 +29,7 @@ export async function requireProfile(allowed?: AppRole[], allowInactive = false)
     .single();
   if (!data) redirect("/auth/sign-in");
   const profile = data as CurrentProfile;
+  if (profile.role === "student" && !user.email_confirmed_at) redirect("/auth?mode=signin&error=unconfirmed");
   if (allowed && !allowed.includes(profile.role)) redirect("/dashboard");
   if(profile.role === "student" && profile.registration_status !== "active" && !allowInactive) redirect("/dashboard/registration");
   return { supabase, user, profile };
