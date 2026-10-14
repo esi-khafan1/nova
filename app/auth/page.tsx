@@ -1,3 +1,4 @@
+import "../landing-approved.css";
 import "./auth-gradient.css";
 import { UnifiedAuth } from "@/components/auth/unified-auth";
 import { safeReturnPath } from "@/lib/return-path";

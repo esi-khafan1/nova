@@ -2,8 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/logo";
+import { LandingHeader } from "@/components/landing-header";
 import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
 import { emailConfirmationUrl } from "@/lib/auth-urls";
@@ -12,9 +13,8 @@ type AuthMode = "signin" | "signup";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const benefits = [
-  "برنامه اختصاصی هفتگی",
-  "مشاور تأییدشده و مناسب تو",
-  "منابع معتبر و طبقه‌بندی‌شده",
+  { title: "مسیر متناسب با تو", detail: "دوره‌ها و منابع مناسب پایه و رشته‌ات" },
+  { title: "همراهی در هر قدم", detail: "برنامه‌ریزی و مشاوره، از شروع تا نتیجه" },
 ];
 
 export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessage = "" }: { initialMode: AuthMode; returnTo?: string; initialMessage?: string }) {
@@ -24,9 +24,11 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(initialMessage);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode);
+    setShowPassword(false);
     setMessage("");
     setSuccess(false);
     window.history.replaceState(null, "", `/auth?mode=${nextMode}&next=${encodeURIComponent(destination)}`);
@@ -93,160 +95,94 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   }
 
   return (
-    <main className="auth-gradient-page">
-      <header className="auth-gradient-header">
-        <Logo />
-        <Link className="auth-gradient-back" href="/">
-          بازگشت به خانه <span aria-hidden="true">←</span>
-        </Link>
-      </header>
-
-      <div className="auth-gradient-wrap">
-        <div className="auth-gradient-card">
-          <section className="auth-gradient-form">
-            <div className="auth-gradient-form-head">
-              <span>ورود / ثبت‌نام</span>
-              <h1>{mode === "signin" ? "خوش برگشتی!" : "ساخت حساب تازه"}</h1>
-              <p>
-                {mode === "signin"
-                  ? "اطلاعاتت را وارد کن تا وارد مسیرت بشوی."
-                  : "چند دقیقه وقت بگذار؛ مسیر روشن شروع می‌شود."}
-              </p>
+    <div className="nova-auth-page">
+      <LandingHeader isAuthenticated={false} />
+      <main className="nova-auth-main" id="auth-content">
+        <div className="nova-auth-topline">
+          <span>یک شروع روشن، به سبک خودت</span>
+          <Link href="/">بازگشت به خانه <AuthIcon name="arrow" /></Link>
+        </div>
+        <div className="nova-auth-card">
+          <section className="nova-auth-form-panel" aria-labelledby="nova-auth-title">
+            <div className="nova-auth-heading">
+              <span className="nova-auth-eyebrow"><i aria-hidden="true" /> حساب کاربری نووا</span>
+              <h1 id="nova-auth-title">{mode === "signin" ? "خوش برگشتی!" : "قدم اول، با تو"}</h1>
+              <p>{mode === "signin" ? "وارد حساب شو و مسیرت را از همان‌جا ادامه بده." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
             </div>
 
-            <div className="auth-gradient-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
-              <button
-                className={mode === "signin" ? "active" : ""}
-                type="button"
-                role="tab"
-                aria-selected={mode === "signin"}
-                onClick={() => changeMode("signin")}
-              >
-                ورود به حساب
-              </button>
-              <button
-                className={mode === "signup" ? "active" : ""}
-                type="button"
-                role="tab"
-                aria-selected={mode === "signup"}
-                onClick={() => changeMode("signup")}
-              >
-                ساخت حساب جدید
-              </button>
+            <div className="nova-auth-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
+              {(["signin", "signup"] as const).map((tabMode) => (
+                <button key={tabMode} id={`auth-tab-${tabMode}`} className={mode === tabMode ? "active" : ""} type="button" role="tab" aria-selected={mode === tabMode} aria-controls="auth-form-panel" tabIndex={mode === tabMode ? 0 : -1} disabled={loading}
+                  onClick={() => changeMode(tabMode)}
+                  onKeyDown={(event) => {
+                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                    event.preventDefault();
+                    const nextMode = event.key === "Home" ? "signin" : event.key === "End" ? "signup" : mode === "signin" ? "signup" : "signin";
+                    changeMode(nextMode);
+                    document.getElementById(`auth-tab-${nextMode}`)?.focus();
+                  }}>
+                  {tabMode === "signin" ? "ورود به حساب" : "ثبت‌نام"}
+                </button>
+              ))}
             </div>
 
             {message && (
-              <div className={`auth-gradient-message${success ? " success" : ""}`} role="status">
-                {message}
+              <div className={`nova-auth-message${success ? " success" : ""}`} role={success ? "status" : "alert"} aria-live="polite">
+                <AuthIcon name={success ? "check" : "info"} /><p>{message}</p>
               </div>
             )}
 
-            {mode === "signin" ? (
-              <form key="signin" onSubmit={submitSignIn} noValidate>
-                <div className="auth-gradient-field">
-                  <label htmlFor="signin-email">ایمیل</label>
-                  <input
-                    id="signin-email"
-                    name="email"
-                    type="email"
-                    dir="ltr"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                <div className="auth-gradient-field">
-                  <label htmlFor="signin-password">رمز عبور</label>
-                  <input
-                    id="signin-password"
-                    name="password"
-                    type="password"
-                    dir="ltr"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    minLength={8}
-                    required
-                  />
-                </div>
-                <button className="auth-gradient-submit" disabled={loading}>
-                  {loading ? "در حال ورود..." : "ورود به حساب ←"}
-                </button>
-                <p className="auth-gradient-switch">
-                  حساب نداری؟{" "}
-                  <button type="button" onClick={() => changeMode("signup")}>یک حساب بساز</button>
-                </p>
-              </form>
-            ) : (
-              <form key="signup" onSubmit={submitSignUp} noValidate>
-                <div className="auth-gradient-field">
+            <div id="auth-form-panel" role="tabpanel" aria-labelledby={`auth-tab-${mode}`}>
+              <form key={mode} onSubmit={mode === "signin" ? submitSignIn : submitSignUp} noValidate aria-busy={loading}>
+                {mode === "signup" && <div className="nova-auth-field">
                   <label htmlFor="signup-name">نام و نام خانوادگی</label>
-                  <input
-                    id="signup-name"
-                    name="fullName"
-                    placeholder="مثلاً: علی رضایی"
-                    autoComplete="name"
-                    required
-                  />
+                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="account" /></span><input id="signup-name" name="fullName" placeholder="مثلاً: علی رضایی" autoComplete="name" required /></div>
+                </div>}
+                <div className="nova-auth-field">
+                  <label htmlFor={`${mode}-email`}>ایمیل</label>
+                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="email" /></span><input id={`${mode}-email`} name="email" type="email" dir="ltr" placeholder="you@example.com" autoComplete="email" autoCapitalize="none" spellCheck={false} required /></div>
                 </div>
-                <div className="auth-gradient-field">
-                  <label htmlFor="signup-email">ایمیل</label>
-                  <input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    dir="ltr"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    required
-                  />
+                <div className="nova-auth-field">
+                  <label htmlFor={`${mode}-password`}>رمز عبور</label>
+                  <div className="nova-auth-input-wrap nova-auth-password"><span className="nova-auth-input-icon"><AuthIcon name="lock" /></span><input id={`${mode}-password`} name="password" type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} aria-describedby={mode === "signup" ? "auth-password-hint" : undefined} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
+                  {mode === "signup" && <p id="auth-password-hint" className="nova-auth-field-hint">رمزی با حداقل ۸ کاراکتر انتخاب کن.</p>}
                 </div>
-                <div className="auth-gradient-field">
-                  <label htmlFor="signup-password">رمز عبور</label>
-                  <input
-                    id="signup-password"
-                    name="password"
-                    type="password"
-                    dir="ltr"
-                    placeholder="حداقل ۸ کاراکتر"
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                  />
-                </div>
-                <button className="auth-gradient-submit" disabled={loading || success}>
-                  {loading ? "در حال ساخت حساب..." : success ? "حساب ساخته شد" : "ساخت حساب جدید ←"}
+                <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
+                  <span>{loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
-                <p className="auth-gradient-switch">
-                  حساب داری؟{" "}
-                  <button type="button" onClick={() => changeMode("signin")}>وارد شو</button>
-                </p>
+                <p className="nova-auth-switch">{mode === "signin" ? "هنوز حساب نداری؟" : "قبلاً ثبت‌نام کردی؟"} <button type="button" disabled={loading} onClick={() => changeMode(mode === "signin" ? "signup" : "signin")}>{mode === "signin" ? "ثبت‌نام در نووا" : "وارد حسابت شو"}</button></p>
               </form>
-            )}
+            </div>
+            <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>{mode === "signup" ? "بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی." : "اینجا، ادامهٔ مسیر توست."}</span></div>
           </section>
 
-          <aside className="auth-gradient-side">
-            <div className="auth-gradient-side-content">
-              <Logo />
-              <span className="auth-gradient-eyebrow">● مسیر روشن موفقیت تحصیلی</span>
-              <h2>یک نقطه شروع، دو مسیر ساده</h2>
-              <p>وارد مسیرت شو یا همین‌جا یک حساب تازه بساز. نووا کنار توست، از اولین قدم تا روز نتیجه.</p>
-              <div className="auth-gradient-benefits">
-                {benefits.map((benefit) => (
-                  <div className="auth-gradient-benefit" key={benefit}>
-                    <span aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <path d="m5 12 4 4L19 6" />
-                      </svg>
-                    </span>
-                    <b>{benefit}</b>
-                  </div>
-                ))}
-              </div>
+          <aside className="nova-auth-story" aria-labelledby="nova-auth-story-title">
+            <div className="nova-auth-story-copy">
+              <span className="nova-auth-eyebrow">از اولین قدم تا روز نتیجه</span>
+              <h2 id="nova-auth-story-title">آیندهٔ روشن،<br /><em>از همین‌جا.</em></h2>
+              <p>هدف تو، مسیر تو، برنامهٔ تو.<br />با نووا، قدم بعدی را مطمئن‌تر بردار.</p>
             </div>
-            <small>© ۱۴۰۵ نووا. تمام حقوق محفوظ است.</small>
+            <div className="nova-auth-art"><Image src="/nova/hero.svg" width={2172} height={724} unoptimized alt="شخصیت دانش‌آموز نووا، با کتاب و کوله‌پشتی در مسیر دانشگاه" /></div>
+            <div className="nova-auth-benefits">{benefits.map(benefit => <div key={benefit.title}><span className="nova-auth-benefit-icon"><AuthIcon name="check" /></span><div><strong>{benefit.title}</strong><p>{benefit.detail}</p></div></div>)}</div>
           </aside>
         </div>
-      </div>
-    </main>
+        <p className="nova-auth-bottom">نووا؛ همراه مسیر روشن تو</p>
+      </main>
+    </div>
   );
+}
+
+function AuthIcon({ name }: { name: "arrow" | "account" | "email" | "lock" | "eye" | "eyeOff" | "shield" | "check" | "info" }) {
+  const paths = {
+    arrow: <path d="M19 12H5m6-6-6 6 6 6" />,
+    account: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
+    email: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></>,
+    lock: <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></>,
+    eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
+    eyeOff: <><path d="m3 3 18 18M9.5 5.3A11 11 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.8M6 6.5A18 18 0 0 0 2 12s3.5 7 10 7a11 11 0 0 0 5-1.2M10 10a3 3 0 0 0 4 4" /></>,
+    shield: <><path d="m12 3 8 3v5c0 5-8 10-8 10S4 16 4 11V6l8-3Z" /><path d="m8 12 3 3 5-6" /></>,
+    check: <path d="m5 12 4 4L19 6" />,
+    info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
+  };
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
