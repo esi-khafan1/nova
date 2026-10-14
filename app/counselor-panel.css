@@ -8,3 +8,16 @@
 .counselor-portal .cp-refresh{background:#fff;border:1px solid #ccddf3;border-radius:8px;min-height:44px;padding:10px 16px;color:#1e5faf}.counselor-portal .plan-item-fields label{font-size:14px}.counselor-portal .plan-builder-meta strong{color:#496582}
 
 .counselor-portal .portal-empty-icon svg{width:24px;height:24px}
+
+/* Keep compact answer-key digits independent of the portal's form-font reset. */
+.counselor-portal .exam-builder .exam-key-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
