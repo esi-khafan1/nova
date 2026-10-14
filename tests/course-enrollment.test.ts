@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { coursesFor, courseFields, courseRegistrationPath, parseCourseSelection } from "../lib/courses";
 import { emailConfirmationUrl } from "../lib/auth-urls";
+import { validateRegistration } from "../lib/registration";
 import { safeReturnPath } from "../lib/return-path";
 for(const grade of [10,11,12])for(const field of courseFields){
  const courses=coursesFor(grade,field);assert.equal(courses.length,9);assert.equal(new Set(courses.map(c=>`${c.course}:${c.months}`)).size,9);
@@ -19,4 +20,6 @@ const form=read("components/registration/registration-form.tsx");assert.ok(form.
 const account=read("app/dashboard/student/account/page.tsx");assert.ok(account.includes('mode="profile"'));assert.ok(account.includes('<DeleteAccount/>'));
 const migration=read("supabase/migrations/043_student_course_enrollment.sql");assert.ok(!/drop table|truncate|delete from|alter policy/i.test(migration));assert.ok(migration.includes('revoke all on function public.save_student_account_details(jsonb) from public,anon'));
 const manual=read("supabase/migrations/044_admin_manual_student_activation.sql");assert.ok(manual.includes("is distinct from 'admin'"));assert.ok(manual.includes('insert into public.student_manual_activations'));assert.ok(manual.includes("approval_status='approved'"));
+assert.equal(validateRegistration({full_name:"دانش آموز آزمایشی",phone:"09121234567",telegram_id:"student_1",grade:10,study_field:"arts",province:"تهران",city:"تهران"},true),null);
+assert.notEqual(validateRegistration({full_name:"دانش آموز آزمایشی",phone:"09121234567",telegram_id:"student_1",grade:10,study_field:"arts",province:"تهران",city:"تهران"}),null);
 console.log("Course combinations, email return URLs, read-only portal and manual activation regression tests passed.");
