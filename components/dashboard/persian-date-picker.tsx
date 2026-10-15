@@ -36,6 +36,7 @@ export function PersianDatePicker({
   plannedWeeks = {},
   selectionMode = "week",
   minDate,
+  todayDate,
 }: {
   name: string;
   value: string;
@@ -43,9 +44,10 @@ export function PersianDatePicker({
   plannedWeeks?: Record<string, "draft" | "published">;
   selectionMode?: "week" | "day" | "range";
   minDate?: string;
+  todayDate?: string;
 }) {
   const selected = parseIsoDate(value);
-  const today = startOfDay(new Date());
+  const today = startOfDay(todayDate ? parseIsoDate(todayDate) : new Date());
   const currentWeekStart = addDays(today, -((today.getDay() + 1) % 7));
   const selectedRangeEnd =
     selectionMode !== "day" ? addDays(selected, 6) : selected;

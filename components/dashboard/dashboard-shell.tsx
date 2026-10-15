@@ -153,10 +153,6 @@ export function DashboardShell({
       <main className="student-portal-main">
         <div className="ed-workspace-bar">
           <div className="ed-workspace-identity"><span className="ed-avatar" aria-hidden="true">{(name || "ن").slice(0, 1)}</span><div><strong>{name || "کاربر نووا"}</strong><span>{labels[role]}</span></div></div>
-          <nav className="ed-workspace-links" aria-label="ناوبری پنل">
-            {links.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}
-            <form action={signOut}><button type="submit">خروج از حساب</button></form>
-          </nav>
         </div>
         {children}
       </main>
