@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import type { ContentStatus, ResourceType } from "@/lib/content";
 
 export type Podcast = {
@@ -24,7 +24,7 @@ export type PublishedPodcastListItem = Pick<
 >;
 
 export async function getPublishedPodcasts(limit?: number, offset = 0) {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   let query = supabase
     .from("podcasts")
     .select("id,title,summary,body,resource_type,audio_seconds,published_at")
