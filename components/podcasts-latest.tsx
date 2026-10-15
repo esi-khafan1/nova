@@ -7,12 +7,12 @@ import {
   resourceTypeLabels,
 } from "@/lib/content";
 import { formatAudioDuration } from "@/lib/podcast-media";
-import type { Podcast } from "@/lib/podcasts";
+import type { PublishedPodcastListItem } from "@/lib/podcasts";
 export function PodcastCard({
   podcast,
   archive = false,
 }: {
-  podcast: Podcast;
+  podcast: PublishedPodcastListItem;
   archive?: boolean;
 }) {
   const image = findFirstImage(parseContent(podcast.body));
@@ -69,7 +69,7 @@ export function PodcastsLatest({
   podcasts,
   unavailable = false,
 }: {
-  podcasts: Podcast[];
+  podcasts: PublishedPodcastListItem[];
   unavailable?: boolean;
 }) {
   return (
