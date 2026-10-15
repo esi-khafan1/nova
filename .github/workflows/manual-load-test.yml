@@ -1,0 +1,108 @@
+name: Nova · Manual load test
+run-name: Manual load test · ${{ inputs.target }} · up to ${{ inputs.max_users }} VUs
+
+# Intentionally NO push, pull_request or schedule trigger.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Target site (production requires confirmation below)
+        type: choice
+        options: [production, preview]
+        default: production
+      max_users:
+        description: Maximum concurrent virtual users (1–500; start with 10)
+        type: string
+        default: '10'
+      step_seconds:
+        description: Seconds per load step (60–180)
+        type: string
+        default: '60'
+      p95_limit_ms:
+        description: Stop if p95 exceeds this many milliseconds (100–10000)
+        type: string
+        default: '2000'
+      error_limit_percent:
+        description: Stop if errors exceed this percentage (0–10)
+        type: string
+        default: '1'
+      scenario:
+        description: Read-only journey (student needs NOVA_LOAD_TEST_STUDENT_COOKIES secret)
+        type: choice
+        options: [public, student]
+        default: public
+      confirm_production:
+        description: I approve bounded traffic and possible costs on the live site
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One test at a time, including reruns / branches. New runs never cancel a running test.
+concurrency:
+  group: nova-manual-load-test
+  cancel-in-progress: false
+
+jobs:
+  load-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      TARGET: ${{ inputs.target }}
+      MAX_USERS: ${{ inputs.max_users }}
+      STEP_SECONDS: ${{ inputs.step_seconds }}
+      P95_LIMIT_MS: ${{ inputs.p95_limit_ms }}
+      ERROR_LIMIT_PERCENT: ${{ inputs.error_limit_percent }}
+      SCENARIO: ${{ inputs.scenario }}
+      CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
+      NOVA_STUDENT_COOKIES: ${{ secrets.NOVA_LOAD_TEST_STUDENT_COOKIES }}
+      K6_NO_USAGE_REPORT: 'true'
+    steps:
+      - name: Checkout tooling
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate inputs and run local unit tests (no site traffic)
+        run: |
+          python3 tools/load-test/test_runner.py
+          python3 - <<'PY'
+          import os, sys
+          sys.path.insert(0, 'tools/load-test')
+          import run
+          args = run.args_parser().parse_args([
+              '--target', os.environ['TARGET'], '--max-users', os.environ['MAX_USERS'],
+              '--step-seconds', os.environ['STEP_SECONDS'], '--p95-limit-ms', os.environ['P95_LIMIT_MS'],
+              '--error-limit-percent', os.environ['ERROR_LIMIT_PERCENT'], '--scenario', os.environ['SCENARIO']
+          ] + (['--confirm-production'] if os.environ['CONFIRM_PRODUCTION'] == 'true' else []))
+          run.validate(args)
+          PY
+      - name: Install pinned k6 (verify release checksum)
+        run: |
+          set -euo pipefail
+          version=1.0.0
+          archive="k6-v${version}-linux-amd64.tar.gz"
+          base="https://github.com/grafana/k6/releases/download/v${version}"
+          curl --fail --silent --show-error --location --retry 3 "$base/$archive" -o "$RUNNER_TEMP/$archive"
+          cd "$RUNNER_TEMP"
+          echo "5eb2236bc76a3c5cced12aaf0fd76c4b1ceac5ea040c70388a3d272b46595b59  $archive" | sha256sum --check --strict -
+          tar -xzf "$archive"
+          echo "$RUNNER_TEMP/k6-v${version}-linux-amd64" >> "$GITHUB_PATH"
+      - name: Run bounded staircase (read only)
+        run: |
+          args=(--target "$TARGET" --max-users "$MAX_USERS" --step-seconds "$STEP_SECONDS" --p95-limit-ms "$P95_LIMIT_MS" --error-limit-percent "$ERROR_LIMIT_PERCENT" --scenario "$SCENARIO")
+          if [ "$CONFIRM_PRODUCTION" = true ]; then args+=(--confirm-production); fi
+          python3 tools/load-test/run.py "${args[@]}"
+      - name: Upload charts, CSV and summary (even after guard stops)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nova-load-test-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            load-test-results/report.html
+            load-test-results/summary.json
+            load-test-results/summary.md
+            load-test-results/stages.csv
+            load-test-results/windows.csv
