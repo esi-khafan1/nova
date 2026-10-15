@@ -4,6 +4,8 @@ import Image from "next/image";
 import { NewsArchiveCard } from "@/components/news-archive-card";
 import { getPublishedNews } from "@/lib/news";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "همهٔ خبرهای کنکور | نووا",
   description:
