@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ContentStatus, ResourceType } from "@/lib/content";
+
 export type Podcast = {
   id: string;
   author_id: string | null;
@@ -16,6 +17,12 @@ export type Podcast = {
   published_at: string | null;
   updated_at: string;
 };
+
+export type PublishedPodcastListItem = Pick<
+  Podcast,
+  "id" | "title" | "summary" | "body" | "resource_type" | "audio_seconds" | "published_at"
+>;
+
 export async function getPublishedPodcasts(limit?: number) {
   const supabase = await createClient();
   let query = supabase
@@ -26,8 +33,9 @@ export async function getPublishedPodcasts(limit?: number) {
     .order("id", { ascending: false });
   if (limit !== undefined) query = query.limit(limit);
   const { data, error } = await query;
-  return { podcasts: (data ?? []) as Podcast[], error: Boolean(error) };
+  return { podcasts: (data ?? []) as PublishedPodcastListItem[], error: Boolean(error) };
 }
+
 export async function getPublishedPodcast(id: string) {
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
