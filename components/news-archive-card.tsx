@@ -6,13 +6,13 @@ import {
   formatPersianDate,
   parseContent,
 } from "@/lib/content";
-import type { KonkurNews } from "@/lib/news";
+import type { PublishedNewsListItem } from "@/lib/news";
 
 export function NewsArchiveCard({
   news,
   priority = false,
 }: {
-  news: KonkurNews;
+  news: PublishedNewsListItem;
   priority?: boolean;
 }) {
   const document = parseContent(news.body);
