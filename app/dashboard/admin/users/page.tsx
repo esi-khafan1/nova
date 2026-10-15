@@ -1,4 +1,5 @@
-import { changeUserRole } from "@/app/dashboard/actions";
+import { UserRoleForm } from "@/components/dashboard/user-role-form";
+import "./users.css";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
 
@@ -74,11 +75,7 @@ export default async function AdminUsersPage({
               </div>
 
               {user.role !== "admin" ? (
-                <form action={changeUserRole}>
-                  <input type="hidden" name="user_id" value={user.id} />
-                  <label>نقش حساب<select name="target_role" defaultValue={user.role} aria-label={`نقش ${user.full_name}`}><option value="student">دانش‌آموز</option><option value="counselor">مشاور</option><option value="exam_designer">طراح آزمون</option></select></label>
-                  <button className="role-action promote">ذخیره نقش</button>
-                </form>
+                <UserRoleForm user={{id:user.id,full_name:user.full_name,role:user.role}} />
               ) : (
                 <span className="no-action">—</span>
               )}

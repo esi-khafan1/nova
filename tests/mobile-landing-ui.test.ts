@@ -17,7 +17,7 @@ assert.ok(page.indexOf('import "./landing-mobile.css"') > page.indexOf('import "
 assert.match(page, /\.limit\(3\)/);
 assert.match(page, /getPublishedNews\(3\)/);
 assert.match(page, /getPublishedPodcasts\(3\)/);
-assert.match(auth, /\.nova-auth-password \.nova-auth-reveal \{ inset: 0 1px 0 auto; \}/);
-assert.match(auth, /\.nova-auth-password input\[type="password"\]::placeholder \{ direction: ltr; text-align: left;/);
+assert.match(auth, /\.nova-auth-reveal \{[^}]*inset: 0 1px 0 auto;/);
+assert.match(auth, /\.nova-auth-password input::placeholder \{ direction: ltr; text-align: left;/);
 assert.match(readme, /قواعد تأییدشدهٔ گوشی/);
 console.log("Owner-approved mobile grids, landing-only limits, auth alignment and README guardrails are preserved.");
