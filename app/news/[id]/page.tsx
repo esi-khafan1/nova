@@ -6,6 +6,8 @@ import { getPublishedNewsItem } from "@/lib/news";
 import { formatPersianDate, parseContent } from "@/lib/content";
 
 type Props = { params: Promise<{ id: string }> };
+
+export const revalidate = 300;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const item = await getPublishedNewsItem((await params).id);
   return item
