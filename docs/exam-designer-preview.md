@@ -15,13 +15,13 @@ Branch: `feature/exam-designer-reports`. **Do not merge or deploy to production 
 
 ## Database rollout
 
-Migrations 046–047 were applied before the owner requested branch-only delivery. No application code was pushed to `main` and the requested account role has not been changed.
+Migrations 046–047 were applied before the owner requested branch-only delivery. No application code was pushed to `main`. After the preview deployed successfully and the owner approved database changes, `doob58157@gmail.com` was changed to `exam_designer` through the protected admin role RPC.
 
 Migration 048 restores legacy counselor-builder compatibility while the feature is in preview. The new preview action remains designer-only and uses a separate private wrapper. Migration 048 was applied after the owner's explicit approval and the integration suite was rerun.
 
 Before eventual production cutover, remove legacy counselor-save grants and entry points in a new migration, only after the designer UI is deployed. Do not edit existing migration history. Do not disable either the profile role-change trigger or row-level security.
 
-The preview currently shares the production Supabase project. **Changing the requested account to `exam_designer` would also change its role on the main site**, whose current build has no designer page. Keep the role unchanged until the owner chooses either that shared-account limitation or an isolated test backend. Do not create a login bypass or expose auth secrets for QA.
+The preview currently shares the production Supabase project. **The requested test account now has the designer role on the shared database, including the main site**, whose current build has no designer page. Use the preview URL for that account until production cutover. This shared-backend limitation was explained to the owner. Other users retain their original roles. Do not create a login bypass or expose auth secrets for QA.
 
 ## QA performed
 
@@ -30,4 +30,14 @@ The preview currently shares the production Supabase project. **Changing the req
 - `tests/konkur-subject-results.test.ts`: five template totals, exact continuous question ranges, tamper rejection, physics/chemistry boundary isolation, negative percentages, fractions and legacy fallback.
 - `tests/sql/exam-designer-reports.sql`: transactional authenticated-role/RLS integration tests. All test writes and temporary role changes roll back. Covers selected/unselected students, forbidden key-column reads, forbidden designer report access, rejected counselor design calls, early report rejection, 23.81% grading and 100% physics vs −33.33% chemistry.
 
+- Local-only Chromium smoke test: all five template booklet/question totals, frozen add/delete controls, custom subject mode, no designer report navigation, and zero horizontal overflow at 390px. The temporary local route was removed and never committed.
+- Shared printable-report render test with synthetic data: nine subject rows, six historical exams, nine legend entries, and exactly one A4 PDF page. The temporary mock script was removed and never committed.
+- Cloudflare preview build succeeded. Public sign-in returns 200; unauthenticated designer and student-report routes redirect to sign-in.
+
 Authenticated browser testing with the owner's account has not yet been performed. ImageKit upload requires existing runtime secrets and must be checked on the preview; no upload secrets are committed here.
+
+## Preview
+
+https://feature-exam-designer-reports-nova.doob4347.workers.dev
+
+Production `main` was independently verified at commit `970034b196b3e155c52dea8c91ea7ed00dce1a0d`; the feature application commit is `f5de2bfcc25f23aef393139d31e7af23cfc3867e`.
