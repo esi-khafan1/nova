@@ -1,0 +1,84 @@
+/* Owner-approved phone layouts only. Do not apply these rules to archives or desktop. */
+@media (max-width: 700px) {
+  .landing-v2d .proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 12px;
+  }
+  .landing-v2d .proof-item { min-width: 0; text-align: center; }
+  .landing-v2d .proof-item h4 { font-size: 18px; line-height: 1.7; }
+  .landing-v2d .proof-item p { line-height: 1.8; }
+
+  .landing-v2d .nova-why-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+  .landing-v2d .nova-why--open .nova-why-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border-bottom: 0;
+    text-align: center;
+  }
+  .landing-v2d .nova-why--open .nova-why-icon { margin-inline: auto; }
+  .landing-v2d .nova-why-copy h3 { font-size: 16px; line-height: 1.8; margin: 0 0 8px; }
+  .landing-v2d .nova-why-copy p { font-size: 14px; line-height: 1.9; }
+
+  /* Keep the newest two cards in each landing section; full archives remain available. */
+  .landing-v2d .nova-mag-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .landing-v2d .nova-mag-layout > .nova-mag-article:nth-child(n + 3) { display: none; }
+  .landing-v2d .nova-mag-summary { display: none; }
+  .landing-v2d .nova-mag-card { border-radius: 12px; }
+  .landing-v2d .nova-mag-body { padding: 12px; }
+  .landing-v2d .nova-mag-card h3 { font-size: 16px; line-height: 1.8; }
+  .landing-v2d .nova-mag-meta { gap: 4px; margin-bottom: 8px; font-size: 14px; }
+  .landing-v2d .nova-mag-category { padding-inline: 6px; }
+  .landing-v2d .nova-mag-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding-top: 12px;
+  }
+  .landing-v2d .nova-mag-read { gap: 4px; }
+  .landing-v2d .nova-news-source { overflow-wrap: anywhere; }
+
+  .landing-v2d .social-preview .container { width: calc(100% - 48px); padding-inline: 0; }
+  .landing-v2d .social-section .social-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .landing-v2d .social-section .social-card {
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 12px;
+    gap: 12px;
+  }
+  .landing-v2d .social-section .social-card .icon-box { width: 44px; height: 44px; }
+  .landing-v2d .social-section .social-card .text { min-width: 0; flex: 1; }
+  .landing-v2d .social-section .social-card .text strong { font-size: 17px; line-height: 1.7; margin-bottom: 8px; }
+  .landing-v2d .social-section .social-card .text small { font-size: 14px; line-height: 1.9; }
+  .landing-v2d .social-section .social-card .follow-cta {
+    align-self: flex-start;
+    margin-top: auto;
+    padding-inline: 0;
+    font-size: 14px;
+    white-space: normal;
+    min-height: 44px;
+  }
+
+  /* All footer destinations stay present; only the redundant brand block is hidden. */
+  .landing-v2d .site-footer { padding: 32px 0 24px; }
+  .landing-v2d .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; margin-bottom: 24px; }
+  .landing-v2d .footer-grid > .footer-about { display: none; }
+  .landing-v2d .footer-col { min-width: 0; }
+  .landing-v2d .footer-col h5 { margin: 0 0 8px; line-height: 1.8; }
+  .landing-v2d .footer-col a { min-height: 44px; display: flex; align-items: center; padding-block: 8px; line-height: 1.8; }
+  .landing-v2d .footer-col:last-child { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  .landing-v2d .footer-col:last-child h5 { grid-column: 1 / -1; }
+  .landing-v2d .footer-bottom { font-size: 14px; line-height: 1.8; padding-top: 16px; }
+}

@@ -125,3 +125,12 @@
 @media (prefers-reduced-motion: no-preference) {
   .nova-auth-main :is(button,input,a) { transition: border-color .15s, background-color .15s, box-shadow .15s; }
 }
+
+/* Phone-only: replace the lock with the reveal control and align both credentials left. */
+@media (max-width: 700px) {
+  .nova-auth-password .nova-auth-input-icon { display: none; }
+  .nova-auth-password .nova-auth-reveal { inset: 0 1px 0 auto; }
+  .nova-auth-input-wrap input[dir="ltr"] { padding-left: 16px; padding-right: 46px; text-align: left; }
+  .nova-auth-password input::placeholder,
+  .nova-auth-password input[type="password"]::placeholder { direction: ltr; text-align: left; font-size: 14px; }
+}
