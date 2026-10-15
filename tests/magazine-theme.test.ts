@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const archive = readFileSync("app/mag/page.tsx", "utf8");
+const article = readFileSync("app/mag/[id]/page.tsx", "utf8");
+const layout = readFileSync("app/mag/layout.tsx", "utf8");
+const css = readFileSync("app/mag/magazine-theme.css", "utf8");
+assert.match(layout, /LandingHeader isAuthenticated=\{Boolean\(user\)\}/);
+assert.match(layout, /import "\.\.\/landing-approved.css"/);
+for (const page of [archive, article]) { assert.ok(!page.includes('<Logo')); assert.ok(!page.includes('mag-header')); }
+assert.match(archive, /src="\/nova\/mark.svg"/);
+assert.match(archive, /\.eq\("status", "published"\)/);
+assert.match(archive, /\.order\("published_at", \{ ascending: false \}\)/);
+assert.ok(!archive.includes('.limit('));
+assert.match(archive, /resources.map\(\(resource\)/);
+assert.match(archive, /className="mag-card-footer"><time/);
+assert.match(article, /<RichContent document=\{parseContent\(article.body\)\}/);
+assert.match(article, /if \(!result\) notFound\(\)/);
+assert.match(article, /generateMetadata/);
+assert.match(css, /\.mag-content \.mag-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+assert.match(css, /\.mag-card-summary \{ display:none; \}/);
+assert.match(css, /\.article-rich-content \{ font-size:16px;/);
+assert.match(css, /\.mag-footer-brand \{ display:none; \}/);
+console.log("Magazine-only styling, shared navbar, full archive, complete article and mobile rules are preserved.");

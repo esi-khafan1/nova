@@ -10,6 +10,7 @@ import "./landing-v2d.css";
 import "./landing-approved.css";
 import "./why-nova.css";
 import "./path-finder.css";
+import "./courses.css";
 import "./magazine-latest.css";
 import "./konkur-news.css";
 import { KonkurNewsLatest } from "@/components/konkur-news-latest";
@@ -19,6 +20,8 @@ import "./podcasts/podcasts.css";
 import "./editorial-light-themes.css";
 import "./social-light-preview.css";
 import "./landing-white-sections.css";
+import "./landing-mobile.css";
+import "./landing-hero-refresh.css";
 import { getPublishedNews } from "@/lib/news";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -155,6 +158,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <Link href="/mag">مجله</Link>
               <Link href="/podcasts">پادکست‌ها</Link>
               <Link href="/auth">ورود</Link>
+              <Link className="footer-mobile-link" href="/contact">تماس با ما</Link>
+              <Link className="footer-mobile-link" href="/privacy">حریم خصوصی</Link>
             </div>
             <div className="footer-col">
               <h5>خدمات</h5>
@@ -162,6 +167,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <a href="#find-path">برنامه‌ریزی</a>
               <Link href="/mag">منابع</Link>
               <Link href="/auth?mode=signup">شروع مسیر</Link>
+              <Link className="footer-mobile-link" href="/terms">شرایط استفاده</Link>
+              <Link className="footer-mobile-link" href="/refund">بازگشت وجه</Link>
             </div>
             <div className="footer-col">
               <h5>قوانین و ارتباط</h5>

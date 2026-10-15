@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Logo } from "@/components/logo";
 import { RichContent } from "@/components/content/rich-content";
 import { getPublishedNewsItem } from "@/lib/news";
 import { formatPersianDate, parseContent } from "@/lib/content";
@@ -21,24 +20,15 @@ export default async function NewsItemPage({ params }: Props) {
   if (!item) notFound();
   return (
     <main className="mag-shell article-shell">
-      <header className="mag-header">
-        <div className="container mag-nav">
-          <Logo />
-          <nav aria-label="ناوبری اخبار">
-            <Link href="/">صفحه اصلی</Link>
-            <Link href="/news">اخبار کنکور</Link>
-            <Link href="/mag">مجله نووا</Link>
-          </nav>
-        </div>
-      </header>
+      <nav className="container mag-breadcrumb" aria-label="مسیر صفحه"><Link href="/">صفحه اصلی</Link><span aria-hidden="true">/</span><Link href="/news">اخبار کنکور</Link></nav>
       <article className="container article-page">
-        <Link className="article-back" href="/news">
-          بازگشت به خبرها
-        </Link>
         <header>
+          <div className="article-topline">
           <div className="article-meta">
             <span>خبر کنکور</span>
             <span>{item.source_name}</span>
+          </div>
+          <Link className="article-back" href="/news"><span aria-hidden="true">←</span><span className="mag-desktop-label">بازگشت به خبرها</span><span className="mag-mobile-label">بازگشت</span></Link>
           </div>
           <h1>{item.title}</h1>
           {item.summary && <p>{item.summary}</p>}

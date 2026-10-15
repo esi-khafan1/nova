@@ -67,9 +67,9 @@ export function calculateBookletResults(
   });
 }
 
-export function examEndsAt(startsAt: string, durationMinutes: number) {
+export function examEndsAt(startsAt: string, durationMinutes: number, startWindowEndsAt?: string | null) {
   return new Date(
-    new Date(startsAt).getTime() + durationMinutes * 60_000,
+    new Date(startWindowEndsAt ?? startsAt).getTime() + durationMinutes * 60_000 + (startWindowEndsAt ? 30_000 : 0),
   );
 }
 
@@ -89,9 +89,10 @@ export function getExamTimeState(
   startsAt: string,
   durationMinutes: number,
   now = new Date(),
+  startWindowEndsAt?: string | null,
 ) {
   const start = new Date(startsAt);
-  const end = examEndsAt(startsAt, durationMinutes);
+  const end = examEndsAt(startsAt, durationMinutes, startWindowEndsAt);
   if (now < start) return "upcoming" as const;
   if (now >= end) return "ended" as const;
   return "active" as const;

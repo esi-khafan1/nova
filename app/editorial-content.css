@@ -1,0 +1,21 @@
+/* Route-scoped additions to the approved magazine theme. No landing overrides. */
+.magazine-theme .mag-list-heading > span { min-width:0; line-height:1.9; }
+.magazine-theme .mag-footer a { color:var(--mag-blue); font-size:14px; }
+.magazine-theme .mag-footer > .container { flex-wrap:wrap; }
+.magazine-theme .article-page > header > time { display:block; margin-top:16px; color:var(--mag-copy); font-size:14px; line-height:1.9; }
+.magazine-theme .article-author a { color:var(--mag-blue); }
+.magazine-theme .podcast-archive-cover { position:relative; aspect-ratio:16/10; flex-shrink:0; overflow:hidden; background:var(--mag-ice); }
+.magazine-theme .podcast-archive-cover > img { object-fit:cover; }
+.magazine-theme .podcast-archive-cover .mag-card-placeholder { height:100%; aspect-ratio:auto; font-size:44px; }
+.magazine-theme .podcast-cover-badge { background:#fff1e5; color:#a34300; border:1px solid #ffd7b8; }
+.magazine-theme .podcast-player { background:var(--mag-ice); border-color:var(--mag-line); padding:24px; }
+.magazine-theme .podcast-player-label { color:var(--mag-ink); font-size:16px; }
+.magazine-theme .podcast-player a { color:var(--mag-blue); }
+.magazine-theme .podcast-player button { background:#fff1e5; color:#a34300; border-color:#ffd7b8; }
+.magazine-theme .podcast-sample-notice { background:#fff1e5; border-color:var(--mag-orange); color:#a34300; font-size:14px; }
+@media (max-width:700px) {
+  .podcasts-theme .mag-card-footer { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .magazine-theme .podcast-archive-cover { aspect-ratio:4/3; }
+  .magazine-theme .podcast-cover-badge { width:36px; height:36px; bottom:8px; right:8px; font-size:14px; }
+  .magazine-theme .podcast-player { padding:16px; }
+}

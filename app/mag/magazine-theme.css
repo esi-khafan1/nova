@@ -1,0 +1,115 @@
+/* Magazine routes only; the shared landing navbar is intentionally not restyled. */
+.magazine-theme { --mag-ink:#123b63; --mag-copy:#426384; --mag-blue:#176bce; --mag-line:#d6e6f7; --mag-ice:#eef6ff; --mag-orange:#ff7a1a; color:var(--mag-ink); background:var(--mag-ice); min-height:100vh; }
+.magazine-theme .container { width:min(1120px,calc(100% - 64px)); margin-inline:auto; }
+.magazine-theme .mag-shell { display:flow-root; background:var(--mag-ice); color:var(--mag-ink); min-height:calc(100vh - 104px); }
+.magazine-theme .mag-mobile-label { display:none; }
+.magazine-theme a:focus-visible { outline:3px solid var(--mag-blue); outline-offset:4px; }
+.magazine-theme .mag-hero { padding:32px 0 48px; background:var(--mag-ice); border-bottom:1px solid var(--mag-line); }
+.magazine-theme .mag-hero::after { display:none; }
+.magazine-theme .mag-hero-topline { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.magazine-theme .mag-hero-topline .mag-home { margin:0; flex-shrink:0; }
+.magazine-theme .mag-home { display:flex; align-items:center; gap:10px; width:fit-content; min-height:44px; margin:0 auto 24px 0; font-size:14px; font-weight:600; color:var(--mag-blue); }
+.magazine-theme .mag-home span { font-size:14px; font-weight:600; color:inherit; }
+.magazine-theme .mag-eyebrow { display:flex; align-items:center; gap:8px; color:var(--mag-blue); font-size:14px; font-weight:700; }
+.magazine-theme .mag-eyebrow::before { content:""; width:7px; height:7px; background:var(--mag-orange); border-radius:50%; }
+.magazine-theme .mag-hero h1 { max-width:900px; margin:12px 0; color:var(--mag-ink); font-size:clamp(32px,3.3vw,46px); line-height:1.65; font-weight:850; }
+.magazine-theme .mag-hero p { max-width:760px; color:var(--mag-copy); font-size:16px; line-height:2; }
+.magazine-theme .mag-content { padding-block:40px 64px; }
+.magazine-theme .mag-list-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
+.magazine-theme .mag-list-heading h2 { color:var(--mag-ink); margin:0; font-size:24px; }
+.magazine-theme .mag-list-heading > span { font-size:14px; color:var(--mag-copy); }
+.magazine-theme .mag-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
+.magazine-theme .mag-card { display:flex; flex-direction:column; min-width:0; min-height:100%; border:1px solid var(--mag-line); border-radius:16px; background:#fff; box-shadow:none; transition:border-color .15s,box-shadow .15s; }
+.magazine-theme .mag-card:hover { transform:none; border-color:#8dbbef; box-shadow:0 4px 16px rgba(18,59,99,.06); }
+.magazine-theme .mag-card > img,.magazine-theme .mag-card-placeholder { display:block; width:100%; height:auto; min-height:0; aspect-ratio:16/10; object-fit:cover; background:#e5f0ff; flex-shrink:0; }
+.magazine-theme .mag-card-placeholder { display:grid; place-items:center; color:var(--mag-blue); }
+.magazine-theme .mag-card-placeholder svg { width:56px; height:56px; }
+.magazine-theme .mag-card > .mag-card-body { display:flex; flex:1; flex-direction:column; padding:20px; min-width:0; }
+.magazine-theme .mag-card-meta { display:flex; flex-wrap:wrap; gap:6px; }
+.magazine-theme .mag-card-meta > span { font-size:14px; line-height:1.8; color:var(--mag-blue); background:var(--mag-ice); border:0; border-radius:6px; padding:3px 8px; }
+.magazine-theme .mag-card-meta > .is-school,.magazine-theme .mag-card-meta > span + span { color:#a34300; background:#fff1e5; }
+.magazine-theme .mag-card h2 { color:var(--mag-ink); font-size:21px; line-height:1.8; margin:12px 0; overflow-wrap:anywhere; }
+.magazine-theme .mag-card-summary { color:var(--mag-copy); font-size:15px; line-height:2; margin:0 0 20px; }
+.magazine-theme .mag-card-footer { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; margin-top:auto; padding-top:12px; border-top:1px solid #edf3fb; min-height:48px; }
+.magazine-theme .mag-card-footer time { color:var(--mag-copy); font-size:14px; line-height:1.9; min-width:0; }
+.magazine-theme .mag-card-readmore { display:block; color:var(--mag-blue); font-size:14px; font-weight:700; line-height:1.9; margin:0; text-align:left; }
+.magazine-theme .mag-empty { min-height:300px; padding:32px 24px; border:1px solid var(--mag-line); border-radius:16px; background:#fff; }
+.magazine-theme .mag-empty > img { width:68px; height:68px; object-fit:contain; }
+.magazine-theme .mag-empty h2 { color:var(--mag-ink); font-size:26px; line-height:1.8; }
+.magazine-theme .mag-empty p { color:var(--mag-copy); font-size:16px; }
+.magazine-theme .mag-footer { padding:24px 0; border-top:1px solid var(--mag-line); background:#fff; }
+.magazine-theme .mag-footer .container { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:16px; }
+.magazine-theme .mag-footer-brand img { display:block; width:68px; height:68px; }
+.magazine-theme .mag-footer p { color:var(--mag-copy); font-size:14px; margin:0; }
+.magazine-theme .mag-breadcrumb { display:flex; align-items:center; gap:12px; padding-block:24px; font-size:14px; color:var(--mag-copy); }
+.magazine-theme .mag-breadcrumb a { display:inline-flex; align-items:center; min-height:44px; }
+.magazine-theme .article-page { width:min(840px,calc(100% - 64px)); max-width:none; margin:0 auto 64px; padding:40px 48px; border:1px solid var(--mag-line); border-radius:20px; background:#fff; }
+.magazine-theme .article-back { display:inline-flex; gap:8px; align-items:center; min-height:44px; font-size:14px; color:var(--mag-blue); margin-bottom:20px; }
+.magazine-theme .article-page > header { padding-bottom:28px; border-bottom:1px solid var(--mag-line); }
+.magazine-theme .article-topline { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px; }
+.magazine-theme .article-topline .article-back { margin:0; white-space:nowrap; }
+.magazine-theme .article-topline .article-meta { min-width:0; }
+.magazine-theme .article-topline .article-meta > span { max-width:100%; overflow-wrap:anywhere; }
+.magazine-theme .article-meta { display:flex; flex-wrap:wrap; gap:8px; }
+.magazine-theme .article-meta > span { padding:4px 10px; font-size:14px; line-height:1.8; border:0; border-radius:6px; color:var(--mag-blue); background:var(--mag-ice); }
+.magazine-theme .article-meta > span:first-child { background:#fff1e5; color:#a34300; }
+.magazine-theme .article-page > header h1 { color:var(--mag-ink); font-size:clamp(30px,3.5vw,42px); font-weight:850; line-height:1.8; margin:20px 0 16px; overflow-wrap:anywhere; }
+.magazine-theme .article-page > header > p { color:var(--mag-copy); font-size:17px; line-height:2.1; margin:0; }
+.magazine-theme .article-byline { margin-top:24px; gap:12px; }
+.magazine-theme .article-byline > div,.magazine-theme .article-author > div:first-child { width:48px; height:48px; flex:0 0 48px; border-radius:12px; background:#fff1e5; color:#a34300; font-size:18px; }
+.magazine-theme .article-byline strong { color:var(--mag-ink); font-size:15px; }
+.magazine-theme .article-byline small { color:var(--mag-copy); font-size:14px; }
+.magazine-theme .article-rich-content { color:var(--mag-ink); font-size:17px; line-height:2.15; padding-block:32px; overflow-wrap:anywhere; }
+.magazine-theme .article-rich-content p { margin:0 0 24px; }
+.magazine-theme .article-rich-content h2 { color:var(--mag-ink); font-size:28px; line-height:1.8; margin:36px 0 16px; }
+.magazine-theme .article-rich-content h3 { color:var(--mag-ink); font-size:22px; line-height:1.8; }
+.magazine-theme .article-rich-content a { color:var(--mag-blue); text-decoration-color:#8dbbef; }
+.magazine-theme .article-rich-content li::marker { color:var(--mag-blue); }
+.magazine-theme .article-rich-content blockquote { margin:24px 0; padding:20px 24px; border-right:3px solid var(--mag-orange); border-radius:12px; background:var(--mag-ice); }
+.magazine-theme .article-rich-content blockquote p:last-child { margin-bottom:0; }
+.magazine-theme .article-rich-content img { width:auto; max-width:100%; height:auto; border:1px solid var(--mag-line); border-radius:12px; box-shadow:none; margin:24px auto; }
+.magazine-theme .article-rich-content hr { border-color:var(--mag-line); }
+.magazine-theme .article-rich-content code { color:var(--mag-blue); background:var(--mag-ice); border-radius:4px; padding:2px 4px; overflow-wrap:anywhere; }
+.magazine-theme .article-author { padding:24px; border:1px solid var(--mag-line); background:var(--mag-ice); border-radius:12px; align-items:flex-start; }
+.magazine-theme .article-author > div:last-child { min-width:0; }
+.magazine-theme .article-author span { color:var(--mag-blue); font-size:14px; }
+.magazine-theme .article-author h2 { color:var(--mag-ink); font-size:18px; }
+.magazine-theme .article-author p { color:var(--mag-copy); font-size:15px; line-height:2; overflow-wrap:anywhere; }
+@media (min-width:701px) and (max-width:1000px) { .magazine-theme .mag-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:700px) {
+  .magazine-theme .container { width:calc(100% - 32px); }
+  .magazine-theme .mag-shell { min-height:calc(100vh - 86px); }
+  .magazine-theme .mag-mobile-label { display:inline; }
+  .magazine-theme .mag-desktop-label { display:none; }
+  .magazine-theme .mag-hero { padding:16px 0 28px; }
+  .magazine-theme .mag-home { margin-bottom:16px; }
+  .magazine-theme .mag-hero h1 { font-size:30px; line-height:1.7; margin:12px 0; }
+  .magazine-theme .mag-hero p { font-size:15px; line-height:2; }
+  .magazine-theme .mag-content { padding-block:24px 40px; }
+  .magazine-theme .mag-list-heading { margin-bottom:16px; }
+  .magazine-theme .mag-list-heading h2 { font-size:21px; }
+  .magazine-theme .mag-content .mag-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .magazine-theme .mag-card { border-radius:12px; }
+  .magazine-theme .mag-card > img,.magazine-theme .mag-card-placeholder { aspect-ratio:4/3; }
+  .magazine-theme .mag-card-placeholder svg { width:44px; height:44px; }
+  .magazine-theme .mag-card > .mag-card-body { padding:12px; }
+  .magazine-theme .mag-card-meta > span { padding:3px 6px; font-size:14px; }
+  .magazine-theme .mag-card h2 { font-size:16px; line-height:1.85; margin:12px 0 16px; }
+  .magazine-theme .mag-card-summary { display:none; }
+  .magazine-theme .mag-card-footer { gap:6px; grid-template-columns:minmax(0,1fr) auto; }
+  .magazine-theme .mag-footer-brand { display:none; }
+  .magazine-theme .mag-footer .container { justify-content:center; text-align:center; }
+  .magazine-theme .mag-breadcrumb { padding-block:12px; }
+  .magazine-theme .article-page { width:calc(100% - 32px); margin-bottom:32px; padding:20px 16px; border-radius:16px; }
+  .magazine-theme .article-back { margin-bottom:16px; }
+  .magazine-theme .article-page > header h1 { font-size:28px; line-height:1.8; margin:16px 0; }
+  .magazine-theme .article-page > header > p { font-size:16px; }
+  .magazine-theme .article-rich-content { font-size:16px; padding-block:24px; }
+  .magazine-theme .article-rich-content h2 { font-size:24px; }
+  .magazine-theme .article-rich-content h3 { font-size:20px; }
+  .magazine-theme .article-rich-content ul,.magazine-theme .article-rich-content ol { padding-right:22px; }
+  .magazine-theme .article-rich-content blockquote { padding:16px; }
+  .magazine-theme .article-author { padding:16px; gap:12px; }
+  .magazine-theme .article-author p { font-size:14px; }
+}
+@media (prefers-reduced-motion:reduce) { .magazine-theme .mag-card { transition:none; } }

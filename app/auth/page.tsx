@@ -1,3 +1,4 @@
+import "../landing-approved.css";
 import "./auth-gradient.css";
 import { UnifiedAuth } from "@/components/auth/unified-auth";
 import { safeReturnPath } from "@/lib/return-path";
@@ -14,6 +15,6 @@ export default async function AuthPage({
 
   const returnTo = safeReturnPath(params.next);
   const { data: { user } } = await (await createClient()).auth.getUser();
-  if (user) redirect(returnTo);
-  return <UnifiedAuth initialMode={initialMode} returnTo={returnTo} />;
+  if (user?.email_confirmed_at) redirect(returnTo);
+  return <UnifiedAuth initialMode={initialMode} returnTo={returnTo} initialMessage={user || params.error === "unconfirmed" ? "ابتدا لینک تأیید ایمیل را باز کن، سپس وارد حساب شو." : ""} />;
 }

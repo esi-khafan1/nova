@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { floatingRemainingSeconds, replaceBookletAnswers, type FloatingExamSession } from "@/lib/floating-exams";
+import { updateFloatingExamProgress } from "@/app/dashboard/exams/actions";
 import { submitExam } from "@/app/dashboard/exams/actions";
 import { toPersianDigits } from "@/lib/persian-date";
 import type { ExamBooklet } from "@/lib/exams";
@@ -11,20 +13,28 @@ export function StudentExamForm({
   examTitle,
   booklets,
   studentName = "دانش‌آموز نووا",
+  floatingSession,
 }: {
   examId: string;
   examTitle: string;
   booklets: ExamBooklet[];
   studentName?: string;
+  floatingSession?: FloatingExamSession;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const autoSubmitRef = useRef<HTMLButtonElement>(null);
-  const storageKey = `nova_exam_${examId}`;
+  const storageKey = floatingSession ? `nova_floating_exam_${examId}_${floatingSession.student_id}` : `nova_exam_${examId}`;
+  const [session,setSession] = useState(floatingSession);
+  const serverClock = useRef({stamp: floatingSession ? Date.parse(floatingSession.server_now) : Date.now(), received: performance.now()});
+  const [progressError,setProgressError] = useState("");
+  const [retrySave,setRetrySave] = useState(0);
+  const [advancing,setAdvancing] = useState(false);
+  const autoFinish = useRef(false);
 
-  const [currentBookletIndex, setCurrentBookletIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [bookletStartedAt, setBookletStartedAt] = useState<number>(Date.now());
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
+  const [currentBookletIndex, setCurrentBookletIndex] = useState(floatingSession?.current_booklet_index ?? 0);
+  const [answers, setAnswers] = useState<Record<string, number>>(floatingSession?.answers ?? {});
+  const [bookletStartedAt, setBookletStartedAt] = useState<number>(floatingSession ? Date.parse(floatingSession.booklet_started_at) : Date.now());
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(floatingSession && booklets[floatingSession.current_booklet_index] ? floatingRemainingSeconds(floatingSession,booklets[floatingSession.current_booklet_index],Date.parse(floatingSession.server_now)) : 0);
   const [focusedQ, setFocusedQ] = useState<number>(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [modalForTimeout, setModalForTimeout] = useState(false);
@@ -32,12 +42,22 @@ export function StudentExamForm({
 
   const currentBooklet = booklets[currentBookletIndex] ?? booklets[0];
 
+  const latestAnswers = useRef(answers);
+  const latestIndex = useRef(currentBookletIndex);
+  useEffect(()=>{latestAnswers.current=answers;latestIndex.current=currentBookletIndex;},[answers,currentBookletIndex]);
+
   // Load initial saved state from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
+        if(floatingSession) {
+          const booklet=booklets[floatingSession.current_booklet_index];
+          if(parsed?.pending && parsed.instance===floatingSession.started_at && parsed.bookletIndex===floatingSession.current_booklet_index && booklet && parsed.answers && typeof parsed.answers==="object" && !Array.isArray(parsed.answers))
+            setAnswers(replaceBookletAnswers(floatingSession.answers,parsed.answers,booklet));
+          return;
+        }
         if (parsed && typeof parsed === "object") {
           if (parsed.answers) setAnswers(parsed.answers);
           if (
@@ -50,13 +70,13 @@ export function StudentExamForm({
             setBookletStartedAt(parsed.bookletStartedAt);
           }
         }
-      } else {
+      } else if (!floatingSession) {
         setBookletStartedAt(Date.now());
       }
     } catch {
       // ignore storage errors
     }
-  }, [storageKey, booklets.length]);
+  }, [storageKey, booklets, floatingSession]);
 
   // Save state on change
   useEffect(() => {
@@ -67,12 +87,44 @@ export function StudentExamForm({
           answers,
           bookletIndex: currentBookletIndex,
           bookletStartedAt,
+          ...(session ? {instance:session.started_at,pending:true} : {}),
         }),
       );
     } catch {
       // ignore storage errors
     }
-  }, [storageKey, answers, currentBookletIndex, bookletStartedAt]);
+  }, [storageKey, answers, currentBookletIndex, bookletStartedAt, session]);
+
+
+  // Save floating drafts on the server; never restore timing or position from local cache.
+  useEffect(()=>{
+    if(!session || submitting || advancing) return;
+    const payload=JSON.stringify(answers), index=currentBookletIndex;
+    const timer=window.setTimeout(async()=>{
+      try {
+        const result=await updateFloatingExamProgress(examId,index,answers);
+        if(latestIndex.current!==index || JSON.stringify(latestAnswers.current)!==payload) return;
+        if(result.error || !result.session) {setProgressError(result.error || "ذخیرهٔ خودکار انجام نشد؛ دوباره تلاش کن.");return;}
+        serverClock.current={stamp:Date.parse(result.session.server_now),received:performance.now()};
+        setProgressError("");
+        try {localStorage.setItem(storageKey,JSON.stringify({answers,bookletIndex:index,instance:session.started_at,pending:false}));} catch {}
+      } catch {setProgressError("ارتباط برای ذخیرهٔ خودکار برقرار نشد. پاسخ‌ها در این صفحه محفوظ‌اند؛ اتصال را بررسی کن.");}
+    },600);
+    return ()=>window.clearTimeout(timer);
+  },[answers,currentBookletIndex,examId,storageKey,session,submitting,advancing,retrySave]);
+
+  // The whole exam deadline keeps running even while a booklet transition modal is open.
+  useEffect(()=>{
+    if(!session || submitting) return;
+    const timer=window.setInterval(()=>{
+      const now=serverClock.current.stamp+performance.now()-serverClock.current.received;
+      if(now>=Date.parse(session.expires_at) && !autoFinish.current) {
+        autoFinish.current=true;setSubmitting(true);
+        formRef.current?.requestSubmit(autoSubmitRef.current ?? undefined);
+      }
+    },500);
+    return ()=>window.clearInterval(timer);
+  },[session,submitting]);
 
   // Set initial focus to start of booklet
   useEffect(() => {
@@ -87,19 +139,39 @@ export function StudentExamForm({
 
     const durationSeconds = currentBooklet.duration_minutes * 60;
     const interval = window.setInterval(() => {
-      const elapsed = Math.floor((Date.now() - bookletStartedAt) / 1000);
-      const left = Math.max(0, durationSeconds - elapsed);
+      const now=session ? serverClock.current.stamp+performance.now()-serverClock.current.received : Date.now();
+      const elapsed = Math.floor((now - bookletStartedAt) / 1000);
+      const left = session ? floatingRemainingSeconds(session,currentBooklet,now) : Math.max(0, durationSeconds - elapsed);
       setRemainingSeconds(left);
 
       if (left === 0) {
         window.clearInterval(interval);
+        if(session && currentBookletIndex===booklets.length-1) {
+          if(!autoFinish.current) {autoFinish.current=true;setSubmitting(true);formRef.current?.requestSubmit(autoSubmitRef.current ?? undefined);}
+          return;
+        }
         setModalForTimeout(true);
         setShowConfirmModal(true);
       }
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [currentBooklet, bookletStartedAt, submitting]);
+  }, [currentBooklet, bookletStartedAt, submitting, session, currentBookletIndex, booklets.length]);
+
+  const toggleAnswer = useCallback((questionNumber: number, option: number) => {
+    if(submitting || advancing) return;
+    setFocusedQ(questionNumber);
+    setAnswers((prev) => {
+      const qKey = String(questionNumber);
+      const next = { ...prev };
+      if (next[qKey] === option) {
+        delete next[qKey];
+      } else {
+        next[qKey] = option;
+      }
+      return next;
+    });
+  }, [submitting, advancing]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -124,21 +196,9 @@ export function StudentExamForm({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [focusedQ, currentBooklet, showConfirmModal, submitting]);
+  }, [focusedQ, currentBooklet, showConfirmModal, submitting, toggleAnswer]);
 
-  const toggleAnswer = (questionNumber: number, option: number) => {
-    setFocusedQ(questionNumber);
-    setAnswers((prev) => {
-      const qKey = String(questionNumber);
-      const next = { ...prev };
-      if (next[qKey] === option) {
-        delete next[qKey];
-      } else {
-        next[qKey] = option;
-      }
-      return next;
-    });
-  };
+
 
   // Booklet questions & statistics
   const currentQuestions = currentBooklet
@@ -166,7 +226,22 @@ export function StudentExamForm({
 
   const isLastBooklet = currentBookletIndex === booklets.length - 1;
 
-  const proceedToNextOrSubmit = () => {
+  const proceedToNextOrSubmit = async () => {
+    if(session && !isLastBooklet) {
+      setAdvancing(true);
+      try {
+        const result=await updateFloatingExamProgress(examId,currentBookletIndex,answers,true);
+        if(result.error || !result.session) {setProgressError(result.error || "ورود به دفترچه بعدی انجام نشد.");return;}
+        const next=result.session;
+        serverClock.current={stamp:Date.parse(next.server_now),received:performance.now()};
+        latestIndex.current=next.current_booklet_index;
+        setSession(next);setAnswers(next.answers);setCurrentBookletIndex(next.current_booklet_index);
+        setBookletStartedAt(Date.parse(next.booklet_started_at));setProgressError("");
+        setShowConfirmModal(false);setModalForTimeout(false);
+      } catch {setProgressError("ارتباط برقرار نشد؛ دوباره تلاش کن.");}
+      finally {setAdvancing(false);}
+      return;
+    }
     setShowConfirmModal(false);
     setModalForTimeout(false);
 
@@ -181,7 +256,7 @@ export function StudentExamForm({
       // Final submit
       setSubmitting(true);
       try {
-        localStorage.removeItem(storageKey);
+        if(!session) localStorage.removeItem(storageKey);
       } catch {}
       formRef.current?.requestSubmit(autoSubmitRef.current ?? undefined);
     }
@@ -193,6 +268,7 @@ export function StudentExamForm({
 
   return (
     <div className="exam-konkur-container">
+      {progressError && <div className="portal-alert error" role="alert">{progressError} <button type="button" className="button secondary" onClick={()=>setRetrySave(n=>n+1)} disabled={submitting || advancing}>ذخیره دوباره</button></div>}
       {/* Top Banner */}
       <div className="exam-konkur-topbar">
         <div className="exam-konkur-meta">
@@ -271,6 +347,7 @@ export function StudentExamForm({
                       <button
                         type="button"
                         key={opt}
+                        disabled={submitting || advancing}
                         className={`exam-bubble-btn ${selectedChoice === opt ? "selected" : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -289,6 +366,7 @@ export function StudentExamForm({
           <button
             type="button"
             className="button exam-next-booklet-btn"
+            disabled={submitting || advancing}
             onClick={() => {
               setModalForTimeout(false);
               setShowConfirmModal(true);
@@ -303,6 +381,7 @@ export function StudentExamForm({
       <form ref={formRef} action={submitExam} className="hidden">
         <input type="hidden" name="exam_id" value={examId} />
         <input type="hidden" name="answers" value={JSON.stringify(answers)} />
+        {session && <input type="hidden" name="floating_booklet_index" value={currentBookletIndex}/> }
         <button ref={autoSubmitRef} type="submit" />
       </form>
 
@@ -319,6 +398,7 @@ export function StudentExamForm({
             </h3>
 
             <div className="exam-modal-body">
+              {progressError && <p className="portal-alert error" role="alert">{progressError}</p>}
               {modalForTimeout ? (
                 <p>
                   زمان پاسخگویی به این دفترچه به پایان رسید. پاسخ‌های شما ثبت شده و اکنون وارد
@@ -352,17 +432,17 @@ export function StudentExamForm({
               <button
                 type="button"
                 className="button"
-                disabled={submitting}
+                disabled={submitting || advancing}
                 onClick={proceedToNextOrSubmit}
               >
-                {submitting
+                {(submitting || advancing)
                   ? "در حال ثبت نهایی..."
                   : isLastBooklet
                     ? "بله، ثبت نهایی آزمون"
                     : "بله، شروع دفترچه بعدی"}
               </button>
 
-              {!modalForTimeout && !submitting && (
+              {!modalForTimeout && !submitting && !advancing && (
                 <button
                   type="button"
                   className="button secondary"
