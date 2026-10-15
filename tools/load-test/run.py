@@ -16,7 +16,7 @@ import time
 
 TARGETS = {
     'production': 'https://nova-academy.ir',
-    'preview': 'https://feature-exam-designer-reports-nova.doob4347.workers.dev',
+    'preview': 'https://perf-reduce-public-content-payload-nova.doob4347.workers.dev',
 }
 WARMUP_SECONDS = 10
 WINDOW_SECONDS = 15
