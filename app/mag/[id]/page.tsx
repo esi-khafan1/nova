@@ -72,14 +72,16 @@ export default async function ArticlePage({
       <nav className="container mag-breadcrumb" aria-label="مسیر صفحه"><Link href="/">صفحه اصلی</Link><span aria-hidden="true">/</span><Link href="/mag">مجله نووا</Link></nav>
 
       <article className="container article-page">
-        <Link className="article-back" href="/mag">
-          <span aria-hidden="true">← </span>بازگشت به مجله
-        </Link>
         <header>
-          <div className="article-meta">
-            <span>{resourceTypeLabels[article.resource_type]}</span>
-            {article.grade && <span>پایه {article.grade}</span>}
-            {article.subject && <span>{article.subject}</span>}
+          <div className="article-topline">
+            <div className="article-meta">
+              <span>{resourceTypeLabels[article.resource_type]}</span>
+              {article.grade && <span>پایه {article.grade}</span>}
+              {article.subject && <span>{article.subject}</span>}
+            </div>
+            <Link className="article-back" href="/mag">
+              <span aria-hidden="true">← </span>بازگشت به مجله
+            </Link>
           </div>
           <h1>{article.title}</h1>
           {article.summary && <p>{article.summary}</p>}

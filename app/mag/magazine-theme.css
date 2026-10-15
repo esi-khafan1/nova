@@ -46,6 +46,10 @@
 .magazine-theme .article-page { width:min(840px,calc(100% - 64px)); max-width:none; margin:0 auto 64px; padding:40px 48px; border:1px solid var(--mag-line); border-radius:20px; background:#fff; }
 .magazine-theme .article-back { display:inline-flex; gap:8px; align-items:center; min-height:44px; font-size:14px; color:var(--mag-blue); margin-bottom:20px; }
 .magazine-theme .article-page > header { padding-bottom:28px; border-bottom:1px solid var(--mag-line); }
+.magazine-theme .article-topline { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px; }
+.magazine-theme .article-topline .article-back { margin:0; white-space:nowrap; }
+.magazine-theme .article-topline .article-meta { min-width:0; }
+.magazine-theme .article-topline .article-meta > span { max-width:100%; overflow-wrap:anywhere; }
 .magazine-theme .article-meta { display:flex; flex-wrap:wrap; gap:8px; }
 .magazine-theme .article-meta > span { padding:4px 10px; font-size:14px; line-height:1.8; border:0; border-radius:6px; color:var(--mag-blue); background:var(--mag-ice); }
 .magazine-theme .article-meta > span:first-child { background:#fff1e5; color:#a34300; }
