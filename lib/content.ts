@@ -62,11 +62,13 @@ export function findFirstImage(node: ContentNode): string | null {
   return null;
 }
 
+const persianDateFormatter = new Intl.DateTimeFormat("fa-IR", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
 export function formatPersianDate(value: string | null | undefined) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(value));
+  return persianDateFormatter.format(new Date(value));
 }
