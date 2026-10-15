@@ -23,7 +23,7 @@ export type PublishedPodcastListItem = Pick<
   "id" | "title" | "summary" | "body" | "resource_type" | "audio_seconds" | "published_at"
 >;
 
-export async function getPublishedPodcasts(limit?: number) {
+export async function getPublishedPodcasts(limit?: number, offset = 0) {
   const supabase = await createClient();
   let query = supabase
     .from("podcasts")
@@ -31,9 +31,14 @@ export async function getPublishedPodcasts(limit?: number) {
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .order("id", { ascending: false });
-  if (limit !== undefined) query = query.limit(limit);
+  if (limit !== undefined) query = query.range(offset, offset + limit);
   const { data, error } = await query;
-  return { podcasts: (data ?? []) as PublishedPodcastListItem[], error: Boolean(error) };
+  const rows = (data ?? []) as PublishedPodcastListItem[];
+  return {
+    podcasts: limit === undefined ? rows : rows.slice(0, limit),
+    hasMore: limit !== undefined && rows.length > limit,
+    error: Boolean(error),
+  };
 }
 
 export async function getPublishedPodcast(id: string) {
