@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { examSaveErrorMessage } from "@/lib/exam-save-errors";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { ExamBuilder } from "@/components/dashboard/exam-builder";
+
 import { requireProfile } from "@/lib/auth";
 import { formatExamDuration, formatExamSchedule } from "@/lib/exams";
 import { toPersianDigits } from "@/lib/persian-date";
@@ -34,7 +34,6 @@ export default async function CounselorExamsPage({
     .select(
       "id,title,description,mode,audience,status,starts_at,start_window_ends_at,duration_minutes,created_at,exam_booklets(id,question_count),exam_attempts(id)",
     )
-    .eq("counselor_id", profile.id)
     .order("created_at", { ascending: false });
 
   const exams = (data ?? []) as CounselorExam[];
@@ -46,7 +45,7 @@ export default async function CounselorExamsPage({
           <span>مرکز آزمون</span>
           <h1>آزمون‌های کنکوری دفترچه‌ای</h1>
           <p>
-            آزمون‌های چنددفترچه‌ای کنکوری بساز و درصد و کارنامه داوطلبان را یک‌جا ببین.
+            نتایج و کارنامهٔ دانش‌آموزان خودت را ببین؛ طراحی و تخصیص آزمون در پنل طراح آزمون انجام می‌شود.
           </p>
         </div>
       </section>
@@ -65,7 +64,7 @@ export default async function CounselorExamsPage({
         </div>
       )}
 
-      <ExamBuilder />
+
 
       <section className="portal-card exam-list-section">
         <div className="portal-card-title">
@@ -100,9 +99,7 @@ export default async function CounselorExamsPage({
                     <p>
                       {bCount > 0 ? `${toPersianDigits(bCount)} دفترچه` : "کنکوری"}
                       {qCount > 0 ? ` · ${toPersianDigits(qCount)} سؤال` : ""} ·{" "}
-                      {exam.audience === "own_students"
-                        ? "دانش‌آموزان خودم"
-                        : "همه دانش‌آموزان دارای مشاور"}
+                      کارنامهٔ دانش‌آموزان من
                     </p>
                     <p className="exam-schedule">
                       شروع: {formatExamSchedule(exam.starts_at)} {exam.start_window_ends_at && `· مهلت شروع تا: ${formatExamSchedule(exam.start_window_ends_at)}`} · مدت:{" "}

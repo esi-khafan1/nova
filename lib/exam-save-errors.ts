@@ -1,4 +1,6 @@
 const messages: Record<string, string> = {
+  students: "دانش‌آموزان انتخاب‌شده معتبر نیستند؛ برای انتشار حداقل یک دانش‌آموز انتخاب کن.",
+  template: "ساختار الگوی کنکور ثابت است و قابل تغییر نیست. الگو را دوباره انتخاب کن.",
   window: "پایان بازهٔ شروع باید بعد از شروع بازه و در همان روز باشد؛ ساعت‌ها به وقت تهران هستند.",
   started_exam: "آزمونی که دانش‌آموز شروع کرده است قابل ویرایش نیست؛ برای تغییرات، آزمون جدید بساز.",
   metadata: "عنوان، مخاطبان یا رشتهٔ آزمون معتبر نیست. اطلاعات اصلی آزمون را بررسی کن.",
@@ -8,7 +10,7 @@ const messages: Record<string, string> = {
   duration_total: "مجموع زمان دفترچه‌های آزمون نباید بیشتر از ۶۰۰ دقیقه باشد.",
   booklet_pdf: "برای انتشار، فایل PDF تمام دفترچه‌ها باید بارگذاری شده باشد.",
   incomplete_key: "برای انتشار آزمون باید گزینهٔ صحیح تمام سؤال‌ها مشخص شود. سؤال‌های بدون کلید را بررسی کن.",
-  permission: "ساخت آزمون فقط برای حساب مشاورِ تأییدشده مجاز است. وضعیت حساب و تأیید مشاور را بررسی کن.",
+  permission: "ساخت آزمون فقط برای حساب طراح آزمون مجاز است.",
   submitted_exam: "آزمونی که پاسخ ثبت‌شده دارد قابل ویرایش نیست؛ برای تغییرات، آزمون جدید بساز.",
 };
 
@@ -19,6 +21,9 @@ export function examSaveErrorMessage(code: string | undefined): string {
 // Never expose raw database errors, SQL, or submitted exam content to readers.
 export function examSaveErrorCode(error: { message: string; code?: string }): string {
   const message = error.message.toLowerCase();
+  if (message.includes("template")) return "template";
+  if (message.includes("selected students")) return "students";
+  if (message.includes("only exam designers")) return "permission";
   if (message.includes("floating start window")) return "window";
   if (message.includes("started sessions cannot be edited")) return "started_exam";
   if (message.includes("only approved counselors") || error.code === "42501") return "permission";

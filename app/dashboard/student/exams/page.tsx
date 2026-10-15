@@ -34,16 +34,11 @@ export default async function StudentExamsPage({
 }) {
   const { supabase, profile } = await requireProfile(["student"], true);
   const params = await searchParams;
-  if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و انتشار مشاور در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status}/></DashboardShell>;
+  if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و تخصیص طراح آزمون در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status}/></DashboardShell>;
 
 
-  const [{ data: assignment }, { data: examsData }, { data: attemptsData }, {data:sessionsData}] =
+  const [{ data: examsData }, { data: attemptsData }, {data:sessionsData}] =
     await Promise.all([
-      supabase
-        .from("counselor_students")
-        .select("id")
-        .eq("student_id", profile.id)
-        .limit(1),
       supabase
         .from("exams")
         .select(
@@ -59,7 +54,6 @@ export default async function StudentExamsPage({
     ]);
 
   const sessions = new Map(((sessionsData ?? []) as Pick<FloatingExamSession,"exam_id"|"expires_at">[]).map(session=>[session.exam_id,session]));
-  const hasCounselor = Boolean(assignment?.length);
   const exams = (examsData ?? []) as StudentExam[];
   const attempts = new Map(
     ((attemptsData ?? []) as Attempt[]).map((attempt) => [
@@ -74,7 +68,7 @@ export default async function StudentExamsPage({
         <div>
           <span>آزمون‌های من</span>
           <h1>آزمون‌های کنکوری قابل شرکت</h1>
-          <p>فقط آزمون‌هایی را می‌بینی که مشاور برای تو منتشر کرده است.</p>
+          <p>آزمون‌هایی که برای تو انتخاب و منتشر شده‌اند اینجا نمایش داده می‌شوند.</p>
         </div>
       </section>
 
@@ -82,15 +76,6 @@ export default async function StudentExamsPage({
         <div className="portal-alert error">آزمون در دسترس نیست.</div>
       )}
 
-      {!hasCounselor ? (
-        <section className="portal-card exam-gate">
-          <h2>برای شرکت در آزمون به مشاور نیاز داری</h2>
-          <p>بعد از انتخاب مشاور، آزمون‌های مجاز اینجا نمایش داده می‌شوند.</p>
-          <Link className="button" href="/dashboard/apply-counselor">
-            درخواست مشاور
-          </Link>
-        </section>
-      ) : (
         <section className="exam-student-grid">
           {exams.length ? (
             exams.map((exam) => {
@@ -167,7 +152,6 @@ export default async function StudentExamsPage({
             </section>
           )}
         </section>
-      )}
     </DashboardShell>
   );
 }

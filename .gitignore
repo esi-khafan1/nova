@@ -16,3 +16,5 @@ cloudflare-env.d.ts
 /public/pdfjs/pdf.worker.min.js
 /public/pdfjs/cmaps/
 /public/pdfjs/standard_fonts/
+
+*.tsbuildinfo

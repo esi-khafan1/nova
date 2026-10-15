@@ -12,6 +12,7 @@ const labels: Record<AppRole, string> = {
   student: "دانش‌آموز",
   counselor: "مشاور",
   admin: "مدیر",
+  exam_designer: "طراح آزمون",
 };
 
 function NavIcon({
@@ -101,7 +102,7 @@ export function DashboardShell({
           },
           {
             href: "/dashboard/counselor/exams",
-            label: "آزمون‌ها",
+            label: "کارنامه‌های آزمون",
             icon: "exam" as const,
           },
           {
@@ -121,7 +122,7 @@ export function DashboardShell({
       ? [
           {
             href: "/dashboard/student/exams",
-            label: "آزمون‌ها",
+            label: "کارنامه‌های آزمون",
             icon: "exam" as const,
           },
           {

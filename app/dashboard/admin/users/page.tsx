@@ -5,7 +5,7 @@ import { requireProfile } from "@/lib/auth";
 type UserRow = {
   id: string;
   full_name: string;
-  role: "student" | "counselor" | "admin";
+  role: "student" | "counselor" | "exam_designer" | "admin";
   grade: number | null;
   created_at: string;
 };
@@ -14,6 +14,7 @@ const roleLabels = {
   student: "دانش‌آموز",
   counselor: "مشاور",
   admin: "مدیر",
+  exam_designer: "طراح آزمون",
 };
 
 export default async function AdminUsersPage({
@@ -35,7 +36,7 @@ export default async function AdminUsersPage({
         <div>
           <span>مدیریت نووا</span>
           <h1>مدیریت کاربران</h1>
-          <p>نقش هر حساب را مستقیماً بین دانش‌آموز و مشاور تغییر بده.</p>
+          <p>نقش هر حساب را مستقیماً بین دانش‌آموز، مشاور و طراح آزمون تغییر بده.</p>
         </div>
       </section>
 
@@ -75,20 +76,8 @@ export default async function AdminUsersPage({
               {user.role !== "admin" ? (
                 <form action={changeUserRole}>
                   <input type="hidden" name="user_id" value={user.id} />
-                  <input
-                    type="hidden"
-                    name="target_role"
-                    value={user.role === "counselor" ? "student" : "counselor"}
-                  />
-                  <button
-                    className={`role-action ${
-                      user.role === "counselor" ? "demote" : "promote"
-                    }`}
-                  >
-                    {user.role === "counselor"
-                      ? "تبدیل به دانش‌آموز"
-                      : "تبدیل به مشاور"}
-                  </button>
+                  <label>نقش حساب<select name="target_role" defaultValue={user.role} aria-label={`نقش ${user.full_name}`}><option value="student">دانش‌آموز</option><option value="counselor">مشاور</option><option value="exam_designer">طراح آزمون</option></select></label>
+                  <button className="role-action promote">ذخیره نقش</button>
                 </form>
               ) : (
                 <span className="no-action">—</span>

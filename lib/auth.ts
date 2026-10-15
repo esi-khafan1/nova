@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-export type AppRole = "student" | "counselor" | "admin";
+export type AppRole = "student" | "counselor" | "exam_designer" | "admin";
 export type CurrentProfile = {
   id: string;
   full_name: string;
