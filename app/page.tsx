@@ -5,7 +5,8 @@ import { LandingHero } from "@/components/landing-hero";
 import { WhyNova } from "@/components/why-nova";
 import { PathFinder, type PathFinderDesign } from "@/components/path-finder";
 import { MagazineLatest, type MagazineDesign, type LatestResource } from "@/components/magazine-latest";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import "./landing-v2d.css";
 import "./landing-approved.css";
 import "./why-nova.css";
@@ -30,12 +31,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const editorialTheme = ["ice", "paper", "peach"].includes(String(params.editorial)) ? String(params.editorial) : "ice";
   const socialTheme = ["cards", "rows", "split"].includes(String(params.social)) ? String(params.social) : "rows";
   const magDesign: MagazineDesign = "warm";
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+  const hasSupabaseSessionCookie = cookieStore.getAll().some(({ name }) =>
+    name.startsWith("sb-") && name.includes("-auth-token"),
+  );
+  const publicSupabase = createPublicClient();
 
-  // These independent read-only requests used to run sequentially. Start them
-  // together so the homepage spends less time waiting on multiple Supabase calls.
+  // Anonymous visitors do not need a remote auth lookup. Only validate a user
+  // when a Supabase session cookie is present; all content queries are public reads.
   const [resourcesResult, newsResult, podcastsResult, userResult] = await Promise.all([
-    supabase
+    publicSupabase
       .from("resources")
       .select("id,title,summary,body,resource_type,subject,published_at")
       .eq("status", "published")
@@ -43,7 +48,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
       .limit(3),
     getPublishedNews(3),
     getPublishedPodcasts(3),
-    supabase.auth.getUser(),
+    hasSupabaseSessionCookie
+      ? createClient().then((client) => client.auth.getUser())
+      : Promise.resolve({ data: { user: null } }),
   ]);
 
   const latestResources = (resourcesResult.data ?? []) as LatestResource[];
