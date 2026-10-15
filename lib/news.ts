@@ -20,7 +20,7 @@ export type PublishedNewsListItem = Pick<
   "id" | "title" | "summary" | "body" | "source_name" | "source_published_at" | "published_at"
 >;
 
-export async function getPublishedNews(limit?: number) {
+export async function getPublishedNews(limit?: number, offset = 0) {
   const supabase = await createClient();
   let query = supabase
     .from("konkur_news")
@@ -29,9 +29,14 @@ export async function getPublishedNews(limit?: number) {
     .order("source_published_at", { ascending: false })
     .order("published_at", { ascending: false })
     .order("id", { ascending: false });
-  if (limit !== undefined) query = query.limit(limit);
+  if (limit !== undefined) query = query.range(offset, offset + limit);
   const { data, error } = await query;
-  return { news: (data ?? []) as PublishedNewsListItem[], error: Boolean(error) };
+  const rows = (data ?? []) as PublishedNewsListItem[];
+  return {
+    news: limit === undefined ? rows : rows.slice(0, limit),
+    hasMore: limit !== undefined && rows.length > limit,
+    error: Boolean(error),
+  };
 }
 
 export async function getPublishedNewsItem(id: string) {
