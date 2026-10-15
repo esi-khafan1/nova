@@ -10,8 +10,12 @@ export const metadata: Metadata = {
     "آرشیو خبرهای کنکور، اطلاعیه‌ها و تغییرات آزمون؛ همراه با تاریخ انتشار و لینک منبع.",
 };
 
-export default async function NewsPage() {
-  const { news, error } = await getPublishedNews();
+export default async function NewsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const params = await searchParams;
+  const parsedPage = Number(params.page ?? "1");
+  const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const pageSize = 24;
+  const { news, hasMore, error } = await getPublishedNews(pageSize, (page - 1) * pageSize);
   return (
     <main className="mag-shell news-archive">
       <section
@@ -38,7 +42,7 @@ export default async function NewsPage() {
           <h2 id="news-archive-list-title">جدیدترین خبرها</h2>
           {!error && (
             <span>
-              {news.length.toLocaleString("fa-IR")} خبر منتشرشده{" "}
+              {news.length.toLocaleString("fa-IR")} خبر در این صفحه{" "}
               <span aria-hidden="true">·</span> جدیدترین در ابتدا
             </span>
           )}
@@ -63,6 +67,13 @@ export default async function NewsPage() {
             <h2>اولین خبرها به‌زودی منتشر می‌شوند</h2>
             <p>خبرهای معتبر کنکور پس از انتشار در این صفحه قرار می‌گیرند.</p>
           </div>
+        )}
+        {!error && (page > 1 || hasMore) && (
+          <nav className="mag-pagination" aria-label="صفحه‌بندی خبرها" style={{ display: "flex", justifyContent: "center", gap: "1rem", padding: "2rem 0" }}>
+            {page > 1 && <Link href={page === 2 ? "/news" : "/news?page=" + (page - 1)}>← خبرهای جدیدتر</Link>}
+            <span>صفحهٔ {page.toLocaleString("fa-IR")}</span>
+            {hasMore && <Link href={"/news?page=" + (page + 1)}>خبرهای قدیمی‌تر →</Link>}
+          </nav>
         )}
       </section>
       <footer className="mag-footer">
