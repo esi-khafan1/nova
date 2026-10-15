@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const page = readFileSync("app/page.tsx", "utf8");
+const mobile = readFileSync("app/landing-mobile.css", "utf8");
+const social = readFileSync("app/social-light-preview.css", "utf8");
+assert.match(mobile, /\.landing-v2d \.proof \.proof-grid \{[^}]*repeat\(2, minmax\(0, 1fr\)\)/);
+assert.match(mobile, /\.site-footer \.footer-col:last-child \{ display: none; \}/);
+assert.equal((page.match(/className="footer-mobile-link"/g) ?? []).length, 4);
+assert.match(social, /\.social-card.yt,\s*\.landing-v2d \.social-preview \.social-card.tg \{background:#ffffff;/);
+console.log("Mobile footer has two topics; proof and social colors resist base CSS order.");

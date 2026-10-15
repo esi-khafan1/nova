@@ -7,6 +7,6 @@ assert.match(hero, /src="\/nova\/hero-study\.svg" width="1280" height="720"/);
 assert.match(css, /\.nova-hero-inner \{ position: absolute; inset: 0;/);
 assert.match(mobile, /\.nova-mag-card-footer \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) fit-content\(60%\)/);
 assert.match(mobile, /\.nova-mag-read \{[^}]*text-align: left/);
-assert.match(mobile, /\.footer-col:last-child \{ grid-column: 2; grid-row: 2; display: block; \}/);
+assert.match(mobile, /\.site-footer \.footer-col:last-child \{ display: none; \}/);
 assert.ok(readFileSync("public/nova/hero.svg", "utf8").includes("<svg"));
 console.log("Supplied hero, overlaid mobile copy, side-by-side editorial footer and two-column footer are preserved.");

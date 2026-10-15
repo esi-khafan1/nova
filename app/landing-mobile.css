@@ -1,6 +1,7 @@
 /* Owner-approved phone layouts only. Do not apply these rules to archives or desktop. */
+.landing-v2d .site-footer .footer-mobile-link { display: none; }
 @media (max-width: 700px) {
-  .landing-v2d .proof-grid {
+  .landing-v2d .proof .proof-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px 12px;
   }
@@ -49,11 +50,11 @@
   .landing-v2d .nova-news-source { overflow-wrap: anywhere; }
 
   .landing-v2d .social-preview .container { width: calc(100% - 48px); padding-inline: 0; }
-  .landing-v2d .social-section .social-grid {
+  .landing-v2d .social-section.social-preview .social-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
-  .landing-v2d .social-section .social-card {
+  .landing-v2d .social-section.social-preview .social-card {
     min-width: 0;
     flex-direction: column;
     align-items: flex-start;
@@ -75,13 +76,14 @@
 
   /* All footer destinations stay present; only the redundant brand block is hidden. */
   .landing-v2d .site-footer { padding: 32px 0 24px; }
-  .landing-v2d .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; margin-bottom: 24px; }
+  .landing-v2d .site-footer .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; margin-bottom: 24px; }
   .landing-v2d .footer-grid > .footer-about { display: none; }
   .landing-v2d .footer-col { min-width: 0; }
   .landing-v2d .footer-col h5 { margin: 0 0 8px; line-height: 1.8; }
   .landing-v2d .footer-col a { min-height: 44px; display: flex; align-items: center; padding-block: 8px; line-height: 1.8; }
-  .landing-v2d .footer-col:nth-child(2) { grid-column: 1; grid-row: 1 / span 2; }
-  .landing-v2d .footer-col:nth-child(3) { grid-column: 2; grid-row: 1; }
-  .landing-v2d .footer-col:last-child { grid-column: 2; grid-row: 2; display: block; }
+  .landing-v2d .site-footer .footer-col:nth-child(2) { grid-column: 1; grid-row: 1; }
+  .landing-v2d .site-footer .footer-col:nth-child(3) { grid-column: 2; grid-row: 1; }
+  .landing-v2d .site-footer .footer-col:last-child { display: none; }
+  .landing-v2d .site-footer .footer-mobile-link { display: flex; }
   .landing-v2d .footer-bottom { font-size: 14px; line-height: 1.8; padding-top: 16px; }
 }

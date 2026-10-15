@@ -158,6 +158,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <Link href="/mag">مجله</Link>
               <Link href="/podcasts">پادکست‌ها</Link>
               <Link href="/auth">ورود</Link>
+              <Link className="footer-mobile-link" href="/contact">تماس با ما</Link>
+              <Link className="footer-mobile-link" href="/privacy">حریم خصوصی</Link>
             </div>
             <div className="footer-col">
               <h5>خدمات</h5>
@@ -165,6 +167,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <a href="#find-path">برنامه‌ریزی</a>
               <Link href="/mag">منابع</Link>
               <Link href="/auth?mode=signup">شروع مسیر</Link>
+              <Link className="footer-mobile-link" href="/terms">شرایط استفاده</Link>
+              <Link className="footer-mobile-link" href="/refund">بازگشت وجه</Link>
             </div>
             <div className="footer-col">
               <h5>قوانین و ارتباط</h5>

@@ -7,6 +7,8 @@
 .landing-v2d .social-preview .social-head h2 .accent {color:#1e5faf;}
 .landing-v2d .social-preview .social-head p {font-size:16px;line-height:1.9;color:#4c6279;max-width:620px;}
 .landing-v2d .social-preview .social-grid {max-width:none;gap:24px;}
+.landing-v2d .social-preview .social-card.yt,
+.landing-v2d .social-preview .social-card.tg {background:#ffffff;}
 .landing-v2d .social-preview .social-card {background:#ffffff;border:1px solid #d6e3f4;border-radius:20px;color:#15324f;padding:32px;gap:20px;box-shadow:none;transition:border-color .2s,box-shadow .2s;}
 .landing-v2d .social-preview .social-card::before {display:none;}
 .landing-v2d .social-preview .social-card:hover {transform:none;border-color:#86a9d2;box-shadow:0 4px 12px rgba(21,50,79,.06);}
