@@ -80,7 +80,7 @@ export default async function ArticlePage({
               {article.subject && <span>{article.subject}</span>}
             </div>
             <Link className="article-back" href="/mag">
-              <span aria-hidden="true">← </span>بازگشت به مجله
+              <span aria-hidden="true">← </span><span className="mag-desktop-label">بازگشت به مجله</span><span className="mag-mobile-label">بازگشت</span>
             </Link>
           </div>
           <h1>{article.title}</h1>

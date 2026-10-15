@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Logo } from "@/components/logo";
 import { RichContent } from "@/components/content/rich-content";
 import { PodcastPlayer } from "@/components/podcast-player";
 import { getPublishedPodcast } from "@/lib/podcasts";
@@ -11,7 +10,6 @@ import {
   resourceTypeLabels,
 } from "@/lib/content";
 import { formatAudioDuration } from "@/lib/podcast-media";
-import "../podcasts.css";
 type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getPublishedPodcast((await params).id);
@@ -24,25 +22,16 @@ export default async function PodcastPage({ params }: Props) {
   if (!p || !p.audio_url) notFound();
   return (
     <main className="mag-shell article-shell">
-      <header className="mag-header">
-        <div className="container mag-nav">
-          <Logo />
-          <nav aria-label="ناوبری پادکست">
-            <Link href="/">صفحه اصلی</Link>
-            <Link href="/podcasts">پادکست‌ها</Link>
-            <Link href="/mag">مجله نووا</Link>
-          </nav>
-        </div>
-      </header>
+      <nav className="container mag-breadcrumb" aria-label="مسیر صفحه"><Link href="/">صفحه اصلی</Link><span aria-hidden="true">/</span><Link href="/podcasts">پادکست‌های نووا</Link></nav>
       <article className="container article-page">
-        <Link className="article-back" href="/podcasts">
-          بازگشت به پادکست‌ها
-        </Link>
         <header>
+          <div className="article-topline">
           <div className="article-meta">
             <span>{resourceTypeLabels[p.resource_type]}</span>
             <span>{formatAudioDuration(p.audio_seconds)}</span>
             {p.subject && <span>{p.subject}</span>}
+          </div>
+          <Link className="article-back" href="/podcasts"><span aria-hidden="true">←</span><span className="mag-desktop-label">بازگشت به پادکست‌ها</span><span className="mag-mobile-label">بازگشت</span></Link>
           </div>
           <h1>{p.title}</h1>
           {p.summary && <p>{p.summary}</p>}

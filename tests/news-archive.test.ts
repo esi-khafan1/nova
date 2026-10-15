@@ -8,7 +8,7 @@ test("archive is a standalone page, not the landing teaser", () => {
   const page = read("app/news/page.tsx");
   assert.ok(page.includes("NewsArchiveCard"));
   assert.ok(page.includes('<h1 id="news-archive-title">'));
-  assert.ok(page.includes("بازگشت به صفحه اصلی"));
+  assert.ok(page.includes("بازگشت به خانه"));
   assert.equal(page.includes("KonkurNewsLatest"), false);
   assert.equal(page.includes("landing-v2d"), false);
   assert.equal(page.includes("nova-mag-all"), false);
@@ -33,7 +33,7 @@ test("source image migration is limited and protects existing images", () => {
 });
 
 test("desktop news archive uses three equal cards without a spotlight", () => {
-  const css = read("app/news/news-archive.css");
+  const css = read("app/mag/magazine-theme.css");
   const card = read("components/news-archive-card.tsx");
   const page = read("app/news/page.tsx");
   assert.match(

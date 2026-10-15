@@ -1,7 +1,7 @@
 /* Magazine routes only; the shared landing navbar is intentionally not restyled. */
 .magazine-theme { --mag-ink:#123b63; --mag-copy:#426384; --mag-blue:#176bce; --mag-line:#d6e6f7; --mag-ice:#eef6ff; --mag-orange:#ff7a1a; color:var(--mag-ink); background:var(--mag-ice); min-height:100vh; }
 .magazine-theme .container { width:min(1120px,calc(100% - 64px)); margin-inline:auto; }
-.magazine-theme .mag-shell { background:var(--mag-ice); color:var(--mag-ink); min-height:calc(100vh - 104px); }
+.magazine-theme .mag-shell { display:flow-root; background:var(--mag-ice); color:var(--mag-ink); min-height:calc(100vh - 104px); }
 .magazine-theme .mag-mobile-label { display:none; }
 .magazine-theme a:focus-visible { outline:3px solid var(--mag-blue); outline-offset:4px; }
 .magazine-theme .mag-hero { padding:32px 0 48px; background:var(--mag-ice); border-bottom:1px solid var(--mag-line); }
