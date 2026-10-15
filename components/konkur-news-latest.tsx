@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { findFirstImage, formatPersianDate, parseContent } from "@/lib/content";
-import type { KonkurNews } from "@/lib/news";
+import type { PublishedNewsListItem } from "@/lib/news";
 
-export function NewsCard({ news }: { news: KonkurNews }) {
+export function NewsCard({ news }: { news: PublishedNewsListItem }) {
   const image = findFirstImage(parseContent(news.body));
   return (
     <article className="nova-mag-article">
@@ -60,7 +60,7 @@ export function KonkurNewsLatest({
   news,
   unavailable = false,
 }: {
-  news: KonkurNews[];
+  news: PublishedNewsListItem[];
   unavailable?: boolean;
 }) {
   return (
