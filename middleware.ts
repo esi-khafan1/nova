@@ -6,6 +6,16 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return response;
+
+  // Public anonymous requests have no session to validate or refresh. Keep the
+  // auth check for protected pages and for requests carrying Supabase session
+  // cookies, so signed-in sessions can still be refreshed on public routes.
+  const isProtectedStudentRoute = request.nextUrl.pathname.startsWith("/dashboard/student");
+  const hasSupabaseSessionCookie = request.cookies.getAll().some(({ name }) =>
+    name.startsWith("sb-") && name.includes("-auth-token"),
+  );
+  if (!isProtectedStudentRoute && !hasSupabaseSessionCookie) return response;
+
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
