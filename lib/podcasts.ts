@@ -20,7 +20,7 @@ export async function getPublishedPodcasts(limit?: number) {
   const supabase = await createClient();
   let query = supabase
     .from("podcasts")
-    .select("*")
+    .select("id,title,summary,body,resource_type,audio_seconds,published_at")
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .order("id", { ascending: false });
