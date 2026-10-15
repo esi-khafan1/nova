@@ -15,6 +15,11 @@ export type KonkurNews = {
   status: ContentStatus;
 };
 
+export type PublishedNewsListItem = Pick<
+  KonkurNews,
+  "id" | "title" | "summary" | "body" | "source_name" | "source_published_at" | "published_at"
+>;
+
 export async function getPublishedNews(limit?: number) {
   const supabase = await createClient();
   let query = supabase
@@ -26,7 +31,7 @@ export async function getPublishedNews(limit?: number) {
     .order("id", { ascending: false });
   if (limit !== undefined) query = query.limit(limit);
   const { data, error } = await query;
-  return { news: (data ?? []) as KonkurNews[], error: Boolean(error) };
+  return { news: (data ?? []) as PublishedNewsListItem[], error: Boolean(error) };
 }
 
 export async function getPublishedNewsItem(id: string) {
