@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const hero = readFileSync("components/landing-hero.tsx", "utf8");
+const css = readFileSync("app/landing-hero-refresh.css", "utf8");
+const mobile = readFileSync("app/landing-mobile.css", "utf8");
+assert.match(hero, /src="\/nova\/hero-study\.svg" width="1280" height="720"/);
+assert.match(css, /\.nova-hero-inner \{ position: absolute; inset: 0;/);
+assert.match(mobile, /\.nova-mag-card-footer \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) fit-content\(60%\)/);
+assert.match(mobile, /\.nova-mag-read \{[^}]*text-align: left/);
+assert.match(mobile, /\.footer-col:last-child \{ grid-column: 2; grid-row: 2; display: block; \}/);
+assert.ok(readFileSync("public/nova/hero.svg", "utf8").includes("<svg"));
+console.log("Supplied hero, overlaid mobile copy, side-by-side editorial footer and two-column footer are preserved.");

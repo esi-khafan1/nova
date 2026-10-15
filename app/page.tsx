@@ -21,6 +21,7 @@ import "./editorial-light-themes.css";
 import "./social-light-preview.css";
 import "./landing-white-sections.css";
 import "./landing-mobile.css";
+import "./landing-hero-refresh.css";
 import { getPublishedNews } from "@/lib/news";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

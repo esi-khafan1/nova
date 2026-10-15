@@ -1,0 +1,30 @@
+/* Supplied 16:9 study artwork replaces the previous panorama on both breakpoints. */
+.landing-v2d .nova-approved-hero {
+  height: clamp(520px, 56.25vw, 780px);
+  min-height: 0;
+  aspect-ratio: auto;
+  background: #eaf4ff;
+}
+.landing-v2d .nova-hero-background { object-fit: cover; object-position: center; }
+.landing-v2d .nova-hero-copy { width: 43%; margin-right: 0; padding-bottom: 0; }
+.landing-v2d .nova-hero-copy h1 { font-size: clamp(35px, 3.3vw, 52px); }
+@media (max-width: 1100px) and (min-width: 701px) {
+  .landing-v2d .nova-hero-copy { width: 44%; }
+}
+@media (max-width: 700px) {
+  .landing-v2d .nova-approved-hero { height: 650px; }
+  .landing-v2d .nova-hero-background { inset: 0; height: 100%; object-position: 18% center; }
+  .landing-v2d .nova-approved-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(238,246,255,.97) 0%, rgba(238,246,255,.9) 28%, rgba(238,246,255,.25) 55%, rgba(238,246,255,0) 75%);
+  }
+  .landing-v2d .nova-hero-inner { position: absolute; inset: 0; padding: 24px; }
+  .landing-v2d .nova-hero-copy { width: 100%; margin: 0; }
+  .landing-v2d .nova-hero-copy h1 { font-size: 32px; line-height: 1.6; }
+  .landing-v2d .nova-hero-lead { margin-top: 12px; }
+  .landing-v2d .nova-hero-actions { gap: 8px; margin-top: 16px; }
+}
