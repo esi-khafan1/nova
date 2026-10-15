@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import type { ContentStatus } from "@/lib/content";
 
 export type KonkurNews = {
@@ -21,7 +21,7 @@ export type PublishedNewsListItem = Pick<
 >;
 
 export async function getPublishedNews(limit?: number, offset = 0) {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   let query = supabase
     .from("konkur_news")
     .select("id,title,summary,body,source_name,source_published_at,published_at")
