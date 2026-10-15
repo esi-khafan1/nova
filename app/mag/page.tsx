@@ -39,8 +39,10 @@ export default async function MagazinePage() {
     <main className="mag-shell">
       <section className="mag-hero">
         <div className="container">
-          <Link className="mag-home" href="/"><span aria-hidden="true">←</span><span className="mag-desktop-label">بازگشت به خانه</span><span className="mag-mobile-label">بازگشت</span></Link>
-          <span className="mag-eyebrow">مجله آموزشی نووا</span>
+          <div className="mag-hero-topline">
+            <span className="mag-eyebrow">مجله آموزشی نووا</span>
+            <Link className="mag-home" href="/"><span aria-hidden="true">←</span><span className="mag-desktop-label">بازگشت به خانه</span><span className="mag-mobile-label">بازگشت</span></Link>
+          </div>
           <h1>تجربه مشاورها، برای مسیر روشن‌تر تو</h1>
           <p>
             تحلیل آزمون، روش مطالعه و نکته‌های کاربردی را مستقیم از مشاوران نووا

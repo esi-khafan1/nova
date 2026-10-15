@@ -6,6 +6,8 @@
 .magazine-theme a:focus-visible { outline:3px solid var(--mag-blue); outline-offset:4px; }
 .magazine-theme .mag-hero { padding:32px 0 48px; background:var(--mag-ice); border-bottom:1px solid var(--mag-line); }
 .magazine-theme .mag-hero::after { display:none; }
+.magazine-theme .mag-hero-topline { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.magazine-theme .mag-hero-topline .mag-home { margin:0; flex-shrink:0; }
 .magazine-theme .mag-home { display:flex; align-items:center; gap:10px; width:fit-content; min-height:44px; margin:0 auto 24px 0; font-size:14px; font-weight:600; color:var(--mag-blue); }
 .magazine-theme .mag-home span { font-size:14px; font-weight:600; color:inherit; }
 .magazine-theme .mag-eyebrow { display:flex; align-items:center; gap:8px; color:var(--mag-blue); font-size:14px; font-weight:700; }
