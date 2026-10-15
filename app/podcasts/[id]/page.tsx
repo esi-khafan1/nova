@@ -11,6 +11,8 @@ import {
 } from "@/lib/content";
 import { formatAudioDuration } from "@/lib/podcast-media";
 type Props = { params: Promise<{ id: string }> };
+
+export const revalidate = 300;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getPublishedPodcast((await params).id);
   return p
