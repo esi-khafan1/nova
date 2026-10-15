@@ -9,8 +9,12 @@ export const metadata: Metadata = {
   description: "پادکست‌های آموزشی نووا؛ همراه با ویس، تصویر و متن.",
 };
 
-export default async function PodcastsPage() {
-  const { podcasts, error } = await getPublishedPodcasts();
+export default async function PodcastsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const params = await searchParams;
+  const parsedPage = Number(params.page ?? "1");
+  const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const pageSize = 24;
+  const { podcasts, hasMore, error } = await getPublishedPodcasts(pageSize, (page - 1) * pageSize);
   return (
     <main className="mag-shell">
       <section
@@ -37,7 +41,7 @@ export default async function PodcastsPage() {
           <h2 id="news-archive-list-title">جدیدترین پادکست‌ها</h2>
           {!error && (
             <span>
-              {podcasts.length.toLocaleString("fa-IR")} پادکست منتشرشده{" "}
+              {podcasts.length.toLocaleString("fa-IR")} پادکست در این صفحه{" "}
               <span aria-hidden="true">·</span> جدیدترین در ابتدا
             </span>
           )}
