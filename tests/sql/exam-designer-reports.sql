@@ -57,15 +57,18 @@ do $$ declare denied boolean;begin
  if (select count(*) from public.exam_booklets_for_counselor(current_setting('qa.exam')::uuid))<>2 then raise exception 'Counselor report missing';end if;
  denied:=false;begin perform public.save_designer_exam(null,'QA denied',null,array[current_setting('qa.student')::uuid],now()+interval '2 hours','draft','[]',null,null);exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Counselor can create exam';end if;
 end $$;
--- The unchanged main build can still save its legacy counselor draft during staging.
+-- Production cutover: obsolete counselor RPC is no longer callable.
 select set_config('request.jwt.claim.sub',current_setting('qa.counselor'),true);
-do $$ declare legacy uuid;begin
- legacy:=public.save_booklet_exam_with_window(null,'QA main compatibility',null,'own_students',now()+interval '2 hours','draft','[{"title":"ریاضی","questionCount":20,"durationMinutes":30,"pdfUrl":"","keyAnswers":{}}]'::jsonb,'mathematics',null);
- if legacy is null then raise exception 'Main-site legacy save failed';end if;
+do $$ declare denied boolean:=false;begin
+ begin
+  perform public.save_booklet_exam_with_window(null,'QA obsolete counselor builder',null,'own_students',now()+interval '2 hours','draft','[{"title":"ریاضی","questionCount":20,"durationMinutes":30,"pdfUrl":"","keyAnswers":{}}]'::jsonb,'mathematics',null);
+ exception when insufficient_privilege then denied:=true;
+ end;
+ if not denied then raise exception 'Legacy counselor builder still callable after production cutover';end if;
 end $$;
 select set_config('request.jwt.claim.sub',current_setting('qa.designer'),true);
 do $$ begin
  if exists(select 1 from public.exam_attempts where exam_id::text=current_setting('qa.exam')) then raise exception 'Designer sees results via table';end if;
 end $$;
 rollback;
-select 'PASS: immutable template, recipient selection, RLS, role separation, 23.81% precision, correct physics/chemistry boundaries, global report-release guard, identical subject history. QA data rolled back.' as result;
+select 'PASS: immutable template, recipient selection, RLS, role separation and retired legacy counselor builder, 23.81% precision, correct physics/chemistry boundaries, global report-release guard, identical subject history. QA data rolled back.' as result;

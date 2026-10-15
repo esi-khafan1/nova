@@ -7,8 +7,10 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 const config = [
-  { ignores: [".next/**", "next-env.d.ts"] },
+  { ignores: [".next/**", "next-env.d.ts", "public/pdfjs/**"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  // Node test/build tools intentionally use CommonJS; application rules stay strict.
+  { files: ["scripts/**/*.cjs", "tests/**/*.cjs"], rules: { "@typescript-eslint/no-require-imports": "off" } },
 ];
 
 export default config;
