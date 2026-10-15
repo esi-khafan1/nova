@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   extractContentText,
@@ -37,24 +37,10 @@ export default async function MagazinePage() {
 
   return (
     <main className="mag-shell">
-      <header className="mag-header">
-        <div className="container mag-nav">
-          <Logo />
-          <nav aria-label="ناوبری مجله">
-            <Link href="/">صفحه اصلی</Link>
-            <Link aria-current="page" href="/mag">
-              مجله نووا
-            </Link>
-            <Link className="button button-small" href="/auth">
-              ورود
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       <section className="mag-hero">
         <div className="container">
-          <span>مجله آموزشی نووا</span>
+          <Link className="mag-home" href="/"><span aria-hidden="true">←</span><span className="mag-desktop-label">بازگشت به خانه</span><span className="mag-mobile-label">بازگشت</span></Link>
+          <span className="mag-eyebrow">مجله آموزشی نووا</span>
           <h1>تجربه مشاورها، برای مسیر روشن‌تر تو</h1>
           <p>
             تحلیل آزمون، روش مطالعه و نکته‌های کاربردی را مستقیم از مشاوران نووا
@@ -63,10 +49,11 @@ export default async function MagazinePage() {
         </div>
       </section>
 
-      <section className="container mag-content">
+      <section className="container mag-content" aria-labelledby="mag-all-title">
+        <div className="mag-list-heading"><h2 id="mag-all-title">همه مقاله‌ها</h2><span>{resources.length.toLocaleString("fa-IR")} مقاله</span></div>
         {resources.length ? (
           <div className="mag-grid">
-            {resources.map((resource, index) => {
+            {resources.map((resource) => {
               const document = parseContent(resource.body);
               const image = findFirstImage(document);
               const summary =
@@ -74,7 +61,7 @@ export default async function MagazinePage() {
                 `${extractContentText(document).slice(0, 150)}…`;
               return (
                 <Link
-                  className={`mag-card ${index === 0 ? "featured" : ""}`}
+                  className="mag-card"
                   href={`/mag/${resource.id}`}
                   key={resource.id}
                 >
@@ -83,18 +70,17 @@ export default async function MagazinePage() {
                     <img alt="" loading="lazy" src={image} />
                   ) : (
                     <div className="mag-card-placeholder" aria-hidden="true">
-                      ن
+                      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2"><path d="M32 14C22 9 12 9 6 12v40c10-3 19-1 26 4 7-5 16-7 26-4V12c-7-3-17-3-26 2ZM32 14v42M14 22l10 2M14 31l10 2M40 24l10-2M40 33l10-2" /></svg>
                     </div>
                   )}
-                  <div>
+                  <div className="mag-card-body">
                     <div className="mag-card-meta">
-                      <span>{resourceTypeLabels[resource.resource_type]}</span>
+                      <span className={resource.resource_type === "final_exam" ? "is-school" : undefined}>{resourceTypeLabels[resource.resource_type]}</span>
                       {resource.subject && <span>{resource.subject}</span>}
-                      <time>{formatPersianDate(resource.published_at)}</time>
                     </div>
                     <h2>{resource.title}</h2>
-                    <p>{summary}</p>
-                    <span className="mag-card-readmore">خواندن مقاله ←</span>
+                    <p className="mag-card-summary">{summary}</p>
+                    <div className="mag-card-footer"><time dateTime={resource.published_at ?? undefined}>{formatPersianDate(resource.published_at)}</time><span className="mag-card-readmore"><span className="mag-desktop-label">خواندن مقاله</span><span className="mag-mobile-label">بخوان</span><span aria-hidden="true"> ←</span></span></div>
                   </div>
                 </Link>
               );
@@ -102,7 +88,7 @@ export default async function MagazinePage() {
           </div>
         ) : (
           <div className="mag-empty">
-            <span>ن</span>
+            <Image src="/nova/mark.svg" alt="لوگوی N نووا" width={68} height={68} unoptimized />
             <h2>اولین مقاله‌ها به‌زودی منتشر می‌شوند</h2>
             <p>
               مشاوران نووا در حال آماده‌کردن محتواهای کاربردی برای تو هستند.
@@ -113,7 +99,7 @@ export default async function MagazinePage() {
 
       <footer className="mag-footer">
         <div className="container">
-          <Logo />
+          <Link href="/" className="mag-footer-brand" aria-label="صفحه اصلی نووا"><Image src="/nova/mark.svg" alt="لوگوی N نووا" width={68} height={68} unoptimized /></Link>
           <p>محتوای آموزشی مستقیم از مشاوران نووا</p>
         </div>
       </footer>

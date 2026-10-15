@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Logo } from "@/components/logo";
 import { RichContent } from "@/components/content/rich-content";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -70,22 +69,11 @@ export default async function ArticlePage({
   const { article, author } = result;
   return (
     <main className="mag-shell article-shell">
-      <header className="mag-header">
-        <div className="container mag-nav">
-          <Logo />
-          <nav aria-label="ناوبری مجله">
-            <Link href="/">صفحه اصلی</Link>
-            <Link href="/mag">مجله نووا</Link>
-            <Link className="button button-small" href="/auth">
-              ورود
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <nav className="container mag-breadcrumb" aria-label="مسیر صفحه"><Link href="/">صفحه اصلی</Link><span aria-hidden="true">/</span><Link href="/mag">مجله نووا</Link></nav>
 
       <article className="container article-page">
         <Link className="article-back" href="/mag">
-          بازگشت به مجله
+          <span aria-hidden="true">← </span>بازگشت به مجله
         </Link>
         <header>
           <div className="article-meta">
