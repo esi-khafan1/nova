@@ -19,7 +19,7 @@ export async function getPublishedNews(limit?: number) {
   const supabase = await createClient();
   let query = supabase
     .from("konkur_news")
-    .select("*")
+    .select("id,title,summary,body,source_name,source_published_at,published_at")
     .eq("status", "published")
     .order("source_published_at", { ascending: false })
     .order("published_at", { ascending: false })
