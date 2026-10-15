@@ -1,7 +1,7 @@
 import Link from "next/link";
 export function LandingHero() {
   return <section className="nova-approved-hero" aria-labelledby="nova-hero-title">
-    <img className="nova-hero-background" src="/nova/hero-study.svg" width="1280" height="720" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
+    <img className="nova-hero-background" src="/nova/hero-panorama.svg" width="2172" height="724" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
     <div className="nova-hero-inner"><div className="nova-hero-copy">
       <p className="nova-eyebrow">یک شروع تازه، با نوا</p>
       <h1 id="nova-hero-title">بهترین نسخهٔ<br /><em>خودت</em> باش.</h1>
