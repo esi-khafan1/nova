@@ -2,9 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { findFirstImage, parseContent, formatPersianDate, resourceTypeLabels } from "@/lib/content";
 import { formatAudioDuration } from "@/lib/podcast-media";
-import type { Podcast } from "@/lib/podcasts";
+import type { PublishedPodcastListItem } from "@/lib/podcasts";
 
-export function PodcastArchiveCard({ podcast }: { podcast: Podcast }) {
+export function PodcastArchiveCard({ podcast }: { podcast: PublishedPodcastListItem }) {
   const image = findFirstImage(parseContent(podcast.body));
   return (
     <Link className="mag-card" href={`/podcasts/${podcast.id}`} prefetch={false}>
