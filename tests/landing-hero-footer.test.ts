@@ -13,4 +13,6 @@ assert.match(css, /display: flex; align-items: flex-end/);
 assert.match(css, /text-align: right/);
 assert.match(hero, /<source media="\(max-width: 700px\)" srcSet="\/nova\/hero-mobile\.svg"/);
 assert.match(css, /::before \{ content: none; background: none; \}/);
+assert.match(css, /height: calc\(61vw \+ 320px\)/);
+assert.match(css, /width: 100%; height: auto; min-height: 100%/);
 console.log("Supplied hero, overlaid mobile copy, side-by-side editorial footer and two-column footer are preserved.");
