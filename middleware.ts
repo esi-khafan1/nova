@@ -3,17 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
-
-  // This middleware only enforces the student-dashboard redirect. Avoid a
-  // Supabase auth round-trip on public pages that do not need this check.
-  if (!request.nextUrl.pathname.startsWith("/dashboard/student")) {
-    return response;
-  }
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return response;
-
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -24,9 +16,8 @@ export async function middleware(request: NextRequest) {
       },
     },
   });
-
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard/student")) {
     const signIn = new URL("/auth", request.url);
     signIn.searchParams.set("mode", "signin");
     signIn.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
@@ -34,7 +25,6 @@ export async function middleware(request: NextRequest) {
     response.cookies.getAll().forEach(cookie => redirectResponse.cookies.set(cookie));
     return redirectResponse;
   }
-
   return response;
 }
 
