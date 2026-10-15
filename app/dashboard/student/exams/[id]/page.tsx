@@ -115,6 +115,7 @@ export default async function StudentExamPage({
             <p>{timeState !== "ended" ? "بررسی پاسخ‌برگ و نتیجه، بعد از پایان زمان آزمون برای همه فعال می‌شود." : "پاسخ شما برای بررسی مشاور ثبت گردید."}</p>
           )}
         </section>
+        {exam.mode === "booklet" && timeState === "ended" && !reviewError && Boolean(reviewData?.length) && <section className="portal-card"><h2>کارنامه و روند پیشرفت</h2><p>درصد هر درس، پاسخ‌های درست و غلط و نمودار پیشرفتت در آزمون‌های اخیر را ببین.</p><Link className="button" href={`/dashboard/student/exams/${id}/report`}>مشاهده و چاپ کارنامه</Link></section>}
         {exam.mode === "booklet" && timeState === "ended" && (reviewError
           ? <div className="portal-alert error" role="alert">بررسی پاسخ‌ها فعلاً در دسترس نیست. دوباره صفحه را باز کن؛ پاسخ‌های ثبت‌شده محفوظ‌اند.</div>
           : reviewData?.length

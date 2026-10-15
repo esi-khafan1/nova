@@ -1,3 +1,4 @@
+import type { ExamSubjectRange } from "@/lib/konkur-presets";
 import { formatPersianFullDate } from "@/lib/persian-date";
 
 const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
@@ -18,6 +19,7 @@ export type ExamBooklet = {
   duration_minutes: number;
   sort_order: number;
   key_answers?: Record<string, number>;
+  subject_ranges?: ExamSubjectRange[];
 };
 
 export type ExamBookletResult = {
@@ -33,14 +35,14 @@ export function calculateBookletResults(
   booklets: ExamBooklet[],
   answers: Record<string, number> | null,
 ): ExamBookletResult[] {
-  return booklets.map((booklet) => {
+  return booklets.flatMap((booklet) => (booklet.subject_ranges?.length ? booklet.subject_ranges : [{id:booklet.id,title:booklet.title,start:booklet.start_question_number,end:booklet.end_question_number}]).map(subject => {
     let correct = 0;
     let incorrect = 0;
     let unanswered = 0;
 
     for (
-      let question = booklet.start_question_number;
-      question <= booklet.end_question_number;
+      let question = subject.start;
+      question <= subject.end;
       question += 1
     ) {
       const answer = answers?.[String(question)];
@@ -50,21 +52,21 @@ export function calculateBookletResults(
       else incorrect += 1;
     }
 
-    const total = booklet.question_count;
+    const total = subject.end - subject.start + 1;
     const percentage =
       total > 0
         ? Math.round(((correct * 3 - incorrect) * 10000) / (total * 3)) / 100
         : 0;
 
     return {
-      title: booklet.title,
+      title: subject.title,
       total,
       correct,
       incorrect,
       unanswered,
       percentage,
     };
-  });
+  }));
 }
 
 export function examEndsAt(startsAt: string, durationMinutes: number, startWindowEndsAt?: string | null) {

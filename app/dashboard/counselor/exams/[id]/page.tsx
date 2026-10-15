@@ -11,7 +11,7 @@ export default async function CounselorExamResultsPage({ params }: { params: Pro
   const { id } = await params;
   const { supabase, profile } = await requireProfile(["counselor"]);
   const [{ data: exam }, { data: attemptsData }] = await Promise.all([
-    supabase.from("exams").select("id,title,mode,audience,status,description,starts_at,duration_minutes,exam_booklets(id,title,pdf_url,question_count,start_question_number,end_question_number,duration_minutes,sort_order)").eq("id", id).eq("counselor_id", profile.id).single(),
+    supabase.from("exams").select("id,title,mode,audience,status,description,starts_at,duration_minutes,exam_booklets(id,title,pdf_url,question_count,start_question_number,end_question_number,duration_minutes,sort_order,subject_ranges)").eq("id", id).single(),
     supabase.rpc("exam_attempts_for_counselor", { target_exam_id: id }),
   ]);
   if (!exam) notFound();

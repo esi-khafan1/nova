@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { parseExamStartWindow, floatingExamErrorCode, floatingExamErrorMessage, type FloatingExamSession } from "@/lib/floating-exams";
 import { examSaveErrorCode } from "@/lib/exam-save-errors";
 import { hasCompleteExamKeys } from "@/lib/exam-key-validation";
-import { createClient } from "@/lib/supabase/server";
+import { matchesKonkurTemplate } from "@/lib/konkur-presets";
+import type { StudyField } from "@/lib/study-catalog";
 import { requireProfile } from "@/lib/auth";
 
 const uuidPattern =
@@ -22,14 +23,14 @@ type RawBooklet = {
 };
 
 export async function saveExam(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/sign-in");
+  const {supabase} = await requireProfile(["exam_designer"]);
 
   const examId = clean(formData.get("exam_id"), 50);
   const title = clean(formData.get("title"), 160);
   const description = clean(formData.get("description"), 3000);
-  const audience = clean(formData.get("audience"), 40);
+  let studentIds: string[] = [];
+  try { studentIds=JSON.parse(String(formData.get("student_ids") || "[]")); } catch { redirect("/dashboard/exam_designer?error=students"); }
+  if (!Array.isArray(studentIds) || studentIds.some(id=>typeof id!=="string" || !uuidPattern.test(id))) redirect("/dashboard/exam_designer?error=students");
   const status = clean(formData.get("status"), 20);
   const scheduledDate = clean(formData.get("scheduled_date"), 10);
   const scheduledTime = clean(formData.get("scheduled_time"), 5);
@@ -43,46 +44,47 @@ export async function saveExam(formData: FormData) {
     (examId && !uuidPattern.test(examId)) ||
     title.length < 3 ||
     !["fixed","floating"].includes(schedulingMode) ||
-    !["own_students", "all_assigned_students"].includes(audience) ||
     !["draft", "published"].includes(status) ||
     !["", "mathematics", "experimental_sciences", "humanities", "arts", "foreign_languages"].includes(examField) ||
     description.length > 3000
-  ) redirect("/dashboard/counselor/exams?error=metadata");
+  ) redirect("/dashboard/exam_designer?error=metadata");
 
   if (Number.isNaN(startsAt.getTime()) || startsAt.getTime() <= Date.now() + 60_000)
-    redirect("/dashboard/counselor/exams?error=schedule");
+    redirect("/dashboard/exam_designer?error=schedule");
 
-  if (schedulingMode === "floating" && !window) redirect("/dashboard/counselor/exams?error=window");
+  if (schedulingMode === "floating" && !window) redirect("/dashboard/exam_designer?error=window");
 
   let booklets: RawBooklet[] = [];
   try {
     booklets = JSON.parse(rawBooklets || "[]");
     if (!Array.isArray(booklets) || booklets.length === 0 || booklets.some(b => !b || typeof b !== "object" || Array.isArray(b))) throw new Error("invalid");
   } catch {
-    redirect("/dashboard/counselor/exams?error=booklets");
+    redirect("/dashboard/exam_designer?error=booklets");
   }
 
+  if (examField && !matchesKonkurTemplate(examField as StudyField,booklets)) redirect("/dashboard/exam_designer?error=template");
+  if (status === "published" && studentIds.length === 0) redirect("/dashboard/exam_designer?error=students");
   let totalDuration = 0;
   for (const b of booklets) {
     const qCount = Number(b.questionCount);
     const duration = Number(b.durationMinutes);
     if (!Number.isInteger(qCount) || qCount < 1 || qCount > 200 || !Number.isInteger(duration) || duration < 1 || duration > 360)
-      redirect("/dashboard/counselor/exams?error=booklet_params");
+      redirect("/dashboard/exam_designer?error=booklet_params");
     totalDuration += duration;
     if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://")))
-      redirect("/dashboard/counselor/exams?error=booklet_pdf");
+      redirect("/dashboard/exam_designer?error=booklet_pdf");
   }
 
-  if (totalDuration > 600) redirect("/dashboard/counselor/exams?error=duration_total");
+  if (totalDuration > 600) redirect("/dashboard/exam_designer?error=duration_total");
 
   if (status === "published" && !hasCompleteExamKeys(booklets))
-    redirect("/dashboard/counselor/exams?error=incomplete_key");
+    redirect("/dashboard/exam_designer?error=incomplete_key");
 
-  const { data, error } = await supabase.rpc("save_booklet_exam_with_window", {
+  const { data, error } = await supabase.rpc("save_designer_exam", {
     target_exam_id: examId || null,
     target_title: title,
     target_description: description || null,
-    target_audience: audience,
+    target_student_ids: studentIds,
     target_starts_at: startsAt.toISOString(),
     target_status: status,
     target_booklets: booklets,
@@ -92,14 +94,14 @@ export async function saveExam(formData: FormData) {
   if (error) {
     const category = examSaveErrorCode(error);
     console.error("[nova:save_exam]", { code: error.code, category });
-    redirect(`/dashboard/counselor/exams?error=${category}`);
+    redirect(`/dashboard/exam_designer?error=${category}`);
   }
-  if (!data) redirect("/dashboard/counselor/exams?error=save_failed");
+  if (!data) redirect("/dashboard/exam_designer?error=save_failed");
 
-  revalidatePath("/dashboard/counselor");
+  revalidatePath("/dashboard/exam_designer");
   revalidatePath("/dashboard/counselor/exams");
   revalidatePath("/dashboard/student/exams");
-  redirect(`/dashboard/counselor/exams?saved=${status}`);
+  redirect(`/dashboard/exam_designer?saved=${status}`);
 }
 
 export async function submitExam(formData: FormData) {

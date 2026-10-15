@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { clampExamTime } from "@/lib/exam-schedule";
 import { toPersianDigits } from "@/lib/persian-date";
 
 const DEFAULT_HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -50,7 +51,7 @@ export function PersianTimePicker({
   }
 
   // Ensure minute is in minutes list
-  const minuteOptions = Array.from(new Set([...DEFAULT_MINUTES, minute])).sort(
+  const minuteOptions = Array.from(new Set([...DEFAULT_MINUTES, minute, ...(minMinute >= 0 && minMinute <= 59 ? [minMinute] : [])])).sort(
     (a, b) => a - b,
   );
 
@@ -92,7 +93,7 @@ export function PersianTimePicker({
 
   const updateTime = (nextHour: number, nextMinute: number) => {
     const formatted = `${String(nextHour).padStart(2, "0")}:${String(nextMinute).padStart(2, "0")}`;
-    onChange(formatted);
+    onChange(clampExamTime(formatted, minTime));
   };
 
   const isHourDisabled = (h: number) => {

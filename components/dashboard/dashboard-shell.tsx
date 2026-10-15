@@ -5,6 +5,7 @@ import "@/app/landing-approved.css";
 import "@/app/student-panel.css";
 import "@/app/courses.css";
 import "@/app/counselor-panel.css";
+import "@/app/exam-panel-refresh.css";
 import { signOut } from "@/app/dashboard/actions";
 import type { AppRole } from "@/lib/auth";
 
@@ -12,6 +13,7 @@ const labels: Record<AppRole, string> = {
   student: "دانش‌آموز",
   counselor: "مشاور",
   admin: "مدیر",
+  exam_designer: "طراح آزمون",
 };
 
 function NavIcon({
@@ -101,7 +103,7 @@ export function DashboardShell({
           },
           {
             href: "/dashboard/counselor/exams",
-            label: "آزمون‌ها",
+            label: "کارنامه‌های آزمون",
             icon: "exam" as const,
           },
           {
@@ -121,7 +123,7 @@ export function DashboardShell({
       ? [
           {
             href: "/dashboard/student/exams",
-            label: "آزمون‌ها",
+            label: "کارنامه‌های آزمون",
             icon: "exam" as const,
           },
           {
@@ -145,6 +147,18 @@ export function DashboardShell({
   ];
   if (role === "student") return <div className="student-portal"><LandingHeader isAuthenticated studentPanel /><main className="student-portal-main">{children}</main><footer className="student-portal-footer"><Link href="/dashboard/student">پنل من</Link><Link href="/dashboard/student/account">حساب کاربری</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
   if(role === "counselor") return <div className="student-portal counselor-portal"><LandingHeader isAuthenticated counselorPanel/><main className="student-portal-main"><div className="cp-identity"><span>{name || "مشاور نووا"}</span><span>پنل مشاور</span></div><nav className="cp-tools" aria-label="ابزارهای مشاور"><Link href="/dashboard/counselor">نمای کلی</Link><Link href="/dashboard/counselor/students">دانش‌آموزان و گزارش‌ها</Link>{links.filter(l=>l.href!=="/dashboard/counselor"&&l.href!=="/").map(l=><Link href={l.href} key={l.href}>{l.label}</Link>)}</nav>{children}</main><footer className="student-portal-footer"><Link href="/dashboard/counselor">پنل مشاور</Link><Link href="/">مشاهده سایت</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
+  if (role === "exam_designer") return (
+    <div className="student-portal exam-designer-portal">
+      <LandingHeader isAuthenticated examDesignerPanel />
+      <main className="student-portal-main">
+        <div className="ed-workspace-bar">
+          <div className="ed-workspace-identity"><span className="ed-avatar" aria-hidden="true">{(name || "ن").slice(0, 1)}</span><div><strong>{name || "کاربر نووا"}</strong><span>{labels[role]}</span></div></div>
+        </div>
+        {children}
+      </main>
+      <footer className="student-portal-footer"><Link href="/dashboard/exam_designer">پنل طراح آزمون</Link><Link href="/">مشاهده سایت</Link><form action={signOut}><button type="submit">خروج از حساب</button></form></footer>
+    </div>
+  );
   const isStudentFocus = variant === "student-focus";
 
   return (
