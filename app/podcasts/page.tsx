@@ -4,6 +4,8 @@ import Image from "next/image";
 import { PodcastArchiveCard } from "@/components/podcast-archive-card";
 import { getPublishedPodcasts } from "@/lib/podcasts";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "همهٔ پادکست‌های نووا | نووا",
   description: "پادکست‌های آموزشی نووا؛ همراه با ویس، تصویر و متن.",
