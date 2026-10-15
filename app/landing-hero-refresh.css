@@ -14,16 +14,9 @@
   .landing-v2d .nova-hero-copy { width: 44%; }
 }
 @media (max-width: 700px) {
-  .landing-v2d .nova-approved-hero { height: 650px; min-height: 0; aspect-ratio: auto; }
-  .landing-v2d .nova-hero-background { inset: 0; height: 100%; object-position: 14% center; }
-  .landing-v2d .nova-approved-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(0deg, rgba(238,246,255,.98) 0%, rgba(238,246,255,.95) 35%, rgba(238,246,255,.65) 48%, rgba(238,246,255,0) 66%);
-  }
+  .landing-v2d .nova-approved-hero { height: max(650px, 166.6667vw); min-height: 0; aspect-ratio: auto; }
+  .landing-v2d .nova-hero-background { inset: 0; height: 100%; object-position: center top; }
+  .landing-v2d .nova-approved-hero::before { content: none; background: none; }
   .landing-v2d .nova-hero-inner { position: absolute; inset: 0; padding: 24px; display: flex; align-items: flex-end; }
   .landing-v2d .nova-hero-copy { width: 100%; margin: 0; text-align: right; }
   .landing-v2d .nova-hero-copy h1 { font-size: 32px; line-height: 1.6; }

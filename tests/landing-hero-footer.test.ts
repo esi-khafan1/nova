@@ -11,4 +11,6 @@ assert.match(mobile, /\.site-footer \.footer-col:last-child \{ display: none; \}
 assert.ok(readFileSync("public/nova/hero.svg", "utf8").includes("<svg"));
 assert.match(css, /display: flex; align-items: flex-end/);
 assert.match(css, /text-align: right/);
+assert.match(hero, /<source media="\(max-width: 700px\)" srcSet="\/nova\/hero-mobile\.svg"/);
+assert.match(css, /::before \{ content: none; background: none; \}/);
 console.log("Supplied hero, overlaid mobile copy, side-by-side editorial footer and two-column footer are preserved.");
