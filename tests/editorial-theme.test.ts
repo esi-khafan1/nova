@@ -33,3 +33,5 @@ for (const card of ["components/news-archive-card.tsx", "components/podcast-arch
 }
 console.log("Editorial theme, full content, sources, audio and mobile labels preserved.");
 assert.match(read("app/mag/magazine-theme.css"), /\.mag-shell \{ display:flow-root;/);
+
+assert.match(read("app/editorial-content.css"), /\.podcasts-theme \.mag-card-footer \{ grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\);/);
