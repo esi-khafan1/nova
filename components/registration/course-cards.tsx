@@ -142,8 +142,8 @@ export function CourseCards({
                 />
                 <div className="mag-card-body">
                   <div className="mag-card-meta">
-                    <span>پایهٔ {course.grade.toLocaleString("fa-IR")} · {fieldLabel}</span>
-                    <span>{courseDurationLabel(course.months)}</span>
+                    <span className="course-plan-context">پایهٔ {course.grade.toLocaleString("fa-IR")} · {fieldLabel}</span>
+                    <span className="course-plan-duration">{courseDurationLabel(course.months)}</span>
                   </div>
                   <h2>{plan.label}</h2>
                   <p className="course-plan-tagline">{plan.tagline}</p>

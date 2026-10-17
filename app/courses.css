@@ -333,17 +333,46 @@
 
 @media (max-width: 700px) {
   .nova-path { --path-panel-height: 655px; }
-  .nova-path[data-step="result"] .nova-path-panel { padding: 24px 12px; }
-  .nova-path[data-step="result"] .nova-path-heading { margin-bottom: 18px; }
-  .nova-path[data-step="result"] .nova-path-heading h2 { font-size: 26px; line-height: 1.6; }
-  .nova-path[data-step="result"] .nova-path-result { margin-top: 12px; }
-  .nova-path-result .course-plan-grid { grid-auto-columns: 100%; gap: 16px; }
-  .nova-path-result .course-plan-card { border-radius: 12px; }
-  .nova-path-result .course-plan-card > .course-plan-cover { aspect-ratio: 4 / 3; padding: 10px; }
-  .nova-path-result .course-plan-card > .mag-card-body { padding: 16px; }
-  .nova-path-result .course-plan-card h2 { font-size: 20px; }
-  .nova-path-result .course-plan-edge { width: 38px; }
-  .landing-v2d .nova-path[data-step="result"] { padding: 40px 12px; }
+  .landing-v2d .nova-path[data-step="result"] {
+    min-height: calc(100svh - var(--nova-header-height, 86px));
+    padding: 12px;
+  }
+  .nova-path[data-step="result"] .nova-path-panel { padding: 16px 12px; }
+  .nova-path[data-step="result"] .nova-path-heading { margin-bottom: 6px; }
+  .nova-path[data-step="result"] .nova-path-heading .nova-path-eyebrow { display: none; }
+  .nova-path[data-step="result"] .nova-path-heading h2 { font-size: 26px; line-height: 1.45; }
+  .nova-path[data-step="result"] .nova-path-heading .nova-path-subtitle { margin-top: 4px; font-size: 14px; line-height: 1.55; }
+  .nova-path[data-step="result"] .nova-path-result { margin-top: 4px; }
+  .nova-path[data-step="result"] .nova-path-actions { gap: 8px; margin-top: 8px; }
+  .nova-path[data-step="result"] .nova-path-actions .nova-path-primary,
+  .nova-path[data-step="result"] .nova-path-actions .nova-path-secondary {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  .nova-path-result .course-plan-grid { grid-auto-columns: 100%; gap: 12px; padding-block: 2px 8px; }
+  .nova-path-result .course-plan-card { height: auto; min-height: 0; border-radius: 12px; }
+  .nova-path-result .course-plan-card > .course-plan-cover {
+    height: clamp(140px, 40vw, 165px);
+    aspect-ratio: auto;
+    padding: 8px;
+  }
+  .nova-path-result .course-plan-card > .mag-card-body { padding: 12px; overflow: visible; }
+  .nova-path-result .course-plan-card .course-plan-context { display: none; }
+  .nova-path-result .course-plan-card .course-plan-duration { font-size: 14px; }
+  .nova-path-result .course-plan-card h2 { margin: 7px 0 2px; font-size: 20px; line-height: 1.5; }
+  .nova-path-result .course-plan-tagline { margin-bottom: 4px; font-size: 15px; line-height: 1.6; }
+  .nova-path-result .course-plan-card .course-plan-summary {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .nova-path-result .course-plan-footer { margin-top: 8px; padding-top: 8px; }
+  .nova-path-result .course-plan-details { min-height: 40px; padding-block: 6px; }
+  .nova-path-result .course-plan-edge { width: 30px; }
 }
 
 @media (max-width: 360px) {
