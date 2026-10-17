@@ -14,7 +14,7 @@
   .landing-v2d .nova-hero-copy { width: 44%; }
 }
 @media (max-width: 700px) {
-  .landing-v2d .nova-approved-hero { height: calc(61vw + 220px); min-height: 0; aspect-ratio: auto; }
+  .landing-v2d .nova-approved-hero { height: calc(61vw + 240px); min-height: 0; aspect-ratio: auto; }
   .landing-v2d .nova-hero-background { inset: 0; width: 100%; height: auto; min-height: 100%; object-position: center top; }
   .landing-v2d .nova-approved-hero::before { content: none; background: none; }
   .landing-v2d .nova-hero-inner { position: absolute; inset: 0; padding: 24px; display: flex; align-items: flex-end; }
