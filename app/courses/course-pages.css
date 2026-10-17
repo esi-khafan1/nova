@@ -45,11 +45,98 @@
 .course-pages .course-catalog-content {
   padding-block: 40px 72px;
 }
+.course-pages .course-plan-carousel {
+  width: 100%;
+  min-width: 0;
+}
+.course-pages .course-carousel-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.course-pages .course-carousel-tools p {
+  margin: 0;
+  color: var(--mag-copy);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.course-pages .course-carousel-controls {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+.course-pages .course-carousel-controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--mag-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--mag-blue);
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+}
+.course-pages .course-carousel-controls button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.course-pages .course-carousel-controls button:focus-visible,
+.course-pages .course-plan-grid:focus-visible {
+  outline: 3px solid var(--mag-blue);
+  outline-offset: 3px;
+}
+.course-pages .course-plan-viewport {
+  position: relative;
+  min-width: 0;
+  isolation: isolate;
+}
 .course-pages .course-plan-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-template-rows: auto;
+  grid-auto-columns: calc((100% - 44px) / 3);
   gap: 22px;
-  grid-auto-rows: 1fr;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 3px 0 12px;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.course-pages .course-plan-grid::-webkit-scrollbar {
+  display: none;
+}
+.course-pages .course-plan-card {
+  height: 100%;
+  scroll-snap-align: start;
+}
+.course-pages .course-plan-edge {
+  position: absolute;
+  z-index: 1;
+  inset-block: 0;
+  width: 30px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.course-pages .course-plan-edge[data-visible="true"] {
+  opacity: 1;
+}
+.course-pages .course-plan-edge--right {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.96), rgba(238, 246, 255, 0));
+}
+.course-pages .course-plan-edge--left {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.96), rgba(238, 246, 255, 0));
 }
 .course-pages .course-plan-card {
   min-width: 0;
@@ -269,7 +356,7 @@
 
 @media (min-width: 701px) and (max-width: 1000px) {
   .course-pages .course-plan-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-columns: calc((100% - 22px) / 2);
   }
   .course-pages .course-plan-card > .course-plan-cover {
     aspect-ratio: 16 / 9;
@@ -301,10 +388,28 @@
   .course-pages .course-catalog-content {
     padding-block: 24px 40px;
   }
+  .course-pages .course-carousel-tools {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .course-pages .course-carousel-tools p {
+    font-size: 13px;
+  }
+  .course-pages .course-carousel-controls {
+    gap: 4px;
+  }
+  .course-pages .course-carousel-controls button {
+    width: 40px;
+    height: 40px;
+  }
   .course-pages .course-plan-grid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: auto;
+    grid-auto-columns: 100%;
+    grid-template-rows: auto;
     gap: 16px;
+    padding-inline: 0;
+  }
+  .course-pages .course-plan-edge {
+    width: 18px;
   }
   .course-pages .course-plan-card {
     border-radius: 12px;
