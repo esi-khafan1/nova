@@ -2,7 +2,7 @@ import Link from "next/link";
 export function LandingHero() {
   return <section className="nova-approved-hero" aria-labelledby="nova-hero-title">
     <picture>
-      <source media="(max-width: 700px)" srcSet="/nova/hero-mobile.svg" />
+      <source media="(max-width: 700px)" srcSet="/nova/hero-mobile-outpaint.png" />
     <img className="nova-hero-background" src="/nova/hero-desktop.png" width="2172" height="724" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
     </picture>
     <div className="nova-hero-inner"><div className="nova-hero-copy">
