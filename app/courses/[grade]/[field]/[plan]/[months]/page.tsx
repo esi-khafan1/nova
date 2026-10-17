@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { courseCatalogPath, courseDurationLabel, courseRegistrationPath, parseCourseSelection } from "@/lib/courses";
+import { courseCatalogPath, courseDurationLabel, courseLandingPath, courseRegistrationPath, parseCourseSelection } from "@/lib/courses";
 import { getCoursePlan } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
 
-type PageProps = { params: Promise<{ grade: string; field: string; plan: string; months: string }> };
+type PageProps = {
+  params: Promise<{ grade: string; field: string; plan: string; months: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 async function getCourse(params: PageProps["params"]) {
   const route = await params;
@@ -26,14 +29,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function CourseDetailsPage({ params }: PageProps) {
+export default async function CourseDetailsPage({ params, searchParams }: PageProps) {
   const course = await getCourse(params);
   if (!course) notFound();
 
   const { selection, plan } = course;
+  const query = await searchParams;
   const gradeLabel = selection.grade.toLocaleString("fa-IR");
   const fieldLabel = studyFieldLabels[selection.field];
-  const backHref = courseCatalogPath({ grade: selection.grade, field: selection.field });
+  const context = { grade: selection.grade, field: selection.field };
+  const backHref = query.return === "landing" ? courseLandingPath(context) : courseCatalogPath(context);
   const registrationHref = courseRegistrationPath(selection);
 
   return (

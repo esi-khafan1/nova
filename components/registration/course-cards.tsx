@@ -7,7 +7,15 @@ import { courseDetailsPath, courseDurationLabel, coursesFor } from "@/lib/course
 import { getCoursePlan } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
 
-export function CourseCards({ grade, field }: { grade: number; field: string }) {
+export function CourseCards({
+  grade,
+  field,
+  returnTo = "catalog",
+}: {
+  grade: number;
+  field: string;
+  returnTo?: "catalog" | "landing";
+}) {
   const track = useRef<HTMLDivElement>(null);
   const trackId = useId();
   const [limits, setLimits] = useState({ previous: false, next: true });
@@ -102,7 +110,7 @@ export function CourseCards({ grade, field }: { grade: number; field: string }) 
                   <p className="course-plan-tagline">{plan.tagline}</p>
                   <p className="mag-card-summary course-plan-summary">{plan.summary}</p>
                   <div className="mag-card-footer course-plan-footer">
-                    <Link className="course-plan-details" href={courseDetailsPath(course)}>
+                    <Link className="course-plan-details" href={courseDetailsPath(course, returnTo === "landing" ? "landing" : undefined)}>
                       جزئیات بیشتر <span aria-hidden="true">←</span>
                     </Link>
                   </div>

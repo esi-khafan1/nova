@@ -23,9 +23,11 @@ import "./landing-white-sections.css";
 import "./landing-mobile.css";
 import "./landing-hero-refresh.css";
 import { getPublishedNews } from "@/lib/news";
+import { parseCourseContext } from "@/lib/courses";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
+  const initialCourseContext = parseCourseContext(params);
   const pathDesign: PathFinderDesign = params.path === "peach" || params.path === "horizon" ? params.path : "sky";
   const editorialTheme = ["ice", "paper", "peach"].includes(String(params.editorial)) ? String(params.editorial) : "ice";
   const socialTheme = ["cards", "rows", "split"].includes(String(params.social)) ? String(params.social) : "rows";
@@ -75,7 +77,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <WhyNova />
 
-      <PathFinder design={pathDesign} />
+      <PathFinder design={pathDesign} initialContext={initialCourseContext} />
 
       <MagazineLatest resources={latestResources} design={magDesign} />
 

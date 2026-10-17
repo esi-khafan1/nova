@@ -35,8 +35,13 @@ export function courseCatalogPath(context: CourseContext): string {
   return `/courses?${new URLSearchParams({ grade: String(context.grade), field: context.field })}`;
 }
 
-export function courseDetailsPath(selection: CourseSelection): string {
-  return `/courses/${selection.grade}/${selection.field}/${selection.course}/${selection.months}`;
+export function courseLandingPath(context: CourseContext): string {
+  return `/?${new URLSearchParams({ grade: String(context.grade), field: context.field })}#find-path`;
+}
+
+export function courseDetailsPath(selection: CourseSelection, returnTo?: "landing"): string {
+  const path = `/courses/${selection.grade}/${selection.field}/${selection.course}/${selection.months}`;
+  return returnTo === "landing" ? `${path}?return=landing` : path;
 }
 
 export function courseRegistrationPath(selection: CourseSelection): string {
