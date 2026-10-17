@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, type MouseEvent as ReactMouseEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent } from "react";
 import { courseDetailsPath, courseDurationLabel, coursesFor } from "@/lib/courses";
 import { getCoursePlan } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
@@ -19,8 +19,40 @@ export function CourseCards({
   const track = useRef<HTMLDivElement>(null);
   const drag = useRef<{ pointerId: number; startX: number; lastX: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
+  const [limits, setLimits] = useState({ previous: false, next: true });
   const courses = coursesFor(grade, field);
   const fieldLabel = studyFieldLabels[field as keyof typeof studyFieldLabels];
+
+  useEffect(() => {
+    const element = track.current;
+    if (!element) return;
+
+    function updateLimits() {
+      if (!element) return;
+      const viewport = element.getBoundingClientRect();
+      const cards = element.querySelectorAll<HTMLElement>(".course-plan-card");
+      if (!cards.length) {
+        setLimits({ previous: false, next: false });
+        return;
+      }
+      const first = cards[0].getBoundingClientRect();
+      const last = cards[cards.length - 1].getBoundingClientRect();
+      const nextLimits = {
+        previous: first.right > viewport.right + 2,
+        next: last.left < viewport.left - 2,
+      };
+      setLimits((current) => current.previous === nextLimits.previous && current.next === nextLimits.next ? current : nextLimits);
+    }
+
+    updateLimits();
+    element.addEventListener("scroll", updateLimits, { passive: true });
+    const observer = new ResizeObserver(updateLimits);
+    observer.observe(element);
+    return () => {
+      element.removeEventListener("scroll", updateLimits);
+      observer.disconnect();
+    };
+  }, [grade, field]);
 
   function move(next: boolean) {
     const element = track.current;
@@ -126,8 +158,8 @@ export function CourseCards({
             );
           })}
         </div>
-        <span className="course-plan-edge course-plan-edge--right" aria-hidden="true" />
-        <span className="course-plan-edge course-plan-edge--left" aria-hidden="true" />
+        <span className="course-plan-edge course-plan-edge--right" data-visible={limits.previous} aria-hidden="true" />
+        <span className="course-plan-edge course-plan-edge--left" data-visible={limits.next} aria-hidden="true" />
       </div>
     </section>
   );

@@ -184,19 +184,19 @@
   position: absolute;
   z-index: 1;
   inset-block: 0;
-  width: 72px;
+  width: 60px;
   pointer-events: none;
-  opacity: 1;
-  -webkit-backdrop-filter: blur(7px);
-  backdrop-filter: blur(7px);
+  opacity: 0;
+  transition: opacity 0.18s ease;
 }
+.nova-path-result .course-plan-edge[data-visible="true"] { opacity: 1; }
 .nova-path-result .course-plan-edge--right {
   right: 0;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.78) 24%, rgba(255, 255, 255, 0.3) 62%, transparent 100%);
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.6) 26%, rgba(255, 255, 255, 0.24) 64%, transparent 100%);
 }
 .nova-path-result .course-plan-edge--left {
   left: 0;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.78) 24%, rgba(255, 255, 255, 0.3) 62%, transparent 100%);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.6) 26%, rgba(255, 255, 255, 0.24) 64%, transparent 100%);
 }
 
 .registration-form label>small{font-size:12px;font-weight:400;color:#547191;line-height:1.8}.registration-form select:disabled{color:#547191;background:#eff5ff;cursor:not-allowed}.registration-form input::placeholder{color:#547191;opacity:1}
@@ -211,17 +211,21 @@
 }
 
 @media (min-width: 701px) and (max-height: 850px) {
-  .landing-v2d .nova-path[data-step="result"] { padding-block: 20px; }
-  .nova-path[data-step="result"] .nova-path-panel { padding-block: 20px; }
-  .nova-path[data-step="result"] .nova-path-heading { margin-bottom: 12px; }
-  .nova-path[data-step="result"] .nova-path-heading .nova-path-eyebrow { margin-bottom: 8px; }
-  .nova-path[data-step="result"] .nova-path-result { margin-top: 10px; }
-  .nova-path[data-step="result"] .nova-path-actions { margin-top: 12px; }
-  .nova-path-result .course-plan-card > .mag-card-body { padding-block: 14px; }
-  .nova-path-result .course-plan-card h2 { margin-top: 8px; }
-  .nova-path-result .course-plan-tagline { margin-bottom: 4px; }
-  .nova-path-result .course-plan-card .course-plan-summary { -webkit-line-clamp: 2; margin-bottom: 10px; }
-  .nova-path-result .course-plan-footer { padding-top: 10px; }
+  .landing-v2d .nova-path[data-step="result"] { padding-block: 8px; }
+  .nova-path[data-step="result"] .nova-path-panel { padding-block: 12px; }
+  .nova-path[data-step="result"] .nova-path-heading { margin-bottom: 4px; }
+  .nova-path[data-step="result"] .nova-path-heading .nova-path-eyebrow { margin-bottom: 4px; }
+  .nova-path[data-step="result"] .nova-path-heading h2 { font-size: 26px; line-height: 1.4; }
+  .nova-path[data-step="result"] .nova-path-heading .nova-path-subtitle { margin-top: 6px; font-size: 14px; line-height: 1.6; }
+  .nova-path[data-step="result"] .nova-path-result { margin-top: 4px; }
+  .nova-path[data-step="result"] .nova-path-actions { margin-top: 8px; }
+  .nova-path-result .course-plan-card > .course-plan-cover { height: 155px; aspect-ratio: auto; padding: 4px; }
+  .nova-path-result .course-plan-card > .mag-card-body { padding: 12px 16px; }
+  .nova-path-result .course-plan-card h2 { margin-top: 6px; font-size: 20px; line-height: 1.5; }
+  .nova-path-result .course-plan-tagline { margin-bottom: 2px; font-size: 14px; line-height: 1.55; }
+  .nova-path-result .course-plan-card .course-plan-summary { -webkit-line-clamp: 2; margin-bottom: 8px; font-size: 13px; line-height: 1.55; }
+  .nova-path-result .course-plan-footer { padding-top: 8px; }
+  .nova-path-result .course-plan-details { min-height: 40px; padding-block: 6px; font-size: 13px; }
 }
 
 @media (max-width: 700px) {
