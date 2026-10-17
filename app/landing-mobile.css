@@ -26,24 +26,51 @@
   .landing-v2d .nova-why-copy h3 { font-size: 16px; line-height: 1.8; margin: 0 0 8px; }
   .landing-v2d .nova-why-copy p { font-size: 14px; line-height: 1.9; }
 
-  /* Keep the newest two cards in each landing section; full archives remain available. */
+  /* Show three editorial items as large, easy-to-scan rows on phones. */
   .landing-v2d .nova-mag-layout {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
   }
-  .landing-v2d .nova-mag-layout > .nova-mag-article:nth-child(n + 3) { display: none; }
+  .landing-v2d .nova-mag-layout > .nova-mag-article:nth-child(n + 4) { display: none; }
+  .landing-v2d .nova-mag-card {
+    flex-direction: row;
+    align-items: stretch;
+    direction: rtl;
+    border-radius: 14px;
+  }
+  .landing-v2d .nova-mag-cover {
+    flex: 0 0 clamp(108px, 35vw, 140px);
+    width: clamp(108px, 35vw, 140px);
+    height: clamp(108px, 35vw, 140px);
+    aspect-ratio: 1;
+  }
+  .landing-v2d .nova-mag-body { padding: 10px 12px; }
   .landing-v2d .nova-mag-summary { display: none; }
-  .landing-v2d .nova-mag-card { border-radius: 12px; }
-  .landing-v2d .nova-mag-body { padding: 12px; }
-  .landing-v2d .nova-mag-card h3 { font-size: 16px; line-height: 1.8; }
-  .landing-v2d .nova-mag-meta { gap: 4px; margin-bottom: 8px; font-size: 14px; }
-  .landing-v2d .nova-mag-category { padding-inline: 6px; }
+  .landing-v2d .nova-mag-card h3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-size: 18px;
+    line-height: 1.75;
+  }
+  .landing-v2d .nova-mag-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-bottom: 7px;
+    font-size: 13px;
+  }
+  .landing-v2d .nova-mag-category { padding: 2px 8px; font-size: 12px; }
+  .landing-v2d .nova-mag-read { gap: 4px; white-space: nowrap; font-size: 12px; }
   .landing-v2d .nova-mag-card-footer {
     display: grid;
     grid-template-columns: minmax(0, 1fr) fit-content(60%);
     align-items: center;
-    gap: 8px;
-    padding-top: 12px;
+    gap: 4px 8px;
+    padding-top: 8px;
+    font-size: 12px;
   }
   .landing-v2d .nova-mag-card-footer > time { min-width: 0; }
   .landing-v2d .nova-mag-read { display: block; min-width: 0; text-align: left; }
