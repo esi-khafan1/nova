@@ -88,7 +88,7 @@
   .magazine-theme .mag-content { padding-block:24px 40px; }
   .magazine-theme .mag-list-heading { margin-bottom:16px; }
   .magazine-theme .mag-list-heading h2 { font-size:21px; }
-  .magazine-theme .mag-content .mag-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .magazine-theme .mag-content .mag-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
   .magazine-theme .mag-card { border-radius:12px; }
   .magazine-theme .mag-card > img,.magazine-theme .mag-card-placeholder { aspect-ratio:4/3; }
   .magazine-theme .mag-card-placeholder svg { width:44px; height:44px; }
