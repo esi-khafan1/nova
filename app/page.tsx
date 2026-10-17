@@ -149,8 +149,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 <Image src="/nova/mark.svg" width={84} height={84} alt="لوگوی N نووا" unoptimized />
               </Link>
               <p>
-                نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی
-                روشن.
+                آینده بهتر از امروز شروع می‌شود.
               </p>
             </div>
             <nav className="footer-col" aria-label="خدمات آموزشی">
@@ -177,8 +176,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
             <div className="footer-about">
               <Link className="nova-footer-brand" href="/" aria-label="صفحه اصلی نووا"><Image src="/nova/mark.svg" width={84} height={84} alt="لوگوی N نووا" unoptimized /></Link>
               <p>
-                نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی
-                روشن.
+                آینده بهتر از امروز شروع می‌شود.
               </p>
             </div>
             <div className="footer-col">

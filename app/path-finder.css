@@ -82,6 +82,9 @@
 @media(max-width:700px){.nova-path--sky .nova-path-title-tail,.nova-path--peach .nova-path-title-tail{display:block}}
 @media(min-width:701px){.nova-path--peach .is-intro .nova-path-symbol{display:none}}
 
+/* Align the full course section immediately below the sticky desktop header. */
+@media(min-width:701px){.landing-v2d #find-path{scroll-margin-top:var(--nova-header-height)}}
+
 /* Approved gray artwork is decorative only; keep its internal rhythm intact. */
 .nova-path-approved-clusters{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("/images/approved-star-clusters.svg");background-repeat:no-repeat;background-position:center;background-size:cover;opacity:.15}
 .nova-path-approved-clusters>span{display:none}

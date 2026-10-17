@@ -335,15 +335,15 @@
 /* The v2d dashboard card stands on its own, without the legacy halo. */
 .landing-v2d .hero-visual::before { display: none; }
 
-/* Desktop footer: brand on the left, with three compact navigation columns. */
-.landing-v2d .site-footer .footer-grid--desktop { direction: ltr; }
+/* Desktop footer: brand on the right, with three compact navigation columns. */
+.landing-v2d .site-footer .footer-grid--desktop { direction: rtl; }
 .landing-v2d .site-footer .footer-grid--desktop > .footer-about {
-  direction: ltr;
-  text-align: left;
+  direction: rtl;
+  text-align: right;
 }
 .landing-v2d .site-footer .footer-grid--desktop > .footer-about p {
   direction: rtl;
-  text-align: left;
+  text-align: right;
 }
 .landing-v2d .site-footer .footer-grid--desktop > .footer-col {
   direction: rtl;
@@ -360,8 +360,9 @@
   .landing-v2d .site-footer .footer-grid--desktop > .footer-about {
     grid-column: 1 / -1;
     display: flex;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
   }
   .landing-v2d .site-footer .footer-grid--desktop > .footer-about p {
     max-width: 320px;
