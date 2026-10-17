@@ -113,11 +113,11 @@ export function PathFinder({
 
   const introHeading = (
     <header className="nova-path-heading">
-      <p className="nova-path-eyebrow">{step === "result" ? "پیشنهاد اختصاصی نووا" : "یک شروع روشن، به سبک خودت"}</p>
+      {step !== "result" && <p className="nova-path-eyebrow">یک شروع روشن، به سبک خودت</p>}
       <h2 id="nova-path-title" ref={heading} tabIndex={-1}>
         {step === "intro" ? <><span>مسیر مناسب خودت رو</span>{" "}<span className="nova-path-title-tail">پیدا کن</span></> : title}
       </h2>
-      <p className="nova-path-subtitle">{subtitle}</p>
+      {step !== "result" && <p className="nova-path-subtitle">{subtitle}</p>}
     </header>
   );
 
