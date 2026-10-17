@@ -36,7 +36,7 @@ export default async function MagazinePage() {
   const resources = (data ?? []) as PublishedResource[];
 
   return (
-    <main className="mag-shell">
+    <main className="mag-shell mag-articles-archive">
       <section className="mag-hero">
         <div className="container">
           <div className="mag-hero-topline">

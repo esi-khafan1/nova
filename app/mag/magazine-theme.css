@@ -96,6 +96,16 @@
   .magazine-theme .mag-card-meta > span { padding:3px 6px; font-size:14px; }
   .magazine-theme .mag-card h2 { font-size:16px; line-height:1.85; margin:12px 0 16px; }
   .magazine-theme .mag-card-summary { display:none; }
+  .magazine-theme .mag-articles-archive .mag-card-summary {
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+    margin:0 0 14px;
+    font-size:14px;
+    line-height:1.9;
+  }
   .magazine-theme .mag-card-footer { gap:6px; grid-template-columns:minmax(0,1fr) auto; }
   .magazine-theme .mag-footer-brand { display:none; }
   .magazine-theme .mag-footer .container { justify-content:center; text-align:center; }
