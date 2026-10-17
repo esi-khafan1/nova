@@ -26,54 +26,77 @@
   .landing-v2d .nova-why-copy h3 { font-size: 16px; line-height: 1.8; margin: 0 0 8px; }
   .landing-v2d .nova-why-copy p { font-size: 14px; line-height: 1.9; }
 
-  /* Show three editorial items as large, easy-to-scan rows on phones. */
+  /* One full-width editorial card per row, with a prominent cover and full text. */
   .landing-v2d .nova-mag-layout {
     grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
+    gap: 16px;
   }
   .landing-v2d .nova-mag-layout > .nova-mag-article:nth-child(n + 4) { display: none; }
   .landing-v2d .nova-mag-card {
-    flex-direction: row;
-    align-items: stretch;
+    flex-direction: column;
     direction: rtl;
-    border-radius: 14px;
+    border-radius: 16px;
   }
   .landing-v2d .nova-mag-cover {
-    flex: 0 0 clamp(108px, 35vw, 140px);
-    width: clamp(108px, 35vw, 140px);
-    height: clamp(108px, 35vw, 140px);
-    aspect-ratio: 1;
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
   }
-  .landing-v2d .nova-mag-body { padding: 10px 12px; }
-  .landing-v2d .nova-mag-summary { display: none; }
+  .landing-v2d .nova-mag-body { padding: 14px 16px 16px; }
+  .landing-v2d .nova-mag-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .landing-v2d .nova-mag-category { padding: 2px 8px; font-size: 13px; }
   .landing-v2d .nova-mag-card h3 {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.75;
   }
-  .landing-v2d .nova-mag-meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    margin-bottom: 7px;
-    font-size: 13px;
+  .landing-v2d .nova-mag-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    margin: 8px 0 0;
+    font-size: 15px;
+    line-height: 1.9;
   }
-  .landing-v2d .nova-mag-category { padding: 2px 8px; font-size: 12px; }
-  .landing-v2d .nova-mag-read { gap: 4px; white-space: nowrap; font-size: 12px; }
   .landing-v2d .nova-mag-card-footer {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) fit-content(60%);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 4px 8px;
-    padding-top: 8px;
-    font-size: 12px;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 0;
+    font-size: 13px;
+    line-height: 1.8;
   }
   .landing-v2d .nova-mag-card-footer > time { min-width: 0; }
-  .landing-v2d .nova-mag-read { display: block; min-width: 0; text-align: left; }
+  .landing-v2d .nova-mag-read {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    gap: 6px;
+    min-height: 42px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #ffbf00;
+    color: #14263b;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+  }
   .landing-v2d .nova-news-source { overflow-wrap: anywhere; }
 
   .landing-v2d .social-preview .container { width: calc(100% - 48px); padding-inline: 0; }
