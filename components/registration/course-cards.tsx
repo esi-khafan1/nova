@@ -1,45 +1,47 @@
-"use client";
-import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useId, useRef, useState } from "react";
-import { coursesFor, courseRegistrationPath, courseTypeLabel, courseDurationLabel } from "@/lib/courses";
-import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
+import Link from "next/link";
+import { courseDurationLabel, courseDetailsPath, coursesFor } from "@/lib/courses";
+import { getCoursePlan } from "@/lib/course-plans";
+import { studyFieldLabels } from "@/lib/study-catalog";
+
 export function CourseCards({ grade, field }: { grade: number; field: string }) {
-  const track = useRef<HTMLDivElement>(null);
-  const trackId = useId();
-  const [limits, setLimits] = useState({ previous: false, next: true });
-  useEffect(() => {
-    const element = track.current;
-    if (!element) return;
-    function update() {
-      if (!element) return;
-      const maximum = Math.max(0, element.scrollWidth - element.clientWidth);
-      const position = Math.min(maximum, Math.abs(element.scrollLeft));
-      setLimits({ previous: position > 2, next: position < maximum - 2 });
-    }
-    update();
-    element.addEventListener("scroll", update, { passive: true });
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => { element.removeEventListener("scroll", update); observer.disconnect(); };
-  }, [grade, field]);
-  function move(next: boolean) {
-    const element = track.current;
-    if (!element) return;
-    const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
-    element.scrollBy({ left: (next ? -1 : 1) * (element.clientWidth + gap), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-  }
-  return <section className="nova-course-carousel" aria-label="دوره‌های مناسب پایه و رشتهٔ انتخاب‌شده">
-    <div className="nova-course-viewport">
-    <div ref={track} id={trackId} className="nova-course-grid" dir="rtl" tabIndex={0} role="region" aria-label="۹ دوره، قابل پیمایش افقی" onKeyDown={event => {
-      if (event.target !== event.currentTarget) return;
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); move(event.key === "ArrowLeft"); }
-    }}>{coursesFor(grade, field).map(course => <article className="nova-course-card" key={`${course.course}-${course.months}`} data-duration={course.months}>
-      <Image unoptimized src={`/courses/${course.course}-${course.field}.svg`} alt={`${courseTypeLabel(course.course)} ویژهٔ ${studyFieldLabels[course.field as StudyField]}`} width={512} height={512} loading="lazy" />
-      <div className="nova-course-body"><span>پایهٔ {course.grade.toLocaleString("fa-IR")} · {studyFieldLabels[course.field as StudyField]}</span><h3>{courseTypeLabel(course.course)}</h3><p className="nova-course-duration">{courseDurationLabel(course.months)}</p><Link className="nova-path-primary" href={courseRegistrationPath(course)}>انتخاب دوره <span aria-hidden="true">←</span></Link></div>
-    </article>)}</div>
-    <span className="nova-course-edge nova-course-edge--right" data-visible={limits.previous} aria-hidden="true" />
-    <span className="nova-course-edge nova-course-edge--left" data-visible={limits.next} aria-hidden="true" />
+  const courses = coursesFor(grade, field);
+  const fieldLabel = studyFieldLabels[field as keyof typeof studyFieldLabels];
+
+  return (
+    <div className="course-plan-grid" role="list" aria-label={`${courses.length.toLocaleString("fa-IR")} دوره برای پایه ${grade.toLocaleString("fa-IR")} و رشتهٔ ${fieldLabel}`}>
+      {courses.map((course) => {
+        const plan = getCoursePlan(course.course);
+        if (!plan) return null;
+        const detailsHref = courseDetailsPath(course);
+        return (
+          <article className="mag-card course-plan-card" role="listitem" key={`${course.course}-${course.months}`}>
+            <Image
+              className="course-plan-cover"
+              unoptimized
+              src={`/courses/${plan.imageType}-${course.field}.svg`}
+              alt=""
+              width={640}
+              height={640}
+              loading="lazy"
+            />
+            <div className="mag-card-body">
+              <div className="mag-card-meta">
+                <span>پایهٔ {course.grade.toLocaleString("fa-IR")} · {fieldLabel}</span>
+                <span>{courseDurationLabel(course.months)}</span>
+              </div>
+              <h2>{plan.label}</h2>
+              <p className="course-plan-tagline">{plan.tagline}</p>
+              <p className="mag-card-summary course-plan-summary">{plan.summary}</p>
+              <div className="mag-card-footer course-plan-footer">
+                <Link className="course-plan-details" href={detailsHref}>
+                  جزئیات بیشتر <span aria-hidden="true">←</span>
+                </Link>
+              </div>
+            </div>
+          </article>
+        );
+      })}
     </div>
-  </section>;
+  );
 }

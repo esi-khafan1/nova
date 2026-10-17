@@ -11,7 +11,7 @@ export function LandingHero() {
       <p className="nova-hero-lead">هدف تو، مسیر تو، برنامهٔ تو.<br />با نوا یاد بگیر، رشد کن و با اطمینان پیش برو.</p>
       <div className="nova-hero-actions">
         <Link className="nova-primary" href="/auth?mode=signup">شروع مشاوره رایگان <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg></Link>
-        <Link className="nova-secondary" href="/mag">مشاهده دوره‌ها</Link>
+        <Link className="nova-secondary" href="/#find-path">مشاهدهٔ دوره‌ها</Link>
       </div>
     </div></div>
   </section>;
