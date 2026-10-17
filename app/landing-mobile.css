@@ -86,4 +86,6 @@
   .landing-v2d .site-footer .footer-col:last-child { display: none; }
   .landing-v2d .site-footer .footer-mobile-link { display: flex; }
   .landing-v2d .footer-bottom { font-size: 14px; line-height: 1.8; padding-top: 16px; }
+  .landing-v2d .site-footer .footer-grid--desktop { display: none; }
+  .landing-v2d .site-footer .footer-grid--mobile { display: grid; }
 }

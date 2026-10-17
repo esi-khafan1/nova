@@ -143,7 +143,37 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <footer className="site-footer" id="about">
         <div className="container">
-          <div className="footer-grid">
+          <div className="footer-grid footer-grid--desktop">
+            <div className="footer-about">
+              <Link className="nova-footer-brand" href="/" aria-label="صفحه اصلی نووا">
+                <Image src="/nova/mark.svg" width={84} height={84} alt="لوگوی N نووا" unoptimized />
+              </Link>
+              <p>
+                نووا؛ همراه قابل اعتماد دانش‌آموزان برای ساختن یک مسیر تحصیلی
+                روشن.
+              </p>
+            </div>
+            <nav className="footer-col" aria-label="خدمات آموزشی">
+              <h5>خدمات آموزشی</h5>
+              <Link href="#find-path">دوره‌ها</Link>
+              <Link href="#find-path">برنامه‌ریزی تحصیلی</Link>
+              <Link href="#services">مشاوره تحصیلی</Link>
+            </nav>
+            <nav className="footer-col" aria-label="مطالب و مقالات">
+              <h5>مطالب و مقالات</h5>
+              <Link href="/mag">مجله نووا</Link>
+              <Link href="/podcasts">پادکست‌ها</Link>
+              <Link href="/news">اخبار کنکور</Link>
+            </nav>
+            <nav className="footer-col" aria-label="ارتباط با ما">
+              <h5>ارتباط با ما</h5>
+              <Link href="/about">درباره ما</Link>
+              <Link href="/contact">تماس با ما</Link>
+              <Link href="/faq">سؤالات متداول</Link>
+            </nav>
+          </div>
+
+          <div className="footer-grid footer-grid--mobile">
             <div className="footer-about">
               <Link className="nova-footer-brand" href="/" aria-label="صفحه اصلی نووا"><Image src="/nova/mark.svg" width={84} height={84} alt="لوگوی N نووا" unoptimized /></Link>
               <p>
