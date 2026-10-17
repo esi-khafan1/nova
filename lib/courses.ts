@@ -59,7 +59,7 @@ export function courseDurationLabel(value: unknown): string {
 export function coursesFor(grade: number, field: string): CourseSelection[] {
   const context = parseCourseContext({ grade, field });
   if (!context) return [];
-  return coursePlans.flatMap((plan) => courseDurations.map((duration) => ({
+  return courseDurations.flatMap((duration) => coursePlans.map((plan) => ({
     ...context,
     course: plan.value,
     months: duration.value,

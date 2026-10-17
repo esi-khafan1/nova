@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useRef, type MouseEvent as ReactMouseEvent, type PointerEvent } from "react";
 import { courseDetailsPath, courseDurationLabel, coursesFor } from "@/lib/courses";
 import { getCoursePlan } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
@@ -17,40 +17,10 @@ export function CourseCards({
   returnTo?: "catalog" | "landing";
 }) {
   const track = useRef<HTMLDivElement>(null);
-  const trackId = useId();
-  const [limits, setLimits] = useState({ previous: false, next: true });
+  const drag = useRef<{ pointerId: number; startX: number; lastX: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
   const courses = coursesFor(grade, field);
   const fieldLabel = studyFieldLabels[field as keyof typeof studyFieldLabels];
-
-  useEffect(() => {
-    const element = track.current;
-    if (!element) return;
-
-    function updateLimits() {
-      if (!element) return;
-      const viewport = element.getBoundingClientRect();
-      const cards = element.querySelectorAll<HTMLElement>(".course-plan-card");
-      if (!cards.length) {
-        setLimits({ previous: false, next: false });
-        return;
-      }
-      const first = cards[0].getBoundingClientRect();
-      const last = cards[cards.length - 1].getBoundingClientRect();
-      setLimits({
-        previous: first.right > viewport.right + 2,
-        next: last.left < viewport.left - 2,
-      });
-    }
-
-    updateLimits();
-    element.addEventListener("scroll", updateLimits, { passive: true });
-    const observer = new ResizeObserver(updateLimits);
-    observer.observe(element);
-    return () => {
-      element.removeEventListener("scroll", updateLimits);
-      observer.disconnect();
-    };
-  }, [grade, field]);
 
   function move(next: boolean) {
     const element = track.current;
@@ -63,24 +33,61 @@ export function CourseCards({
     });
   }
 
+  function startDrag(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    if ((event.target as HTMLElement).closest("a, button")) return;
+    drag.current = { pointerId: event.pointerId, startX: event.clientX, lastX: event.clientX, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.classList.add("is-dragging");
+    event.preventDefault();
+  }
+
+  function dragTrack(event: PointerEvent<HTMLDivElement>) {
+    const activeDrag = drag.current;
+    const element = event.currentTarget;
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
+    if (Math.abs(event.clientX - activeDrag.startX) > 4) activeDrag.moved = true;
+    const delta = event.clientX - activeDrag.lastX;
+    activeDrag.lastX = event.clientX;
+    if (activeDrag.moved) {
+      const direction = getComputedStyle(element).direction === "rtl" ? 1 : -1;
+      element.scrollBy({ left: delta * direction, behavior: "auto" });
+    }
+  }
+
+  function stopDrag(event: PointerEvent<HTMLDivElement>) {
+    const activeDrag = drag.current;
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
+    event.currentTarget.classList.remove("is-dragging");
+    if (activeDrag.moved) {
+      suppressClick.current = true;
+      window.setTimeout(() => { suppressClick.current = false; }, 0);
+    }
+    drag.current = null;
+  }
+
+  function suppressDraggedClick(event: ReactMouseEvent<HTMLDivElement>) {
+    if (!suppressClick.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClick.current = false;
+  }
+
   return (
     <section className="course-plan-carousel" aria-label={`${courses.length.toLocaleString("fa-IR")} دوره برای پایه ${grade.toLocaleString("fa-IR")} و رشتهٔ ${fieldLabel}`}>
-      <div className="course-carousel-tools">
-        <p>برای دیدن دوره‌های بعدی، به چپ اسکرول کن.</p>
-        <div className="course-carousel-controls" aria-label="پیمایش دوره‌ها">
-          <button type="button" aria-label="دوره‌های بعدی" aria-controls={trackId} disabled={!limits.next} onClick={() => move(true)}><span aria-hidden="true">←</span></button>
-          <button type="button" aria-label="دوره‌های قبلی" aria-controls={trackId} disabled={!limits.previous} onClick={() => move(false)}><span aria-hidden="true">→</span></button>
-        </div>
-      </div>
       <div className="course-plan-viewport">
         <div
           ref={track}
-          id={trackId}
           className="course-plan-grid"
           dir="rtl"
           role="list"
           tabIndex={0}
-          aria-label="دوره‌ها، قابل پیمایش افقی"
+          aria-label="دوره‌ها؛ با لمس، کشیدن یا کلیدهای جهت‌دار پیمایش کنید"
+          onPointerDown={startDrag}
+          onPointerMove={dragTrack}
+          onPointerUp={stopDrag}
+          onPointerCancel={stopDrag}
+          onClickCapture={suppressDraggedClick}
           onKeyDown={(event) => {
             if (event.target !== event.currentTarget) return;
             if (event.key === "ArrowLeft") { event.preventDefault(); move(true); }
@@ -119,8 +126,8 @@ export function CourseCards({
             );
           })}
         </div>
-        <span className="course-plan-edge course-plan-edge--right" data-visible={limits.previous} aria-hidden="true" />
-        <span className="course-plan-edge course-plan-edge--left" data-visible={limits.next} aria-hidden="true" />
+        <span className="course-plan-edge course-plan-edge--right" aria-hidden="true" />
+        <span className="course-plan-edge course-plan-edge--left" aria-hidden="true" />
       </div>
     </section>
   );

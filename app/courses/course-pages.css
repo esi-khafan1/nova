@@ -49,42 +49,6 @@
   width: 100%;
   min-width: 0;
 }
-.course-pages .course-carousel-tools {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.course-pages .course-carousel-tools p {
-  margin: 0;
-  color: var(--mag-copy);
-  font-size: 14px;
-  line-height: 1.8;
-}
-.course-pages .course-carousel-controls {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 8px;
-}
-.course-pages .course-carousel-controls button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--mag-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--mag-blue);
-  font: inherit;
-  font-size: 20px;
-  cursor: pointer;
-}
-.course-pages .course-carousel-controls button:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-.course-pages .course-carousel-controls button:focus-visible,
 .course-pages .course-plan-grid:focus-visible {
   outline: 3px solid var(--mag-blue);
   outline-offset: 3px;
@@ -110,9 +74,15 @@
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  cursor: grab;
 }
 .course-pages .course-plan-grid::-webkit-scrollbar {
   display: none;
+}
+.course-pages .course-plan-grid.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
 }
 .course-pages .course-plan-card {
   height: 100%;
@@ -122,21 +92,19 @@
   position: absolute;
   z-index: 1;
   inset-block: 0;
-  width: 30px;
+  width: 72px;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-.course-pages .course-plan-edge[data-visible="true"] {
   opacity: 1;
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
 }
 .course-pages .course-plan-edge--right {
   right: 0;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.96), rgba(238, 246, 255, 0));
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.78) 24%, rgba(255, 255, 255, 0.3) 62%, transparent 100%);
 }
 .course-pages .course-plan-edge--left {
   left: 0;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.96), rgba(238, 246, 255, 0));
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.78) 24%, rgba(255, 255, 255, 0.3) 62%, transparent 100%);
 }
 .course-pages .course-plan-card {
   min-width: 0;
@@ -388,20 +356,6 @@
   .course-pages .course-catalog-content {
     padding-block: 24px 40px;
   }
-  .course-pages .course-carousel-tools {
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .course-pages .course-carousel-tools p {
-    font-size: 13px;
-  }
-  .course-pages .course-carousel-controls {
-    gap: 4px;
-  }
-  .course-pages .course-carousel-controls button {
-    width: 40px;
-    height: 40px;
-  }
   .course-pages .course-plan-grid {
     grid-auto-columns: 100%;
     grid-template-rows: auto;
@@ -409,7 +363,7 @@
     padding-inline: 0;
   }
   .course-pages .course-plan-edge {
-    width: 18px;
+    width: 38px;
   }
   .course-pages .course-plan-card {
     border-radius: 12px;
