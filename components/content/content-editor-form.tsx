@@ -2,15 +2,22 @@
 
 import { useActionState, useRef, useState } from "react";
 import { upload } from "@imagekit/next";
+import type { Editor, JSONContent } from "@tiptap/core";
 import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import { Markdown } from "@tiptap/markdown";
 import {
   saveResourceAction,
   type ContentActionState,
 } from "@/app/dashboard/counselor/content/actions";
-import { emptyContent, parseContent } from "@/lib/content";
+import { emptyContent, parseContent, type ContentNode } from "@/lib/content";
+import {
+  normalizeMarkdownDocument,
+  serializeSelectionAsMarkdown,
+} from "@/lib/markdown";
+import { RichContent } from "@/components/content/rich-content";
 import { PodcastAudioUpload } from "@/components/content/podcast-audio-upload";
 import { savePodcastAction } from "@/app/dashboard/counselor/podcasts/actions";
 import { saveNewsAction } from "@/app/dashboard/counselor/news/actions";
@@ -32,6 +39,7 @@ type EditableResource = {
 };
 
 const initialState: ContentActionState = {};
+type EditorMode = "visual" | "markdown";
 
 function ToolButton({
   active,
@@ -74,9 +82,18 @@ export function ContentEditorForm({
   function updatePodcastMetadata(key: keyof typeof podcastMetadata, value: string) {
     setPodcastMetadata(previous => ({...previous, [key]: value}));
   }
-  const [body, setBody] = useState(
-    JSON.stringify(resource ? parseContent(resource.body) : emptyContent),
+  const [initialDocument] = useState<ContentNode>(() =>
+    resource ? parseContent(resource.body) : emptyContent,
   );
+  const [body, setBody] = useState(() => JSON.stringify(initialDocument));
+  const [editorMode, setEditorMode] = useState<EditorMode>("visual");
+  const [markdownSource, setMarkdownSource] = useState("");
+  const [markdownPreview, setMarkdownPreview] =
+    useState<ContentNode>(initialDocument);
+  const [markdownError, setMarkdownError] = useState("");
+  const markdownBaselineRef = useRef("");
+  const originalDocumentRef = useRef<ContentNode>(initialDocument);
+  const editorRef = useRef<Editor | null>(null);
   const [uploading, setUploading] = useState(false);
   const [audioUploading, setAudioUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -86,21 +103,52 @@ export function ContentEditorForm({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3] } }),
+      StarterKit.configure({ heading: { levels: [2, 3] }, link: false }),
       Link.configure({ openOnClick: false, autolink: true }),
       Image.configure({ allowBase64: false }),
+      Markdown,
     ],
-    content: resource ? parseContent(resource.body) : emptyContent,
+    content: initialDocument,
     editorProps: {
       attributes: {
         class: "content-editor-area",
         "aria-label": "متن محتوا",
+      },
+      handleDOMEvents: {
+        copy: (view, event) => {
+          const clipboardEvent = event as ClipboardEvent;
+          const clipboard = clipboardEvent.clipboardData;
+          const { selection, schema } = view.state;
+          if (!clipboard || selection.empty) return false;
+
+          const markdownManager = editorRef.current?.markdown;
+          if (!markdownManager) return false;
+          const markdown = serializeSelectionAsMarkdown(
+            selection,
+            schema,
+            markdownManager,
+          );
+          if (!markdown) return false;
+          try {
+            clipboard.setData("text/plain", markdown);
+          } catch {
+            return false;
+          }
+          clipboardEvent.preventDefault();
+          try {
+            clipboard.setData("text/markdown", markdown);
+          } catch {
+            // Some clipboard implementations only support the standard text/plain type.
+          }
+          return true;
+        },
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
       setBody(JSON.stringify(currentEditor.getJSON()));
     },
   });
+  editorRef.current = editor;
   const toolbarState = useEditorState({
     editor,
     selector: ({ editor: currentEditor }) => ({
@@ -113,6 +161,67 @@ export function ContentEditorForm({
       link: currentEditor?.isActive("link") ?? false,
     }),
   });
+
+  function parseMarkdownSource(value: string): ContentNode {
+    if (!value.trim()) return emptyContent;
+    if (!editor?.markdown) {
+      throw new Error("مبدل Markdown هنوز آماده نیست. دوباره تلاش کن.");
+    }
+    const document = normalizeMarkdownDocument(
+      editor.markdown.parse(value) as ContentNode,
+    );
+    if (!document.content?.length) return emptyContent;
+    editor.schema.nodeFromJSON(document).check();
+    return document;
+  }
+
+  function switchToMarkdown() {
+    if (!editor || editorMode === "markdown") return;
+    const document = editor.getJSON() as ContentNode;
+    const source = editor.getMarkdown();
+    markdownBaselineRef.current = source;
+    originalDocumentRef.current = document;
+    setMarkdownSource(source);
+    setMarkdownPreview(document);
+    setMarkdownError("");
+    setEditorMode("markdown");
+  }
+
+  function updateMarkdownSource(value: string) {
+    setMarkdownSource(value);
+    try {
+      const document = parseMarkdownSource(value);
+      setMarkdownPreview(document);
+      setBody(JSON.stringify(document));
+      setMarkdownError("");
+    } catch {
+      setMarkdownError("این Markdown قابل تبدیل نیست؛ نشانه‌گذاری را بررسی کن.");
+    }
+  }
+
+  function switchToVisual() {
+    if (!editor || editorMode === "visual") return;
+    try {
+      if (markdownSource !== markdownBaselineRef.current) {
+        const document = parseMarkdownSource(markdownSource);
+        const updated = editor.commands.setContent(document as JSONContent, {
+          emitUpdate: false,
+          errorOnInvalidContent: true,
+        });
+        if (!updated) throw new Error("محتوا قابل تبدیل نیست.");
+        setMarkdownPreview(document);
+        setBody(JSON.stringify(document));
+      } else {
+        // If the source was only opened and not changed, keep the original
+        // document exactly as it was instead of round-tripping its saved JSON.
+        setBody(JSON.stringify(originalDocumentRef.current));
+      }
+      setMarkdownError("");
+      setEditorMode("visual");
+    } catch {
+      setMarkdownError("Markdown به ویرایش دیداری تبدیل نشد؛ متن را بررسی کن.");
+    }
+  }
 
   function setLink() {
     if (!editor) return;
@@ -283,58 +392,143 @@ export function ContentEditorForm({
       {podcast && <PodcastAudioUpload initialUrl={resource?.audio_url ?? ""} initialSeconds={resource?.audio_seconds ?? null} onBusyChange={setAudioUploading} disabled={pending} />}
 
       <section className="portal-card content-composer">
-        <div className="content-toolbar" aria-label="ابزارهای ویرایش متن">
-          <ToolButton
-            active={toolbarState?.bold}
-            onClick={() => editor?.chain().focus().toggleBold().run()}
-          >
-            ضخیم
-          </ToolButton>
-          <ToolButton
-            active={toolbarState?.heading2}
-            onClick={() =>
-              editor?.chain().focus().toggleHeading({ level: 2 }).run()
-            }
-          >
-            تیتر
-          </ToolButton>
-          <ToolButton
-            active={toolbarState?.heading3}
-            onClick={() =>
-              editor?.chain().focus().toggleHeading({ level: 3 }).run()
-            }
-          >
-            زیرتیتر
-          </ToolButton>
-          <ToolButton
-            active={toolbarState?.bulletList}
-            onClick={() => editor?.chain().focus().toggleBulletList().run()}
-          >
-            فهرست
-          </ToolButton>
-          <ToolButton active={toolbarState?.link} onClick={setLink}>
-            لینک
-          </ToolButton>
-          <button
-            disabled={uploading}
-            onClick={() => fileRef.current?.click()}
-            type="button"
-          >
-            {uploading ? "در حال آپلود..." : "افزودن تصویر"}
-          </button>
-          <input
-            accept="image/*"
-            className="content-file-input"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void uploadImage(file);
-            }}
-            ref={fileRef}
-            type="file"
-          />
+        <div className="content-composer-heading">
+          <div>
+            <span>متن محتوا</span>
+            <p>
+              در حالت Markdown مستقیم بنویس و پیش‌نمایش را ببین؛ کپی از ویرایش دیداری
+              هم به صورت Markdown انجام می‌شود.
+            </p>
+          </div>
+          <div className="content-editor-mode-tabs" role="tablist" aria-label="حالت ویرایش متن">
+            <button
+              id="content-visual-tab"
+              aria-controls="content-visual-panel"
+              aria-selected={editorMode === "visual"}
+              className={editorMode === "visual" ? "active" : ""}
+              onClick={switchToVisual}
+              role="tab"
+              type="button"
+            >
+              ویرایش دیداری
+            </button>
+            <button
+              id="content-markdown-tab"
+              aria-controls="content-markdown-panel"
+              aria-selected={editorMode === "markdown"}
+              className={editorMode === "markdown" ? "active" : ""}
+              onClick={switchToMarkdown}
+              role="tab"
+              type="button"
+            >
+              Markdown
+            </button>
+          </div>
         </div>
-        <EditorContent editor={editor} />
-        {uploadError && <p className="content-error">{uploadError}</p>}
+
+        <div
+          id="content-visual-panel"
+          aria-labelledby="content-visual-tab"
+          hidden={editorMode !== "visual"}
+          role="tabpanel"
+        >
+          <div className="content-toolbar" aria-label="ابزارهای ویرایش متن">
+            <ToolButton
+              active={toolbarState?.bold}
+              onClick={() => editor?.chain().focus().toggleBold().run()}
+            >
+              ضخیم
+            </ToolButton>
+            <ToolButton
+              active={toolbarState?.heading2}
+              onClick={() =>
+                editor?.chain().focus().toggleHeading({ level: 2 }).run()
+              }
+            >
+              تیتر
+            </ToolButton>
+            <ToolButton
+              active={toolbarState?.heading3}
+              onClick={() =>
+                editor?.chain().focus().toggleHeading({ level: 3 }).run()
+              }
+            >
+              زیرتیتر
+            </ToolButton>
+            <ToolButton
+              active={toolbarState?.bulletList}
+              onClick={() => editor?.chain().focus().toggleBulletList().run()}
+            >
+              فهرست
+            </ToolButton>
+            <ToolButton active={toolbarState?.link} onClick={setLink}>
+              لینک
+            </ToolButton>
+            <button
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              type="button"
+            >
+              {uploading ? "در حال آپلود..." : "افزودن تصویر"}
+            </button>
+            <input
+              accept="image/*"
+              className="content-file-input"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void uploadImage(file);
+              }}
+              ref={fileRef}
+              type="file"
+            />
+          </div>
+          <EditorContent editor={editor} />
+          {uploadError && <p className="content-error">{uploadError}</p>}
+        </div>
+
+        <div
+          id="content-markdown-panel"
+          aria-labelledby="content-markdown-tab"
+          className="content-markdown-panel"
+          hidden={editorMode !== "markdown"}
+          role="tabpanel"
+        >
+          <div className="content-markdown-workspace">
+            <label className="content-markdown-source">
+              <span>متن Markdown</span>
+              <textarea
+                dir="auto"
+                onChange={(event) => updateMarkdownSource(event.target.value)}
+                placeholder={`## تیتر اصلی\n\nیک پاراگراف با **متن ضخیم** و *متن مورب*.\n\n- نکته اول\n- نکته دوم\n\n[لینک](https://example.com)`}
+                spellCheck={false}
+                value={markdownSource}
+              />
+            </label>
+            <section
+              className="content-markdown-preview"
+              aria-label="پیش‌نمایش محتوا"
+            >
+              <div className="content-markdown-preview-heading">
+                <strong>پیش‌نمایش زنده</strong>
+                <span>نمایش نهایی قالب‌بندی‌شده</span>
+              </div>
+              <div className="content-markdown-preview-body">
+                {markdownSource.trim() ? (
+                  <RichContent document={markdownPreview} />
+                ) : (
+                  <p className="content-markdown-empty">
+                    برای دیدن پیش‌نمایش، Markdown را در کادر کناری بنویس.
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
+          {markdownError && (
+            <p className="content-error" role="alert">
+              {markdownError}
+            </p>
+          )}
+        </div>
       </section>
 
       {(state.error || uploadError) && (
@@ -344,7 +538,7 @@ export function ContentEditorForm({
       <div className="content-editor-actions">
         <button
           className="button button-secondary"
-          disabled={pending || uploading || audioUploading}
+          disabled={pending || uploading || audioUploading || Boolean(markdownError)}
           name={news || podcast ? undefined : "intent"}
           onClick={news || podcast ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "draft"; } : undefined}
           type="submit"
@@ -354,7 +548,7 @@ export function ContentEditorForm({
         </button>
         <button
           className="button"
-          disabled={pending || uploading || audioUploading}
+          disabled={pending || uploading || audioUploading || Boolean(markdownError)}
           name={news || podcast ? undefined : "intent"}
           onClick={news || podcast ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "publish"; } : undefined}
           type="submit"

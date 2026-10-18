@@ -43,6 +43,12 @@ function renderNode(node: ContentNode, key: number | string): ReactNode {
   if (node.type === "listItem") return <li key={key}>{children}</li>;
   if (node.type === "blockquote")
     return <blockquote key={key}>{children}</blockquote>;
+  if (node.type === "codeBlock")
+    return (
+      <pre key={key}>
+        <code>{children}</code>
+      </pre>
+    );
   if (node.type === "hardBreak") return <br key={key} />;
   if (node.type === "horizontalRule") return <hr key={key} />;
   if (node.type === "image" && typeof node.attrs?.src === "string") {
