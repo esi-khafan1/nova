@@ -9,6 +9,7 @@ type UserRow = {
   role: "student" | "counselor" | "exam_designer" | "admin";
   grade: number | null;
   created_at: string;
+  email: string | null;
 };
 
 const roleLabels = {
@@ -25,10 +26,7 @@ export default async function AdminUsersPage({
 }) {
   const { supabase, profile } = await requireProfile(["admin"]);
   const params = await searchParams;
-  const { data } = await supabase
-    .from("profiles")
-    .select("id,full_name,role,grade,created_at")
-    .order("created_at", { ascending: false });
+  const { data } = await supabase.rpc("admin_list_users");
   const users = (data ?? []) as UserRow[];
 
   return (
@@ -73,6 +71,9 @@ export default async function AdminUsersPage({
                   </small>
                 </div>
               </div>
+              <span className="users-list-email" dir="auto">
+                {user.email || "ایمیل ثبت نشده"}
+              </span>
 
               {user.role !== "admin" ? (
                 <UserRoleForm user={{id:user.id,full_name:user.full_name,role:user.role}} />

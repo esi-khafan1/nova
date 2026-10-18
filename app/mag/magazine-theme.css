@@ -88,7 +88,7 @@
   .magazine-theme .mag-content { padding-block:24px 40px; }
   .magazine-theme .mag-list-heading { margin-bottom:16px; }
   .magazine-theme .mag-list-heading h2 { font-size:21px; }
-  .magazine-theme .mag-content .mag-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .magazine-theme .mag-content .mag-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
   .magazine-theme .mag-card { border-radius:12px; }
   .magazine-theme .mag-card > img,.magazine-theme .mag-card-placeholder { aspect-ratio:4/3; }
   .magazine-theme .mag-card-placeholder svg { width:44px; height:44px; }
@@ -96,6 +96,16 @@
   .magazine-theme .mag-card-meta > span { padding:3px 6px; font-size:14px; }
   .magazine-theme .mag-card h2 { font-size:16px; line-height:1.85; margin:12px 0 16px; }
   .magazine-theme .mag-card-summary { display:none; }
+  .magazine-theme .mag-articles-archive .mag-card-summary {
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+    margin:0 0 14px;
+    font-size:14px;
+    line-height:1.9;
+  }
   .magazine-theme .mag-card-footer { gap:6px; grid-template-columns:minmax(0,1fr) auto; }
   .magazine-theme .mag-footer-brand { display:none; }
   .magazine-theme .mag-footer .container { justify-content:center; text-align:center; }

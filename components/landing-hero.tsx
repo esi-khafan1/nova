@@ -2,8 +2,8 @@ import Link from "next/link";
 export function LandingHero() {
   return <section className="nova-approved-hero" aria-labelledby="nova-hero-title">
     <picture>
-      <source media="(max-width: 700px)" srcSet="/nova/hero-mobile.svg" />
-    <img className="nova-hero-background" src="/nova/hero-panorama.svg" width="2172" height="724" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
+      <source media="(max-width: 700px)" srcSet="/nova/hero-mobile-outpaint.png" />
+    <img className="nova-hero-background" src="/nova/hero-desktop.png" width="2172" height="724" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
     </picture>
     <div className="nova-hero-inner"><div className="nova-hero-copy">
       <p className="nova-eyebrow">یک شروع تازه، با نوا</p>
@@ -11,7 +11,7 @@ export function LandingHero() {
       <p className="nova-hero-lead">هدف تو، مسیر تو، برنامهٔ تو.<br />با نوا یاد بگیر، رشد کن و با اطمینان پیش برو.</p>
       <div className="nova-hero-actions">
         <Link className="nova-primary" href="/auth?mode=signup">شروع مشاوره رایگان <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg></Link>
-        <Link className="nova-secondary" href="/mag">مشاهده دوره‌ها</Link>
+        <Link className="nova-secondary" href="/#find-path">مشاهدهٔ دوره‌ها</Link>
       </div>
     </div></div>
   </section>;

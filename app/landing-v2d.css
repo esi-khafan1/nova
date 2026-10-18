@@ -334,3 +334,39 @@
 
 /* The v2d dashboard card stands on its own, without the legacy halo. */
 .landing-v2d .hero-visual::before { display: none; }
+
+/* Desktop footer: brand on the right, with three compact navigation columns. */
+.landing-v2d .site-footer .footer-grid--desktop { direction: rtl; }
+.landing-v2d .site-footer .footer-grid--desktop > .footer-about {
+  direction: rtl;
+  text-align: right;
+}
+.landing-v2d .site-footer .footer-grid--desktop > .footer-about p {
+  direction: rtl;
+  text-align: right;
+}
+.landing-v2d .site-footer .footer-grid--desktop > .footer-col {
+  direction: rtl;
+  text-align: right;
+}
+.landing-v2d .site-footer .footer-grid--desktop > .footer-col h5 { margin: 0 0 16px; }
+.landing-v2d .site-footer .footer-grid--mobile { display: none; }
+
+@media (min-width: 701px) and (max-width: 980px) {
+  .landing-v2d .site-footer .footer-grid--desktop {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px 24px;
+  }
+  .landing-v2d .site-footer .footer-grid--desktop > .footer-about {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .landing-v2d .site-footer .footer-grid--desktop > .footer-about p {
+    max-width: 320px;
+    margin: 0;
+    text-align: right;
+  }
+}
