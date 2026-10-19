@@ -19,6 +19,14 @@ begin
  if has_column_privilege('authenticated','public.profiles','registration_status','update')then raise exception 'Students can self activate';end if;
  execute 'reset role';
  perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ perform public.admin_assign_student_counselor(s3,c1);
+ if exists(select 1 from public.profiles where id=s3 and registration_status<>'incomplete')or not exists(select 1 from public.counselor_students where student_id=s3 and counselor_id=c1)then raise exception 'Assignment must not activate an incomplete student';end if;
+ perform set_config('request.jwt.claim.sub',c1::text,true);
+ execute 'set local role authenticated';
+ blocked:=false;begin perform public.admin_assign_student_counselor(s2,c1);exception when others then blocked:=true;end;if not blocked then raise exception 'Counselor can assign via admin RPC';end if;
+ execute 'reset role';
+ perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ delete from public.counselor_students where student_id=s3;
  blocked:=false;begin perform public.admin_activate_student(s3,c1,null);exception when others then blocked:=true;end;if not blocked then raise exception 'Missing registration activated';end if;
  blocked:=false;begin perform public.admin_activate_student(s1,c1,'stale');exception when others then blocked:=true;end;if not blocked then raise exception 'Stale receipt activated';end if;
  if exists(select 1 from public.counselor_students where student_id=s1)then raise exception 'Failed approval assigned a counselor';end if;
