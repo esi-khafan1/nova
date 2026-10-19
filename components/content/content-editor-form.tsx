@@ -98,7 +98,7 @@ export function ContentEditorForm({
   const [audioUploading, setAudioUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  const newsIntentRef = useRef<HTMLInputElement>(null);
+  const intentRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -298,7 +298,7 @@ export function ContentEditorForm({
     <form action={formAction} className="content-editor-form">
       {resource && <input name="id" type="hidden" value={resource.id} />}
       <input name="body" type="hidden" value={body} />
-      {(news || podcast) && <input ref={newsIntentRef} name="intent" type="hidden" defaultValue="draft" />}
+      <input ref={intentRef} name="intent" type="hidden" defaultValue="draft" />
 
       <section className="portal-card content-editor-meta">
         <div className="portal-card-title">
@@ -539,20 +539,20 @@ export function ContentEditorForm({
         <button
           className="button button-secondary"
           disabled={pending || uploading || audioUploading || Boolean(markdownError)}
-          name={news || podcast ? undefined : "intent"}
-          onClick={news || podcast ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "draft"; } : undefined}
+          onClick={() => {
+            if (intentRef.current) intentRef.current.value = "draft";
+          }}
           type="submit"
-          value="draft"
         >
           ذخیره پیش‌نویس
         </button>
         <button
           className="button"
           disabled={pending || uploading || audioUploading || Boolean(markdownError)}
-          name={news || podcast ? undefined : "intent"}
-          onClick={news || podcast ? () => { if (newsIntentRef.current) newsIntentRef.current.value = "publish"; } : undefined}
+          onClick={() => {
+            if (intentRef.current) intentRef.current.value = "publish";
+          }}
           type="submit"
-          value="publish"
         >
           {pending ? "در حال ذخیره..." : podcast ? "انتشار پادکست" : news ? "انتشار خبر" : "انتشار محتوا"}
         </button>
