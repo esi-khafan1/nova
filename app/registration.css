@@ -4,6 +4,64 @@
 .registration-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px 28px;padding:28px 20px;border-top:1px solid #d8e4f5;background:#fff;font-size:14px}
 .registration-footer a{color:#225db2}.registration-footer form{margin:0}.registration-footer button{border:0;background:transparent;color:#b74808;font:inherit;cursor:pointer;min-height:44px;padding:8px}
 .registration-page>.nova-site-header{width:100%;max-width:none;margin:0;padding:0;display:block}
-.registration-directory .registration-actions-cell{min-width:220px}.registration-directory .registration-student-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:10px}.registration-directory .registration-counselor-picker{display:flex;flex-direction:column;gap:6px;font-weight:600}.registration-directory .registration-counselor-picker select{width:100%;min-height:44px;background:#fff;color:var(--registration-ink)}.registration-directory .registration-confirmation{display:flex;align-items:flex-start;gap:8px;line-height:1.7;cursor:pointer}.registration-directory .registration-confirmation input{flex:0 0 auto;width:20px;height:20px;margin-top:3px}.registration-directory .registration-action-buttons{display:flex;flex-direction:column;gap:8px}.registration-directory .registration-action-buttons .button{width:100%;min-height:44px;justify-content:center;white-space:normal;text-align:center}.registration-directory .registration-assignment-note{line-height:1.8}
-@media(max-width:820px){.registration-directory{padding:20px 16px}.registration-directory .registration-table-wrap{overflow:visible}.registration-directory table,.registration-directory tbody,.registration-directory tr,.registration-directory td{display:block;width:100%}.registration-directory table{min-width:0}.registration-directory thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.registration-directory tbody{display:grid;gap:16px}.registration-directory tr{border:1px solid #d8e4f5;border-radius:14px;background:#fff;padding:8px 14px}.registration-directory td{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;padding:11px 0;text-align:right}.registration-directory td::before{content:attr(data-label);color:#547191;font-size:12px;font-weight:700;line-height:1.8}.registration-directory .registration-actions-cell{min-width:0}.registration-directory .registration-actions-cell::before{content:""}.registration-directory .registration-actions-cell{grid-template-columns:1fr}.registration-directory .registration-student-actions{margin-top:2px}.registration-directory .registration-counselor-picker select,.registration-directory .registration-action-buttons .button{min-height:48px;font-size:15px}.registration-directory .portal-card-title{align-items:stretch}.registration-directory .portal-card-title .button{width:100%;justify-content:center}}
-@media(max-width:420px){.registration-directory td{grid-template-columns:88px minmax(0,1fr);gap:8px}.registration-directory .registration-actions-cell{grid-template-columns:1fr}}
+
+/* Keep the directory fluid inside the dashboard; never impose a table min-width. */
+.registration-directory{min-width:0;max-width:100%;container-type:inline-size}
+.registration-directory .portal-card-title{display:flex;align-items:flex-start;flex-wrap:nowrap;gap:24px;margin-bottom:12px}
+.registration-directory .portal-card-title>div{min-width:0;flex:1}
+.registration-directory .portal-card-title h2{margin:0 0 8px;font-size:20px}
+.registration-directory .portal-card-title p{margin:0;line-height:1.9;font-size:13px}
+.registration-directory .portal-card-title>.button{flex-shrink:0;min-height:44px;padding:10px 18px;font-size:13px;white-space:nowrap}
+.registration-export-note{font-size:11px;line-height:1.8}
+.registration-summary{display:flex;flex-wrap:wrap;gap:12px 28px;padding:18px 0;margin:16px 0;border-block:1px solid #d8e4f5;font-size:12px}
+.registration-summary span{display:flex;align-items:center;gap:10px}
+.registration-summary strong{font-size:16px}
+.registration-directory .registration-table-wrap{overflow:visible;min-width:0}
+.registration-directory .registration-table-wrap table{width:100%;min-width:0;table-layout:fixed}
+.registration-directory th{font-size:11px;padding:12px 8px}
+.registration-directory td{padding:20px 8px;line-height:1.8}
+.registration-directory th:nth-child(1){width:16%}
+.registration-directory th:nth-child(2),.registration-directory th:nth-child(3){width:10%}
+.registration-directory th:nth-child(4){width:17%}
+.registration-directory th:nth-child(5){width:19%}
+.registration-directory th:nth-child(6){width:28%}
+.registration-directory .registration-course-details{min-width:0}
+.registration-directory .registration-cell-content{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.registration-directory td small{font-size:11px;line-height:1.8;text-align:start}
+.registration-directory td small[dir=ltr]{text-align:right;unicode-bidi:plaintext}
+.registration-directory .registration-course-details p{max-width:100%;margin:4px 0}
+.registration-directory .registration-student-actions{display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:12px;margin-top:8px;min-width:0;width:100%;max-width:320px}
+.registration-directory .registration-counselor-picker{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;min-width:0}
+.registration-directory .registration-counselor-picker select{width:100%;min-width:0;min-height:44px;background:#fff;color:inherit;padding:9px 10px;font-size:13px;text-overflow:ellipsis}
+.registration-directory .registration-confirmation{display:flex;align-items:flex-start;gap:8px;line-height:1.8;font-size:12px;cursor:pointer}
+.registration-directory .registration-confirmation input{flex:0 0 auto;width:18px;height:18px;margin:2px 0 0;accent-color:#b74808}
+.registration-directory .registration-action-buttons{display:flex;flex-direction:column;gap:8px}
+.registration-directory .registration-action-buttons .button{width:100%;min-height:44px;padding:10px 12px;justify-content:center;white-space:normal;text-align:center;font-size:12px;line-height:1.7}
+.registration-directory .button:disabled{opacity:.5;cursor:not-allowed}
+.registration-directory :is(select,button,a):focus-visible{outline:2px solid #235eb0;outline-offset:3px}
+.registration-directory .registration-assignment-note{line-height:1.8}
+@container (max-width:960px){
+  .registration-directory .portal-card-title{flex-wrap:wrap;gap:14px}
+  .registration-directory .portal-card-title>div{flex-basis:100%}
+  .registration-directory table,.registration-directory tbody{display:block;width:100%}
+  .registration-directory thead{display:none}
+  .registration-directory tbody{display:grid;gap:16px}
+  .registration-directory tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;min-width:0;border:1px solid #d8e4f5;border-radius:14px;padding:16px;background:#fff}
+  .registration-directory td{display:block;min-width:0;width:auto;padding:12px 0;border-bottom:1px solid #d8e4f5}
+  .registration-directory td::before{content:attr(data-label);display:block;margin-bottom:6px;color:#547191;font-size:11px;font-weight:600}
+  .registration-directory td:first-child{grid-column:1/-1;padding-top:0}
+  .registration-directory td:first-child strong{font-size:16px}
+  .registration-directory td:first-child::before{display:none}
+  .registration-directory td:nth-child(5){grid-column:1/-1}
+  .registration-directory td:last-child{grid-column:1/-1;border:0;padding-bottom:0}
+  .registration-directory .registration-student-actions{max-width:none}
+  .registration-directory .registration-action-buttons{flex-direction:row;flex-wrap:wrap}
+  .registration-directory .registration-action-buttons .button{flex:1 1 180px;width:auto}
+}
+@media(max-width:600px){
+  .registration-directory{padding:18px 14px}
+  .registration-directory .portal-card-title h2{font-size:18px}
+  .registration-directory .portal-card-title>.button{width:auto}
+  .registration-summary{gap:12px 18px}
+  .registration-directory .registration-counselor-picker select,.registration-directory .registration-action-buttons .button{min-height:46px;font-size:14px}
+}

@@ -21,7 +21,7 @@ export default async function Registrations({
 
       {params.error === "assignment" ? (
         <p className="portal-alert error" role="alert">
-          تخصیص مشاور انجام نشد؛ یک مشاور تأییدشده انتخاب کن و دوباره تلاش کن.
+          تخصیص انجام نشد؛ دانش‌آموز باید بدون مشاور باشد و مشاور انتخابی تأییدشده باشد. صفحه را تازه کن و دوباره بررسی کن.
         </p>
       ) : params.error ? (
         <p className="portal-alert error" role="alert">

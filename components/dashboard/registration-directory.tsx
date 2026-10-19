@@ -53,14 +53,20 @@ export async function RegistrationDirectory({
         <div>
           <h2>ثبت‌نام، فیش و تخصیص مشاور</h2>
           <p>
-            مشاور را می‌توانی برای همهٔ دانش‌آموزها، مستقل از وضعیت ثبت‌نام، اختصاص بدهی؛ این کار به‌تنهایی خدمات دانش‌آموز را فعال نمی‌کند. فعال‌سازی همچنان با تأیید فیش یا استثنای دستی انجام می‌شود.
+            برای دانش‌آموزهای بدون مشاور، مشاور انتخاب کن. تخصیص مشاور مستقل از تأیید فیش و فعال‌سازی خدمات است.
           </p>
         </div>
         <a className="button button-secondary" href="/api/registrations/export">
           دریافت خروجی CSV
         </a>
       </div>
-      <small>خروجی شامل لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
+      <small className="registration-export-note">خروجی شامل لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
+
+      <div className="registration-summary" aria-label="خلاصه دانش‌آموزها">
+        <span>کل دانش‌آموزها <strong>{rows.length.toLocaleString("fa-IR")}</strong></span>
+        <span>بدون مشاور <strong>{rows.filter((row) => !row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
+        <span>دارای مشاور <strong>{rows.filter((row) => row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
+      </div>
 
       {!rows.length ? (
         <p>هنوز دانش‌آموزی در این فهرست نیست.</p>
@@ -85,33 +91,33 @@ export async function RegistrationDirectory({
 
                 return (
                   <tr key={row.student_id}>
-                    <td data-label="دانش‌آموز و تماس">
+                    <td data-label="دانش‌آموز و تماس"><div className="registration-cell-content">
                       <strong>{row.full_name || "نام ثبت نشده"}</strong>
                       <small dir="ltr">{row.phone || "شماره ثبت نشده"}</small>
                       <small dir="ltr">
                         {row.telegram_id ? `@${row.telegram_id}` : "تلگرام ثبت نشده"}
                       </small>
-                    </td>
-                    <td data-label="پایه و رشته">
+                    </div></td>
+                    <td data-label="پایه و رشته"><div className="registration-cell-content">
                       {row.grade ? `پایه ${row.grade.toLocaleString("fa-IR")}` : "—"}
                       <small>
                         {row.study_field
                           ? studyFieldLabels[row.study_field]
                           : "رشته ثبت نشده"}
                       </small>
-                    </td>
-                    <td data-label="محل سکونت">
+                    </div></td>
+                    <td data-label="محل سکونت"><div className="registration-cell-content">
                       {row.province || "—"}
                       <small>{row.city || "—"}</small>
-                    </td>
-                    <td className="registration-course-details" data-label="دوره و توضیحات">
+                    </div></td>
+                    <td className="registration-course-details" data-label="دوره و توضیحات"><div className="registration-cell-content">
                       <strong>{courseTypeLabel(row.course_type) || "دوره انتخاب نشده"}</strong>
                       {row.course_duration_months && (
                         <small>{courseDurationLabel(row.course_duration_months)}</small>
                       )}
                       {row.additional_notes && <p>{row.additional_notes}</p>}
-                    </td>
-                    <td data-label="وضعیت و فیش">
+                    </div></td>
+                    <td data-label="وضعیت و فیش"><div className="registration-cell-content">
                       <strong>
                         {row.registration_status === "incomplete" && row.has_account_details
                           ? "اطلاعات کامل؛ خدمات غیرفعال"
@@ -133,15 +139,15 @@ export async function RegistrationDirectory({
                             : "فیش ارسال نشده"}
                         </small>
                       )}
-                    </td>
-                    <td className="registration-actions-cell" data-label="مشاور و فعال‌سازی">
+                    </div></td>
+                    <td className="registration-actions-cell" data-label="مشاور و فعال‌سازی"><div className="registration-cell-content">
                       <small>
-                        {row.counselor_name
-                          ? `مشاور فعلی: ${row.counselor_name}`
+                        {row.counselor_id
+                          ? `مشاور فعلی: ${row.counselor_name || counselors.find((counselor) => counselor.id === row.counselor_id)?.full_name || "تخصیص داده شده"}`
                           : "هنوز اختصاص داده نشده"}
                       </small>
 
-                      {audience === "admin" && (
+                      {audience === "admin" && (!row.counselor_id || canActivateWithReceipt || canManualActivate) && (
                         <form action={assignCounselor} className="registration-student-actions">
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input
@@ -150,7 +156,9 @@ export async function RegistrationDirectory({
                             value={row.receipt_path ?? ""}
                           />
 
-                          <label className="registration-counselor-picker">
+                          {row.counselor_id ? (
+                            <input name="counselor_id" type="hidden" value={row.counselor_id} />
+                          ) : <label className="registration-counselor-picker">
                             <span>مشاور</span>
                             <select
                               aria-label={`انتخاب مشاور برای ${row.full_name || "دانش‌آموز"}`}
@@ -168,7 +176,9 @@ export async function RegistrationDirectory({
                                 </option>
                               ))}
                             </select>
-                          </label>
+                          </label>}
+
+                          {!row.counselor_id && !counselors.length && <small role="status">مشاور تأییدشده‌ای برای تخصیص موجود نیست.</small>}
 
                           {canActivateWithReceipt && (
                             <label className="registration-confirmation">
@@ -184,15 +194,13 @@ export async function RegistrationDirectory({
                           )}
 
                           <div className="registration-action-buttons">
-                            <button
+                            {!row.counselor_id && <button
                               className="button button-secondary"
                               type="submit"
                               disabled={!counselors.length}
                             >
-                              {row.counselor_id
-                                ? "ذخیره تخصیص مشاور"
-                                : "اختصاص مشاور"}
-                            </button>
+                              اختصاص مشاور
+                            </button>}
 
                             {canActivateWithReceipt && (
                               <button
@@ -201,7 +209,7 @@ export async function RegistrationDirectory({
                                 name="activation_mode"
                                 value="receipt"
                                 formAction={activateStudent}
-                                disabled={!counselors.length || !row.receipt_path}
+                                disabled={(!row.counselor_id && !counselors.length) || !row.receipt_path}
                               >
                                 تأیید و فعال‌سازی
                               </button>
@@ -214,21 +222,21 @@ export async function RegistrationDirectory({
                                 name="activation_mode"
                                 value="manual"
                                 formAction={activateStudent}
-                                disabled={!counselors.length}
+                                disabled={!row.counselor_id && !counselors.length}
                               >
                                 فعال‌سازی دستی بدون فیش
                               </button>
                             )}
                           </div>
 
-                          {row.registration_status === "incomplete" && (
+                          {!row.counselor_id && row.registration_status === "incomplete" && (
                             <small className="registration-assignment-note">
-                              «اختصاص مشاور» فقط رابطهٔ مشاور و دانش‌آموز را ذخیره می‌کند و وضعیت ثبت‌نام را تغییر نمی‌دهد.
+                              تخصیص مشاور، خدمات را فعال نمی‌کند.
                             </small>
                           )}
                         </form>
                       )}
-                    </td>
+                    </div></td>
                   </tr>
                 );
               })}

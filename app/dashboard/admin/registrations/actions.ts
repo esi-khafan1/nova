@@ -27,6 +27,15 @@ export async function assignCounselor(fd: FormData) {
     redirect("/dashboard/admin/registrations?error=assignment");
   }
 
+  const { data: existing, error: lookupError } = await supabase
+    .from("counselor_students")
+    .select("counselor_id")
+    .eq("student_id", studentId)
+    .limit(1);
+  if (lookupError || existing?.length) {
+    redirect("/dashboard/admin/registrations?error=assignment");
+  }
+
   const { error } = await supabase.rpc("admin_assign_student_counselor", {
     target_student_id: studentId,
     target_counselor_id: counselorId,
