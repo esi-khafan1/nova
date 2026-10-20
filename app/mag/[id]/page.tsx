@@ -34,11 +34,11 @@ async function getArticle(id: string) {
     .single();
   if (!data) return null;
 
-  const { data: author } = await supabase
-    .from("profiles")
-    .select("full_name,bio")
-    .eq("id", data.author_id)
-    .single();
+  // Profiles are private under RLS; expose only the published article's author name.
+  const { data: authors } = await supabase.rpc("published_article_author", {
+    target_resource_id: data.id,
+  });
+  const author = (authors as { full_name: string | null }[] | null)?.[0] ?? null;
 
   return { article: data as Article, author };
 }
@@ -86,9 +86,9 @@ export default async function ArticlePage({
           <h1>{article.title}</h1>
           {article.summary && <p>{article.summary}</p>}
           <div className="article-byline">
-            <div>{(author?.full_name || "ن").slice(0, 1)}</div>
+            {author?.full_name && <div>{author.full_name.slice(0, 1)}</div>}
             <span>
-              <strong>{author?.full_name || "مشاور نووا"}</strong>
+              {author?.full_name && <strong>{author.full_name}</strong>}
               <small>{formatPersianDate(article.published_at)}</small>
             </span>
           </div>
@@ -96,17 +96,12 @@ export default async function ArticlePage({
 
         <RichContent document={parseContent(article.body)} />
 
-        <aside className="article-author">
-          <div>{(author?.full_name || "ن").slice(0, 1)}</div>
-          <div>
-            <span>نویسنده</span>
-            <h2>{author?.full_name || "مشاور نووا"}</h2>
-            <p>
-              {author?.bio ||
-                "مشاور تحصیلی نووا؛ همراه دانش‌آموزان برای ساختن مسیر روشن‌تر."}
-            </p>
-          </div>
-        </aside>
+        {author?.full_name && (
+          <aside className="article-author" aria-label="نویسنده مقاله">
+            <div>{author.full_name.slice(0, 1)}</div>
+            <div><h2>{author.full_name}</h2></div>
+          </aside>
+        )}
       </article>
     </main>
   );
