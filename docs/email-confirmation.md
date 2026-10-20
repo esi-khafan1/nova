@@ -30,3 +30,11 @@ still calls Supabase directly; making *all* auth requests first-party is separat
 work. Recovery/invite/email-change templates are not changed by this template.
 
 Do not disable email verification or remove SMTP rate limits as a workaround.
+
+## Email typography
+The confirmation template requests the site's Estedad font from
+`/fonts/estedad-arabic-wght-normal.woff2` (OFL license alongside it).
+Deploy this asset before updating the template. Supporting email clients and
+browser previews use Estedad; Gmail and clients that disallow web fonts use
+Tahoma/Arial/system fallback. Identical typography across all inboxes cannot be
+guaranteed. Body text and confirmation buttons remain real, selectable HTML.
