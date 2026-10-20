@@ -48,3 +48,23 @@
  .users-list .user-role-form { grid-template-columns: minmax(0, 1fr); }
  .users-list .user-role-form .role-action { width: 100%; }
 }
+
+/* Equal desktop tracks in every row, including protected admin accounts. */
+@media (min-width: 761px) {
+ .users-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(280px, 360px);
+  align-items: center;
+  gap: 20px;
+ }
+ .users-list-main, .users-list-main > div { min-width: 0; }
+ .users-list-main strong { overflow-wrap: anywhere; }
+ .users-list-main .role-badge { flex-shrink: 0; }
+ .users-list .user-role-form {
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+ }
+ .users-list .no-action { width: 100%; text-align: center; }
+}

@@ -28,6 +28,9 @@ export default async function AdminUsersPage({
   const params = await searchParams;
   const { data } = await supabase.rpc("admin_list_users");
   const users = (data ?? []) as UserRow[];
+  const { data: superAdmins } = await supabase.rpc("admin_list_super_admins");
+  const superAdminIds = new Set<string>((superAdmins ?? []).map((row: { user_id: string }) => row.user_id));
+  const canGrantAdmin = superAdminIds.has(profile.id);
 
   return (
     <DashboardShell role="admin" name={profile.full_name}>
@@ -35,7 +38,7 @@ export default async function AdminUsersPage({
         <div>
           <span>مدیریت نووا</span>
           <h1>مدیریت کاربران</h1>
-          <p>نقش هر حساب را مستقیماً بین دانش‌آموز، مشاور و طراح آزمون تغییر بده.</p>
+          <p>{canGrantAdmin ? "دسترسی سوپرادمین: مدیریت نقش کاربران و ارتقای حساب‌ها به مدیر." : "نقش هر حساب را مستقیماً بین دانش‌آموز، مشاور و طراح آزمون تغییر بده."}</p>
         </div>
       </section>
 
@@ -62,7 +65,7 @@ export default async function AdminUsersPage({
             <article key={user.id}>
               <div className="users-list-main">
                 <span className={`role-badge ${user.role}`}>
-                  {roleLabels[user.role]}
+                  {superAdminIds.has(user.id) ? "سوپرادمین" : roleLabels[user.role]}
                 </span>
                 <div>
                   <strong>{user.full_name || "کاربر نووا"}</strong>
@@ -71,12 +74,12 @@ export default async function AdminUsersPage({
                   </small>
                 </div>
               </div>
-              <span className="users-list-email" dir="auto">
+              <span className="users-list-email" dir="ltr">
                 {user.email || "ایمیل ثبت نشده"}
               </span>
 
               {user.role !== "admin" ? (
-                <UserRoleForm user={{id:user.id,full_name:user.full_name,role:user.role}} />
+                <UserRoleForm canGrantAdmin={canGrantAdmin} user={{id:user.id,full_name:user.full_name,role:user.role}} />
               ) : (
                 <span className="no-action">—</span>
               )}
