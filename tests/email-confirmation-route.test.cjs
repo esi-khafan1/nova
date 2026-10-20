@@ -15,49 +15,43 @@ function load(path, dependencies = {}) {
 const urls = load('lib/auth-urls.ts', { './return-path': load('lib/return-path.ts') });
 const security = load('lib/email-confirmation.ts');
 let calls = 0;
-let fail = false;
+let outcome = 'success';
+const token = 'a'.repeat(56);
 const route = load('app/auth/confirm/route.ts', {
   'next/server': { NextResponse: { redirect: (url, init) => new Response(null, { ...init, headers: { ...init.headers, Location: url } }) } },
   '@/lib/auth-urls': urls,
   '@/lib/email-confirmation': security,
-  '@/lib/supabase/server': { createClient: async () => ({ auth: { verifyOtp: async (input) => {
+  '@/lib/supabase/confirmation': { verifySignupEmail: async (hash) => {
     calls++;
-    assert.equal(input.type, 'signup');
-    assert.equal(input.token_hash, 'a'.repeat(56));
-    return { error: fail ? { message: 'expired' } : null };
-  } } }) },
+    assert.equal(hash, token);
+    if (outcome === 'network') throw Error('Network unavailable');
+    return outcome === 'success';
+  } },
 });
 (async () => {
   const origin = urls.AUTH_SITE_ORIGIN;
-  const token = 'a'.repeat(56);
-  const page = await route.GET(new Request(`${origin}/auth/confirm?token_hash=${token}`));
-  assert.equal(page.status, 200);
-  assert.equal(calls, 0, 'GET scanners must not consume the token');
-  assert.equal(page.headers.get('Referrer-Policy'), 'same-origin');
-  assert.match(await page.text(), /method="post"/);
-  assert.equal((await route.GET(new Request(`${origin}/auth/confirm`))).status, 303);
-  const post = (requestOrigin = origin) => new Request(`${origin}/auth/confirm`, {
-    method: 'POST', headers: { Origin: requestOrigin }, body: new URLSearchParams({ token_hash: token }),
-  });
-  assert.equal((await route.POST(post('https://evil.example'))).status, 403);
+  const request = () => new Request(`${origin}/auth/confirm?token_hash=${token}&next=https://evil.example`);
+  for (const suffix of ['', '?token_hash=bad', '?token_hash=%22%3E%3Cscript%3E']) {
+    const invalid = await route.GET(new Request(`${origin}/auth/confirm${suffix}`));
+    assert.equal(invalid.status, 303);
+    assert.match(invalid.headers.get('Location'), /error=callback/);
+  }
   assert.equal(calls, 0);
-  const success = await route.POST(post());
+  const success = await route.GET(request());
   assert.equal(success.status, 303);
-  assert.equal(success.headers.get('Location'), `${origin}/dashboard`);
-  const nullOrigin = new Request(`${origin}/auth/confirm`, {
-    method: 'POST', headers: { Origin: 'null', 'Sec-Fetch-Site': 'same-origin' },
-    body: new URLSearchParams({ token_hash: token }),
-  });
-  assert.equal((await route.POST(nullOrigin)).headers.get('Location'), `${origin}/dashboard`);
-  assert.equal((await route.POST(post('null'))).status, 403);
-  const crossSite = new Request(`${origin}/auth/confirm`, {
-    method: 'POST', headers: { Origin: 'null', 'Sec-Fetch-Site': 'cross-site' },
-    body: new URLSearchParams({ token_hash: token }),
-  });
-  assert.equal((await route.POST(crossSite)).status, 403);
-  fail = true;
-  const expired = await route.POST(post());
-  assert.match(expired.headers.get('Location'), /error=callback/);
-  assert.equal(expired.headers.get('Location').includes(token), false);
-  console.log('Email confirmation route tests passed (mocked Auth).');
+  assert.equal(success.headers.get('Location'), `${origin}/auth?mode=signin&confirmed=1`);
+  assert.equal(success.headers.get('set-cookie'), null);
+  assert.equal(success.headers.get('Referrer-Policy'), 'no-referrer');
+  assert.match(success.headers.get('Cache-Control'), /no-store/);
+  assert.equal(await success.text(), '', 'No intermediate confirmation screen');
+  for (const result of ['expired', 'network']) {
+    outcome = result;
+    const failure = await route.GET(request());
+    assert.equal(failure.status, 303);
+    assert.match(failure.headers.get('Location'), /error=callback/);
+    assert.equal(failure.headers.get('Location').includes(token), false);
+    assert.equal(new URL(failure.headers.get('Location')).origin, origin);
+  }
+  assert.equal(route.POST, undefined, 'No second confirmation button or POST step');
+  console.log('One-click confirmation route tests passed (mocked verification).');
 })().catch(error => { console.error(error); process.exitCode = 1; });
