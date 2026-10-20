@@ -89,7 +89,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
       return;
     }
     setSuccess(true);
-    setMessage("حساب ساخته شد. اگر تأیید ایمیل فعال باشد، صندوق ورودی‌ات را بررسی کن.");
+    setMessage("حالا ایمیلت را باز کن و روی دکمهٔ تأیید بزن؛ بعد وارد حساب شو. اگر ایمیل را ندیدی، پوشهٔ اسپم را هم چک کن.");
     setLoading(false);
   }
 
