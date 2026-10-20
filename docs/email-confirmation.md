@@ -38,3 +38,14 @@ Deploy this asset before updating the template. Supporting email clients and
 browser previews use Estedad; Gmail and clients that disallow web fonts use
 Tahoma/Arial/system fallback. Identical typography across all inboxes cannot be
 guaranteed. Body text and confirmation buttons remain real, selectable HTML.
+
+
+### Troubleshooting the Supabase preview
+Do not replace text with images. The font file must be deployed on the public
+Nova domain first; pushing a branch does not deploy Runflare automatically.
+The exact font URL has public CORS headers so a preview on another origin may
+load it without authentication. In browser Network, check the font request for
+200, `font/woff2`, and `Access-Control-Allow-Origin: *`. A 404 requires deploying
+the correct branch/artifact; CORS headers cannot fix a missing deployment. If no
+font request is made, inspect whether the preview strips `@font-face` or blocks
+it via CSP. Do not weaken the dashboard's security policy to force custom fonts.

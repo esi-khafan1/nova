@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Public email font must not refresh sessions or set authentication cookies.
+  if (request.nextUrl.pathname === "/fonts/estedad-arabic-wght-normal.woff2") {
+    return NextResponse.next();
+  }
   // Confirmation handles its own session. Avoid an unrelated refresh before
   // verification, and keep credential-bearing pages out of middleware auth work.
   if (request.nextUrl.pathname === "/auth/confirm") return NextResponse.next();
