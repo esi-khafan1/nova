@@ -486,7 +486,9 @@ export function WeeklyPlanBuilder({
                                 updateItem(
                                   item.key,
                                   "targetTestCount",
-                                  Number(event.target.value),
+                                  event.target.value === ""
+                                    ? null
+                                    : Number(event.target.value),
                                 )
                               }
                               required
