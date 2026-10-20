@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LandingHeader } from "@/components/landing-header";
 import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
+import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
 import { emailConfirmationUrl } from "@/lib/auth-urls";
 
 type AuthMode = "signin" | "signup";
@@ -24,10 +25,24 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [message, setMessage] = useState(initialMessage);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  function changePassword(value: string) {
+    if (!isEnglishPasswordInput(value)) {
+      // Reject the entire edit/paste rather than silently altering a password.
+      setPasswordError(englishPasswordMessage);
+      return;
+    }
+    setPasswordValue(value);
+    setPasswordError("");
+  }
 
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode);
     setShowPassword(false);
+    setPasswordValue("");
+    setPasswordError("");
     setMessage("");
     setSuccess(false);
     window.history.replaceState(null, "", `/auth?mode=${nextMode}&next=${encodeURIComponent(destination)}`);
@@ -42,6 +57,10 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
 
     if (!email) return setMessage("لطفاً ایمیل را وارد کن.");
     if (!emailPattern.test(email)) return setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+    if (!isEnglishPasswordInput(password) || passwordError) {
+      setPasswordError(englishPasswordMessage);
+      return;
+    }
     if (!password) return setMessage("لطفاً رمز عبور را وارد کن.");
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
@@ -67,6 +86,10 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (fullName.length < 2) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
     if (!email) return setMessage("لطفاً ایمیل را وارد کن.");
     if (!emailPattern.test(email)) return setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+    if (!isEnglishPasswordInput(password) || passwordError) {
+      setPasswordError(englishPasswordMessage);
+      return;
+    }
     if (!password) return setMessage("لطفاً رمز عبور را وارد کن.");
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
@@ -143,8 +166,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                 </div>
                 <div className="nova-auth-field">
                   <label htmlFor={`${mode}-password`}>رمز عبور</label>
-                  <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
+                  <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" value={passwordValue} onChange={event => changePassword(event.target.value)} aria-invalid={!!passwordError} aria-describedby={passwordError ? `${mode}-password-error` : undefined} autoCapitalize="none" autoCorrect="off" spellCheck={false} type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
                 </div>
+                {passwordError && <p id={`${mode}-password-error`} role="alert" className="nova-auth-message">{passwordError}</p>}
                 <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
                   <span>{loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
