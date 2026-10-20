@@ -33,7 +33,7 @@ const route = load('app/auth/confirm/route.ts', {
   const page = await route.GET(new Request(`${origin}/auth/confirm?token_hash=${token}`));
   assert.equal(page.status, 200);
   assert.equal(calls, 0, 'GET scanners must not consume the token');
-  assert.equal(page.headers.get('Referrer-Policy'), 'no-referrer');
+  assert.equal(page.headers.get('Referrer-Policy'), 'same-origin');
   assert.match(await page.text(), /method="post"/);
   assert.equal((await route.GET(new Request(`${origin}/auth/confirm`))).status, 303);
   const post = (requestOrigin = origin) => new Request(`${origin}/auth/confirm`, {
@@ -44,6 +44,17 @@ const route = load('app/auth/confirm/route.ts', {
   const success = await route.POST(post());
   assert.equal(success.status, 303);
   assert.equal(success.headers.get('Location'), `${origin}/dashboard`);
+  const nullOrigin = new Request(`${origin}/auth/confirm`, {
+    method: 'POST', headers: { Origin: 'null', 'Sec-Fetch-Site': 'same-origin' },
+    body: new URLSearchParams({ token_hash: token }),
+  });
+  assert.equal((await route.POST(nullOrigin)).headers.get('Location'), `${origin}/dashboard`);
+  assert.equal((await route.POST(post('null'))).status, 403);
+  const crossSite = new Request(`${origin}/auth/confirm`, {
+    method: 'POST', headers: { Origin: 'null', 'Sec-Fetch-Site': 'cross-site' },
+    body: new URLSearchParams({ token_hash: token }),
+  });
+  assert.equal((await route.POST(crossSite)).status, 403);
   fail = true;
   const expired = await route.POST(post());
   assert.match(expired.headers.get('Location'), /error=callback/);

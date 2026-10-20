@@ -16,14 +16,18 @@ Site URL must be `https://nova-academy.ir`; redirect allowlist must include
 `https://nova-academy.ir/auth/callback` and `/auth/confirm`.
 
 GET does not consume tokens (email scanners often prefetch links). POST only
-accepts the canonical origin, verifies a signup token server-to-server using the
+accepts the canonical origin (or a null/omitted Origin with Sec-Fetch-Site:
+same-origin), verifies a signup token server-to-server using the
 normal publishable key, and does not expose session tokens in redirects. No
-service-role key is needed. The server still needs access to Supabase.
+service-role key is needed. The server still needs access to Supabase. Referrer-Policy is same-origin so
+external destinations never receive the token URL, while same-origin form POSTs
+can retain their Origin. The confirmation screen uses the local Estedad font
+and Nova colors; no image replacement or client scripts are needed.
 
 Disable email-provider click tracking for authentication emails if enabled:
 otherwise the provider may wrap the first-party link in its own tracking host.
 Configure Runflare/proxy access logging to redact the `token_hash` query parameter
-and never log POST form bodies. Token-bearing pages are no-store/no-referrer.
+and never log POST form bodies. Token-bearing pages are no-store/same-origin-referrer.
 
 This addresses email confirmation only. The current browser sign-in/signup code
 still calls Supabase directly; making *all* auth requests first-party is separate
