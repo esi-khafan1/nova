@@ -91,10 +91,15 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     try {
       const result = await saveRecoveredPassword(passwordValue);
       if (result.ok) {
+        setPasswordValue("");
+        router.replace("/dashboard");
+        router.refresh();
+        return;
+      }
+      if (result.passwordChanged) {
         setMode("signin");
         setPasswordValue("");
         setShowPassword(false);
-        setSuccess(true);
         window.history.replaceState(null, "", "/auth?mode=signin&password_changed=1");
       }
       setMessage(result.message);
@@ -159,7 +164,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
             <div className="nova-auth-heading">
               <span className="nova-auth-eyebrow"><i aria-hidden="true" /> حساب کاربری نووا</span>
               <h1 id="nova-auth-title">{mode === "reset" ? "رمز جدیدت را تعیین کن" : mode === "signin" ? "خوش برگشتی!" : "قدم اول، با تو"}</h1>
-              <p>{mode === "reset" ? "رمز جدید را ذخیره کن؛ بعد با همان رمز وارد حسابت شو." : mode === "signin" ? "وارد حساب شو و مسیرت را از همان‌جا ادامه بده." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
+              <p>{mode === "reset" ? "رمز جدیدت را وارد کن تا مستقیم وارد پنل شوی." : mode === "signin" ? "وارد حساب شو و مسیرت را از همان‌جا ادامه بده." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
             </div>
 
             {mode !== "reset" && <div className="nova-auth-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
@@ -200,7 +205,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                 </div>
                 {passwordError && <p id={`${mode}-password-error`} role="alert" className="nova-auth-message">{passwordError}</p>}
                 <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
-                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ذخیرهٔ رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
+                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ورود با رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
               </form>
             </div>

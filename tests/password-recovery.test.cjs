@@ -16,14 +16,23 @@ const security = load('lib/email-confirmation.ts', {});
 let cookie = 'a'.repeat(56);
 let verified = 0, updated = 0, signedOut = 0;
 let verifyFails = false;
+let updateFails = false, loginFails = false;
+let sessionsSaved = 0;
 let suppliedPassword;
 const actions = load('app/auth/recovery/actions.ts', {
   'next/headers': { cookies: async () => ({ get: () => cookie ? { value: cookie } : undefined, set: (_name, value) => { cookie = value; } }) },
+  '@/lib/supabase/server': { createClient: async () => ({ auth: { setSession: async session => {
+    assert.equal(session.access_token, 'test-access');
+    assert.equal(session.refresh_token, 'test-refresh');
+    sessionsSaved++;
+    return { error: loginFails ? {} : null };
+  } } }) },
   '@/lib/password-input': password,
   '@/lib/email-confirmation': security,
   '@/lib/supabase/recovery': { recoveryCookie: 'nova-password-recovery', recoveryClient: () => ({ auth: {
     verifyOtp: async input => { assert.equal(input.type, 'recovery'); verified++; return { error: verifyFails ? {} : null, data: { session: verifyFails ? null : {} } }; },
-    updateUser: async input => { suppliedPassword = input.password; updated++; return { error: null }; },
+    updateUser: async input => { suppliedPassword = input.password; updated++; return { error: updateFails ? {} : null }; },
+    getSession: async () => ({ data: { session: { access_token: 'test-access', refresh_token: 'test-refresh' } }, error: null }),
     signOut: async () => { signedOut++; return { error: null }; },
   } }) },
 });
@@ -45,14 +54,22 @@ const route = load('app/auth/recovery/route.ts', {
   verifyFails = true;
   assert.equal((await actions.saveRecoveredPassword('NewPassword123!')).ok, false);
   assert.equal(updated, 0);
+  assert.equal(sessionsSaved, 0);
   assert.equal(cookie, '');
   cookie = 'a'.repeat(56); verifyFails = false;
   assert.equal((await actions.saveRecoveredPassword('NewPassword123!')).ok, true);
-  assert.equal(updated, 1); assert.equal(signedOut, 1);
+  assert.equal(updated, 1); assert.equal(signedOut, 0); assert.equal(sessionsSaved, 1);
   assert.equal(suppliedPassword, 'NewPassword123!');
   assert.equal(cookie, '');
   assert.equal((await actions.saveRecoveredPassword('DifferentPass123!')).ok, false);
   assert.equal(updated, 1, 'Cookie removed after one use');
+  cookie = 'a'.repeat(56); updateFails = true;
+  assert.equal((await actions.saveRecoveredPassword('NewPassword123!')).ok, false);
+  assert.equal(sessionsSaved, 1, 'No login before successful password update');
+  assert.equal(signedOut, 1);
+  cookie = 'a'.repeat(56); updateFails = false; loginFails = true;
+  assert.equal((await actions.saveRecoveredPassword('NewPassword123!')).ok, false);
+  assert.equal(cookie, '');
   const response = await route.GET(new Request('https://nova-academy.ir/auth/recovery?token_hash=' + 'a'.repeat(56)));
   assert.equal(response.status, 303);
   assert.equal(response.headers.get('Location'), 'https://nova-academy.ir/auth?mode=reset');

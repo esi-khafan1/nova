@@ -25,11 +25,14 @@ Email link opens `/auth/recovery`, a backend route with no HTML screen. It puts
 the recovery hash in a Secure, HttpOnly, SameSite=Lax, /auth cookie (10 minutes)
 and immediately redirects to the existing `/auth?mode=reset` page with a clean
 URL. That page uses the normal auth layout and a new-password field.
-Saving verifies the recovery token on the server using type=recovery, then
-updates that token's account with a stateless client (not the browser's current
-session). Recovery credentials never reach JavaScript. Success clears the
-recovery cookie/session, shows the existing sign-in form and message
-`رمز عبور تغییر کرد. با رمز عبور جدید وارد شوید.` The user signs in normally.
+The banner reads `با رمز عبور جدید وارد شوید.` Saving verifies the recovery token
+on the server using type=recovery, then updates that token's account with a
+stateless client (not the browser's current session). Only after successful
+password update, its verified session is persisted through the existing SSR
+cookie client. Session tokens are never returned in action results or URLs.
+The recovery cookie is cleared and the browser goes directly to `/dashboard`,
+which selects the appropriate role panel. No second email/password login step.
+If session persistence fails after updating, show a normal-login fallback message.
 An admin never sees or chooses the password. No service-role key is needed.
 English-keyboard validation and 8–128 character limits apply on both client and
 server; passwords are never trimmed or transliterated.
