@@ -7,7 +7,6 @@ import { LandingHeader } from "@/components/landing-header";
 import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
 import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
-import { resendConfirmation } from "@/app/auth/confirmation/actions";
 import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
 import { emailConfirmationUrl } from "@/lib/auth-urls";
 
@@ -19,7 +18,7 @@ const benefits = [
   { title: "همراهی در هر قدم", detail: "برنامه‌ریزی و مشاوره، از شروع تا نتیجه" },
 ];
 
-export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessage = "", allowResend = false }: { allowResend?: boolean; initialMode: AuthMode; returnTo?: string; initialMessage?: string }) {
+export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessage = "" }: { initialMode: AuthMode; returnTo?: string; initialMessage?: string }) {
   const destination = safeReturnPath(returnTo);
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -28,8 +27,6 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
-  const [showResend, setShowResend] = useState(allowResend);
-  const [resending, setResending] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
   function changePassword(value: string) {
@@ -71,12 +68,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     setLoading(true);
     const { error } = await createClient().auth.signInWithPassword({ email, password });
     if (error) {
-      if (error.code === "email_not_confirmed") {
-        setShowResend(true);
-        setMessage("ایمیلت هنوز تأیید نشده؛ لینک ایمیل را باز کن یا تأییدیهٔ جدید بگیر.");
-      } else {
-        setMessage(error.status === 429 ? "تعداد تلاش‌ها زیاد شده؛ کمی صبر کن و دوباره تلاش کن." : error.status === 0 || (error.status ?? 0) >= 500 ? "ارتباط با سرویس ورود برقرار نشد؛ دوباره تلاش کن." : "ایمیل یا رمز عبور درست نیست.");
-      }
+      setMessage("ایمیل یا رمز عبور درست نیست.");
       setLoading(false);
       return;
     }
@@ -215,12 +207,6 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                 <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
                   <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ورود با رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
-                {mode === "signin" && showResend && <button className="nova-auth-submit" type="button" disabled={loading || resending} onClick={async event => {
-                  const form = event.currentTarget.form;
-                  const email = String(form ? new FormData(form).get("email") ?? "" : "");
-                  setResending(true);
-                  try { setMessage(await resendConfirmation(email)); } catch { setMessage("ارتباط برقرار نشد؛ دوباره تلاش کن."); } finally { setResending(false); }
-                }}>{resending ? "در حال ارسال..." : "ارسال دوبارهٔ ایمیل تأیید"}</button>}
               </form>
             </div>
             {mode === "signup" && <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی.</span></div>}

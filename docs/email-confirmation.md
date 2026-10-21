@@ -37,14 +37,3 @@ check whether the preview strips @font-face or blocks it via CSP. Do not weaken
 its security policy. Some email clients ignore web fonts and use Tahoma/Arial.
 Text and buttons remain HTML, not images. Identical fonts across inboxes cannot
 be guaranteed.
-
-## Diagnosing failed confirmation
-Verification now distinguishes confirmed, expired, rate-limited and unavailable
-results. A network/server failure must not be described as an expired token.
-Runflare logs include `signup_confirmation_failed` with machine code/status only,
-never tokens/email/raw upstream messages. The existing login page offers a resend
-button on confirmation errors or `email_not_confirmed`; Supabase's resend/email
-rate limits still apply. Only the latest unexpired link should be used.
-A password-grant `/token` 400 is not a `/verify` error and cannot diagnose why a
-confirmation failed. Inspect the safe server log or Auth `/verify` error code.
-No manual email confirmation/password changes are performed by this fix.
