@@ -17,9 +17,11 @@ begin
   blocked:=false;
   begin perform public.admin_prepare_password_recovery(target); exception when raise_exception then blocked:=true; end;
   if not blocked then raise exception 'Recovery cooldown bypassed'; end if;
-  perform set_config('request.jwt.claim.sub',current_setting('test.super_id'),true);
   email:=public.admin_prepare_password_recovery(current_setting('test.admin_id')::uuid);
-  if email is null then raise exception 'Super admin recovery failed'; end if;
+  if email is null then raise exception 'Regular admin cannot recover admin'; end if;
+  perform set_config('request.jwt.claim.sub',current_setting('test.super_id'),true);
+  email:=public.admin_prepare_password_recovery(current_setting('test.super_id')::uuid);
+  if email is null then raise exception 'Super admin cannot recover super admin'; end if;
   perform set_config('request.jwt.claim.sub',current_setting('test.student_id'),true);
   blocked:=false;
   begin perform public.admin_prepare_password_recovery(target); exception when insufficient_privilege then blocked:=true; end;

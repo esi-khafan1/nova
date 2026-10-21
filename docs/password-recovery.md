@@ -1,14 +1,15 @@
 # Admin-initiated password recovery
 
 Separate admin screen: `/dashboard/admin/password-recovery`.
-Regular admins can send to non-admin users. Super admins can also send to admins.
+Regular admins can send to all accounts, including admins, except super admins.
+Super admins can send to all accounts, including other super admins.
 The target email is resolved in a permission-checked DB function, never accepted
 from a hidden field. Reservations are audited (IDs/time only), one per target
 per minute and at most 10 per actor per hour. Failed sends reserve the same
 cooldown to prevent retries bypassing throttling. Supabase/SMTP limits still apply.
 
 ## Deployment order
-1. Apply migration 056 (applied live during implementation).
+1. Apply migrations 056 and 057 (applied live during implementation).
 2. Deploy the latest `arena/9639a778-nova` commit on Runflare.
 3. Supabase > Authentication > URL Configuration: include
    `https://nova-academy.ir/auth/recovery` in Redirect URLs; keep existing entries.
