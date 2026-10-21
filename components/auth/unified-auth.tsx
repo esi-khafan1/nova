@@ -129,7 +129,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
     setLoading(true);
-    const { error } = await createClient().auth.signUp({
+    const { data: signupData, error } = await createClient().auth.signUp({
       email,
       password,
       options: {
@@ -140,9 +140,15 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (error) {
       setMessage(
         error.message.includes("registered")
-          ? "قبلاً با این ایمیل ثبت‌نام شده است."
+          ? "این حساب قبلاً ساخته شده است؛ وارد شوید."
           : "ثبت‌نام انجام نشد. اطلاعات را بررسی کن.",
       );
+      setLoading(false);
+      return;
+    }
+    if (signupData.user?.identities?.length === 0) {
+      changeMode("signin");
+      setMessage("این حساب قبلاً ساخته شده است؛ وارد شوید.");
       setLoading(false);
       return;
     }
