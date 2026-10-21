@@ -7,9 +7,10 @@ import { LandingHeader } from "@/components/landing-header";
 import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
 import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
+import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
 import { emailConfirmationUrl } from "@/lib/auth-urls";
 
-type AuthMode = "signin" | "signup";
+type AuthMode = "signin" | "signup" | "reset";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const benefits = [
@@ -75,6 +76,35 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     router.refresh();
   }
 
+  async function submitReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    if (passwordError || !isEnglishPasswordInput(passwordValue)) {
+      setPasswordError(englishPasswordMessage);
+      return;
+    }
+    if (passwordValue.length < 8 || passwordValue.length > 128) {
+      setMessage("رمز جدید باید بین ۸ تا ۱۲۸ کاراکتر باشد.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await saveRecoveredPassword(passwordValue);
+      if (result.ok) {
+        setMode("signin");
+        setPasswordValue("");
+        setShowPassword(false);
+        setSuccess(true);
+        window.history.replaceState(null, "", "/auth?mode=signin&password_changed=1");
+      }
+      setMessage(result.message);
+    } catch {
+      setMessage("ارتباط برقرار نشد؛ دوباره تلاش کن.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submitSignUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -128,11 +158,11 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
           <section className="nova-auth-form-panel" aria-labelledby="nova-auth-title">
             <div className="nova-auth-heading">
               <span className="nova-auth-eyebrow"><i aria-hidden="true" /> حساب کاربری نووا</span>
-              <h1 id="nova-auth-title">{mode === "signin" ? "خوش برگشتی!" : "قدم اول، با تو"}</h1>
-              <p>{mode === "signin" ? "وارد حساب شو و مسیرت را از همان‌جا ادامه بده." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
+              <h1 id="nova-auth-title">{mode === "reset" ? "رمز جدیدت را تعیین کن" : mode === "signin" ? "خوش برگشتی!" : "قدم اول، با تو"}</h1>
+              <p>{mode === "reset" ? "رمز جدید را ذخیره کن؛ بعد با همان رمز وارد حسابت شو." : mode === "signin" ? "وارد حساب شو و مسیرت را از همان‌جا ادامه بده." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
             </div>
 
-            <div className="nova-auth-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
+            {mode !== "reset" && <div className="nova-auth-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
               {(["signin", "signup"] as const).map((tabMode) => (
                 <button key={tabMode} id={`auth-tab-${tabMode}`} className={mode === tabMode ? "active" : ""} type="button" role="tab" aria-selected={mode === tabMode} aria-controls="auth-form-panel" tabIndex={mode === tabMode ? 0 : -1} disabled={loading}
                   onClick={() => changeMode(tabMode)}
@@ -146,7 +176,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                   {tabMode === "signin" ? "ورود به حساب" : "ثبت‌نام"}
                 </button>
               ))}
-            </div>
+            </div>}
 
             {message && (
               <div className={`nova-auth-message${success ? " success" : ""}`} role={success ? "status" : "alert"} aria-live="polite">
@@ -154,23 +184,23 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
               </div>
             )}
 
-            <div id="auth-form-panel" role="tabpanel" aria-labelledby={`auth-tab-${mode}`}>
-              <form key={mode} onSubmit={mode === "signin" ? submitSignIn : submitSignUp} noValidate aria-busy={loading}>
+            <div id="auth-form-panel" role={mode === "reset" ? undefined : "tabpanel"} aria-labelledby={mode === "reset" ? "nova-auth-title" : `auth-tab-${mode}`}>
+              <form key={mode} onSubmit={mode === "reset" ? submitReset : mode === "signin" ? submitSignIn : submitSignUp} noValidate aria-busy={loading}>
                 {mode === "signup" && <div className="nova-auth-field">
                   <label htmlFor="signup-name">نام و نام خانوادگی</label>
                   <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="account" /></span><input id="signup-name" name="fullName" placeholder="مثلاً: علی رضایی" autoComplete="name" required /></div>
                 </div>}
-                <div className="nova-auth-field">
+                {mode !== "reset" && <div className="nova-auth-field">
                   <label htmlFor={`${mode}-email`}>ایمیل</label>
                   <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="email" /></span><input id={`${mode}-email`} name="email" type="email" dir="ltr" placeholder="you@example.com" autoComplete="email" autoCapitalize="none" spellCheck={false} required /></div>
-                </div>
+                </div>}
                 <div className="nova-auth-field">
-                  <label htmlFor={`${mode}-password`}>رمز عبور</label>
+                  <label htmlFor={`${mode}-password`}>{mode === "reset" ? "رمز عبور جدید" : "رمز عبور"}</label>
                   <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" value={passwordValue} onChange={event => changePassword(event.target.value)} aria-invalid={!!passwordError} aria-describedby={passwordError ? `${mode}-password-error` : undefined} autoCapitalize="none" autoCorrect="off" spellCheck={false} type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
                 </div>
                 {passwordError && <p id={`${mode}-password-error`} role="alert" className="nova-auth-message">{passwordError}</p>}
                 <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
-                  <span>{loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
+                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ذخیرهٔ رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
               </form>
             </div>

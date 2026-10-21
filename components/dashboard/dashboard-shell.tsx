@@ -137,6 +137,11 @@ export function DashboardShell({
       ? [
           {href:"/dashboard/admin/registrations",label:"فعال‌سازی دانش‌آموزها",icon:"admin" as const},
           {
+            href: "/dashboard/admin/password-recovery",
+            label: "بازیابی رمز عبور",
+            icon: "admin" as const,
+          },
+          {
             href: "/dashboard/admin/users",
             label: "مدیریت کاربران",
             icon: "admin" as const,

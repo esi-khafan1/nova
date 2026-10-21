@@ -1,0 +1,7 @@
+.recovery-card { max-width: 760px; }
+.recovery-card p { line-height: 2; overflow-wrap: anywhere; }
+.recovery-send-form { display: grid; gap: 14px; min-width: 0; margin-top: 24px; }
+.recovery-send-form select { width: 100%; min-width: 0; min-height: 48px; font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: inherit; }
+.recovery-send-form button { justify-self: start; min-height: 48px; padding: 12px 22px; }
+.recovery-note { font-size: 13px; margin-top: 20px; }
+@media(max-width: 600px) { .recovery-send-form button { width: 100%; } }
