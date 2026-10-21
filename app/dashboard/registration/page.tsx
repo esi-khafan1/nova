@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
-import { getRequestUser } from "@/lib/supabase/request-auth";
+import { createClient } from "@/lib/supabase/server";
 import { safeReturnPath } from "@/lib/return-path";
 import { parseCourseSelection, courseRegistrationPath } from "@/lib/courses";
 import { loadStudentAccount } from "@/lib/load-student-account";
@@ -13,7 +13,7 @@ export default async function RegistrationPage({ searchParams }: { searchParams:
   const requested = parseCourseSelection(params);
   const invalidSelection = !requested && ["grade","field","course","months"].some(key => params[key] !== undefined);
   const next = requested ? courseRegistrationPath(requested) : "/dashboard/registration";
-  const { user } = await getRequestUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
   if (!user || !user.email_confirmed_at) redirect(`/auth?mode=signup&next=${encodeURIComponent(safeReturnPath(next))}`);
   const { supabase, profile } = await requireProfile(["student"], true);
   if (profile.registration_status === "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-card"><h1>خدمات حساب تو فعال است</h1><p>برای حفظ ثبت‌نام تأییدشده، این فرم آن را بازنویسی نمی‌کند. برای تغییر یا تمدید دوره با نووا هماهنگ کن.</p><Link className="button" href="/dashboard/student">رفتن به پنل من</Link></section></DashboardShell>;

@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { cache } from "react";
-import { getRequestUser } from "@/lib/supabase/request-auth";
+import { createClient } from "@/lib/supabase/server";
 export type AppRole = "student" | "counselor" | "exam_designer" | "admin";
 export type CurrentProfile = {
   id: string;
@@ -17,26 +16,19 @@ export type CurrentProfile = {
     | "foreign_languages"
     | null;
 };
-// Memoize data, not authorization decisions. Every caller's allowed roles and
-// registration requirements are still checked separately, including actions.
-const getRequestProfile = cache(async () => {
-  const { supabase, user } = await getRequestUser();
+export async function requireProfile(allowed?: AppRole[], allowInactive = false) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/auth/sign-in");
-  const started = performance.now();
   const { data } = await supabase
     .from("profiles")
     .select("id,full_name,role,grade,phone,study_field,registration_status")
     .eq("id", user.id)
     .single();
-  if (process.env.AUTH_PERF_LOG === "1") {
-    console.info(JSON.stringify({ event: "auth_timing", operation: "profile", ms: Math.round(performance.now() - started) }));
-  }
   if (!data) redirect("/auth/sign-in");
-  return { supabase, user, profile: data as CurrentProfile };
-});
-
-export async function requireProfile(allowed?: AppRole[], allowInactive = false) {
-  const { supabase, user, profile } = await getRequestProfile();
+  const profile = data as CurrentProfile;
   if (profile.role === "student" && !user.email_confirmed_at) redirect("/auth?mode=signin&error=unconfirmed");
   if (allowed && !allowed.includes(profile.role)) redirect("/dashboard");
   if(profile.role === "student" && profile.registration_status !== "active" && !allowInactive) redirect("/dashboard/registration");
