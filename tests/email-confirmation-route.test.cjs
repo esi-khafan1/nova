@@ -25,7 +25,7 @@ const route = load('app/auth/confirm/route.ts', {
     calls++;
     assert.equal(hash, token);
     if (outcome === 'network') throw Error('Network unavailable');
-    return outcome === 'success';
+    return outcome === 'success' ? 'confirmed' : outcome;
   } },
 });
 (async () => {
@@ -34,7 +34,7 @@ const route = load('app/auth/confirm/route.ts', {
   for (const suffix of ['', '?token_hash=bad', '?token_hash=%22%3E%3Cscript%3E']) {
     const invalid = await route.GET(new Request(`${origin}/auth/confirm${suffix}`));
     assert.equal(invalid.status, 303);
-    assert.match(invalid.headers.get('Location'), /error=callback/);
+    assert.match(invalid.headers.get('Location'), /error=confirmation_expired/);
   }
   assert.equal(calls, 0);
   const success = await route.GET(request());
@@ -48,7 +48,7 @@ const route = load('app/auth/confirm/route.ts', {
     outcome = result;
     const failure = await route.GET(request());
     assert.equal(failure.status, 303);
-    assert.match(failure.headers.get('Location'), /error=callback/);
+    assert.match(failure.headers.get('Location'), result === 'network' ? /error=confirmation_unavailable/ : /error=confirmation_expired/);
     assert.equal(failure.headers.get('Location').includes(token), false);
     assert.equal(new URL(failure.headers.get('Location')).origin, origin);
   }
