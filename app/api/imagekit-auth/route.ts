@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
   const purpose = request.nextUrl.searchParams.get("purpose") || "content";
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   let allowed = false;
-  if (profile?.role === "counselor") {
+  if (profile?.role === "content_manager") {
+    allowed = ["content", "podcast-audio"].includes(purpose);
+  } else if (profile?.role === "counselor") {
     const { data: counselor } = await supabase.from("counselor_profiles").select("approval_status").eq("user_id", user.id).single();
     allowed = counselor?.approval_status === "approved" && ["content", "podcast-audio"].includes(purpose);
   } else if (profile?.role === "exam_designer" && purpose === "exam-question") {

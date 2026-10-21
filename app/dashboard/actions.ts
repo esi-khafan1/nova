@@ -225,11 +225,11 @@ export async function changeUserRole(fd: FormData) {
   const target_role = clean(fd.get("target_role"), 20);
   if (
     !uuidPattern.test(user_id) ||
-    !["student", "counselor", "exam_designer", "admin"].includes(target_role)
+    !["student", "counselor", "exam_designer", "admin", "content_manager"].includes(target_role)
   )
     redirect("/dashboard/admin/users?error=role");
 
-  if (target_role === "admin") {
+  if (["admin", "content_manager"].includes(target_role)) {
     const { data: superAdmins, error: permissionError } = await s.rpc("admin_list_super_admins");
     if (permissionError || !(superAdmins ?? []).some((row: { user_id: string }) => row.user_id === user.id)) {
       redirect("/dashboard/admin/users?error=role");

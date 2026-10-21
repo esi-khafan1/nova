@@ -1,0 +1,19 @@
+.editorial-tabs { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 24px; }
+.editorial-tabs a { padding:10px 18px; border:1px solid var(--sp-line); border-radius:12px; color:var(--sp-ink); background:#fff; text-decoration:none; }
+.editorial-tabs a[aria-current="page"] { background:var(--sp-ice); border-color:var(--sp-blue); }
+.editorial-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:20px; }
+.editorial-card { min-width:0; overflow-wrap:anywhere; display:flex; flex-direction:column; gap:12px; }
+.editorial-card h2 { font-size:20px; margin:0; }
+.editorial-card p { margin:0; }
+.editorial-card .button { margin-top:auto; }
+.editorial-meta { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--sp-blue); }
+.editorial-decisions { margin-top:24px; display:grid; gap:24px; }
+.editorial-decisions form { display:grid; gap:12px; min-width:0; }
+.editorial-decisions textarea { width:100%; min-width:0; font:inherit; padding:12px; border:1px solid var(--sp-line); border-radius:12px; resize:vertical; }
+.student-portal-main audio { max-width:100%; }
+.student-portal-main .content-editor-form { min-width:0; }
+@media(max-width:600px) { .editorial-tabs a { flex:1 1 130px; text-align:center; }.editorial-decisions .button { width:100%; } }
+
+.student-portal-main > .portal-card { margin-bottom:24px; overflow-wrap:anywhere; }
+.student-portal-main .portal-heading { flex-wrap:wrap; min-width:0; }
+.student-portal-main .portal-heading h1 { overflow-wrap:anywhere; }

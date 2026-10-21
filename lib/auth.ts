@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getRequestUser } from "@/lib/supabase/request-auth";
-export type AppRole = "student" | "counselor" | "exam_designer" | "admin";
+export type AppRole = "student" | "counselor" | "exam_designer" | "admin" | "content_manager";
 export type CurrentProfile = {
   id: string;
   full_name: string;

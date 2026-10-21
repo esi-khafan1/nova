@@ -12,7 +12,7 @@ export default async function NewContentPage() {
         <div>
           <span>پادکست‌های نووا</span>
           <h1>ساخت پادکست</h1>
-          <p>عنوان، متن و تصویر را اضافه کن؛ سپس ویس را بارگذاری و منتشر کن.</p>
+          <p>عنوان، متن و تصویر را اضافه کن؛ سپس ویس را بارگذاری کن و برای بررسی بفرست.</p>
         </div>
         <Link
           className="button button-ghost"

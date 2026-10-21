@@ -76,7 +76,7 @@ export default async function CounselorDashboard() {
         <div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg></div>
         <h2>{(resources ?? 0).toLocaleString("fa-IR")} محتوای آموزشی</h2>
         <p>
-          مقاله آموزشی بنویس، تصویر اضافه کن و مستقیم برای دانش‌آموزان منتشر کن.
+          مقاله آموزشی بنویس، تصویر اضافه کن و برای بررسی مدیر محتوا بفرست.
         </p>
         <Link
           className="button button-secondary"
@@ -91,7 +91,7 @@ export default async function CounselorDashboard() {
         <p>خبر معتبر را همراه با لینک منبع و تاریخ انتشار برای دانش‌آموزان بنویس.</p>
         <Link className="button button-secondary" href="/dashboard/counselor/news">مدیریت و نوشتن اخبار کنکور</Link>
       </section>
-    <section className="portal-card portal-empty counselor-secondary"><div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></div><h2>پادکست‌های نووا</h2><p>محتوای آموزشی را با تصویر، متن و ویس برای دانش‌آموزان منتشر کن.</p><Link className="button button-secondary" href="/dashboard/counselor/podcasts">مدیریت و ساخت پادکست</Link></section>
+    <section className="portal-card portal-empty counselor-secondary"><div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></div><h2>پادکست‌های نووا</h2><p>محتوای آموزشی را با تصویر، متن و ویس برای بررسی مدیر محتوا بفرست.</p><Link className="button button-secondary" href="/dashboard/counselor/podcasts">مدیریت و ساخت پادکست</Link></section>
     </DashboardShell>
   );
 }

@@ -20,9 +20,10 @@ import {
 import { RichContent } from "@/components/content/rich-content";
 import { PodcastAudioUpload } from "@/components/content/podcast-audio-upload";
 import { savePodcastAction } from "@/app/dashboard/counselor/podcasts/actions";
+import { saveReviewEdits } from "@/app/dashboard/content_manager/actions";
 import { saveNewsAction } from "@/app/dashboard/counselor/news/actions";
 
-type EditableResource = {
+export type EditableResource = {
   id: string;
   title: string;
   summary: string | null;
@@ -31,6 +32,7 @@ type EditableResource = {
   grade: number | null;
   subject: string | null;
   status: "draft" | "published" | "archived";
+  revision?: number;
   audio_url?: string | null;
   audio_seconds?: number | null;
   source_name?: string;
@@ -66,13 +68,15 @@ export function ContentEditorForm({
   resource,
   news = false,
   podcast = false,
+  review,
 }: {
   resource?: EditableResource;
   news?: boolean;
   podcast?: boolean;
+  review?: { id: string; version: number; kind: "resources"|"news"|"podcasts" };
 }) {
   const [state, formAction, pending] = useActionState(
-    podcast ? savePodcastAction : news ? saveNewsAction : saveResourceAction,
+    review ? saveReviewEdits : podcast ? savePodcastAction : news ? saveNewsAction : saveResourceAction,
     initialState,
   );
   const [podcastMetadata, setPodcastMetadata] = useState({
@@ -296,6 +300,8 @@ export function ContentEditorForm({
 
   return (
     <form action={formAction} className="content-editor-form">
+      <input name="revision" type="hidden" value={review?.version ?? resource?.revision ?? 0}/>
+      {review && <><input name="submission_id" type="hidden" value={review.id}/><input name="kind" type="hidden" value={review.kind}/></>}
       {resource && <input name="id" type="hidden" value={resource.id} />}
       <input name="body" type="hidden" value={body} />
       <input ref={intentRef} name="intent" type="hidden" defaultValue="draft" />
@@ -544,9 +550,9 @@ export function ContentEditorForm({
           }}
           type="submit"
         >
-          ذخیره پیش‌نویس
+          {review ? "ذخیرهٔ ویرایش مدیر محتوا" : "ذخیره پیش‌نویس"}
         </button>
-        <button
+        {!review && <button
           className="button"
           disabled={pending || uploading || audioUploading || Boolean(markdownError)}
           onClick={() => {
@@ -554,8 +560,8 @@ export function ContentEditorForm({
           }}
           type="submit"
         >
-          {pending ? "در حال ذخیره..." : podcast ? "انتشار پادکست" : news ? "انتشار خبر" : "انتشار محتوا"}
-        </button>
+          {pending ? "در حال ارسال..." : "ارسال برای بررسی مدیر محتوا"}
+        </button>}
       </div>
     </form>
   );

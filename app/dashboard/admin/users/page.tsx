@@ -6,7 +6,7 @@ import { requireProfile } from "@/lib/auth";
 type UserRow = {
   id: string;
   full_name: string;
-  role: "student" | "counselor" | "exam_designer" | "admin";
+  role: "student" | "counselor" | "exam_designer" | "admin" | "content_manager";
   grade: number | null;
   created_at: string;
   email: string | null;
@@ -17,6 +17,7 @@ const roleLabels = {
   counselor: "مشاور",
   admin: "مدیر",
   exam_designer: "طراح آزمون",
+  content_manager: "مدیر محتوا",
 };
 
 export default async function AdminUsersPage({
@@ -38,7 +39,7 @@ export default async function AdminUsersPage({
         <div>
           <span>مدیریت نووا</span>
           <h1>مدیریت کاربران</h1>
-          <p>{canGrantAdmin ? "دسترسی سوپرادمین: مدیریت نقش کاربران و ارتقای حساب‌ها به مدیر." : "نقش هر حساب را مستقیماً بین دانش‌آموز، مشاور و طراح آزمون تغییر بده."}</p>
+          <p>{canGrantAdmin ? "دسترسی سوپرادمین: تغییر نقش مدیرها و تعیین مدیر یا مدیر محتوا." : "نقش هر حساب را مستقیماً بین دانش‌آموز، مشاور و طراح آزمون تغییر بده."}</p>
         </div>
       </section>
 
@@ -78,7 +79,7 @@ export default async function AdminUsersPage({
                 {user.email || "ایمیل ثبت نشده"}
               </span>
 
-              {user.role !== "admin" ? (
+              {!superAdminIds.has(user.id) && (canGrantAdmin || !["admin", "content_manager"].includes(user.role)) ? (
                 <UserRoleForm canGrantAdmin={canGrantAdmin} user={{id:user.id,full_name:user.full_name,role:user.role}} />
               ) : (
                 <span className="no-action">—</span>

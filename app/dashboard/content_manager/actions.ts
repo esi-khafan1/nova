@@ -1,0 +1,36 @@
+"use server";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { requireProfile } from "@/lib/auth";
+import { validateEditorial } from "@/lib/editorial/validation";
+import { refreshEditorial,refreshSubmission } from "@/lib/editorial/refresh";
+import { editorialKinds, type EditorialKind } from "@/lib/editorial/types";
+const uuid=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+export async function saveReviewEdits(_state:{error?:string},form:FormData):Promise<{error?:string}> {
+ const {supabase}=await requireProfile(["content_manager"]);
+ const id=String(form.get("submission_id")??""),kind=String(form.get("kind")??"") as EditorialKind,version=Number(form.get("revision"));
+ if(!uuid.test(id)||!editorialKinds.includes(kind)||!Number.isInteger(version)) return {error:"اطلاعات معتبر نیست؛ صفحه را دوباره باز کن."};
+ // Kind is derived again from the protected submission, never trusted from the form.
+ const {data:submission}=await supabase.from("content_submissions").select("kind").eq("id",id).single();
+ if(!submission||submission.kind!==kind) return {error:"ارسال پیدا نشد."};
+ const result=validateEditorial(kind,form);
+ if(!result.payload)return {error:result.error};
+ const {error}=await supabase.rpc("edit_content_submission",{target_submission_id:id,content_payload:result.payload,expected_version:version});
+ if(error)return {error:"ویرایش ذخیره نشد؛ ممکن است نسخه توسط شخص دیگری تغییر کرده باشد. صفحه را دوباره باز کن."};
+ revalidatePath(`/dashboard/content_manager/${id}`);revalidatePath("/dashboard/content_manager");
+ redirect(`/dashboard/content_manager/${id}?saved=1`);
+}
+export async function decideSubmission(form:FormData) {
+ const {supabase}=await requireProfile(["content_manager"]);
+ const id=String(form.get("submission_id")??""),decision=String(form.get("decision")??""),reason=String(form.get("reason")??"").trim(),version=Number(form.get("version"));
+ if(!uuid.test(id)||!["approve","reject"].includes(decision)||!Number.isInteger(version)) redirect("/dashboard/content_manager?error=invalid");
+ if(decision==="reject"&&(reason.length<5||reason.length>2000)) redirect(`/dashboard/content_manager/${id}?error=reason`);
+ const {data:submission}=await supabase.from("content_submissions").select("kind").eq("id",id).single();
+ if(!submission) redirect("/dashboard/content_manager?error=missing");
+ const {data,error}=await supabase.rpc("review_content_submission",{target_submission_id:id,decision,reason,expected_version:version});
+ if(error)redirect(`/dashboard/content_manager/${id}?error=changed`);
+ if(decision==="approve")refreshEditorial(submission.kind as EditorialKind,data as string);
+ else refreshSubmission(submission.kind as EditorialKind,data as string);
+ revalidatePath(`/dashboard/content_manager/${id}`);
+ redirect(`/dashboard/content_manager?state=${decision==="approve"?"published":"rejected"}&done=1`);
+}
