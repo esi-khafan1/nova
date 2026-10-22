@@ -1,6 +1,3 @@
-import {performanceEnabled} from "@/lib/performance/access";
-import {measurePerformance} from "@/lib/performance/trace";
-import {ServerPerformanceReport} from "@/components/performance/server-performance-report";
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
@@ -8,7 +5,7 @@ import { requireProfile } from "@/lib/auth";
 export default async function AdminDashboard() {
   const { supabase, profile } = await requireProfile(["admin"]);
   const [{ count: users }, { count: students }, { count: counselors }] =
-    await measurePerformance("admin_counts_parallel",()=>Promise.all([
+    await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase
         .from("profiles")
@@ -18,9 +15,8 @@ export default async function AdminDashboard() {
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .eq("role", "counselor"),
-    ]));
+    ]);
 
-  const diagnostic=await measurePerformance("debug_access",()=>performanceEnabled(supabase));
   return (
     <DashboardShell role="admin" name={profile.full_name}>
       <section className="portal-card"><h2>ثبت‌نام و فعال‌سازی دانش‌آموزها</h2><p>اطلاعات و فیش را بررسی کن و با اختصاص مشاور، حساب را فعال کن.</p><Link className="button" href="/dashboard/admin/registrations">بررسی ثبت‌نام‌ها و تخصیص مشاور</Link></section>
@@ -60,8 +56,6 @@ export default async function AdminDashboard() {
           مدیریت کاربران
         </Link>
       </section>
-      <p><Link href="/dashboard/performance" prefetch={false}>تشخیص موقت کندی</Link></p>
-      {diagnostic&&<ServerPerformanceReport route="/dashboard/admin"/>}
     </DashboardShell>
   );
 }

@@ -1,4 +1,3 @@
-import { recordPerformance } from "@/lib/performance/trace";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getRequestUser } from "@/lib/supabase/request-auth";
@@ -29,7 +28,6 @@ const getRequestProfile = cache(async () => {
     .select("id,full_name,role,grade,phone,study_field,registration_status")
     .eq("id", user.id)
     .single();
-  recordPerformance("profile",started);
   if (process.env.AUTH_PERF_LOG === "1") {
     console.info(JSON.stringify({ event: "auth_timing", operation: "profile", ms: Math.round(performance.now() - started) }));
   }

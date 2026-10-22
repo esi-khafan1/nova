@@ -8,7 +8,7 @@ const moduleStub = { exports: {} };
 let claims = { sub: 'account' }, authError = null, claimCalls = 0;
 const code = ts.transpileModule(fs.readFileSync('middleware.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 vm.runInNewContext(code, {
-  module: moduleStub, exports: moduleStub.exports, URL, Headers, performance,
+  module: moduleStub, exports: moduleStub.exports, URL, performance,
   process: { env: { NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test', AUTH_PERF_LOG: '1' } },
   require(name) {
     if (name === 'next/server') return { NextRequest, NextResponse };
@@ -38,13 +38,6 @@ for (const path of ['/dashboard', '/dashboard/student', '/dashboard/admin/users'
   assert.equal(response.cookies.get('sb-test-session').value, 'refreshed');
   assert.equal(request.cookies.get('sb-test-session').value, 'refreshed');
   assert.match(response.headers.get('Server-Timing'), /auth_claims;dur=/);
-  const measured=await middleware(new NextRequest('https://nova-academy.ir/dashboard/content_manager', {headers:{cookie:'nova-perf=1','x-nova-perf-start-ms':'forged','x-nova-perf-claims-ms':'forged'}}));
-  assert.match(measured.headers.get('x-middleware-request-x-nova-perf-start-ms'),/^\d+$/);
-  assert.match(measured.headers.get('x-middleware-request-x-nova-perf-claims-ms'),/^\d+$/);
-  assert.match(measured.headers.get('x-middleware-request-cookie'),/sb-test-session=refreshed/);
-  assert.equal(measured.cookies.get('sb-test-session').value,'refreshed');
-  const stripped=await middleware(new NextRequest('https://nova-academy.ir/dashboard',{headers:{'x-nova-perf-start-ms':'forged'}}));
-  assert.equal(stripped.headers.get('x-middleware-request-x-nova-perf-start-ms'),null);
   claims = null;
   const guest = await middleware(new NextRequest('https://nova-academy.ir/dashboard/student/plans?week=1'));
   assert.equal(guest.status, 307);
@@ -55,6 +48,6 @@ for (const path of ['/dashboard', '/dashboard/student', '/dashboard/admin/users'
   claims = { sub: 'forged' }; authError = { message: 'Invalid signature' };
   const invalid = await middleware(new NextRequest('https://nova-academy.ir/dashboard/student'));
   assert.equal(invalid.status, 307);
-  assert.equal(claimCalls, 5);
+  assert.equal(claimCalls, 3);
   console.log('Middleware matcher, verified-claims, refresh cookies and guest redirect tests passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
