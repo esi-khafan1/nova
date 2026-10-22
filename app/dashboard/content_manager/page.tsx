@@ -1,3 +1,6 @@
+import {performanceEnabled} from "@/lib/performance/access";
+import {measurePerformance} from "@/lib/performance/trace";
+import {ServerPerformanceReport} from "@/components/performance/server-performance-report";
 import Link from "next/link";
 import { ManagerLiveDirectory } from "@/components/content/manager-live-directory";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -18,9 +21,10 @@ export default async function ContentManagerPage({searchParams}:{searchParams:Pr
   <ManagerLiveDirectory supabase={supabase} state={state} page={page}/>
  </DashboardShell>;
  const [result,authors]=await Promise.all([
-  supabase.from("content_submissions").select("id,kind,author_id,state,version,updated_at,rejection_reason,title:payload->>title,summary:payload->>summary",{count:"exact"}).eq("state",state).order("updated_at",{ascending:false}).order("id").range(page*50,page*50+49),
-  supabase.rpc("editorial_authors"),
+  measurePerformance("editorial_queue",()=>supabase.from("content_submissions").select("id,kind,author_id,state,version,updated_at,rejection_reason,title:payload->>title,summary:payload->>summary",{count:"exact"}).eq("state",state).order("updated_at",{ascending:false}).order("id").range(page*50,page*50+49)),
+  measurePerformance("editorial_authors",()=>supabase.rpc("editorial_authors")),
  ]);
+ const diagnostic=await measurePerformance("debug_access",()=>performanceEnabled(supabase));
  const names=new Map<string,string>((authors.data??[]).map((a:{author_id:string;full_name:string})=>[a.author_id,a.full_name]));
  return <DashboardShell role="content_manager" name={profile.full_name}>
   <section className="portal-heading"><div><span>میز بررسی</span><h1>مدیریت محتوای نووا</h1><p>مقاله، خبر و پادکست ارسالی مشاورها را بررسی، ویرایش و تأیید یا با دلیل رد کن.</p></div></section>
@@ -32,5 +36,6 @@ export default async function ContentManagerPage({searchParams}:{searchParams:Pr
    return <article className="portal-card editorial-card" key={row.id}><div className="editorial-meta"><span>{kindLabels[row.kind]}</span><span>{reviewLabels[row.state]}</span></div><h2>{row.title}</h2><p>{row.summary}</p><p>نویسنده: {names.get(row.author_id)||"نام ثبت نشده"}</p><small>{formatPersianDate(row.updated_at)}</small>{row.rejection_reason&&<p>دلیل رد: {row.rejection_reason}</p>}<Link className="button" href={`/dashboard/content_manager/${row.id}`}>{row.state==="pending"?"بررسی و تصمیم‌گیری":"مشاهدهٔ نتیجه"}</Link></article>;
   })}</div>:<section className="portal-card portal-empty"><h2>محتوایی در این بخش نیست</h2><p>ارسال‌های جدید مشاورها در بخش «در انتظار بررسی» نمایش داده می‌شوند.</p></section>}
   <nav className="editorial-tabs" aria-label="صفحه‌بندی">{page>0&&<Link href={`/dashboard/content_manager?state=${state}&page=${page-1}`}>صفحهٔ قبل</Link>}{(result.count??0)>(page+1)*50&&<Link href={`/dashboard/content_manager?state=${state}&page=${page+1}`}>صفحهٔ بعد</Link>}</nav>
+ {diagnostic&&<ServerPerformanceReport route="/dashboard/content_manager"/>}
  </DashboardShell>;
 }

@@ -1,3 +1,4 @@
+import { recordPerformance } from "@/lib/performance/trace";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
@@ -6,6 +7,7 @@ export const getRequestUser = cache(async () => {
   const supabase = await createClient();
   const started = performance.now();
   const { data: { user } } = await supabase.auth.getUser();
+  recordPerformance("auth_user",started);
   if (process.env.AUTH_PERF_LOG === "1") {
     // Operational timings only; no identities, cookies, passwords or tokens.
     console.info(JSON.stringify({ event: "auth_timing", operation: "getUser", ms: Math.round(performance.now() - started) }));

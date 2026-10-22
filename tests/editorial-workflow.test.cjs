@@ -35,6 +35,7 @@ const read=p=>readFileSync(p,'utf8');
  await db.exec(read('supabase/migrations/058_content_manager_role.sql'));
  await db.exec(read('supabase/migrations/059_editorial_workflow.sql'));
  await db.exec(read('supabase/migrations/060_content_manager_archive.sql'));
+ await db.exec(read('supabase/migrations/061_temporary_performance_access.sql'));
  await db.exec('create trigger protect_profile_role before update on public.profiles for each row execute function private.protect_profile_role()');
  for(const [actor,id]of Object.entries(ids)){
   await db.query('insert into auth.users values($1)',[id]);
@@ -58,6 +59,20 @@ const read=p=>readFileSync(p,'utf8');
  await actor('admin');
  await denied('select public.admin_set_user_role($1,$2)',[ids.manager,'student'],/super administrators/);
  await denied("update public.profiles set role='student' where id=$1",[ids.manager],/Super administrator required/);
+ await actor('manager');assert.equal(await scalar('select public.performance_debug_enabled()'),false);
+ await denied('select public.set_performance_debug_access($1,true)',[ids.manager],/Super administrator required/);
+ await actor('admin');assert.equal(await scalar('select public.performance_debug_enabled()'),false);
+ await denied('select public.set_performance_debug_access($1,true)',[ids.manager],/Super administrator required/);
+ await actor('super');assert.equal(await scalar('select public.performance_debug_enabled()'),true);
+ await denied('select public.set_performance_debug_access($1,true)',[ids.author],/account required/);
+ await db.query('select public.set_performance_debug_access($1,true)',[ids.manager]);
+ await actor('manager');assert.equal(await scalar('select public.performance_debug_enabled()'),true);
+ await actor('other');assert.equal(await scalar('select public.performance_debug_enabled()'),false);
+ await actor('super');await db.query('select public.set_performance_debug_access($1,false)',[ids.manager]);
+ await actor('manager');assert.equal(await scalar('select public.performance_debug_enabled()'),false);
+ await actor('super');await db.query('select public.set_performance_debug_access($1,true)',[ids.manager]);
+ await db.exec('reset role');await db.query("update private.performance_debug_access set expires_at=now()-interval '1 second'");
+ await actor('manager');assert.equal(await scalar('select public.performance_debug_enabled()'),false);
  const payloads={
   resources:{title:'Original article',summary:'Summary',resource_type:'konkur',grade:12,subject:'Math'},
   news:{title:'Original news',summary:'Summary',source_name:'Official',source_url:'https://example.com/source',source_published_at:'2020-01-01'},

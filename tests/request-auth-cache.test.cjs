@@ -24,7 +24,9 @@ function load(path, dependencies) {
   } });
   return module.exports;
 }
+const tracing=load('lib/performance/trace.ts',{react:React});
 const shared = load('lib/supabase/request-auth.ts', {
+  '@/lib/performance/trace':tracing,
   react: React,
   '@/lib/supabase/server': { createClient: async () => {
     const req = requests.getStore();
@@ -39,6 +41,7 @@ const shared = load('lib/supabase/request-auth.ts', {
   } },
 });
 const auth = load('lib/auth.ts', {
+  '@/lib/performance/trace':tracing,
   react: React,
   '@/lib/supabase/request-auth': shared,
   'next/navigation': { redirect: url => { const error = Error('redirect'); error.url = url; throw error; } },
@@ -58,6 +61,7 @@ async function expectRedirect(fn, url) { await assert.rejects(fn, error => error
       assert.equal(results[1].profile.id, 'alice');
       await expectRedirect(() => auth.requireProfile(['counselor']), '/dashboard');
       assert.equal(alice.users, 1); assert.equal(alice.profiles, 1);
+      assert.deepEqual(Array.from(tracing.getPerformanceTrace().stages,s=>s.stage),['auth_user','profile']);
     }),
     requests.run(bob, async () => {
       const result = await auth.requireProfile(['student'], true);
@@ -70,6 +74,7 @@ async function expectRedirect(fn, url) { await assert.rejects(fn, error => error
   await requests.run(next, async () => {
     assert.equal((await auth.requireProfile(['counselor'])).profile.role, 'counselor');
     assert.equal(next.users, 1); assert.equal(next.profiles, 1);
+    assert.equal(tracing.getPerformanceTrace().stages.length,2);
   });
   const guest = fixture(null);
   await requests.run(guest, () => expectRedirect(() => auth.requireProfile(), '/auth/sign-in'));
