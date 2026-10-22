@@ -72,8 +72,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
       setLoading(false);
       return;
     }
-    router.push(destination);
-    router.refresh();
+    // A single full navigation clears any pre-login App Router cache. push +
+    // refresh could start two competing /dashboard requests after sign-in.
+    window.location.assign(destination);
   }
 
   async function submitReset(event: FormEvent<HTMLFormElement>) {

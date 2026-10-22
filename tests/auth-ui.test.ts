@@ -10,7 +10,7 @@ assert.match(route,/import "\.\.\/landing-approved\.css"/);
 assert.doesNotMatch(css,/\.nova-site-header\s*\{|\.nova-header-(inner|brand|tools)\s*\{/);
 assert.match(ui,/safeReturnPath\(returnTo\)/);
 assert.match(ui,/emailRedirectTo: emailConfirmationUrl\(destination\)/);
-assert.match(ui,/router\.push\(destination\)/);
+assert.match(ui,/window\.location\.assign\(destination\)/);
 assert.match(ui,/autoComplete=\{mode === "signin" \? "current-password" : "new-password"\}/);
 assert.match(ui,/aria-controls="auth-form-panel"/);
 assert.match(ui,/"ArrowLeft", "ArrowRight", "Home", "End"/);

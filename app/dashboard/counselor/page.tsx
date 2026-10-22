@@ -3,37 +3,16 @@ import { requireProfile } from "@/lib/auth";
 import Link from "next/link";
 export default async function CounselorDashboard() {
   const { supabase, profile } = await requireProfile(["counselor"]);
-  const [
-    { data: c },
-    { count: resources },
-    { count: requests },
-    { count: students },
-    { count: plans },
-  ] = await Promise.all([
-    supabase
-      .from("counselor_profiles")
-      .select("headline,specialty,is_accepting")
-      .eq("user_id", profile.id)
-      .single(),
-    supabase
-      .from("resources")
-      .select("id", { count: "exact", head: true })
-      .eq("author_id", profile.id),
-    supabase
-      .from("consultation_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("counselor_id", profile.id),
-    supabase
-      .from("counselor_students")
-      .select("id", { count: "exact", head: true })
-      .eq("counselor_id", profile.id),
-    supabase
-      .from("weekly_plans")
-      .select("id", { count: "exact", head: true })
-      .eq("counselor_id", profile.id),
-  ]);
+  const {data:summary,error}=await supabase.rpc("counselor_dashboard_summary").single<{
+    headline:string|null;specialty:string|null;is_accepting:boolean;
+    resources:number;requests:number;students:number;plans:number;
+  }>();
+  const c=summary;
+  const {resources,requests,students,plans}=summary??{};
+  const count=(value:number|undefined)=>value===undefined?"—":value.toLocaleString("fa-IR");
   return (
     <DashboardShell role="counselor" name={profile.full_name}>
+      {error&&<p className="portal-alert error" role="alert">اطلاعات پنل فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p>}
       <section className="portal-heading">
         <div>
           <span>پنل مشاور</span>
@@ -48,15 +27,15 @@ export default async function CounselorDashboard() {
       <div className="portal-stats">
         <article>
           <span>درخواست‌های مشاوره</span>
-          <strong>{(requests ?? 0).toLocaleString("fa-IR")}</strong>
+          <strong>{count(requests)}</strong>
         </article>
         <article>
           <span>دانش‌آموزان من</span>
-          <strong>{(students ?? 0).toLocaleString("fa-IR")}</strong>
+          <strong>{count(students)}</strong>
         </article>
         <article>
           <span>برنامه‌های ساخته‌شده</span>
-          <strong>{(plans ?? 0).toLocaleString("fa-IR")}</strong>
+          <strong>{count(plans)}</strong>
         </article>
       </div>
       <section className="portal-card admin-role-card">
@@ -74,7 +53,7 @@ export default async function CounselorDashboard() {
       </section>
       <section className="portal-card portal-wide portal-empty counselor-secondary">
         <div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg></div>
-        <h2>{(resources ?? 0).toLocaleString("fa-IR")} محتوای آموزشی</h2>
+        <h2>{count(resources)} محتوای آموزشی</h2>
         <p>
           مقاله آموزشی بنویس، تصویر اضافه کن و برای بررسی مدیر محتوا بفرست.
         </p>
