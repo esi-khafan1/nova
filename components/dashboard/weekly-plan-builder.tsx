@@ -1,5 +1,6 @@
 "use client";
 
+import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
 import { useState } from "react";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
 import { formatPersianFullDate, parseIsoDate } from "@/lib/persian-date";
@@ -191,6 +192,8 @@ export function WeeklyPlanBuilder({
   }
 
   return (
+    <>
+    <CounselorStudentStudyEditor key={student.student_id} student={student} />
     <form action={saveWeeklyPlan} className="weekly-builder">
       <section className="portal-card plan-basics">
         <div className="portal-card-title">
@@ -257,10 +260,9 @@ export function WeeklyPlanBuilder({
               ? studyFieldLabels[student.study_field]
               : "ثبت نشده"}
           </span>
-          {!student?.study_field || !student?.grade && (
+          {(!student?.study_field || !student?.grade) && (
             <strong>
-              برای پیشنهاد درس و فصل، دانش‌آموز باید پایه و رشته‌اش را در
-              پروفایل ثبت کند.
+              برای پیشنهاد درس و فصل، پایه و رشته را در بخش اطلاعات تحصیلی بالا ثبت کن.
             </strong>
           )}
         </div>
@@ -589,5 +591,6 @@ export function WeeklyPlanBuilder({
         </div>
       </section>
     </form>
+    </>
   );
 }

@@ -1,0 +1,46 @@
+// Disposable PostgreSQL only; no real student is modified.
+const {PGlite}=require('@electric-sql/pglite');
+const assert=require('node:assert/strict'),fs=require('node:fs'),{randomUUID}=require('node:crypto');
+(async()=>{
+ const db=new PGlite();
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+ create type public.app_role as enum('student','counselor','admin','content_manager','exam_designer');
+ create type public.study_field as enum('mathematics','experimental_sciences','humanities','arts','foreign_languages');
+ create table public.profiles(id uuid primary key,role public.app_role,grade smallint,study_field public.study_field,registration_status text,full_name text default 'unchanged',phone text default 'unchanged');
+ create table public.counselor_profiles(user_id uuid primary key,approval_status text);
+ create table public.counselor_students(counselor_id uuid,student_id uuid,primary key(counselor_id,student_id));
+ create table public.weekly_plans(id int primary key,title text);
+ insert into public.weekly_plans values(1,'history must stay');
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql security definer stable as $$select role from public.profiles where id=auth.uid()$$;
+ alter table public.profiles enable row level security;
+ create policy own_profile on public.profiles for select using(id=auth.uid());
+ grant usage on schema public,auth,private to authenticated;
+ grant select on public.profiles to authenticated;
+ `);
+ const ids=Object.fromEntries(['counselor','other','pending','admin','student','unassigned','inactive','manager','designer'].map(k=>[k,randomUUID()]));
+ for(const [key,id] of Object.entries(ids))await db.query('insert into public.profiles(id,role,registration_status) values($1,$2,$3)',[id,['counselor','other','pending'].includes(key)?'counselor':key==='admin'?'admin':key==='manager'?'content_manager':key==='designer'?'exam_designer':'student',key==='inactive'?'incomplete':'active']);
+ await db.query("insert into public.counselor_profiles values($1,'approved'),($2,'approved'),($3,'pending')",[ids.counselor,ids.other,ids.pending]);
+ for(const key of ['student','inactive','admin'])await db.query('insert into public.counselor_students values($1,$2)',[ids.counselor,ids[key]]);
+ await db.exec(fs.readFileSync('supabase/migrations/066_counselor_student_study.sql','utf8'));
+ const actor=async key=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[ids[key]]);await db.exec('set role authenticated');};
+ const save=(target='student',grade=11,field='humanities')=>db.query('select public.counselor_update_student_study($1,$2::smallint,$3::public.study_field)',[ids[target],grade,field]);
+ const read=async()=>{await db.exec('reset role');return (await db.query('select * from public.profiles where id=$1',[ids.student])).rows[0];};
+ const original=await read();await actor('counselor');
+ await assert.rejects(()=>db.query('update public.profiles set grade=10 where id=$1',[ids.student]),/permission denied/);
+ await save();let row=await read();assert.equal(row.grade,11);assert.equal(row.study_field,'humanities');
+ for(const key of ['id','role','registration_status','full_name','phone'])assert.equal(row[key],original[key]);
+ await actor('counselor');await save('student',12,'experimental_sciences');
+ for(const grade of [null,9,13])await assert.rejects(()=>save('student',grade),/Invalid student study/);
+ await assert.rejects(()=>save('student',10,null),/Invalid student study/);
+ await assert.rejects(()=>save('student',10,'invalid'),/invalid input value for enum/);
+ await assert.rejects(()=>save('unassigned'),/Student not assigned/);
+ await assert.rejects(()=>save('inactive'),/Active student required/);
+ await assert.rejects(()=>save('admin'),/Active student required/);
+ for(const who of ['other','pending','admin','student','manager','designer']){await actor(who);await assert.rejects(()=>save(),who==='other'?/Student not assigned/:/Approved counselor required/);}
+ await db.exec('reset role;set role anon');await assert.rejects(()=>save(),/permission denied/);
+ row=await read();assert.equal(row.grade,12);assert.equal(row.study_field,'experimental_sciences');
+ assert.equal((await db.query('select title from public.weekly_plans')).rows[0].title,'history must stay');
+ await db.query('delete from public.counselor_students where student_id=$1',[ids.student]);await actor('counselor');await assert.rejects(()=>save(),/Student not assigned/);
+ await db.close();console.log('Counselor study RPC: assigned approved counselor only, null-field registration and edits, input/role/assignment/active guards, no direct update grant and preserved history/profile fields passed.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
