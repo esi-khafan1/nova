@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { ContentStatus, ResourceType } from "@/lib/content";
 export type Podcast = {
@@ -16,7 +17,7 @@ export type Podcast = {
   published_at: string | null;
   updated_at: string;
 };
-export async function getPublishedPodcasts(limit?: number) {
+export const getPublishedPodcasts = cache(async (limit?: number) => {
   const supabase = await createClient();
   let query = supabase
     .from("podcasts")
@@ -27,8 +28,8 @@ export async function getPublishedPodcasts(limit?: number) {
   if (limit !== undefined) query = query.limit(limit);
   const { data, error } = await query;
   return { podcasts: (data ?? []) as Podcast[], error: Boolean(error) };
-}
-export async function getPublishedPodcast(id: string) {
+});
+export const getPublishedPodcast = cache(async (id: string) => {
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
@@ -41,4 +42,4 @@ export async function getPublishedPodcast(id: string) {
     .eq("status", "published")
     .maybeSingle();
   return data as Podcast | null;
-}
+});

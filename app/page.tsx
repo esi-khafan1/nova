@@ -5,6 +5,7 @@ import { LandingHero } from "@/components/landing-hero";
 import { WhyNova } from "@/components/why-nova";
 import { PathFinder, type PathFinderDesign } from "@/components/path-finder";
 import { MagazineLatest, type MagazineDesign, type LatestResource } from "@/components/magazine-latest";
+import { getRequestUser } from "@/lib/supabase/request-auth";
 import { createClient } from "@/lib/supabase/server";
 import "./landing-v2d.css";
 import "./landing-approved.css";
@@ -34,14 +35,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
   // Independent reads must not pay four cross-region round trips in series.
-  const [{data}, {news,error:newsUnavailable}, {podcasts,error:podcastsUnavailable}, {data:{user}}] = await Promise.all([
+  const [{data}, {news,error:newsUnavailable}, {podcasts,error:podcastsUnavailable}, {user}] = await Promise.all([
     supabase.from("resources")
       .select("id,title,summary,body,resource_type,subject,published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false }).limit(3),
     getPublishedNews(3),
     getPublishedPodcasts(3),
-    supabase.auth.getUser(),
+    getRequestUser(),
   ]);
   const latestResources = (data ?? []) as LatestResource[];
 

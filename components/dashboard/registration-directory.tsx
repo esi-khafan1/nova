@@ -17,34 +17,18 @@ export async function RegistrationDirectory({
 }) {
   const { supabase } = await requireProfile(["admin"]);
   let rows: Awaited<ReturnType<typeof loadRegistrationDirectory>>;
-
-  try {
-    rows = await loadRegistrationDirectory(supabase);
-  } catch {
-    return (
-      <p className="portal-alert error" role="alert">
-        وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.
-      </p>
-    );
-  }
-
   let counselors: { id: string; full_name: string }[] = [];
-  if (audience === "admin") {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id,full_name,counselor_profiles!inner(approval_status)")
-      .eq("role", "counselor")
-      .eq("counselor_profiles.approval_status", "approved")
-      .order("full_name");
-
-    if (error) {
-      return (
-        <p className="portal-alert error" role="alert">
-          فهرست مشاورها دریافت نشد؛ برای جلوگیری از تخصیص ناقص، دوباره تلاش کن.
-        </p>
-      );
-    }
-    counselors = (data ?? []) as { id: string; full_name: string }[];
+  try {
+    const [directory,counselorResult]=await Promise.all([
+      loadRegistrationDirectory(supabase),
+      supabase.from("profiles").select("id,full_name,counselor_profiles!inner(approval_status)")
+        .eq("role","counselor").eq("counselor_profiles.approval_status","approved").order("full_name"),
+    ]);
+    rows=directory;
+    if(counselorResult.error)return <p className="portal-alert error" role="alert">فهرست مشاورها دریافت نشد؛ برای جلوگیری از تخصیص ناقص، دوباره تلاش کن.</p>;
+    counselors=(counselorResult.data??[]) as {id:string;full_name:string}[];
+  } catch {
+    return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;
   }
 
   return (

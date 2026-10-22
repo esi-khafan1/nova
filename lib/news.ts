@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { ContentStatus } from "@/lib/content";
 
@@ -15,7 +16,7 @@ export type KonkurNews = {
   status: ContentStatus;
 };
 
-export async function getPublishedNews(limit?: number) {
+export const getPublishedNews = cache(async (limit?: number) => {
   const supabase = await createClient();
   let query = supabase
     .from("konkur_news")
@@ -27,9 +28,9 @@ export async function getPublishedNews(limit?: number) {
   if (limit !== undefined) query = query.limit(limit);
   const { data, error } = await query;
   return { news: (data ?? []) as KonkurNews[], error: Boolean(error) };
-}
+});
 
-export async function getPublishedNewsItem(id: string) {
+export const getPublishedNewsItem = cache(async (id: string) => {
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
@@ -42,4 +43,4 @@ export async function getPublishedNewsItem(id: string) {
     .eq("status", "published")
     .maybeSingle();
   return data as KonkurNews | null;
-}
+});

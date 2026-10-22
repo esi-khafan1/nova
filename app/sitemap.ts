@@ -40,13 +40,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const supabase = await createClient();
-    const { data: podcasts } = await supabase.from("podcasts").select("id,updated_at").eq("status", "published");
+    const [{data:podcasts},{data:resources}]=await Promise.all([
+      supabase.from("podcasts").select("id,updated_at").eq("status","published"),
+      supabase.from("resources").select("id, published_at").eq("status","published"),
+    ]);
     staticRoutes.push(...(podcasts ?? []).map(p => ({url: `${baseUrl}/podcasts/${p.id}`, lastModified: new Date(p.updated_at), changeFrequency: "weekly" as const, priority: 0.8})));
-    const { data: resources } = await supabase
-      .from("resources")
-      .select("id, published_at")
-      .eq("status", "published");
-
     if (resources && resources.length > 0) {
       const dynamicRoutes: MetadataRoute.Sitemap = resources.map((r) => ({
         url: `${baseUrl}/mag/${r.id}`,

@@ -1,3 +1,4 @@
+import {loadCounselorPlans} from "@/lib/load-counselor-plans";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import Link from "next/link";
 import {
@@ -25,9 +26,11 @@ export default async function CounselorPlansPage({
 }) {
   const { supabase, profile } = await requireProfile(["counselor"]);
   const params = await searchParams;
-  const {data:directoryData,error:directoryError}=await supabase.rpc("counselor_student_directory");
-  const plans:CounselorWeeklyPlan[]=[];let plansFailed=false;
-  for(let from=0;;from+=200){const {data,error}=await supabase.from("weekly_plans").select("id,student_id,week_start,title,notes,status,updated_at,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order,source_grade,preparation_track,exam_year)").eq("counselor_id",profile.id).order("week_start",{ascending:false}).order("id").range(from,from+199);if(error){plansFailed=true;break;}plans.push(...(data??[]) as CounselorWeeklyPlan[]);if(!data||data.length<200)break;}
+  const [{data:directoryData,error:directoryError},loadedPlans]=await Promise.all([
+    supabase.rpc("counselor_student_directory"),
+    loadCounselorPlans(supabase,profile.id).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
+  ]);
+  const plans=loadedPlans.data,plansFailed=loadedPlans.failed;
   if(directoryError||plansFailed)return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
 
   const directory = (directoryData ?? []) as StudentDirectoryRow[];

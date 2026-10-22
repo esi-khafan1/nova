@@ -8,10 +8,9 @@ type Account = { id: string; full_name: string; email: string | null; role: stri
 export default async function PasswordRecoveryPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { supabase, profile } = await requireProfile(["admin"]);
   const params = await searchParams;
-  const { data: supers, error: superError } = await supabase.rpc("admin_list_super_admins");
+  const [{data:supers,error:superError},{data,error}]=await Promise.all([supabase.rpc("admin_list_super_admins"),supabase.rpc("admin_list_users")]);
   const superIds = new Set<string>((supers ?? []).map((row: { user_id: string }) => row.user_id));
   const isSuper = superIds.has(profile.id);
-  const { data, error } = await supabase.rpc("admin_list_users");
   const accounts = ((data ?? []) as Account[]).filter(account => account.email && (isSuper || !superIds.has(account.id)));
   return <DashboardShell role="admin" name={profile.full_name}>
     <section className="portal-heading"><div><span>مدیریت نووا</span><h1>بازیابی رمز عبور</h1><p>کاربر را انتخاب کن تا لینک تعیین رمز جدید برای ایمیل خودش ارسال شود.</p></div></section>

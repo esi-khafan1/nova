@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,26 +23,23 @@ type Article = {
   published_at: string | null;
 };
 
-async function getArticle(id: string) {
+const getArticle = cache(async (id: string) => {
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)) return null;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("resources")
-    .select(
-      "id,author_id,title,summary,body,resource_type,grade,subject,published_at",
-    )
-    .eq("id", id)
-    .eq("status", "published")
-    .single();
+  // Both operations are public-only and derive visibility from the article ID.
+  // Metadata and the page reuse this result within the same React request.
+  const [{data},{data:authors}]=await Promise.all([
+    supabase.from("resources")
+      .select("id,author_id,title,summary,body,resource_type,grade,subject,published_at")
+      .eq("id",id).eq("status","published").single(),
+    supabase.rpc("published_article_author",{target_resource_id:id}),
+  ]);
   if (!data) return null;
-
-  // Profiles are private under RLS; expose only the published article's author name.
-  const { data: authors } = await supabase.rpc("published_article_author", {
-    target_resource_id: data.id,
-  });
+  // Profiles stay private; the RPC exposes only the published author name.
   const author = (authors as { full_name: string | null }[] | null)?.[0] ?? null;
 
   return { article: data as Article, author };
-}
+});
 
 export async function generateMetadata({
   params,

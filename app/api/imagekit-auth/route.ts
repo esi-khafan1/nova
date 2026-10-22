@@ -6,11 +6,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Database identity is resolved by auth.uid(); do not trust session metadata.
+  // Still wait for fresh getUser before issuing any upload signature.
+  const [{data:{user}},{data:profile}]=await Promise.all([
+    supabase.auth.getUser(),supabase.rpc("own_dashboard_profile").maybeSingle<{id:string;role:string}>(),
+  ]);
   if (!user) return Response.json({ error: "ابتدا وارد حساب شو." }, { status: 401 });
 
   const purpose = request.nextUrl.searchParams.get("purpose") || "content";
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || profile.id !== user.id) return Response.json({error:"برای این نوع آپلود دسترسی نداری."},{status:403});
   let allowed = false;
   if (profile?.role === "content_manager") {
     allowed = ["content", "podcast-audio"].includes(purpose);

@@ -27,9 +27,8 @@ export default async function AdminUsersPage({
 }) {
   const { supabase, profile } = await requireProfile(["admin"]);
   const params = await searchParams;
-  const { data } = await supabase.rpc("admin_list_users");
+  const [{data},{data:superAdmins}]=await Promise.all([supabase.rpc("admin_list_users"),supabase.rpc("admin_list_super_admins")]);
   const users = (data ?? []) as UserRow[];
-  const { data: superAdmins } = await supabase.rpc("admin_list_super_admins");
   const superAdminIds = new Set<string>((superAdmins ?? []).map((row: { user_id: string }) => row.user_id));
   const canGrantAdmin = superAdminIds.has(profile.id);
 

@@ -40,3 +40,32 @@ The student home previously waited for complete authentication/profile, then all
 Migration 065 was applied to the connected project. It adds only a read-only RPC and does not alter plans, progress, roles or activation. Original page styling, report calculations, progress editing rules, service notices and day-change refresh behavior are retained. The `/dashboard` redirect and network distance to Japan still have costs; no fixed latency improvement is guaranteed.
 
 `node tests/student-dashboard-load.test.cjs` validates 201-plan pagination and matching progress, exclusion of drafts/other students/RLS-hidden items, inactive/anonymous/admin denial, empty history, invalid offsets, whole-history failure handling, identity mismatch rejection and concurrent page wiring. TypeScript, targeted ESLint, production build, real React auth-cache tests and student planning calculation tests pass. Browser latency comparison is left to the deployment.
+
+## Shared/site-wide read follow-up (application-only)
+
+Audit found repeat same-render reads and serial **independent** queries beyond the student home. This change does not alter fonts, CSS, colors, images, published content, exam report-release gates or password verification.
+
+| Area | Previous dependency chain | Change |
+| --- | --- | --- |
+| Shared server client | Multiple callers could construct cookie-backed clients in one render | React request-scoped client reuse; no global session/client singleton |
+| News/podcast detail and listings | Repeated calls, including metadata + page, repeated database reads | React request-scoped memoization by arguments; a 3-item teaser never replaces a full listing |
+| Magazine detail | Article then privacy-scoped author RPC, repeated for metadata/page | Independent published-row/author reads overlap; same-render result reused; invalid UUIDs skip reads |
+| Study reports | All plan pages, then all completion pages | Both pagination sequences start together; every page retained; any failed page rejects the whole history |
+| Counselor plan editor | Student directory, then all plan pages | Directory and complete own-plan history overlap; same failure UI |
+| Counselor student report | Fetch entire counselor directory to locate one student | Server-side student-ID filter; ownership check still precedes the report |
+| Admin users/recovery | Users then superadmin IDs | Independent existing admin RPCs overlap |
+| Registration directory | Entire directory then approved counselors | Reads overlap, preserving approval filters and separate failure messages |
+| Designer exam editor | Owned exam then guarded exam-details RPC | Reads overlap after role validation; the RPC independently verifies role and ownership |
+| Sitemap | Published podcasts then resources | Independent published queries overlap |
+| Upload authorization | Fresh Auth user then database role | Fresh Auth and existing own-profile RPC overlap; exact identity match required before all existing role/purpose/approval/assignment checks and signature creation |
+
+React `cache` here means **only the current server render**, not `unstable_cache`, a persistent Next data cache, or shared authorization across users. Outside a React cache dispatcher it is a passthrough, not a process-wide cache. No service-role client, cached password check, skipped authorization or stale role allowance was introduced. The landing's Auth read also reuses the existing request-auth helper.
+
+Validation executed:
+- `node --conditions=react-server tests/shared-read-performance.test.cjs`: actual React request-cache dispatcher with isolated request stores; one client/cookie read per render, metadata/detail deduplication, distinct list limits, concurrent user isolation, fresh next-request archive visibility, magazine author/read overlap and invalid-ID short circuit.
+- `node tests/report-read-performance.test.cjs`: gated concurrent reads, complete 201-plan/501-completion history, failed subsequent page discards the report; counselor history also retains 201 plans and rejects a failed later page.
+- `node tests/upload-auth-performance.test.cjs`: actual route with mocked services; Auth/profile overlap, anonymous/mismatched identity rejection, manager/designer purpose boundaries, counselor approval and student assignment gates; denied requests never issue a signature.
+- Existing actual React auth-cache and installed Supabase SDK concurrency tests, middleware, student/counselor dashboard integration, recovery and editorial PostgreSQL integration passed. Selected TypeScript assertion tests for auth, planning/report rules, news, podcasts, exam editing/publication and editorial theme also passed.
+- TypeScript, targeted ESLint and production build passed. Unrelated previously recorded full-suite failures are not claimed fixed.
+
+No new migration is required: upload authorization reuses the already-applied `062` own-profile RPC. No production database data or configuration was changed for this follow-up. These tests establish query overlap, call counts and isolation with mocked I/O; they **do not measure production latency**. Deploy the application commit and compare the same routes/browser/network conditions. Remaining Tehran–Japan round trips and Auth password-grant latency are not eliminated.
