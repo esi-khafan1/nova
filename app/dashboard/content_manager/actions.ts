@@ -34,3 +34,14 @@ export async function decideSubmission(form:FormData) {
  revalidatePath(`/dashboard/content_manager/${id}`);
  redirect(`/dashboard/content_manager?state=${decision==="approve"?"published":"rejected"}&done=1`);
 }
+
+export async function archiveContent(_state:{error?:string},form:FormData):Promise<{error?:string}> {
+ const {supabase}=await requireProfile(["content_manager"]);
+ const kind=String(form.get("kind")??"") as EditorialKind,id=String(form.get("content_id")??""),updatedAt=String(form.get("updated_at")??"");
+ if(!editorialKinds.includes(kind)||!uuid.test(id)||!updatedAt||!Number.isFinite(Date.parse(updatedAt)))return {error:"اطلاعات معتبر نیست؛ صفحه را دوباره باز کن."};
+ const {error}=await supabase.rpc("archive_editorial_content",{target_kind:kind,target_content_id:id,expected_updated_at:updatedAt});
+ if(error)return {error:"بایگانی انجام نشد؛ ممکن است محتوا تغییر کرده یا قبلاً بایگانی شده باشد. صفحه را دوباره باز کن."};
+ refreshEditorial(kind,id);
+ revalidatePath("/dashboard/content_manager/[id]","page");
+ redirect("/dashboard/content_manager?state=archived&archived=1");
+}

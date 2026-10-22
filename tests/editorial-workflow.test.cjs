@@ -34,6 +34,7 @@ const read=p=>readFileSync(p,'utf8');
  create policy profile_write on public.profiles for update using(private.current_user_role()='admin');`);
  await db.exec(read('supabase/migrations/058_content_manager_role.sql'));
  await db.exec(read('supabase/migrations/059_editorial_workflow.sql'));
+ await db.exec(read('supabase/migrations/060_content_manager_archive.sql'));
  await db.exec('create trigger protect_profile_role before update on public.profiles for each row execute function private.protect_profile_role()');
  for(const [actor,id]of Object.entries(ids)){
   await db.query('insert into auth.users values($1)',[id]);
@@ -106,6 +107,29 @@ const read=p=>readFileSync(p,'utf8');
   assert.equal(await scalar(`select title from public.${table} where id=$1`,[cid]),newPayload.title);
   assert.equal(await scalar(`select published_at::text from public.${table} where id=$1`,[cid]),publishedAt);
   await denied('select public.review_content_submission($1,$2,$3,$4)',[s.id,'approve','',7],/changed/);
+  const liveUpdated=await scalar(`select updated_at::text from public.${table} where id=$1`,[cid]);
+  // Archive permissions are independent of review rights and direct table grants.
+  for(const who of ['author','other','admin','super','student']){
+   await actor(who);
+   await denied('select public.archive_editorial_content($1,$2,$3)',[kind,cid,liveUpdated],/Content manager only/);
+   await denied('select * from public.list_editorial_live($1,0)',['published'],/Content manager only/);
+  }
+  await actor('manager');
+  assert.ok((await db.query('select * from public.list_editorial_live($1,0)',['published'])).rows.some(r=>r.content_id===cid));
+  await denied('select public.archive_editorial_content($1,$2,$3)',[kind,cid,null],/Invalid content/);
+  await denied('select public.archive_editorial_content($1,$2,$3)',[kind,cid,'2000-01-01'],/changed/);
+  // Keep a pending revision while archiving its older public version.
+  await actor('author');await save(cid,true,8,newPayload);
+  await actor('manager');
+  await db.query('select public.archive_editorial_content($1,$2,$3)',[kind,cid,liveUpdated]);
+  assert.equal(await scalar(`select status from public.${table} where id=$1`,[cid]),'archived');
+  assert.equal(await scalar(`select published_at from public.${table} where id=$1`,[cid]),null);
+  assert.equal(await scalar(`select title from public.${table} where id=$1`,[cid]),newPayload.title);
+  assert.equal(await scalar('select state from public.content_submissions where id=$1',[s.id]),'pending');
+  assert.equal(await scalar('select version from public.content_submissions where id=$1',[s.id]),9);
+  assert.ok((await db.query('select * from public.list_editorial_live($1,0)',['archived'])).rows.some(r=>r.content_id===cid));
+  assert.ok(!(await db.query('select * from public.list_editorial_live($1,0)',['published'])).rows.some(r=>r.content_id===cid));
+  await denied('select public.archive_editorial_content($1,$2,$3)',[kind,cid,liveUpdated],/changed/);
  }
  // A seed with no author must never be claimable; ownership changes at approval
  // time must fail atomically without moving a pending submission out of the queue.
@@ -115,18 +139,20 @@ const read=p=>readFileSync(p,'utf8');
  await actor('author');
  await denied('select public.save_content_submission($1,$2,$3,true,0)',['news',sample,{...payloads.news,body:JSON.stringify({type:'doc',content:[]})}],/Not your content/);
  const existing=(await db.query("select * from public.content_submissions where kind='resources'")).rows[0];
- await db.query('select public.save_content_submission($1,$2,$3,true,$4)',['resources',existing.content_id,existing.payload,existing.version]);
+ // This revision was already pending when its public version was archived.
+
  await denied("insert into public.content_submissions(kind,content_id,author_id,payload) values('resources',$1,$2,$3)",[randomUUID(),ids.author,existing.payload],/permission denied/);
  await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub','',false)");
  await db.query('update public.resources set author_id=$1 where id=$2',[ids.other,existing.content_id]);
  await actor('manager');
- await denied('select public.review_content_submission($1,$2,$3,$4)',[existing.id,'approve','',existing.version+1],/ownership changed/);
+ await denied('select public.review_content_submission($1,$2,$3,$4)',[existing.id,'approve','',existing.version],/ownership changed/);
  assert.equal(await scalar('select state from public.content_submissions where id=$1',[existing.id]),'pending');
  await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub','',false)");await db.exec('set role anon');
- await denied('select public.review_content_submission($1,$2,$3,$4)',[existing.id,'approve','',existing.version+1],/permission denied/);
+ await denied('select public.review_content_submission($1,$2,$3,$4)',[existing.id,'approve','',existing.version],/permission denied/);
  await actor('admin');assert.equal(await scalar('select count(*)::int from public.content_submissions'),0);
  await actor('manager');assert.equal((await db.query('select * from public.editorial_authors()')).rows.length,1);
  await db.exec('reset role');
  assert.equal(await scalar('select count(*)::int from private.content_review_events'),12);
- await db.close();console.log('Editorial PostgreSQL integration passed: all 3 kinds, role guards, RLS, drafts, pending lock, editing, rejection/resubmission, stale versions, preserved live content and timestamps.');
+ assert.equal(await scalar('select count(*)::int from private.content_archive_events'),3);
+ await db.close();console.log('Editorial PostgreSQL integration passed: all 3 kinds, role guards, RLS, drafts, pending lock, editing, rejection/resubmission, stale versions, preserved live content and timestamps, manager-only archiving with unchanged pending revisions.');
 })().catch(e=>{console.error(e);process.exit(1);});

@@ -15,7 +15,7 @@ export async function AuthorContentDirectory({kind,saved}:{kind:EditorialKind;sa
  for(const row of live.data??[]) rows.set(row.id,{...row,live:row.status==="published"});
  for(const raw of submissions.data??[]) {
   const row=raw as unknown as {content_id:string;state:string;rejection_reason:string|null;updated_at:string;title:string;summary:string|null};
-  rows.set(row.content_id,{id:row.content_id,title:row.title,summary:row.summary,status:row.state,rejection_reason:row.rejection_reason,updated_at:row.updated_at,live:rows.get(row.content_id)?.live});
+  rows.set(row.content_id,{id:row.content_id,title:row.title,summary:row.summary,status:row.state==="published"&&rows.get(row.content_id)?.status==="archived"?"archived":row.state,rejection_reason:row.rejection_reason,updated_at:row.updated_at,live:rows.get(row.content_id)?.live});
  }
  const base=`/dashboard/counselor/${authorPaths[kind]}`;
  return <DashboardShell role="counselor" name={profile.full_name}>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ManagerLiveDirectory } from "@/components/content/manager-live-directory";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
 import { formatPersianDate } from "@/lib/content";
@@ -8,7 +9,14 @@ export default async function ContentManagerPage({searchParams}:{searchParams:Pr
  const {supabase,profile}=await requireProfile(["content_manager"]);
  const params=await searchParams;
  const page=Math.max(0,Math.min(100000,Math.floor(Number(params.page)||0)));
- const state=["pending","rejected","published"].includes(params.state??"")?params.state!:"pending";
+ const state=["pending","rejected","published","archived"].includes(params.state??"")?params.state!:"pending";
+ if(state==="published"||state==="archived")return <DashboardShell role="content_manager" name={profile.full_name}>
+  <section className="portal-heading"><div><span>میز بررسی</span><h1>مدیریت محتوای نووا</h1></div></section>
+  <nav className="editorial-tabs" aria-label="وضعیت محتوا">{(["pending","published","rejected","archived"] as const).map(item=><Link key={item} href={`/dashboard/content_manager?state=${item}`} aria-current={state===item?"page":undefined}>{item==="archived"?"بایگانی‌شده":reviewLabels[item]}</Link>)}</nav>
+  {params.archived&&<div className="portal-alert success">محتوا بایگانی و از نمایش عمومی خارج شد؛ نسخه‌های ارسالی تغییر نکردند.</div>}
+  {params.done&&<div className="portal-alert success">نتیجهٔ بررسی ثبت شد.</div>}
+  <ManagerLiveDirectory supabase={supabase} state={state} page={page}/>
+ </DashboardShell>;
  const [result,authors]=await Promise.all([
   supabase.from("content_submissions").select("id,kind,author_id,state,version,updated_at,rejection_reason,title:payload->>title,summary:payload->>summary",{count:"exact"}).eq("state",state).order("updated_at",{ascending:false}).order("id").range(page*50,page*50+49),
   supabase.rpc("editorial_authors"),
@@ -16,7 +24,7 @@ export default async function ContentManagerPage({searchParams}:{searchParams:Pr
  const names=new Map<string,string>((authors.data??[]).map((a:{author_id:string;full_name:string})=>[a.author_id,a.full_name]));
  return <DashboardShell role="content_manager" name={profile.full_name}>
   <section className="portal-heading"><div><span>میز بررسی</span><h1>مدیریت محتوای نووا</h1><p>مقاله، خبر و پادکست ارسالی مشاورها را بررسی، ویرایش و تأیید یا با دلیل رد کن.</p></div></section>
-  <nav className="editorial-tabs" aria-label="وضعیت محتوا">{(["pending","published","rejected"] as const).map(item=><Link key={item} href={`/dashboard/content_manager?state=${item}`} aria-current={state===item?"page":undefined}>{reviewLabels[item]}</Link>)}</nav>
+  <nav className="editorial-tabs" aria-label="وضعیت محتوا">{(["pending","published","rejected","archived"] as const).map(item=><Link key={item} href={`/dashboard/content_manager?state=${item}`} aria-current={state===item?"page":undefined}>{item==="archived"?"بایگانی‌شده":reviewLabels[item]}</Link>)}</nav>
   {params.done&&<div className="portal-alert success">نتیجهٔ بررسی ثبت شد و در پنل مشاور قابل مشاهده است.</div>}
   {params.error&&<div className="portal-alert error">عملیات انجام نشد؛ صفحه را دوباره باز کن.</div>}
   {result.error||authors.error?<section className="portal-card" role="alert">دریافت فهرست انجام نشد؛ دوباره تلاش کن.</section>:result.data?.length?<div className="editorial-grid">{result.data.map(raw=>{

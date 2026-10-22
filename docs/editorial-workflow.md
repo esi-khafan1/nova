@@ -36,3 +36,13 @@ Both migrations were applied to the connected nova project on 2026-10-22. Public
 - Full regression sweep also finds existing failures in course-carousel-cities, course-enrollment, magazine-theme, mobile-landing-ui, registration-csv (stale query mock), apps-script and counselor-curriculum tests. Each was reproduced against the preceding commit in a disposable checkout; their unrelated implementation was not changed. The old auth-role-layout test was updated to assert the new five-option, superadmin-only privileged-role controls.
 
 No real-user browser end-to-end review flow or Runflare deployment was performed in this session.
+
+## Manager archiving (migration 060)
+
+`060_content_manager_archive.sql` adds manager-only `list_editorial_live` and `archive_editorial_content` RPCs. Applied to the connected nova project; no real content was archived during implementation.
+
+The published/archived dashboard tabs now read **all live items**, including legacy publications and NULL-author seed items, rather than only items already represented in the review queue. Managers can archive an item from its published card or from a submission's review page when a public version exists. An explicit confirmation warns that the item leaves public display but is not deleted. No archive controls are offered to authors, admins or superadmins.
+
+Archiving locks the live row, checks the exact expected update timestamp and published state, logs the complete prior live row privately, and sets its status to `archived` with `published_at=NULL` (required by the existing news/podcast constraints). Snapshots, pending reviews, revision counters and rejection reasons are untouched. Public list/detail/home/sitemap and affected dashboard paths are invalidated. Counselor directories show archived status when their approved live item has been archived. A later separate manager approval can publish a pending revision normally; archiving itself does not reject/cancel it.
+
+The disposable PostgreSQL integration suite also applies migration 060 and tests all three content kinds: manager-only listing/archive authorization (including admin/superadmin denial), stale/missing timestamp rejection, repeated archive rejection, published→archived list movement, retained content, unchanged pending snapshots, and private audit entries. TypeScript, targeted ESLint and the production build passed after the archive change.
