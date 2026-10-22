@@ -4,18 +4,8 @@ import { requireProfile } from "@/lib/auth";
 
 export default async function AdminDashboard() {
   const { supabase, profile } = await requireProfile(["admin"]);
-  const [{ count: users }, { count: students }, { count: counselors }] =
-    await Promise.all([
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
-      supabase
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("role", "student"),
-      supabase
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("role", "counselor"),
-    ]);
+  const { data: counts, error: countsError } = await supabase.rpc("admin_dashboard_counts").single<{users:number;students:number;counselors:number}>();
+  const {users,students,counselors}=counts??{};
 
   return (
     <DashboardShell role="admin" name={profile.full_name}>
@@ -28,18 +18,19 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
+      {countsError&&<p className="portal-alert error" role="alert">آمار فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p>}
       <div className="portal-stats">
         <article>
           <span>کل کاربران</span>
-          <strong>{users ?? 0}</strong>
+          <strong>{users ?? "—"}</strong>
         </article>
         <article>
           <span>دانش‌آموزان</span>
-          <strong>{students ?? 0}</strong>
+          <strong>{students ?? "—"}</strong>
         </article>
         <article>
           <span>مشاوران</span>
-          <strong>{counselors ?? 0}</strong>
+          <strong>{counselors ?? "—"}</strong>
         </article>
       </div>
 

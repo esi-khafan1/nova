@@ -1,0 +1,24 @@
+# Reduce cross-region dashboard latency
+
+## Changes
+
+- `getRequestClient` memoizes only the Supabase client within a React request. `getRequestUser` still calls fresh `auth.getUser()` once per request; no process/global user cache or unsigned session authorization was introduced.
+- `own_dashboard_profile()` is a zero-argument, SECURITY INVOKER RPC. It selects the existing profile fields for `auth.uid()` only, under existing profile RLS. It accepts no caller-supplied identity. Its independent query can start alongside `getUser()` rather than waiting for Auth's response before sending the profile query. Protected pages/actions wait for **both** and reject a missing user/profile or a profile/user identity mismatch. Email confirmation, registration-state checks and per-caller allowed roles remain unchanged.
+- `/dashboard` is a redirect-only router, not a protected content endpoint. It reads the own-row RPC to select an allowlisted destination and no longer pays for an additional remote Auth user request. The actual destination page/actions still run full `requireProfile` and fresh `getUser`; a revoked/banned/missing session cannot obtain protected content just by being routed. No client-side role hint or role stored in JWT metadata is used for authorization.
+- Admin dashboard counts now use one admin-guarded `admin_dashboard_counts()` RPC with one aggregate scan instead of three separate exact-count HTTP queries. Counts remain exact and current. Errors are shown as unavailable rather than zero users.
+- Landing resources, news, podcasts and existing authentication lookup are now awaited in parallel instead of four serial operations. Queries, publication filters, visible content, navbar links, styling and colors are unchanged.
+
+## Deployment
+
+`062_dashboard_latency.sql` was applied and verified on the connected nova project before the application deployment: both functions exist, own-profile uses SECURITY INVOKER and neither function grants anonymous execution. No content, roles, credentials, auth settings or data were changed. Deploy the associated application commit. A code-only rollback to the prior revision remains compatible with these additive RPCs.
+
+Diagnostic tooling remains reverted. The residual temporary diagnostic database objects from the blocked cleanup are unrelated and are not called by this implementation. No new diagnostics, browser tokens, permanent caches, background polling or intentionally stale authorization are introduced.
+
+## Validation
+
+- `node --conditions=react-server tests/request-auth-cache.test.cjs`: actual React request-cache isolation, one client/user/profile read, concurrent start, route-only profile lookup, mismatched/revoked user denial, role restrictions, confirmation and registration checks.
+- `node tests/supabase-parallel.test.cjs`: actual installed Supabase SSR/auth/PostgREST clients with a fake local test session and mocked HTTP transport. Confirms Auth getUser and own-profile RPC reach transport concurrently with no extra refresh call. Never contacts Supabase or uses real credentials.
+- `node tests/editorial-workflow.test.cjs`: disposable PostgreSQL applies migration 062 as well as the editorial migrations. Checks own-profile isolation for multiple roles, single aggregate counts, non-admin/anonymous denial, and existing review/archive authorization.
+- TypeScript, targeted ESLint, production build, middleware and selected auth/recovery/content regressions pass.
+
+These changes reduce sequential work/request count; they do not move the database out of Japan or remove the network latency of each remaining call. No production speed percentage or guaranteed millisecond improvement is claimed before deployment and comparison under the same browser/network/cache conditions. The earlier diagnostic permission query is absent from both the baseline and this optimized version.

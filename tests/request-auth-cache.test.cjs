@@ -29,7 +29,8 @@ const shared = load('lib/supabase/request-auth.ts', {
   '@/lib/supabase/server': { createClient: async () => {
     const req = requests.getStore();
     req.clients++;
-    return { auth: { getUser: async () => { req.users++; return { data: { user: req.user } }; } },
+    return { auth: { getUser: async () => { req.users++; req.userStarted=true; req.notify?.(); if(req.gate)await req.gate; return { data: { user: req.user } }; } },
+      rpc(name){assert.equal(name,'own_dashboard_profile');return {maybeSingle:async()=>{req.profiles++;req.profileStarted=true;req.notify?.();if(req.gate)await req.gate;return {data:req.profile};}};},
       from(table) {
         assert.equal(table, 'profiles');
         return { select() { return this; }, eq(field, id) { assert.equal(field, 'id'); assert.equal(id, req.user.id); return this; },
@@ -71,9 +72,24 @@ async function expectRedirect(fn, url) { await assert.rejects(fn, error => error
     assert.equal((await auth.requireProfile(['counselor'])).profile.role, 'counselor');
     assert.equal(next.users, 1); assert.equal(next.profiles, 1);
   });
+  const parallel=fixture('parallel','admin');
+  let release;parallel.gate=new Promise(resolve=>{release=resolve;});
+  parallel.notify=()=>{if(parallel.userStarted&&parallel.profileStarted)release();};
+  await requests.run(parallel,async()=>{
+    let timeout;
+    try{await Promise.race([auth.requireProfile(['admin']),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('User and own profile must start concurrently')),1000);})]);}
+    finally{clearTimeout(timeout);}
+    assert.equal(parallel.clients,1);assert.equal(parallel.users,1);assert.equal(parallel.profiles,1);
+  });
+  const routing=fixture('route','content_manager');
+  await requests.run(routing,async()=>{assert.equal(await auth.getDashboardDestination(),'/dashboard/content_manager');assert.equal(routing.users,0);assert.equal(routing.profiles,1);});
+  const mismatch=fixture('valid','admin');mismatch.profile.id='different';
+  await requests.run(mismatch,()=>expectRedirect(()=>auth.requireProfile(),'/auth/sign-in'));
+  const revoked=fixture(null);revoked.profile={id:'revoked',role:'admin',registration_status:'active'};
+  await requests.run(revoked,()=>expectRedirect(()=>auth.requireProfile(),'/auth/sign-in'));
   const guest = fixture(null);
   await requests.run(guest, () => expectRedirect(() => auth.requireProfile(), '/auth/sign-in'));
-  assert.equal(guest.profiles, 0);
+  assert.equal(guest.profiles, 1);
   const unconfirmed = fixture('eve', 'student', 'active', false);
   await requests.run(unconfirmed, () => expectRedirect(() => auth.requireProfile(['student'], true), '/auth?mode=signin&error=unconfirmed'));
   const missing = fixture('missing', 'student'); missing.profile = null;

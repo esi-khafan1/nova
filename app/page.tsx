@@ -33,17 +33,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const socialTheme = ["cards", "rows", "split"].includes(String(params.social)) ? String(params.social) : "rows";
   const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("resources")
-    .select("id,title,summary,body,resource_type,subject,published_at")
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(3);
-
+  // Independent reads must not pay four cross-region round trips in series.
+  const [{data}, {news,error:newsUnavailable}, {podcasts,error:podcastsUnavailable}, {data:{user}}] = await Promise.all([
+    supabase.from("resources")
+      .select("id,title,summary,body,resource_type,subject,published_at")
+      .eq("status", "published")
+      .order("published_at", { ascending: false }).limit(3),
+    getPublishedNews(3),
+    getPublishedPodcasts(3),
+    supabase.auth.getUser(),
+  ]);
   const latestResources = (data ?? []) as LatestResource[];
-  const { news, error: newsUnavailable } = await getPublishedNews(3);
-  const { podcasts, error: podcastsUnavailable } = await getPublishedPodcasts(3);
-  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <main className={`landing-v2d${editorialTheme ? ` editorial-theme--${editorialTheme}` : ""}`}>

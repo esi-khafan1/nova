@@ -35,6 +35,8 @@ const read=p=>readFileSync(p,'utf8');
  await db.exec(read('supabase/migrations/058_content_manager_role.sql'));
  await db.exec(read('supabase/migrations/059_editorial_workflow.sql'));
  await db.exec(read('supabase/migrations/060_content_manager_archive.sql'));
+ await db.exec(`create type public.study_field as enum ('mathematics','experimental_sciences','humanities','arts','foreign_languages');alter table public.profiles add column study_field public.study_field;alter table public.profiles add column registration_status text not null default 'active';`);
+ await db.exec(read('supabase/migrations/062_dashboard_latency.sql'));
  await db.exec('create trigger protect_profile_role before update on public.profiles for each row execute function private.protect_profile_role()');
  for(const [actor,id]of Object.entries(ids)){
   await db.query('insert into auth.users values($1)',[id]);
@@ -58,6 +60,20 @@ const read=p=>readFileSync(p,'utf8');
  await actor('admin');
  await denied('select public.admin_set_user_role($1,$2)',[ids.manager,'student'],/super administrators/);
  await denied("update public.profiles set role='student' where id=$1",[ids.manager],/Super administrator required/);
+ // The own-profile RPC cannot return another account, even for an admin.
+ await actor('super');
+ let own=(await db.query('select * from public.own_dashboard_profile()')).rows;
+ assert.equal(own.length,1);assert.equal(own[0].id,ids.super);
+ let counts=(await db.query('select * from public.admin_dashboard_counts()')).rows[0];
+ assert.equal(Number(counts.users),6);assert.equal(Number(counts.students),1);assert.equal(Number(counts.counselors),2);
+ for(const who of ['student','author','manager']){
+  await actor(who);own=(await db.query('select * from public.own_dashboard_profile()')).rows;
+  assert.equal(own.length,1);assert.equal(own[0].id,ids[who]);
+  await denied('select * from public.admin_dashboard_counts()',[],/Admin only/);
+ }
+ await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub','',false)");await db.exec('set role anon');
+ await denied('select * from public.own_dashboard_profile()',[],/permission denied/);
+ await denied('select * from public.admin_dashboard_counts()',[],/permission denied/);
  const payloads={
   resources:{title:'Original article',summary:'Summary',resource_type:'konkur',grade:12,subject:'Math'},
   news:{title:'Original news',summary:'Summary',source_name:'Official',source_url:'https://example.com/source',source_published_at:'2020-01-01'},
