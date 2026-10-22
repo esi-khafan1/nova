@@ -20,7 +20,7 @@ import {
 import { RichContent } from "@/components/content/rich-content";
 import { PodcastAudioUpload } from "@/components/content/podcast-audio-upload";
 import { savePodcastAction } from "@/app/dashboard/counselor/podcasts/actions";
-import { saveReviewEdits } from "@/app/dashboard/content_manager/actions";
+import { manageArchivedContent, saveReviewEdits } from "@/app/dashboard/content_manager/actions";
 import { saveNewsAction } from "@/app/dashboard/counselor/news/actions";
 
 export type EditableResource = {
@@ -69,14 +69,16 @@ export function ContentEditorForm({
   news = false,
   podcast = false,
   review,
+  archived,
 }: {
   resource?: EditableResource;
   news?: boolean;
   podcast?: boolean;
+  archived?: {kind: "resources"|"news"|"podcasts"; updatedAt:string};
   review?: { id: string; version: number; kind: "resources"|"news"|"podcasts" };
 }) {
   const [state, formAction, pending] = useActionState(
-    review ? saveReviewEdits : podcast ? savePodcastAction : news ? saveNewsAction : saveResourceAction,
+    archived ? manageArchivedContent : review ? saveReviewEdits : podcast ? savePodcastAction : news ? saveNewsAction : saveResourceAction,
     initialState,
   );
   const [podcastMetadata, setPodcastMetadata] = useState({
@@ -301,6 +303,7 @@ export function ContentEditorForm({
   return (
     <form action={formAction} className="content-editor-form">
       <input name="revision" type="hidden" value={review?.version ?? resource?.revision ?? 0}/>
+      {archived && <><input name="kind" type="hidden" value={archived.kind}/><input name="updated_at" type="hidden" value={archived.updatedAt}/><input name="operation" type="hidden" value="edit"/></>}
       {review && <><input name="submission_id" type="hidden" value={review.id}/><input name="kind" type="hidden" value={review.kind}/></>}
       {resource && <input name="id" type="hidden" value={resource.id} />}
       <input name="body" type="hidden" value={body} />
@@ -550,9 +553,9 @@ export function ContentEditorForm({
           }}
           type="submit"
         >
-          {review ? "ذخیرهٔ ویرایش مدیر محتوا" : "ذخیره پیش‌نویس"}
+          {archived ? "ذخیرهٔ ویرایش در بایگانی" : review ? "ذخیرهٔ ویرایش مدیر محتوا" : "ذخیره پیش‌نویس"}
         </button>
-        {!review && <button
+        {!review && !archived && <button
           className="button"
           disabled={pending || uploading || audioUploading || Boolean(markdownError)}
           onClick={() => {

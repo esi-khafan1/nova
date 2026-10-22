@@ -45,3 +45,19 @@ export async function archiveContent(_state:{error?:string},form:FormData):Promi
  revalidatePath("/dashboard/content_manager/[id]","page");
  redirect("/dashboard/content_manager?state=archived&archived=1");
 }
+
+export async function manageArchivedContent(_state:{error?:string},form:FormData):Promise<{error?:string}> {
+ const {supabase}=await requireProfile(["content_manager"]);
+ const kind=String(form.get("kind")??"") as EditorialKind,id=String(form.get("id")??""),updatedAt=String(form.get("updated_at")??""),operation=String(form.get("operation")??"edit");
+ const reason=String(form.get("reason")??"").trim();
+ if(!editorialKinds.includes(kind)||!uuid.test(id)||!updatedAt||!Number.isFinite(Date.parse(updatedAt))||!["edit","publish","return"].includes(operation))return {error:"اطلاعات معتبر نیست؛ صفحه را دوباره باز کن."};
+ if(operation==="return"&&(reason.length<5||reason.length>2000))return {error:"دلیل رد باید بین ۵ تا ۲۰۰۰ نویسه باشد."};
+ const result=operation==="edit"?validateEditorial(kind,form):null;
+ if(result&&!result.payload)return {error:result.error};
+ const {error}=await supabase.rpc("manage_archived_content",{target_kind:kind,target_content_id:id,expected_updated_at:updatedAt,operation,content_payload:result?.payload??null,reason:operation==="return"?reason:null});
+ if(error)return {error:operation==="return"?"بازگشت انجام نشد؛ نویسنده باید مشاور باشد و نسخهٔ جداگانهٔ پیش‌نویس، ردشده یا در انتظار بررسی نداشته باشد. نسخهٔ موجود را بررسی کن یا صفحه را دوباره باز کن.":"عملیات انجام نشد؛ ممکن است محتوا تغییر کرده باشد یا اطلاعات انتشار کامل نباشد. صفحه را دوباره باز کن."};
+ refreshEditorial(kind,id);
+ revalidatePath(`/dashboard/content_manager/archived/${kind}/${id}`);
+ if(operation==="edit")redirect(`/dashboard/content_manager/archived/${kind}/${id}?saved=1`);
+ redirect(`/dashboard/content_manager?state=${operation==="publish"?"published":"rejected"}&done=1`);
+}
