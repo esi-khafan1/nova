@@ -53,7 +53,7 @@ export async function RegistrationDirectory({
         <div>
           <h2>ثبت‌نام، فیش و تخصیص مشاور</h2>
           <p>
-            برای دانش‌آموزهای بدون مشاور، مشاور انتخاب کن. تخصیص مشاور مستقل از تأیید فیش و فعال‌سازی خدمات است.
+            برای دانش‌آموزهای بدون مشاور، مشاور انتخاب کن؛ با اختصاص مشاور، حساب و خدمات دانش‌آموز هم فعال می‌شوند.
           </p>
         </div>
         <a className="button button-secondary" href="/api/registrations/export">
@@ -199,7 +199,7 @@ export async function RegistrationDirectory({
                               type="submit"
                               disabled={!counselors.length}
                             >
-                              اختصاص مشاور
+                              اختصاص مشاور و فعال‌سازی حساب
                             </button>}
 
                             {canActivateWithReceipt && (
@@ -231,7 +231,7 @@ export async function RegistrationDirectory({
 
                           {!row.counselor_id && row.registration_status === "incomplete" && (
                             <small className="registration-assignment-note">
-                              تخصیص مشاور، خدمات را فعال نمی‌کند.
+                              با اختصاص مشاور توسط ادمین، حساب فعال می‌شود؛ تأیید جداگانه لازم نیست.
                             </small>
                           )}
                         </form>

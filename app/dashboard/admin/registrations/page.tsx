@@ -31,7 +31,7 @@ export default async function Registrations({
 
       {params.assigned && (
         <p className="portal-alert success" role="status">
-          مشاور اختصاص داده شد؛ وضعیت ثبت‌نام و خدمات دانش‌آموز تغییری نکرد.
+          مشاور اختصاص داده شد و حساب دانش‌آموز فعال شد؛ تأیید جداگانه لازم نیست.
         </p>
       )}
       {params.saved && (

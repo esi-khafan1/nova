@@ -21,3 +21,15 @@ The Google account is not connected in the agent browser. The scoped read-only e
 - `npm run build`
 - `tests/sql/registration-access.sql`: rollback-only fixtures exercise incomplete validation, atomic approval/assignment, stale receipt rejection, counselor/receipt RLS, both blocked self-assignment paths, old progress editing, future/other-student/counselor progress denial, grade-10 school planning, unchanged past counselor activities, and shared exam result isolation. No fixture data persists.
 - Offline Chromium mobile form preview and A4 landscape print preview inspected; sample seven-day print fits one A4 page.
+
+## Assignment is activation (migration 064; supersedes 052/053 separation)
+
+Admin assignment to an approved counselor is now the account activation decision: `admin_assign_student_counselor` inserts the assignment and sets the student's `registration_status` to `active` atomically. No second activation/receipt confirmation is required for this route. Only admins can assign, only unassigned students are eligible, and existing counselors cannot be replaced (including same-counselor stale/double submissions). Existing role, email verification, assignment ownership, curriculum and planning validations remain intact; activation does not fabricate missing student information or verify an email.
+
+Migration 064 also repairs already assigned inactive student profiles, limited to actual student accounts whose assigned counselor is still a counselor with approved status. Unassigned students and relationships to unapproved/non-counselor accounts are untouched. The repair changes only activation status (and normal updated-at triggers); assignments, receipt/purchase fields and receipt-approval metadata are unchanged. Existing explicit receipt/manual activation endpoints remain compatible.
+
+Applied to the connected production project and verified: the reported Mohsen Yeganeh profile changed from incomplete with an approved assignment to active, with no valid approved-assigned inactive students remaining. The counselor should refresh their student/planning directory to discard previously loaded client state. No plan or receipt was created as a production test.
+
+Admin directory copy/button/success messages now state that assignment activates the account. Assignment actions invalidate student home/account/exams/registration and the counselor planning/directory views.
+
+Validation: `node tests/assignment-activation.test.cjs` uses disposable PostgreSQL to verify new assignment activation for incomplete/pending/already-active students, legacy backfill, exclusion of unassigned/unapproved cases, admin-only/anonymous guards, reassignment protection, rollback of the inserted relation if activation fails, unchanged receipts and repeat-safe backfill. Updated the SQL registration-access fixture to reflect the new rule. TypeScript, targeted ESLint and production build pass. Planning permissions are not bypassed or made public.

@@ -12,6 +12,8 @@ const revalidateRegistrationPaths = () => {
     "/dashboard/counselor/students",
     "/dashboard/counselor/plans",
     "/dashboard/student",
+    "/dashboard/student/account",
+    "/dashboard/student/exams",
     "/dashboard/registration",
   ]) {
     revalidatePath(path);
