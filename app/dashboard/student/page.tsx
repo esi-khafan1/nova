@@ -3,10 +3,16 @@ import { StudentPlanningPanel } from "@/components/dashboard/student-planning-pa
 import { StudentDashboardRefresh } from "@/components/dashboard/student-dashboard-refresh";
 import { StudentServiceNotice } from "@/components/dashboard/student-service-notice";
 import { requireProfile } from "@/lib/auth";
-import { tehranToday, type StudyPlan, type StudyCompletion } from "@/lib/student-planning";
+import {loadStudentDashboard} from "@/lib/load-student-dashboard";
+import { tehranToday } from "@/lib/student-planning";
 export default async function StudentDashboard(){
- const {supabase,profile}=await requireProfile(["student"], true); const plans:StudyPlan[]=[],completions:StudyCompletion[]=[];let failed=false;
- if(profile.registration_status === "active") for(let from=0;;from+=200){const {data,error}=await supabase.from("weekly_plans").select("id,title,week_start,notes,weekly_plan_items(id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order,source_grade,preparation_track,exam_year)").eq("student_id",profile.id).eq("status","published").order("week_start",{ascending:false}).order("id").range(from,from+199);if(error){failed=true;break;}plans.push(...(data??[]) as StudyPlan[]);if(!data||data.length<200)break;}
- if(profile.registration_status === "active" && !failed)for(let from=0;;from+=500){const {data,error}=await supabase.from("weekly_plan_item_completions").select("item_id,completed_at,completed_test_count").eq("student_id",profile.id).order("item_id").range(from,from+499);if(error){failed=true;break;}completions.push(...(data??[]) as StudyCompletion[]);if(!data||data.length<500)break;}
+ // The zero-identity-argument RPC enforces student role/activation/RLS itself.
+ // Never render its data until fresh getUser + profile checks also succeed.
+ const [{profile},loaded]=await Promise.all([
+  requireProfile(["student"],true),loadStudentDashboard(),
+ ]);
+ const active=profile.registration_status==="active";
+ const failed=active&&(loaded.failed||loaded.studentId!==profile.id||!loaded.active);
+ const plans=active&&!failed?loaded.plans:[],completions=active&&!failed?loaded.completions:[];
  return <DashboardShell role="student" name={profile.full_name}><StudentServiceNotice status={profile.registration_status}/><StudentDashboardRefresh currentDate={tehranToday()}/>{failed?<section className="portal-card portal-alert error" role="alert"><h1>برنامه‌ها فعلاً دریافت نشدند</h1><p>دوباره صفحه را باز کن. این پیام به معنی نداشتن برنامه یا گزارش نیست.</p><a href="/dashboard/student">تلاش دوباره</a></section>:<StudentPlanningPanel audience="student" plans={plans} completions={completions} today={tehranToday()} profile={{full_name:profile.full_name,grade:profile.grade,study_field:profile.study_field}}/>}</DashboardShell>;
 }
