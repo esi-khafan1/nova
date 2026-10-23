@@ -21,11 +21,11 @@ const route = load('app/auth/confirm/route.ts', {
   'next/server': { NextResponse: { redirect: (url, init) => new Response(null, { ...init, headers: { ...init.headers, Location: url } }) } },
   '@/lib/auth-urls': urls,
   '@/lib/email-confirmation': security,
-  '@/lib/supabase/confirmation': { verifySignupEmail: async (hash) => {
+  '@/lib/supabase/confirmation': { verifySignupEmailResult: async (hash) => {
     calls++;
     assert.equal(hash, token);
     if (outcome === 'network') throw Error('Network unavailable');
-    return outcome === 'success';
+    return {verified:outcome === 'success',next:'/dashboard'};
   } },
 });
 (async () => {

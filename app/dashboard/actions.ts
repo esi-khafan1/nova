@@ -225,7 +225,7 @@ export async function changeUserRole(fd: FormData) {
   const target_role = clean(fd.get("target_role"), 20);
   if (
     !uuidPattern.test(user_id) ||
-    !["student", "counselor", "exam_designer", "admin", "content_manager"].includes(target_role)
+    !["student", "counselor", "exam_designer", "admin", "content_manager", "support_agent"].includes(target_role)
   )
     redirect("/dashboard/admin/users?error=role");
 

@@ -10,6 +10,7 @@ export function UserRoleForm({user,canGrantAdmin = false}:{canGrantAdmin?:boolea
    <select id={fieldId} name="target_role" defaultValue={user.role} aria-label={`نقش ${user.full_name}`}>
     <option value="student">دانش‌آموز</option>
     <option value="counselor">مشاور</option>
+    <option value="support_agent">پشتیبان سایت</option>
     <option value="exam_designer">طراح آزمون</option>
     {canGrantAdmin && <><option value="admin">مدیر</option><option value="content_manager">مدیر محتوا</option></>}
    </select>

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getRequestClient, getRequestUser } from "@/lib/supabase/request-auth";
-export type AppRole = "student" | "counselor" | "exam_designer" | "admin" | "content_manager";
+export type AppRole = "student" | "counselor" | "exam_designer" | "admin" | "content_manager" | "support_agent";
 export type CurrentProfile = {
   id: string;
   full_name: string;
@@ -42,7 +42,7 @@ const getRequestProfile = cache(async () => {
 // Every destination page/action still performs full requireProfile/getUser checks.
 export async function getDashboardDestination() {
   const { profile } = await getOwnProfile();
-  if (!profile || !["student","counselor","exam_designer","admin","content_manager"].includes(profile.role)) return "/auth/sign-in";
+  if (!profile || !["student","counselor","exam_designer","admin","content_manager","support_agent"].includes(profile.role)) return "/auth/sign-in";
   return `/dashboard/${profile.role}`;
 }
 

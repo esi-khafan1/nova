@@ -135,7 +135,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
       password,
       options: {
         emailRedirectTo: emailConfirmationUrl(destination),
-        data: { full_name: fullName },
+        data: { full_name: fullName, course_return_to: destination },
       },
     });
     if (error) {

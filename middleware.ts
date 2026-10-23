@@ -35,6 +35,9 @@ export async function middleware(request: NextRequest) {
     response.cookies.getAll().forEach(cookie => redirectResponse.cookies.set(cookie));
     return redirectResponse;
   }
+  if(authenticated&&request.nextUrl.pathname==="/dashboard/registration")response.cookies.delete("nova_course_return");
+  const intended=request.nextUrl.searchParams.get("next");
+  if(request.nextUrl.pathname==="/auth"&&intended?.startsWith("/dashboard/registration?"))response.cookies.set("nova_course_return",intended,{httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",path:"/",maxAge:604800});
   return response;
 }
 

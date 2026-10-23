@@ -6,7 +6,7 @@ import { requireProfile } from "@/lib/auth";
 type UserRow = {
   id: string;
   full_name: string;
-  role: "student" | "counselor" | "exam_designer" | "admin" | "content_manager";
+  role: "student" | "counselor" | "exam_designer" | "admin" | "content_manager" | "support_agent";
   grade: number | null;
   created_at: string;
   email: string | null;
@@ -18,6 +18,7 @@ const roleLabels = {
   admin: "مدیر",
   exam_designer: "طراح آزمون",
   content_manager: "مدیر محتوا",
+  support_agent: "پشتیبان سایت",
 };
 
 export default async function AdminUsersPage({

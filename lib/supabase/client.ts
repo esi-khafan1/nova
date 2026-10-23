@@ -4,5 +4,5 @@ export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("متغیرهای محیطی Supabase تنظیم نشده‌اند.");
-  return createBrowserClient(url, key);
+  return createBrowserClient(url, key, { realtime: { reconnectAfterMs: tries => Math.min(30000,1000 * 2 ** Math.min(tries,5)) + Math.random()*2000 } });
 }

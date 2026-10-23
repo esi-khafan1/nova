@@ -1,3 +1,4 @@
+import {SupportWidget} from "@/components/support/widget";
 import type { Metadata } from "next";
 import "@fontsource-variable/estedad";
 import "./globals.css";
@@ -23,5 +24,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fa" dir="rtl"><body>{children}</body></html>;
+  return <html lang="fa" dir="rtl"><body>{children}<SupportWidget/></body></html>;
 }

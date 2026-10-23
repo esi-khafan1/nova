@@ -15,3 +15,8 @@
 .course-plan-footer .course-price strong span { font-size: 9px; }
 
 .course-plan-sizing { visibility: hidden; pointer-events: none; }
+
+.registration-price-offer { margin-top: 24px; padding-top: 18px; border-top: 1px solid #bbd5f7; }
+.registration-price-offer .course-price { gap: 8px; }
+.registration-price-offer .course-price strong { font-size: 23px; }
+.course-offer-tag { font-weight: 800; color: #a34300; }

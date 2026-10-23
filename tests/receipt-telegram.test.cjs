@@ -12,9 +12,9 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/registration/r
 const values={full_name:'Test Student',phone:'',telegram_id:'',grade:12,study_field:'mathematics',province:'',city:'',additional_notes:''};
 const render=mode=>renderToStaticMarkup(React.createElement(m.exports.RegistrationForm,{mode,values}));
 const enrollment=render('enrollment');
-assert.match(enrollment,/href="https:\/\/t.me\/nova_support26"/);
-assert.match(enrollment,/@nova_support26/);assert.match(enrollment,/روش جایگزین ارسال فیش/);
+assert.match(enrollment,/href="https:\/\/t.me\/NovaAcademy_Poshtibani"/);
+assert.match(enrollment,/@NovaAcademy_Poshtibani/);assert.match(enrollment,/روش جایگزین ارسال فیش/);assert.ok(enrollment.includes('فیش واریزی را برای این آیدی نیز می‌توانید ارسال بکنید تا خیال راحت تری داشته باشید'));assert.ok(!enrollment.includes('ارسال فیش به‌تنهایی خدمات را فعال نمی‌کند'));
 assert.match(enrollment,/target="_blank" rel="noopener noreferrer"/);
 assert.match(enrollment,/type="file"[^>]*required=""/);
-assert.ok(!render('profile').includes('https://t.me/nova_support26'));
+assert.ok(!render('profile').includes('https://t.me/NovaAcademy_Poshtibani'));
 console.log('Enrollment-only direct Telegram receipt link, safe new tab, handle text and unchanged required in-site upload passed.');
