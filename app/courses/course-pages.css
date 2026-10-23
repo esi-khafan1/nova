@@ -165,8 +165,11 @@
   line-height: 2;
 }
 .course-pages .course-plan-footer {
-  display: flex;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  column-gap: 8px;
+  container-type: inline-size;
   margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid #edf3fb;

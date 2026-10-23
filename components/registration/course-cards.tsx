@@ -140,7 +140,6 @@ export function CourseCards({
             return (
               <article className={`mag-card course-plan-card${sizing ? " course-plan-sizing" : ""}`} role={sizing ? undefined : "listitem"} aria-hidden={sizing || undefined} inert={sizing || undefined} style={{gridColumn:sizing ? 1 : index+1,gridRow:1}} key={`${sizing ? "sizing-" : ""}${course.course}-${course.months}`}>
 
-                {!sizing&&<div className="course-price-badge"><CoursePrice selection={course}/></div>}
                 {sizing ? <div className="course-plan-cover"/> : <Image
                   className="course-plan-cover"
                   unoptimized
@@ -159,6 +158,7 @@ export function CourseCards({
                   <p className="course-plan-tagline">{plan.tagline}</p>
                   <p className="mag-card-summary course-plan-summary">{plan.summary}</p>
                   <div className="mag-card-footer course-plan-footer">
+                    {!sizing && <CoursePrice selection={course}/>}
                     <Link prefetch={sizing ? false : undefined} className="course-plan-details" href={courseDetailsPath(course, returnTo === "landing" ? "landing" : undefined)}>
                       جزئیات بیشتر <span aria-hidden="true">←</span>
                     </Link>

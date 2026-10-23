@@ -8,19 +8,10 @@
 .course-price del { font-size: 12px; color: var(--mag-copy, inherit); }
 .course-price strong { font-size: 17px; white-space: nowrap; }
 .course-price strong span { font-size: 11px; font-weight: 500; }
-/* Out of flow: prices never add height or change the carousel/card dimensions. */
-.course-plan-card { position: relative; }
-.course-price-badge {
-  position: absolute;
-  z-index: 1;
-  top: 10px;
-  inset-inline-end: 10px;
-  max-width: calc(100% - 20px);
-  padding: 5px 9px;
-  background: #fff;
-  border: 1px solid var(--mag-line, currentColor);
-  border-radius: 9px;
-  pointer-events: none;
-}
+/* Compact two-line prices fit inside the original footer/button height. */
+.course-plan-footer .course-price { min-width: 0; gap: 2px; line-height: 1.2; }
+.course-plan-footer .course-price del { font-size: 10px; font-size: clamp(10px, 3.8cqi, 12px); white-space: nowrap; }
+.course-plan-footer .course-price strong { font-size: 12px; font-size: clamp(11px, 4.6cqi, 16px); }
+.course-plan-footer .course-price strong span { font-size: 9px; }
 
 .course-plan-sizing { visibility: hidden; pointer-events: none; }

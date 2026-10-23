@@ -151,8 +151,11 @@
   line-height: 2;
 }
 .nova-path-result .course-plan-footer {
-  display: flex;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  column-gap: 8px;
+  container-type: inline-size;
   margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid #edf3fb;
@@ -384,3 +387,8 @@
   .nova-path-result .course-plan-card { transition: none; }
   .nova-path-result .course-plan-edge { transition: none; }
 }
+
+/* Supplemental receipt channel; keep the handle readable and links inside mobile forms. */
+.registration-receipt-alternative { margin-block: 20px; padding-block: 16px; border-block: 1px solid #eed4a5; }
+.registration-receipt-alternative h4 { margin: 0; }
+.registration-receipt-alternative .button { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 100%; white-space: normal; text-align: center; }

@@ -13,7 +13,12 @@ const baseline=require('./fixtures/course-card-dimensions.json');
   for(const card of await cards.all()){
    const r=await card.boundingBox();assert.ok(Math.abs(r.width-row.width)<0.5);assert.ok(Math.abs(r.height-row.height)<0.5);
    const label=await card.locator('h2').textContent();assert.ok(['پلن پایه','پلن پیشرفت'].includes(label));
-   const price=await card.locator('.course-price-badge').boundingBox();assert.ok(price.x>=r.x&&price.x+price.width<=r.x+r.width+0.5);
+   const price=await card.locator('.course-plan-footer .course-price').boundingBox();
+   const details=await card.getByRole('link',{name:'جزئیات بیشتر'}).boundingBox();
+   assert.ok(price.x>=details.x+details.width,'price must be right of details link');
+   const image=await card.locator('.course-plan-cover').boundingBox();
+   assert.ok(price.y>=image.y+image.height,'price must be below artwork');
+   const fit=await card.locator('.course-price strong').evaluate(el=>el.scrollWidth<=el.clientWidth);assert.ok(fit,'price text must fit');assert.ok(price.x>=r.x&&price.x+price.width<=r.x+r.width+0.5);
    assert.ok(price.y>=r.y&&price.y+price.height<=r.y+r.height);
   }
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
