@@ -1,4 +1,5 @@
 "use client";
+import { CoursePrice } from "./course-price";
 import { useActionState } from "react";
 import { submitRegistration } from "@/app/dashboard/registration/actions";
 import { type RegistrationFormValues } from "@/lib/registration";
@@ -10,7 +11,7 @@ export function RegistrationForm({ values, mode = "enrollment", selection }: { v
   const enrollment = mode === "enrollment";
   return <form action={action} className="registration-form">
     <input type="hidden" name="form_mode" value={mode}/>
-    {enrollment && selection && <section className="registration-course-summary" aria-label="دورهٔ انتخابی"><h2>انتخاب تو</h2><dl><div><dt>پلن انتخابی</dt><dd>{courseTypeLabel(selection.course)}</dd></div><div><dt>بازهٔ انتخابی</dt><dd>{courseDurationLabel(selection.months)}</dd></div><div><dt>پایهٔ تحصیلی</dt><dd>{selection.grade.toLocaleString("fa-IR")}</dd></div><div><dt>رشته</dt><dd>{studyFieldLabels[selection.field]}</dd></div></dl><input type="hidden" name="course" value={selection.course}/><input type="hidden" name="months" value={selection.months}/><input type="hidden" name="grade" value={selection.grade}/><input type="hidden" name="study_field" value={selection.field}/></section>}
+    {enrollment && selection && <section className="registration-course-summary" aria-label="دورهٔ انتخابی"><h2>انتخاب تو</h2><dl><div><dt>پلن انتخابی</dt><dd>{courseTypeLabel(selection.course)}</dd></div><div><dt>بازهٔ انتخابی</dt><dd>{courseDurationLabel(selection.months)}</dd></div><div><dt>پایهٔ تحصیلی</dt><dd>{selection.grade.toLocaleString("fa-IR")}</dd></div><div><dt>رشته</dt><dd>{studyFieldLabels[selection.field]}</dd></div></dl><CoursePrice selection={selection}/><input type="hidden" name="course" value={selection.course}/><input type="hidden" name="months" value={selection.months}/><input type="hidden" name="grade" value={selection.grade}/><input type="hidden" name="study_field" value={selection.field}/></section>}
     <div className="registration-fields">
       <label className="registration-full-name">نام و نام خانوادگی<input name="full_name" autoComplete="name" required minLength={3} maxLength={121} defaultValue={values.full_name ?? [values.first_name,values.last_name].filter(Boolean).join(" ")}/></label>
       <label>شمارهٔ تلفن همراه<input name="phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={16} defaultValue={values.phone} placeholder="۰۹۱۲۱۲۳۴۵۶۷" dir="ltr"/></label>

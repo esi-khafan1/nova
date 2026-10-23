@@ -1,0 +1,134 @@
+{
+  "course": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "width": 358.65625,
+      "height": 575.46875
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "width": 358.65625,
+      "height": 575.46875
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "width": 305.328125,
+      "height": 542.140625
+    },
+    {
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "width": 341,
+      "height": 543.25
+    },
+    {
+      "viewport": {
+        "width": 700,
+        "height": 900
+      },
+      "width": 668,
+      "height": 754.28125
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 358,
+      "height": 580.171875
+    },
+    {
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "width": 343,
+      "height": 596.921875
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 740
+      },
+      "width": 288,
+      "height": 555.671875
+    }
+  ],
+  "landing": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "width": 338.65625,
+      "height": 529.140625
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "width": 338.65625,
+      "height": 452.734375
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "width": 290.65625,
+      "height": 452.734375
+    },
+    {
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "width": 319,
+      "height": 516.859375
+    },
+    {
+      "viewport": {
+        "width": 700,
+        "height": 900
+      },
+      "width": 648,
+      "height": 573.859375
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 338,
+      "height": 469.671875
+    },
+    {
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "width": 323,
+      "height": 461.234375
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 740
+      },
+      "width": 268,
+      "height": 430.296875
+    }
+  ]
+}

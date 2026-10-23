@@ -1,10 +1,11 @@
 "use client";
 
+import { CoursePrice } from "./course-price";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent } from "react";
-import { courseDetailsPath, courseDurationLabel, coursesFor } from "@/lib/courses";
-import { getCoursePlan } from "@/lib/course-plans";
+import { courseDetailsPath, courseDurationLabel, coursesFor, type CourseSelection } from "@/lib/courses";
+import { coursePlans, getCoursePlan } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
 
 export function CourseCards({
@@ -21,6 +22,13 @@ export function CourseCards({
   const suppressClick = useRef(false);
   const [limits, setLimits] = useState({ previous: false, next: true });
   const courses = coursesFor(grade, field);
+  // The old four-plan carousel used the tallest plan as its shared row height.
+  // Invisible, inert sizing references preserve that exact responsive geometry,
+  // even after VIP/CIP are removed from the advertised choices.
+  const entries = [
+    ...courses.map(course => ({course, sizing:false})),
+    ...coursePlans.filter(plan => plan.value === "vip" || plan.value === "cip").map(plan => ({course:{grade,field,course:plan.value,months:1} as CourseSelection,sizing:true})),
+  ];
   const fieldLabel = studyFieldLabels[field as keyof typeof studyFieldLabels];
 
   useEffect(() => {
@@ -30,7 +38,7 @@ export function CourseCards({
     function updateLimits() {
       if (!element) return;
       const viewport = element.getBoundingClientRect();
-      const cards = element.querySelectorAll<HTMLElement>(".course-plan-card");
+      const cards = element.querySelectorAll<HTMLElement>(".course-plan-card:not(.course-plan-sizing)");
       if (!cards.length) {
         setLimits({ previous: false, next: false });
         return;
@@ -126,12 +134,14 @@ export function CourseCards({
             if (event.key === "ArrowRight") { event.preventDefault(); move(false); }
           }}
         >
-          {courses.map((course) => {
+          {entries.map(({course,sizing},index) => {
             const plan = getCoursePlan(course.course);
             if (!plan) return null;
             return (
-              <article className="mag-card course-plan-card" role="listitem" key={`${course.course}-${course.months}`}>
-                <Image
+              <article className={`mag-card course-plan-card${sizing ? " course-plan-sizing" : ""}`} role={sizing ? undefined : "listitem"} aria-hidden={sizing || undefined} inert={sizing || undefined} style={{gridColumn:sizing ? 1 : index+1,gridRow:1}} key={`${sizing ? "sizing-" : ""}${course.course}-${course.months}`}>
+
+                {!sizing&&<div className="course-price-badge"><CoursePrice selection={course}/></div>}
+                {sizing ? <div className="course-plan-cover"/> : <Image
                   className="course-plan-cover"
                   unoptimized
                   src={`/courses/${plan.imageType}-${course.field}.svg`}
@@ -139,7 +149,7 @@ export function CourseCards({
                   width={640}
                   height={640}
                   loading="lazy"
-                />
+                />}
                 <div className="mag-card-body">
                   <div className="mag-card-meta">
                     <span className="course-plan-context">پایهٔ {course.grade.toLocaleString("fa-IR")} · {fieldLabel}</span>
@@ -149,7 +159,7 @@ export function CourseCards({
                   <p className="course-plan-tagline">{plan.tagline}</p>
                   <p className="mag-card-summary course-plan-summary">{plan.summary}</p>
                   <div className="mag-card-footer course-plan-footer">
-                    <Link className="course-plan-details" href={courseDetailsPath(course, returnTo === "landing" ? "landing" : undefined)}>
+                    <Link prefetch={sizing ? false : undefined} className="course-plan-details" href={courseDetailsPath(course, returnTo === "landing" ? "landing" : undefined)}>
                       جزئیات بیشتر <span aria-hidden="true">←</span>
                     </Link>
                   </div>

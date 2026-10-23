@@ -1,3 +1,4 @@
+import { CoursePrice } from "@/components/registration/course-price";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -86,6 +87,7 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
             <h2 id="course-detail-cta-title">آماده‌ای مسیرت رو شروع کنی؟</h2>
             <p>پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel} و رشتهٔ {fieldLabel} ثبت می‌شود.</p>
           </div>
+          <CoursePrice selection={selection}/>
           <Link className="course-cta-button" href={registrationHref}>
             انتخاب و ثبت‌نام در این دوره <span aria-hidden="true">←</span>
           </Link>

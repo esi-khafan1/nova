@@ -1,0 +1,26 @@
+.course-price {
+  display: grid;
+  gap: 2px;
+  color: var(--mag-ink, inherit);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.course-price del { font-size: 12px; color: var(--mag-copy, inherit); }
+.course-price strong { font-size: 17px; white-space: nowrap; }
+.course-price strong span { font-size: 11px; font-weight: 500; }
+/* Out of flow: prices never add height or change the carousel/card dimensions. */
+.course-plan-card { position: relative; }
+.course-price-badge {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  inset-inline-end: 10px;
+  max-width: calc(100% - 20px);
+  padding: 5px 9px;
+  background: #fff;
+  border: 1px solid var(--mag-line, currentColor);
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.course-plan-sizing { visibility: hidden; pointer-events: none; }

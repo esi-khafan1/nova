@@ -1,6 +1,7 @@
-import { coursePlans, getCoursePlan, legacyCourseTypes, type CoursePlanId, type LegacyCourseType } from "@/lib/course-plans";
+import { availableCoursePlans, getCoursePlan, legacyCourseTypes, type CoursePlanId, type LegacyCourseType } from "@/lib/course-plans";
 
 export const courseDurations = [
+  { value: 1, label: "۱ ماهه" },
   { value: 3, label: "۳ ماهه" },
   { value: 6, label: "۶ ماهه" },
   { value: 12, label: "یک‌ساله" },
@@ -9,11 +10,11 @@ export const courseDurations = [
 export const courseFields = ["mathematics", "experimental_sciences", "humanities"] as const;
 export type CourseField = (typeof courseFields)[number];
 export type CourseType = CoursePlanId | LegacyCourseType;
-export type CourseSelection = { grade: 10 | 11 | 12; field: CourseField; course: CourseType; months: 3 | 6 | 12 };
+export type CourseSelection = { grade: 10 | 11 | 12; field: CourseField; course: CourseType; months: 1 | 3 | 6 | 12 };
 export type CourseContext = Pick<CourseSelection, "grade" | "field">;
 
 const grades = ["10", "11", "12"] as const;
-const durations = ["3", "6", "12"] as const;
+const durations = ["1", "3", "6", "12"] as const;
 const isCourseType = (value: unknown): value is CourseType =>
   typeof value === "string" && (getCoursePlan(value) !== undefined || legacyCourseTypes.some((item) => item.value === value));
 
@@ -59,9 +60,19 @@ export function courseDurationLabel(value: unknown): string {
 export function coursesFor(grade: number, field: string): CourseSelection[] {
   const context = parseCourseContext({ grade, field });
   if (!context) return [];
-  return courseDurations.flatMap((duration) => coursePlans.map((plan) => ({
+  return courseDurations.flatMap((duration) => availableCoursePlans.map((plan) => ({
     ...context,
     course: plan.value,
     months: duration.value,
   })));
+}
+
+/** Toman amounts; longer durations are exact multiples, with no additional discount. */
+export function coursePrice(selection: CourseSelection): {original: number; discounted: number} | null {
+ if (selection.course !== "base" && selection.course !== "progress") return null;
+ const monthly = selection.grade === 12
+  ? {base: {original: 3200000, discounted: 2290000}, progress: {original: 3500000, discounted: 2590000}}
+  : {base: {original: 3000000, discounted: 2100000}, progress: {original: 3400000, discounted: 2390000}};
+ const price=monthly[selection.course];
+ return {original:price.original*selection.months,discounted:price.discounted*selection.months};
 }

@@ -123,3 +123,6 @@ export type LegacyCourseType = (typeof legacyCourseTypes)[number]["value"];
 export function getCoursePlan(value: unknown): CoursePlan | undefined {
   return coursePlans.find((plan) => plan.value === value);
 }
+
+/** Only these plans are advertised; retain all definitions for past registrations. */
+export const availableCoursePlans = coursePlans.filter(plan => plan.value === "base" || plan.value === "progress");
