@@ -9,7 +9,6 @@ import { safeReturnPath } from "@/lib/return-path";
 import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
 import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
 import { normalizeMobile } from "@/lib/phone-auth";
-import { emailConfirmationUrl } from "@/lib/auth-urls";
 
 type AuthMode = "signin" | "signup" | "reset";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -78,8 +77,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
-    if (!email) return setMessage("شماره تلفن همراه یا ایمیل را وارد کن.");
-    if (!emailPattern.test(email) && !normalizeMobile(email)) return setMessage("شماره تلفن همراه یا ایمیل معتبر وارد کن.");
+    if (!email) return setMessage("شماره تلفن همراه را وارد کن.");
+    if (!emailPattern.test(email) && !normalizeMobile(email)) return setMessage("اطلاعات ورود معتبر وارد کن.");
     if (!isEnglishPasswordInput(password) || passwordError) {
       setPasswordError(englishPasswordMessage);
       return;
@@ -94,7 +93,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     }
     const { error } = await createClient().auth.signInWithPassword({ email, password });
     if (error) {
-      setMessage("ایمیل یا رمز عبور درست نیست.");
+      setMessage("اطلاعات ورود یا رمز عبور درست نیست.");
       setLoading(false);
       return;
     }
@@ -146,7 +145,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     const password = String(data.get("password") ?? "");
 
     if (fullName.length < 2) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
-    if (phoneSignup ? !normalizeMobile(email) : !emailPattern.test(email)) return setMessage(phoneSignup?"شماره تلفن همراه معتبر وارد کن.":"لطفاً یک ایمیل معتبر وارد کن.");
+    if (!normalizeMobile(email)) return setMessage("شماره تلفن همراه معتبر وارد کن.");
+    if (!phoneSignup) return setMessage("ثبت‌نام فعلاً در دسترس نیست؛ کمی بعد تلاش کن.");
     if (!isEnglishPasswordInput(password) || passwordError) {
       setPasswordError(englishPasswordMessage);
       return;
@@ -154,40 +154,11 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (!password) return setMessage("لطفاً رمز عبور را وارد کن.");
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
-    if(phoneSignup){
-      if(Date.now()<resendAt)return setMessage('برای دریافت کد جدید حداقل یک دقیقه صبر کن.');
-      setLoading(true);
-      try{await phoneRequest({action:'signup',phone:email,password,fullName,next:destination});setChallenge(normalizeMobile(email));setResendAt(Date.now()+60000);setSuccess(true);setMessage('کد به شماره‌ات ارسال شد؛ کد را وارد کن تا مستقیم وارد حساب شوی.');}
-      catch(error){setSuccess(false);setMessage(error instanceof Error?error.message:'ارسال کد انجام نشد.');}
-      finally{setLoading(false);}return;
-    }
+    if(Date.now()<resendAt)return setMessage('برای دریافت کد جدید حداقل یک دقیقه صبر کن.');
     setLoading(true);
-    const { data: signupData, error } = await createClient().auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: emailConfirmationUrl(destination),
-        data: { full_name: fullName, course_return_to: destination },
-      },
-    });
-    if (error) {
-      setMessage(
-        error.message.includes("registered")
-          ? "این حساب قبلاً ساخته شده است؛ وارد شوید."
-          : "ثبت‌نام انجام نشد. اطلاعات را بررسی کن.",
-      );
-      setLoading(false);
-      return;
-    }
-    if (signupData.user?.identities?.length === 0) {
-      changeMode("signin");
-      setMessage("این حساب قبلاً ساخته شده است؛ وارد شوید.");
-      setLoading(false);
-      return;
-    }
-    setSuccess(true);
-    setMessage("حالا ایمیلت را باز کن و روی دکمهٔ تأیید بزن؛ بعد وارد حساب شو. اگر ایمیل را ندیدی، پوشهٔ اسپم را هم چک کن.");
-    setLoading(false);
+    try{await phoneRequest({action:'signup',phone:email,password,fullName,next:destination});setChallenge(normalizeMobile(email));setResendAt(Date.now()+60000);setSuccess(true);setMessage('کد به شماره‌ات ارسال شد؛ کد را وارد کن تا مستقیم وارد حساب شوی.');}
+    catch(error){setSuccess(false);setMessage(error instanceof Error?error.message:'ارسال کد انجام نشد.');}
+    finally{setLoading(false);}
   }
 
   return (
@@ -203,7 +174,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
             <div className="nova-auth-heading">
               <span className="nova-auth-eyebrow"><i aria-hidden="true" /> حساب کاربری نووا</span>
               <h1 id="nova-auth-title">{mode === "reset" ? "رمز جدیدت را تعیین کن" : mode === "signin" ? "خوش برگشتی!" : "قدم اول، با تو"}</h1>
-              <p>{mode === "reset" ? "رمز جدیدت را وارد کن تا مستقیم وارد پنل شوی." : mode === "signin" ? "وارد حساب شو و مسیرت را از همان‌جا ادامه بده." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
+              <p>{mode === "reset" ? "رمز جدیدت را وارد کن تا مستقیم وارد پنل شوی." : mode === "signin" ? "با شماره تلفن همراه و رمز عبورت وارد شو." : "حسابت را بساز؛ مسیر مناسب خودت را پیدا کن."}</p>
             </div>
 
             {mode !== "reset" && <div className="nova-auth-tabs" role="tablist" aria-label="انتخاب ورود یا ثبت‌نام">
@@ -235,8 +206,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                   <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="account" /></span><input id="signup-name" name="fullName" readOnly={!!challenge || loading} placeholder="مثلاً: علی رضایی" autoComplete="name" required /></div>
                 </div>}
                 {mode !== "reset" && <div className="nova-auth-field">
-                  <label htmlFor={`${mode}-email`}>{mode === "signin" ? "شماره تلفن همراه یا ایمیل" : phoneSignup ? "شماره تلفن همراه" : "ایمیل"}</label>
-                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="email" /></span><input id={`${mode}-email`} name="email" readOnly={!!challenge || loading} type={mode === "signup" && !phoneSignup ? "email" : "text"} inputMode={mode === "signup" && phoneSignup ? "tel" : "text"} dir="ltr" placeholder={mode === "signup" && phoneSignup ? "09xxxxxxxxx" : "شماره موبایل یا you@example.com"} autoComplete={mode === "signin" ? "username" : phoneSignup ? "tel" : "email"} autoCapitalize="none" spellCheck={false} required /></div>
+                  <label htmlFor={`${mode}-email`}>شماره تلفن همراه</label>
+                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="phone" /></span><input id={`${mode}-email`} name="email" readOnly={!!challenge || loading} type="text" inputMode={mode === "signup" ? "tel" : "text"} dir="ltr" placeholder="09xxxxxxxxx" autoComplete={mode === "signin" ? "username" : "tel"} autoCapitalize="none" spellCheck={false} required /></div>
                 </div>}
                 <div className="nova-auth-field">
                   <label htmlFor={`${mode}-password`}>{mode === "reset" ? "رمز عبور جدید" : "رمز عبور"}</label>
@@ -244,12 +215,12 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                 </div>
                 {mode === 'signup' && challenge && <div className="nova-auth-field"><label htmlFor="signup-code">کد تأیید شماره</label><div className="nova-auth-input-wrap"><input id="signup-code" value={otp} onChange={event=>setOtp(event.target.value.replace(/[^0-9]/g,''))} inputMode="numeric" autoComplete="one-time-code" dir="ltr" maxLength={6} autoFocus required /></div><div className="nova-auth-code-actions"><button type="button" disabled={loading} onClick={()=>{setChallenge(null);setOtp('');setSuccess(false);setMessage('شماره را اصلاح کن یا پس از یک دقیقه دوباره دریافت کد را بزن.');}}>اصلاح شماره</button><button type="button" disabled={loading} onClick={resendCode}>دریافت کد جدید</button></div></div>}
                 {passwordError && <p id={`${mode}-password-error`} role="alert" className="nova-auth-message">{passwordError}</p>}
-                <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success && !phoneSignup)}>
-                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ورود با رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : phoneSignup ? challenge ? "تأیید کد و ورود" : "دریافت کد" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
+                <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && !phoneSignup)}>
+                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ورود با رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود با شماره تلفن همراه" : challenge ? "تأیید کد و ورود" : "دریافت کد"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
               </form>
             </div>
-            {mode === "signup" && <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>{phoneSignup ? "شماره‌ات را با کد پیامکی تأیید کن؛ سپس مستقیم وارد حسابت می‌شوی." : "بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی."}</span></div>}
+            {mode === "signup" && <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>شماره‌ات را با کد پیامکی تأیید کن؛ سپس مستقیم وارد حسابت می‌شوی.</span></div>}
           </section>
 
           <aside className="nova-auth-story" aria-labelledby="nova-auth-story-title">
@@ -266,11 +237,12 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   );
 }
 
-function AuthIcon({ name }: { name: "arrow" | "account" | "email" | "lock" | "eye" | "eyeOff" | "shield" | "check" | "info" }) {
+function AuthIcon({ name }: { name: "arrow" | "account" | "email" | "phone" | "lock" | "eye" | "eyeOff" | "shield" | "check" | "info" }) {
   const paths = {
     arrow: <path d="M19 12H5m6-6-6 6 6 6" />,
     account: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
     email: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></>,
+    phone: <path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 2a14 14 0 0 1-7-7l2-2-2-5Z" />,
     lock: <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></>,
     eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
     eyeOff: <><path d="m3 3 18 18M9.5 5.3A11 11 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.8M6 6.5A18 18 0 0 0 2 12s3.5 7 10 7a11 11 0 0 0 5-1.2M10 10a3 3 0 0 0 4 4" /></>,
