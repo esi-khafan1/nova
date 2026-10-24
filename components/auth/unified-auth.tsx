@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LandingHeader } from "@/components/landing-header";
-import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
 import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
 import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
@@ -33,8 +32,13 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [otp, setOtp] = useState("");
   const [resendAt, setResendAt] = useState(0);
   async function phoneRequest(body:Record<string,unknown>){
-    const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const result=await response.json();if(!response.ok)throw Error(result.message||'ارتباط انجام نشد.');return result;
+    try{
+      const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+      const result=await response.json();if(!response.ok)throw Error(result.message||'ارتباط انجام نشد.');return result;
+    }catch(error){
+      if(error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError'||error.name==='TypeError'))throw Error('ارتباط با سرور برقرار نشد یا بیش از حد طول کشید؛ کمی بعد دوباره تلاش کن.');
+      throw error;
+    }
   }
   async function verifyPhone(event:FormEvent<HTMLFormElement>){
     event.preventDefault();if(!challenge||!/^\d{6}$/.test(otp))return setMessage('کد شش‌رقمی را وارد کن.');
@@ -87,19 +91,12 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
     setLoading(true);
-    if(normalizeMobile(email)){
-      try{await phoneRequest({action:'signin',phone:email,password});window.location.assign(destination);}
-      catch(error){setMessage(error instanceof Error?error.message:'شماره یا رمز عبور درست نیست.');setLoading(false);}return;
-    }
-    const { error } = await createClient().auth.signInWithPassword({ email, password });
-    if (error) {
-      setMessage("اطلاعات ورود یا رمز عبور درست نیست.");
-      setLoading(false);
-      return;
-    }
-    // A single full navigation clears any pre-login App Router cache. push +
-    // refresh could start two competing /dashboard requests after sign-in.
-    window.location.assign(destination);
+    try{
+      await phoneRequest({action:'signin',...(normalizeMobile(email)?{phone:email}:{email}),password});
+      // One full navigation reads the server-issued cookies and clears old caches.
+      window.location.assign(destination);
+    }catch(error){setMessage(error instanceof Error?error.message:'ارتباط برقرار نشد؛ دوباره تلاش کن.');}
+    finally{setLoading(false);}
   }
 
   async function submitReset(event: FormEvent<HTMLFormElement>) {

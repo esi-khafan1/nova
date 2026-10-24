@@ -16,16 +16,19 @@ export async function POST(request:NextRequest){
   const parts:Uint8Array[]=[];let size=0;while(true){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>8192){await reader.cancel();return reply(413,"درخواست بیش از حد بزرگ است.");}parts.push(part.value);}
   const body=JSON.parse(Buffer.concat(parts).toString('utf8'));
   if(!body||typeof body!=='object'||!actions.includes(body.action))return reply(400,"درخواست معتبر نیست.");
-  const phone=normalizeMobile(body.phone);if(!phone)return reply(400,"شماره تلفن همراه معتبر وارد کن.");
+  const email=body.action==='signin'&&typeof body.email==='string'?body.email.trim():null;
+  const emailLogin=Boolean(email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  const phone=normalizeMobile(body.phone);if(!phone&&!emailLogin)return reply(400,"شماره تلفن همراه معتبر وارد کن.");
   if(body.action!=="signin"&&process.env.PHONE_SIGNUP_ENABLED!=="true")return reply(503,"ثبت‌نام و اتصال شماره فعلاً در دسترس نیست؛ کمی بعد تلاش کن.");
   const client=await createClient();
+  if(body.action!=='signin'&&!phone)return reply(400,'شماره تلفن همراه معتبر وارد کن.');
   const link=body.action==='link'||body.action==='verify-link';
   let currentId:string|undefined;
   if(link){const {data:{user},error}=await client.auth.getUser();if(error||!user)return reply(401,"ابتدا وارد حساب خودت شو.");currentId=user.id;if(body.action==='link'&&user.phone_confirmed_at&&user.phone)return reply(409,'این حساب از قبل شمارهٔ تأییدشده دارد.');}
   const verifying=body.action==='verify'||body.action==='verify-link';
   if(body.action==='resend'){
    if(request.cookies.get(pendingCookie)?.value!==`signup:${phone}`)return reply(400,'ابتدا ثبت‌نام را شروع کن.');
-   const {error}=await client.auth.resend({type:'sms',phone});
+   const {error}=await client.auth.resend({type:'sms',phone:phone!});
    return error?reply(400,'کد جدید ارسال نشد؛ کمی صبر کن.'):reply(200,'کد جدید ارسال شد.');
   }
   if(verifying){
@@ -34,7 +37,7 @@ export async function POST(request:NextRequest){
    // A challenge must first have been requested through this same-browser flow.
    if(pending!==`${link?'link:'+currentId:'signup'}:${phone}`)return reply(400,"ابتدا دریافت کد را بزن.");
    if(!link&&(typeof body.password!=='string'||body.password.length<8||body.password.length>128||!isEnglishPasswordInput(body.password)))return reply(400,'رمز انتخاب‌شده معتبر نیست.');
-   const {data,error}=await client.auth.verifyOtp({phone,token:body.token,type:link?'phone_change':'sms'});
+   const {data,error}=await client.auth.verifyOtp({phone:phone!,token:body.token,type:link?'phone_change':'sms'});
    if(error||!data.user?.phone_confirmed_at||normalizeMobile(data.user.phone)!==phone||(link&&data.user.id!==currentId))return reply(400,"کد صحیح نیست یا منقضی شده است.");
    const response=reply(200,link?"شماره به همین حساب متصل شد.":"شماره تأیید شد.");response.cookies.delete(pendingCookie);return response;
   }
@@ -42,9 +45,10 @@ export async function POST(request:NextRequest){
    if(typeof body.password!=='string'||body.password.length<8||body.password.length>128||!isEnglishPasswordInput(body.password))return reply(400,"رمز عبور باید بین ۸ تا ۱۲۸ کاراکتر و با صفحه‌کلید انگلیسی باشد.");
   }
   if(body.action==='signin'){
-   const {error}=await client.auth.signInWithPassword({phone,password:body.password});
-   return error?reply(400,"شماره یا رمز عبور درست نیست."):reply(200,"وارد شدی.");
+   const {error}=await client.auth.signInWithPassword(emailLogin?{email:email!,password:body.password}:{phone:phone!,password:body.password});
+   return error?reply(400,"اطلاعات ورود یا رمز عبور درست نیست."):reply(200,"وارد شدی.");
   }
+  if(!phone)return reply(400,'شماره تلفن همراه معتبر وارد کن.');
   let error;
   if(link){({error}=await client.auth.updateUser({phone}));}
   else{
