@@ -36,3 +36,7 @@ Deployment update: migration 072 and send-sms v1 have been applied to the projec
 ### Connection troubleshooting without an OTP request
 
 The page now includes a read-only diagnostic calling Auth `/settings` with the same public apikey header. It triggers a browser preflight, but does NOT call `/otp` or the SMS hook. A successful top-level `/health` navigation proves gateway reachability only, not cross-origin fetch or Auth upstream health. Success on `/settings` still does not prove the POST OTP/hook path works. With `?diagnostic=1`, the page disables sending even if its click handler is invoked. A temporary HTTP preview can isolate file-origin differences; it does not proxy Supabase requests. The function's server-side SMS test toggle remains disabled pending diagnosis.
+
+### Safe provider outcome diagnostics (migration 073)
+
+The hook now records one terminal outcome on the existing reserved attempt: accepted, HTTP error, small numeric provider rejection code, unrecognized response, timeout or network error. Only service_role may write; no client can read the private table directly. It records no phone, OTP, keys, recId, raw provider body or exception message. This diagnoses subsequent manual attempts without asking the operator to expose request bodies. Existing pre-migration attempts remain `reserved`; their outcome is unknown. Diagnostic writes have a 500ms deadline and cannot trigger resend or convert provider rejection to success. This adds observability, not a claim that the previous delivery failure has been fixed.

@@ -3,7 +3,7 @@ export function normalizePhone(value) {
  const n=String(value??'').replace(/^\+/, '');
  return /^989\d{9}$/.test(n)?n:/^09\d{9}$/.test(n)?`98${n.slice(1)}`:null;
 }
-export function createHandler({env,verify,claim,fetcher=fetch}) {
+export function createHandler({env,verify,claim,report=async()=>{},fetcher=fetch}) {
  return async request=>{
   const reply=(status,message)=>Response.json(status===200?{}:{error:{http_code:status,message}},{status});
   if(request.method!=='POST')return reply(405,'POST required');
@@ -26,18 +26,28 @@ export function createHandler({env,verify,claim,fetcher=fetch}) {
   // Durable claim BEFORE network send: ambiguous timeouts must never auto-resend.
   try{if(!await claim(event))return reply(429,'Duplicate event or test budget exhausted');}
   catch{return reply(503,'Unable to reserve SMS attempt');}
+  const started=Date.now();
+  const finish=async(outcome,code=null)=>{try{await report(event,outcome,code,Math.min(Date.now()-started,60000));}catch{console.warn('sms_test: diagnostic write failed');}};
   try{
    const result=await fetcher('https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber',{
     method:'POST',redirect:'error',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({username,password:key,text:body.sms.otp,to:`0${allowed.slice(2)}`,bodyId:'566954'}),
     signal:AbortSignal.timeout(2500)
    });
-   if(!result.ok)return reply(502,'SMS provider rejected request; inspect delivery before retrying');
+   if(!result.ok){await finish('http_error',result.status);return reply(502,'SMS provider HTTP error; inspect delivery before retrying');}
    // Preserve long recIds as text: JSON number parsing can lose precision.
    const raw=await result.text();
    const match=raw.match(/"Value"\s*:\s*"?(\d{16,})"?\s*[,}]/);
-   if(!match)return reply(502,'SMS provider did not confirm acceptance');
-   return reply(200);
-  }catch{return reply(502,'SMS delivery unknown; inspect panel before retrying');}
+   if(!match){
+    const codeMatch=raw.match(/"Value"\s*:\s*"?(-?\d{1,3})"?\s*[,}]/);
+    const code=codeMatch?Number(codeMatch[1]):null;
+    await finish(code===null?'unrecognized_response':'provider_rejected',code);
+    return reply(502,'SMS provider did not confirm acceptance; inspect test diagnostics');
+   }
+   await finish('accepted');return reply(200);
+  }catch(error){
+   await finish(error?.name==='TimeoutError'||error?.name==='AbortError'?'timeout':'network_error');
+   return reply(502,'SMS delivery unknown; inspect panel before retrying');
+  }
  };
 }
