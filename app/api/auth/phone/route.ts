@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeMobile } from "@/lib/phone-auth";
 import { isEnglishPasswordInput } from "@/lib/password-input";
+import { isTrustedAuthOrigin } from "@/lib/auth-origin";
 import { safeReturnPath } from "@/lib/return-path";
 export const dynamic="force-dynamic";
 const pendingCookie="nova_phone_pending";
@@ -9,7 +10,7 @@ const actions=["signup","verify","signin","link","verify-link","resend"];
 export async function POST(request:NextRequest){
  const reply=(status:number,message:string)=>NextResponse.json({ok:status===200,message},{status,headers:{"Cache-Control":"no-store"}});
  try{
-  if(!request.headers.get('origin')||new URL(request.headers.get('origin')!).host!==request.nextUrl.host)return reply(403,"درخواست مجاز نیست.");
+  if(!isTrustedAuthOrigin(request))return reply(403,"درخواست مجاز نیست.");
   if(!request.headers.get('content-type')?.startsWith('application/json'))return reply(415,"درخواست معتبر نیست.");
   const reader=request.body?.getReader();if(!reader)return reply(400,"درخواست معتبر نیست.");
   const parts:Uint8Array[]=[];let size=0;while(true){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>8192){await reader.cancel();return reply(413,"درخواست بیش از حد بزرگ است.");}parts.push(part.value);}

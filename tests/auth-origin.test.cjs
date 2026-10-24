@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),ts=require('typescript');
+const {NextRequest}=require('next/server');const moduleStub={exports:{}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/auth-origin.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:moduleStub,exports:moduleStub.exports,URL,process:{env:{NODE_ENV:'production',AUTH_ALLOWED_ORIGINS:'https://stage.example.test'}},require:n=>{assert.equal(n,'@/lib/auth-urls');return {AUTH_SITE_ORIGIN:'https://nova-academy.ir'};}});
+const allowed=moduleStub.exports.isTrustedAuthOrigin;
+const req=(origin,extra={})=>new NextRequest('http://0.0.0.0:3000/api/auth/phone',{headers:{...(origin?{origin}:{}),...extra}});
+assert.equal(allowed(req('https://nova-academy.ir')),true);
+assert.equal(allowed(req('https://stage.example.test')),true);
+for(const origin of [null,'null','https://evil.test','http://nova-academy.ir','https://nova-academy.ir.evil.test','https://nova-academy.ir:444','https://nova-academy.ir/path','https://user@nova-academy.ir','not a URL'])assert.equal(allowed(req(origin)),false,origin);
+assert.equal(allowed(req('https://evil.test',{host:'evil.test','x-forwarded-host':'evil.test','x-forwarded-proto':'https'})),false);
+assert.equal(allowed(req('https://nova-academy.ir',{'sec-fetch-site':'cross-site'})),false);
+console.log('Production Auth origin: canonical domain behind internal proxy accepted; missing/null/foreign origins, scheme/port mismatches and forged forwarding headers rejected.');

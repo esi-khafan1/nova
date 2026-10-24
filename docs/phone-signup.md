@@ -39,3 +39,7 @@ Phone API traffic is same-origin via the app server, avoiding direct browser-to-
 - Existing Auth UI, middleware, request-scoped cache, email confirmation/return-path, recovery, receipt and enrollment tests plus production build/TypeScript/targeted ESLint.
 
 The prior standalone real OTP delivery+verification succeeded, but the NEW signup-with-password and linking flows are not yet live production E2E-tested. Verify fresh phone signup, logout/password re-login, occupied-number rejection, linking to an existing email account with UID unchanged, email login with old password, resend/invalid/expired codes and course return before broad launch.
+
+### Reverse-proxy Origin check
+
+The phone API validates browser Origin against the fixed HTTPS canonical site origin, not `request.nextUrl.host`, which can be an internal Runflare host/port. Additional HTTPS stage origins may be explicitly configured in server-only `AUTH_ALLOWED_ORIGINS` (comma-separated exact origins, no wildcards). Production does not infer trust from Host or forwarded headers. Missing/null/foreign origins and cross-site Fetch Metadata are denied. No additional configuration is needed for https://nova-academy.ir. Tests reproduce a canonical public Origin with an internal http://0.0.0.0:3000 request URL without sending an SMS.
