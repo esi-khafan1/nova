@@ -1,0 +1,14 @@
+/* Shared by student, counselor and staff shells; no generic form overrides. */
+.phone-link-card{min-width:0;overflow-wrap:anywhere}
+.phone-link-card .phone-link-eyebrow{display:block;margin-bottom:8px;font-size:12px;color:#225db2;font-weight:650}
+.phone-link-card h2{margin:0 0 10px;font-size:clamp(18px,3vw,24px);line-height:1.9}
+.phone-link-card p{line-height:2;margin:0 0 20px;color:#547191}
+.phone-link-card .phone-link-form{display:grid;grid-template-columns:minmax(0,440px);gap:20px;max-width:560px;margin-top:24px}
+.phone-link-card .phone-link-field{display:grid;gap:10px;min-width:0;font-size:14px;font-weight:600;color:#12304d}
+.phone-link-card .phone-link-field input{box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:48px;padding:12px 14px;border:1px solid #c8daff;border-radius:10px;background:#fff;color:#12304d;font:inherit;text-align:left}
+.phone-link-card input:focus-visible{outline:2px solid #225db2;outline-offset:3px}
+.phone-link-card input[readonly]{background:#f1f7ff;color:#547191}
+.phone-link-card .phone-link-actions{display:flex;flex-wrap:wrap;gap:12px}
+.phone-link-card .phone-link-actions .button{display:inline-flex;justify-content:center;align-items:center;min-height:48px;margin:0;padding:12px 24px;white-space:normal;font:inherit;line-height:1.7}
+.phone-link-card .phone-link-status{margin:20px 0 0;padding:12px 16px;border:1px solid #c8daff;border-radius:10px;background:#f1f7ff;color:#123b63;font-size:14px}
+@media(max-width:600px){.phone-link-card .phone-link-form{grid-template-columns:minmax(0,1fr);max-width:none}.phone-link-card .phone-link-actions{display:grid;grid-template-columns:minmax(0,1fr);width:100%}.phone-link-card .phone-link-actions .button{width:100%;min-width:0}.phone-link-card h2{font-size:19px}.phone-link-card p{font-size:13px}}

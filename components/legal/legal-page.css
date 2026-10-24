@@ -1,0 +1,19 @@
+/* The shared public-information shell follows the current white/ice-blue theme. */
+.nova-info-page{min-height:100vh;background:#f5faff;color:#123b63}
+.nova-info-page .legal-page{min-height:calc(100vh - 104px);padding:32px 24px 48px;background:transparent;color:#123b63}
+.nova-info-page .legal-breadcrumb{display:flex;flex-wrap:wrap;gap:12px;width:min(960px,100%);margin:0 auto 24px;font-size:13px;color:#547191;line-height:2}
+.nova-info-page .legal-breadcrumb a{color:#225db2}
+.nova-info-page .legal-card{width:min(960px,100%);min-width:0;box-sizing:border-box;padding:clamp(24px,4vw,48px);border:1px solid #c8daff;border-radius:20px;background:#fff;box-shadow:none}
+.nova-info-page .legal-eyebrow{color:#225db2}
+.nova-info-page .legal-card h1{color:#123b63;font-size:clamp(28px,4vw,40px);line-height:1.7;margin-top:12px}
+.nova-info-page .legal-updated{color:#547191}
+.nova-info-page .legal-content{margin-top:28px;overflow-wrap:anywhere}
+.nova-info-page .legal-content h2{color:#123b63;line-height:1.9;font-size:20px;padding-top:8px}
+.nova-info-page .legal-content p,.nova-info-page .legal-content li{color:#547191;line-height:2.2}
+.nova-info-page .legal-content a{color:#225db2}
+.nova-info-page .legal-contact{background:#eef6ff;border-color:#c8daff;padding:20px;gap:12px}
+.nova-info-page .legal-contact span{color:#547191}
+.nova-info-page .legal-contact a{font-size:clamp(14px,3vw,18px);overflow-wrap:anywhere;justify-self:start;max-width:100%}
+.nova-info-page .legal-nav{width:min(960px,100%);color:#547191;margin-top:32px;padding-top:24px;border-top:1px solid #dceafb;line-height:2}
+.nova-info-page .legal-nav a:hover{color:#225db2}
+@media(max-width:600px){.nova-info-page .legal-page{padding:24px 16px 36px}.nova-info-page .legal-card{padding:24px 20px;border-radius:16px}.nova-info-page .legal-content h2{font-size:18px}}
