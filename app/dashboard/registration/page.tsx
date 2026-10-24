@@ -1,3 +1,4 @@
+import { hasConfirmedContact } from "@/lib/phone-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -14,7 +15,7 @@ export default async function RegistrationPage({ searchParams }: { searchParams:
   const invalidSelection = !requested && ["grade","field","course","months"].some(key => params[key] !== undefined);
   const next = requested ? courseRegistrationPath(requested) : "/dashboard/registration";
   const { user } = await getRequestUser();
-  if (!user || !user.email_confirmed_at) redirect(`/auth?mode=signup&next=${encodeURIComponent(safeReturnPath(next))}`);
+  if (!user || !hasConfirmedContact(user)) redirect(`/auth?mode=signup&next=${encodeURIComponent(safeReturnPath(next))}`);
   const { supabase, profile } = await requireProfile(["student"], true);
   if (profile.registration_status === "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-card"><h1>خدمات حساب تو فعال است</h1><p>برای حفظ ثبت‌نام تأییدشده، این فرم آن را بازنویسی نمی‌کند. برای تغییر یا تمدید دوره با نووا هماهنگ کن.</p><Link className="button" href="/dashboard/student">رفتن به پنل من</Link></section></DashboardShell>;
   const account = await loadStudentAccount(supabase,profile);

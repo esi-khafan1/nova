@@ -128,3 +128,8 @@
 
 /* Same credential alignment and reveal placement on desktop and phone. */
 .nova-auth-reveal:focus-visible { outline: 2px solid var(--auth-blue); outline-offset: -4px; }
+
+/* Only new code-step actions; preserve the existing form palette and geometry. */
+.nova-auth-code-actions { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.nova-auth-code-actions button { font: inherit; color: var(--auth-blue); background: transparent; border: 0; padding: 8px 0; min-height: 44px; cursor: pointer; }
+.nova-auth-code-actions button:disabled { opacity: .55; cursor: wait; }

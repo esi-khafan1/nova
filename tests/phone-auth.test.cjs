@@ -1,0 +1,25 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
+const {NextRequest,NextResponse}=require('next/server');
+function load(file,requires,extra={}){const module={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module,exports:module.exports,require:n=>requires[n],URL,Buffer,process:{env:{PHONE_SIGNUP_ENABLED:'true'}},...extra});return module.exports;}
+const helpers=load('lib/phone-auth.ts',{}),password=load('lib/password-input.ts',{}),returns=load('lib/return-path.ts',{});
+for(const n of ['09108312159','+989108312159','00989108312159','۰۹۱۰۸۳۱۲۱۵۹'])assert.equal(helpers.normalizeMobile(n),'989108312159');
+for(const n of ['someone@example.com','+12025551234','0912','091083121590',null,{}])assert.equal(helpers.normalizeMobile(n),null);
+assert.equal(helpers.hasConfirmedContact({phone_confirmed_at:'now'}),true);assert.equal(helpers.hasConfirmedContact({email_confirmed_at:'now'}),true);assert.equal(helpers.hasConfirmedContact({}),false);
+let proofExpected=false;let calls=[],owner={id:'owner',email_confirmed_at:'now'},error=null;let proofCode='phone_not_confirmed';
+const client={auth:{getUser:async()=>({data:{user:owner},error:null}),signUp:async p=>{calls.push(['signup',p]);proofExpected=true;return {data:{user:{identities:[{}]}},error};},signInWithPassword:async p=>{calls.push(['signin',p]);if(proofExpected){proofExpected=false;return {error:{code:proofCode}};}return {error};},resend:async p=>{calls.push(['resend',p]);return {error};},updateUser:async p=>{calls.push(['update',p]);return {error};},verifyOtp:async p=>{calls.push(['verify',p]);return {data:{user:{id:owner?.id||'new',phone:p.phone,phone_confirmed_at:'now'}},error};}}};
+const route=load('app/api/auth/phone/route.ts',{'next/server':{NextRequest,NextResponse},'@/lib/supabase/server':{createClient:async()=>client},'@/lib/phone-auth':helpers,'@/lib/password-input':password,'@/lib/return-path':returns});
+const req=(body,cookie='',origin='https://nova.test')=>new NextRequest('https://nova.test/api/auth/phone',{method:'POST',headers:{origin,'content-type':'application/json',cookie},body:JSON.stringify(body)});
+(async()=>{
+let response=await route.POST(req({action:'signup',phone:'09108312159',password:'abcdefgh',fullName:'Test Person',next:'//evil.test',role:'admin'}));assert.equal(response.status,200);assert.match(response.headers.get('set-cookie'),/HttpOnly/);assert.equal(calls.find(c=>c[0]==='signup')[1].options.data.course_return_to,'/dashboard');assert.equal(calls.find(c=>c[0]==='signup')[1].options.data.role,undefined);
+const initial=calls.length;response=await route.POST(req({action:'signin',phone:'09108312159',password:'abcdefgh'}));assert.equal(response.status,200);assert.equal(calls.length,initial+1);assert.equal(calls.at(-1)[0],'signin','password login must not send SMS');
+response=await route.POST(req({action:'verify',phone:'09108312159',token:'123456',password:'abcdefgh'}));assert.equal(response.status,400);
+response=await route.POST(req({action:'verify',phone:'09108312159',token:'123456',password:'abcdefgh'},'nova_phone_pending=signup:989108312159'));assert.equal(response.status,200);assert.equal(calls.at(-1)[0],'verify');assert.match(response.headers.get('set-cookie'),/Max-Age=0|Expires=/);
+response=await route.POST(req({action:'link',phone:'09108312159'}));assert.equal(response.status,200);assert.match(response.headers.get('set-cookie'),/link%3Aowner|link:owner/);
+response=await route.POST(req({action:'verify-link',phone:'09108312159',token:'123456'},'nova_phone_pending=link:owner:989108312159'));assert.equal(response.status,200);assert.equal(calls.at(-1)[1].type,'phone_change');
+owner=null;response=await route.POST(req({action:'link',phone:'09108312159'}));assert.equal(response.status,401);
+response=await route.POST(req({action:'signin',phone:'09108312159',password:'abcdefgh'},'','https://evil.test'));assert.equal(response.status,403);
+response=await route.POST(req({action:'signin',phone:'09108312159',password:'x'.repeat(9000)}));assert.equal(response.status,413);
+error={code:'phone_exists'};owner={id:'owner'};response=await route.POST(req({action:'link',phone:'09108312159'}));assert.equal(response.status,409);
+proofCode='invalid_credentials';error=null;response=await route.POST(req({action:'signup',phone:'09108312159',password:'abcdefgh',fullName:'Test Person'}));assert.equal(response.status,409);assert.equal(response.headers.get('set-cookie'),null,'Never confirm a pre-registered phone with a mismatched password');
+console.log('Phone auth: normalization, verified contacts, bounded same-origin requests, metadata stripping, password-only login, signup confirmation/password and same-account linking passed (mocked Supabase).');
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -42,6 +42,7 @@ const shared = load('lib/supabase/request-auth.ts', {
 const auth = load('lib/auth.ts', {
   react: React,
   '@/lib/supabase/request-auth': shared,
+  '@/lib/phone-auth': load('lib/phone-auth.ts', {}),
   'next/navigation': { redirect: url => { const error = Error('redirect'); error.url = url; throw error; } },
 });
 const fixture = (id, role, status = 'active', confirmed = true) => ({ roots: new Map(), clients: 0, users: 0, profiles: 0,
@@ -92,6 +93,8 @@ async function expectRedirect(fn, url) { await assert.rejects(fn, error => error
   assert.equal(guest.profiles, 1);
   const unconfirmed = fixture('eve', 'student', 'active', false);
   await requests.run(unconfirmed, () => expectRedirect(() => auth.requireProfile(['student'], true), '/auth?mode=signin&error=unconfirmed'));
+  const phoneConfirmed=fixture('phone','student','active',false);phoneConfirmed.user.phone_confirmed_at='2026-01-01';
+  await requests.run(phoneConfirmed,async()=>assert.equal((await auth.requireProfile(['student'])).profile.id,'phone'));
   const missing = fixture('missing', 'student'); missing.profile = null;
   await requests.run(missing, () => expectRedirect(() => auth.requireProfile(), '/auth/sign-in'));
   console.log('Real React request-cache tests passed: 1 user/profile read per render, cross-user isolation and authorization preserved.');

@@ -150,12 +150,13 @@ export function DashboardShell({
           },
         ]
       : []),
+    ...(role!=="student" ? [{href:"/dashboard/account",label:"حساب کاربری",icon:"account" as const}] : []),
     { href: "/", label: "مشاهده سایت", icon: "site" },
   ];
-  if(role === "support_agent") return <div className="student-portal"><LandingHeader isAuthenticated/><main className="student-portal-main">{children}</main><footer className="student-portal-footer"><Link href="/dashboard/support_agent">پنل پشتیبان سایت</Link><Link href="/">مشاهده سایت</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
-  if (role === "content_manager") return <div className="student-portal"><LandingHeader isAuthenticated /><main className="student-portal-main"><section className="portal-heading"><div><span>پنل مدیر محتوا</span><h1>{name || "مدیر محتوا"}</h1></div><Link className="button button-secondary" href="/dashboard/content_manager">میز بررسی محتوا</Link></section>{children}</main><footer className="student-portal-footer"><Link href="/dashboard/content_manager">پنل مدیر محتوا</Link><Link href="/">مشاهده سایت</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
+  if(role === "support_agent") return <div className="student-portal"><LandingHeader isAuthenticated/><main className="student-portal-main">{children}</main><footer className="student-portal-footer"><Link href="/dashboard/support_agent">پنل پشتیبان سایت</Link><Link href="/">مشاهده سایت</Link><Link href="/dashboard/account">اتصال شماره</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
+  if (role === "content_manager") return <div className="student-portal"><LandingHeader isAuthenticated /><main className="student-portal-main"><section className="portal-heading"><div><span>پنل مدیر محتوا</span><h1>{name || "مدیر محتوا"}</h1></div><Link className="button button-secondary" href="/dashboard/content_manager">میز بررسی محتوا</Link></section>{children}</main><footer className="student-portal-footer"><Link href="/dashboard/content_manager">پنل مدیر محتوا</Link><Link href="/">مشاهده سایت</Link><Link href="/dashboard/account">اتصال شماره</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
   if (role === "student") return <div className="student-portal"><LandingHeader isAuthenticated studentPanel /><main className="student-portal-main">{children}</main><footer className="student-portal-footer"><Link href="/dashboard/student">پنل من</Link><Link href="/dashboard/student/account">حساب کاربری</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
-  if(role === "counselor") return <div className="student-portal counselor-portal"><LandingHeader isAuthenticated counselorPanel/><main className="student-portal-main"><div className="cp-identity"><span>{name || "مشاور نووا"}</span><span>پنل مشاور</span></div><nav className="cp-tools" aria-label="ابزارهای مشاور"><Link href="/dashboard/counselor">نمای کلی</Link><Link href="/dashboard/counselor/students">دانش‌آموزان و گزارش‌ها</Link>{links.filter(l=>l.href!=="/dashboard/counselor"&&l.href!=="/").map(l=><Link href={l.href} key={l.href}>{l.label}</Link>)}</nav>{children}</main><footer className="student-portal-footer"><Link href="/dashboard/counselor">پنل مشاور</Link><Link href="/">مشاهده سایت</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
+  if(role === "counselor") return <div className="student-portal counselor-portal"><LandingHeader isAuthenticated counselorPanel/><main className="student-portal-main"><div className="cp-identity"><span>{name || "مشاور نووا"}</span><span>پنل مشاور</span></div><nav className="cp-tools" aria-label="ابزارهای مشاور"><Link href="/dashboard/counselor">نمای کلی</Link><Link href="/dashboard/counselor/students">دانش‌آموزان و گزارش‌ها</Link>{links.filter(l=>l.href!=="/dashboard/counselor"&&l.href!=="/").map(l=><Link href={l.href} key={l.href}>{l.label}</Link>)}</nav>{children}</main><footer className="student-portal-footer"><Link href="/dashboard/counselor">پنل مشاور</Link><Link href="/">مشاهده سایت</Link><Link href="/dashboard/account">اتصال شماره</Link><form action={signOut}><button>خروج از حساب</button></form></footer></div>;
   if (role === "exam_designer") return (
     <div className="student-portal exam-designer-portal">
       <LandingHeader isAuthenticated examDesignerPanel />
@@ -165,7 +166,7 @@ export function DashboardShell({
         </div>
         {children}
       </main>
-      <footer className="student-portal-footer"><Link href="/dashboard/exam_designer">پنل طراح آزمون</Link><Link href="/">مشاهده سایت</Link><form action={signOut}><button type="submit">خروج از حساب</button></form></footer>
+      <footer className="student-portal-footer"><Link href="/dashboard/exam_designer">پنل طراح آزمون</Link><Link href="/">مشاهده سایت</Link><Link href="/dashboard/account">اتصال شماره</Link><form action={signOut}><button type="submit">خروج از حساب</button></form></footer>
     </div>
   );
   const isStudentFocus = variant === "student-focus";

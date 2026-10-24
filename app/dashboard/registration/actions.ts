@@ -1,4 +1,5 @@
 "use server";
+import { hasConfirmedContact } from "@/lib/phone-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
@@ -6,7 +7,7 @@ import { normalizeDigits, validateRegistration, receiptImageType } from "@/lib/r
 import { parseCourseSelection } from "@/lib/courses";
 export async function submitRegistration(_state: { error?: string; success?: string }, fd: FormData): Promise<{ error?: string; success?: string }> {
   const { supabase, user, profile } = await requireProfile(["student"], true);
-  if (!user.email_confirmed_at) return { error: "ابتدا ایمیلت را تأیید کن، سپس دوباره وارد حساب شو." };
+  if (!hasConfirmedContact(user)) return { error: "ابتدا شماره تلفن همراه یا ایمیلت را تأیید کن، سپس دوباره وارد حساب شو." };
   const text = (name: string) => String(fd.get(name) ?? "").trim();
   const mode = text("form_mode");
   if (mode && mode !== "profile" && mode !== "enrollment") return { error: "نوع فرم معتبر نیست؛ صفحه را دوباره باز کن." };

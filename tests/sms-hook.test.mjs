@@ -27,3 +27,9 @@ for(const [response,expected,code] of [
  assert.ok(!(await result.text()).includes('private URL'));
 }
 console.log('SMS safe diagnostics: auth/IP rejection codes, HTTP errors, unknown payloads, timeout/network ambiguity and accepted recId passed. No automatic retry.');
+// Linked-account codes must target sms.phone/phone_change, not the old contact.
+values.SMS_SIGNUP_ENABLED='true';values.SMS_TEST_ENABLED='false';
+let claimedPhone;
+const publicHook=createHandler({env:n=>values[n],verify:async()=>({user:{phone:'989130000000'},sms:{phone:'+989120000000',otp:'123456'}}),claim:async(id,phone)=>{claimedPhone=phone;return true;},fetcher:async(url,options)=>{assert.equal(options.body.get('to'),'09120000000');return new Response('{"Value":"123456789012345678"}');}});
+assert.equal((await publicHook(req('new-public'))).status,200);assert.equal(claimedPhone,'989120000000');
+console.log('Public hook: explicit release gate, shared claim budget and linked-account destination priority passed.');

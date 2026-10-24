@@ -7,10 +7,11 @@ export function createHandler({env,verify,claim,report=async()=>{},fetcher=fetch
  return async request=>{
   const reply=(status,message)=>Response.json(status===200?{}:{error:{http_code:status,message}},{status});
   if(request.method!=='POST')return reply(405,'POST required');
-  if(env('SMS_TEST_ENABLED')!=='true')return reply(503,'SMS test is disabled');
+  const publicMode=env('SMS_SIGNUP_ENABLED')==='true';
+  if(!publicMode&&env('SMS_TEST_ENABLED')!=='true')return reply(503,'SMS test is disabled');
   const secret=env('SEND_SMS_HOOK_SECRET'),username=env('MELIPAYAMAK_USERNAME'),key=env('MELIPAYAMAK_API_KEY');
   const allowed=normalizePhone(env('SMS_TEST_PHONE'));
-  if(!secret||!username||!key||!allowed)return reply(503,'SMS configuration missing');
+  if(!secret||!username||!key||(!allowed&&!publicMode))return reply(503,'SMS configuration missing');
   let body;
   try {
    const reader=request.body?.getReader();if(!reader)return reply(400,'Missing body');
@@ -19,19 +20,20 @@ export function createHandler({env,verify,claim,report=async()=>{},fetcher=fetch
    const raw=new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
    body=await verify(raw,Object.fromEntries(request.headers),secret);
   }catch{return reply(401,'Invalid hook signature or payload');}
-  if(normalizePhone(body?.user?.phone)!==allowed)return reply(403,'Only the configured test number is permitted');
+  const recipient=normalizePhone(body?.sms?.phone||body?.user?.phone_change||body?.user?.phone);
+  if(!recipient||(!publicMode&&recipient!==allowed))return reply(403,'Only the configured test number is permitted');
   if(!/^\d{6}$/.test(body?.sms?.otp??''))return reply(400,'Invalid OTP');
   const event=request.headers.get('webhook-id');
   if(!event||event.length>200)return reply(400,'Invalid event ID');
   // Durable claim BEFORE network send: ambiguous timeouts must never auto-resend.
-  try{if(!await claim(event))return reply(429,'Duplicate event or test budget exhausted');}
+  try{if(!await claim(event,recipient))return reply(429,'Duplicate event or test budget exhausted');}
   catch{return reply(503,'Unable to reserve SMS attempt');}
   const started=Date.now();
   const finish=async(outcome,code=null)=>{try{await report(event,outcome,code,Math.min(Date.now()-started,60000));}catch{console.warn('sms_test: diagnostic write failed');}};
   try{
    const result=await fetcher('https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber',{
     method:'POST',redirect:'error',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({username,password:key,text:body.sms.otp,to:`0${allowed.slice(2)}`,bodyId:'566954'}),
+    body:new URLSearchParams({username,password:key,text:body.sms.otp,to:`0${recipient.slice(2)}`,bodyId:'566954'}),
     signal:AbortSignal.timeout(2500)
    });
    if(!result.ok){await finish('http_error',result.status);return reply(502,'SMS provider HTTP error; inspect delivery before retrying');}

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { safeReturnPath } from "@/lib/return-path";
 import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
 import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
+import { normalizeMobile } from "@/lib/phone-auth";
 import { emailConfirmationUrl } from "@/lib/auth-urls";
 
 type AuthMode = "signin" | "signup" | "reset";
@@ -18,7 +19,7 @@ const benefits = [
   { title: "همراهی در هر قدم", detail: "برنامه‌ریزی و مشاوره، از شروع تا نتیجه" },
 ];
 
-export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessage = "" }: { initialMode: AuthMode; returnTo?: string; initialMessage?: string }) {
+export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessage = "", phoneSignup = false }: { initialMode: AuthMode; returnTo?: string; initialMessage?: string; phoneSignup?: boolean }) {
   const destination = safeReturnPath(returnTo);
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -29,6 +30,26 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [passwordValue, setPasswordValue] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
+  const [challenge, setChallenge] = useState<string|null>(null);
+  const [otp, setOtp] = useState("");
+  const [resendAt, setResendAt] = useState(0);
+  async function phoneRequest(body:Record<string,unknown>){
+    const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const result=await response.json();if(!response.ok)throw Error(result.message||'ارتباط انجام نشد.');return result;
+  }
+  async function verifyPhone(event:FormEvent<HTMLFormElement>){
+    event.preventDefault();if(!challenge||!/^\d{6}$/.test(otp))return setMessage('کد شش‌رقمی را وارد کن.');
+    setLoading(true);setMessage('');setSuccess(false);
+    try{await phoneRequest({action:'verify',phone:challenge,token:otp,password:passwordValue});setPasswordValue('');setOtp('');window.location.assign(destination);}
+    catch(error){setMessage(error instanceof Error?error.message:'کد تأیید نشد.');setLoading(false);}
+  }
+  async function resendCode(){
+    if(!challenge||loading)return;
+    if(Date.now()<resendAt){setMessage('برای کد جدید یک دقیقه صبر کن.');return;}
+    setLoading(true);
+    try{await phoneRequest({action:'resend',phone:challenge});setResendAt(Date.now()+60000);setMessage('کد جدید ارسال شد.');}
+    catch(error){setMessage(error instanceof Error?error.message:'ارسال انجام نشد.');}finally{setLoading(false);}
+  }
   function changePassword(value: string) {
     if (!isEnglishPasswordInput(value)) {
       // Reject the entire edit/paste rather than silently altering a password.
@@ -41,6 +62,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
 
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode);
+    setChallenge(null);setOtp("");setResendAt(0);
     setShowPassword(false);
     setPasswordValue("");
     setPasswordError("");
@@ -56,8 +78,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
-    if (!email) return setMessage("لطفاً ایمیل را وارد کن.");
-    if (!emailPattern.test(email)) return setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+    if (!email) return setMessage("شماره تلفن همراه یا ایمیل را وارد کن.");
+    if (!emailPattern.test(email) && !normalizeMobile(email)) return setMessage("شماره تلفن همراه یا ایمیل معتبر وارد کن.");
     if (!isEnglishPasswordInput(password) || passwordError) {
       setPasswordError(englishPasswordMessage);
       return;
@@ -66,6 +88,10 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
     setLoading(true);
+    if(normalizeMobile(email)){
+      try{await phoneRequest({action:'signin',phone:email,password});window.location.assign(destination);}
+      catch(error){setMessage(error instanceof Error?error.message:'شماره یا رمز عبور درست نیست.');setLoading(false);}return;
+    }
     const { error } = await createClient().auth.signInWithPassword({ email, password });
     if (error) {
       setMessage("ایمیل یا رمز عبور درست نیست.");
@@ -120,8 +146,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     const password = String(data.get("password") ?? "");
 
     if (fullName.length < 2) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
-    if (!email) return setMessage("لطفاً ایمیل را وارد کن.");
-    if (!emailPattern.test(email)) return setMessage("لطفاً یک ایمیل معتبر وارد کن.");
+    if (phoneSignup ? !normalizeMobile(email) : !emailPattern.test(email)) return setMessage(phoneSignup?"شماره تلفن همراه معتبر وارد کن.":"لطفاً یک ایمیل معتبر وارد کن.");
     if (!isEnglishPasswordInput(password) || passwordError) {
       setPasswordError(englishPasswordMessage);
       return;
@@ -129,6 +154,13 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if (!password) return setMessage("لطفاً رمز عبور را وارد کن.");
     if (password.length < 8) return setMessage("رمز عبور باید حداقل ۸ کاراکتر باشد.");
 
+    if(phoneSignup){
+      if(Date.now()<resendAt)return setMessage('برای دریافت کد جدید حداقل یک دقیقه صبر کن.');
+      setLoading(true);
+      try{await phoneRequest({action:'signup',phone:email,password,fullName,next:destination});setChallenge(normalizeMobile(email));setResendAt(Date.now()+60000);setSuccess(true);setMessage('کد به شماره‌ات ارسال شد؛ کد را وارد کن تا مستقیم وارد حساب شوی.');}
+      catch(error){setSuccess(false);setMessage(error instanceof Error?error.message:'ارسال کد انجام نشد.');}
+      finally{setLoading(false);}return;
+    }
     setLoading(true);
     const { data: signupData, error } = await createClient().auth.signUp({
       email,
@@ -197,26 +229,27 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
             )}
 
             <div id="auth-form-panel" role={mode === "reset" ? undefined : "tabpanel"} aria-labelledby={mode === "reset" ? "nova-auth-title" : `auth-tab-${mode}`}>
-              <form key={mode} onSubmit={mode === "reset" ? submitReset : mode === "signin" ? submitSignIn : submitSignUp} noValidate aria-busy={loading}>
+              <form key={mode} onSubmit={mode === "signup" && challenge ? verifyPhone : mode === "reset" ? submitReset : mode === "signin" ? submitSignIn : submitSignUp} noValidate aria-busy={loading}>
                 {mode === "signup" && <div className="nova-auth-field">
                   <label htmlFor="signup-name">نام و نام خانوادگی</label>
-                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="account" /></span><input id="signup-name" name="fullName" placeholder="مثلاً: علی رضایی" autoComplete="name" required /></div>
+                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="account" /></span><input id="signup-name" name="fullName" readOnly={!!challenge || loading} placeholder="مثلاً: علی رضایی" autoComplete="name" required /></div>
                 </div>}
                 {mode !== "reset" && <div className="nova-auth-field">
-                  <label htmlFor={`${mode}-email`}>ایمیل</label>
-                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="email" /></span><input id={`${mode}-email`} name="email" type="email" dir="ltr" placeholder="you@example.com" autoComplete="email" autoCapitalize="none" spellCheck={false} required /></div>
+                  <label htmlFor={`${mode}-email`}>{mode === "signin" ? "شماره تلفن همراه یا ایمیل" : phoneSignup ? "شماره تلفن همراه" : "ایمیل"}</label>
+                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="email" /></span><input id={`${mode}-email`} name="email" readOnly={!!challenge || loading} type={mode === "signup" && !phoneSignup ? "email" : "text"} inputMode={mode === "signup" && phoneSignup ? "tel" : "text"} dir="ltr" placeholder={mode === "signup" && phoneSignup ? "09xxxxxxxxx" : "شماره موبایل یا you@example.com"} autoComplete={mode === "signin" ? "username" : phoneSignup ? "tel" : "email"} autoCapitalize="none" spellCheck={false} required /></div>
                 </div>}
                 <div className="nova-auth-field">
                   <label htmlFor={`${mode}-password`}>{mode === "reset" ? "رمز عبور جدید" : "رمز عبور"}</label>
-                  <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" value={passwordValue} onChange={event => changePassword(event.target.value)} aria-invalid={!!passwordError} aria-describedby={passwordError ? `${mode}-password-error` : undefined} autoCapitalize="none" autoCorrect="off" spellCheck={false} type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
+                  <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" value={passwordValue} readOnly={!!challenge || loading} maxLength={128} onChange={event => changePassword(event.target.value)} aria-invalid={!!passwordError} aria-describedby={passwordError ? `${mode}-password-error` : undefined} autoCapitalize="none" autoCorrect="off" spellCheck={false} type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
                 </div>
+                {mode === 'signup' && challenge && <div className="nova-auth-field"><label htmlFor="signup-code">کد تأیید شماره</label><div className="nova-auth-input-wrap"><input id="signup-code" value={otp} onChange={event=>setOtp(event.target.value.replace(/[^0-9]/g,''))} inputMode="numeric" autoComplete="one-time-code" dir="ltr" maxLength={6} autoFocus required /></div><div className="nova-auth-code-actions"><button type="button" disabled={loading} onClick={()=>{setChallenge(null);setOtp('');setSuccess(false);setMessage('شماره را اصلاح کن یا پس از یک دقیقه دوباره دریافت کد را بزن.');}}>اصلاح شماره</button><button type="button" disabled={loading} onClick={resendCode}>دریافت کد جدید</button></div></div>}
                 {passwordError && <p id={`${mode}-password-error`} role="alert" className="nova-auth-message">{passwordError}</p>}
-                <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success)}>
-                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ورود با رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
+                <button className="nova-auth-submit" type="submit" disabled={loading || (mode === "signup" && success && !phoneSignup)}>
+                  <span>{mode === "reset" ? (loading ? "در حال ذخیره..." : "ورود با رمز جدید") : loading ? mode === "signin" ? "در حال ورود..." : "در حال ساخت حساب..." : mode === "signin" ? "ورود به حساب" : phoneSignup ? challenge ? "تأیید کد و ورود" : "دریافت کد" : success ? "حساب ساخته شد" : "ساخت حساب جدید"}</span><AuthIcon name={success && mode === "signup" ? "check" : "arrow"} />
                 </button>
               </form>
             </div>
-            {mode === "signup" && <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی.</span></div>}
+            {mode === "signup" && <div className="nova-auth-footnote"><AuthIcon name="shield" /><span>{phoneSignup ? "شماره‌ات را با کد پیامکی تأیید کن؛ سپس مستقیم وارد حسابت می‌شوی." : "بعد از ثبت‌نام، ایمیلت را تأیید کن تا وارد حسابت شوی."}</span></div>}
           </section>
 
           <aside className="nova-auth-story" aria-labelledby="nova-auth-story-title">

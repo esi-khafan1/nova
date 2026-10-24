@@ -1,3 +1,4 @@
+import { hasConfirmedContact } from "@/lib/phone-auth";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getRequestClient, getRequestUser } from "@/lib/supabase/request-auth";
@@ -48,7 +49,7 @@ export async function getDashboardDestination() {
 
 export async function requireProfile(allowed?: AppRole[], allowInactive = false) {
   const { supabase, user, profile } = await getRequestProfile();
-  if (profile.role === "student" && !user.email_confirmed_at) redirect("/auth?mode=signin&error=unconfirmed");
+  if (profile.role === "student" && !hasConfirmedContact(user)) redirect("/auth?mode=signin&error=unconfirmed");
   if (allowed && !allowed.includes(profile.role)) redirect("/dashboard");
   if(profile.role === "student" && profile.registration_status !== "active" && !allowInactive) redirect("/dashboard/registration");
   return { supabase, user, profile };
