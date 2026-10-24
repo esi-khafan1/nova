@@ -24,3 +24,11 @@ Non-allowlisted requests fail closed. A signed event ID is claimed BEFORE sendin
 The current coding sandbox cannot reach the MeliPayamak API host; real delivery must run from the deployed Edge Function. Confirm outbound connectivity/IP restrictions there. Hook availability and complete end-to-end timing still require a live test; no deployment or delivery is claimed.
 
 Validation: `node tests/sms-hook.test.mjs` uses mocked verification and provider transport; real Standard Webhooks verification, SQL concurrency and Supabase/MeliPayamak integration require further validation before enabling. No browser/login changes are included.
+
+## Isolated manual verification page
+
+`tools/sms-auth-test.html` is a downloadable, standalone browser page; it is not mounted in the site's login UI. It uses only the project's public publishable key. Download and open in a trusted browser, enter the approved test phone and explicitly confirm one request. The code is entered on that local page only, never in chat. No credentials, OTP or returned access/refresh token are persisted. It requests a separate phone account (`create_user:true`), not an email-account update. Closing the page discards the response; issued Auth sessions still follow Supabase expiry rules (the page does not claim to revoke them).
+
+Deployment update: migration 072 and send-sms v1 have been applied to the project, the hook was registered by the operator, and the Auth user-insert trigger was inspected (it creates only a default profile, with no email requirement). The configured secrets' names were checked, not their raw values. Zero attempt reservations existed at preflight. No actual SMS or Auth signup has been initiated by the agent. The test toggle can be opened for the operator's manual test and must be closed afterward.
+
+`node tests/sms-auth-page.test.cjs` tests the actual inline script with a mocked DOM and HTTP. The optional Playwright test is provided but was not run successfully in this environment because playwright-core is not installed. Do not describe these tests as real SMS delivery or production email regression testing.

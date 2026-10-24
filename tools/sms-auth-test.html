@@ -1,0 +1,36 @@
+<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>تست محدود پیامک نووا</title>
+<style>body{font:16px/1.9 Tahoma,sans-serif;background:#eaf4ff;color:#173653;margin:0;padding:24px}main{max-width:540px;margin:35px auto;background:white;padding:26px;border:1px solid #d9e7f5;border-radius:20px}input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;font:inherit;border-radius:9px;border:1px solid #b7ccdd}input{direction:ltr}button{background:#173653;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:default}small{display:block}#status{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block;margin-top:16px}</style>
+<main><h1>تست پیامک نووا</h1><p>این صفحه مستقل از ورود سایت است. با درخواست کد ممکن است یک حساب تلفنی جدا ساخته شود؛ به حساب ایمیلی شما متصل نمی‌شود.</p><p>فقط شمارهٔ آزمایشی مجاز است. یک بار ارسال کنید؛ در صورت خطا یا نرسیدن پیام، بدون بررسی پنل دوباره درخواست ندهید.</p>
+<label>شمارهٔ آزمایشی خودتان<input id="phone" type="tel" autocomplete="tel" placeholder="09xxxxxxxxx" maxlength="13"></label>
+<button id="send">درخواست یک کد واقعی</button>
+<form id="verify"><label>کد دریافتی<input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required disabled></label><button id="check" disabled>بررسی کد با Supabase</button></form>
+<p id="status" role="status" aria-live="polite">هیچ درخواستی ارسال نشده است.</p><small>رمز، API Key ملی پیامک یا کلید محرمانه‌ای وارد نکنید. کد و نشست ورود در حافظهٔ دائمی ذخیره نمی‌شوند. پس از پایان، صفحه را ببندید.</small></main>
+<script>
+'use strict';
+// Intentionally PUBLIC browser key, never a service_role or MeliPayamak key.
+const base='https://cfqzlmkgcqytgmncfxst.supabase.co/auth/v1';
+const publicKey='sb_publishable_mUkAyiyaotgkA0HQC-0STQ_lGLT5mnR';
+const $=id=>document.getElementById(id);let phone=null,verified=false;
+async function call(path,body){
+ const response=await fetch(base+path,{method:'POST',credentials:'omit',cache:'no-store',headers:{apikey:publicKey,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
+ const data=await response.json();
+ if(!response.ok)throw Error('HTTP '+response.status+': '+String(data.msg||data.message||data.error_description||data.error||'Request failed'));
+ return data;
+}
+$('send').onclick=async()=>{
+ const n=$('phone').value.trim().replace(/^\+/,'');
+ phone=/^09\d{9}$/.test(n)?'98'+n.slice(1):/^989\d{9}$/.test(n)?n:null;
+ if(!phone){$('status').textContent='شماره را با فرمت 09… وارد کنید.';return;}
+ if(!confirm('یک درخواست واقعی با احتمال هزینهٔ پیامک و ساخت حساب تلفنی جدا ارسال شود؟'))return;
+ $('send').disabled=true;$('phone').disabled=true;$('status').textContent='در حال درخواست کد؛ دوباره کلیک نکنید…';
+ try{await call('/otp',{phone,create_user:true,channel:'sms'});$('status').textContent='Supabase درخواست را پذیرفت. رسیدن واقعی پیام را روی گوشی بررسی کنید و کد را اینجا وارد کنید؛ کد را در چت نفرستید.';$('otp').disabled=false;$('check').disabled=false;$('otp').focus();}
+ catch(e){$('status').textContent=e.message+'\nارسال مجدد نکنید؛ وضعیت ارسال را در پنل بررسی کنید. خطا را بدون کد یا کلید گزارش دهید.';}
+};
+$('verify').onsubmit=async e=>{
+ e.preventDefault();if(verified)return;
+ const token=$('otp').value.trim();if(!/^\d{6}$/.test(token))return;
+ $('check').disabled=true;$('status').textContent='در حال بررسی کد…';
+ try{const result=await call('/verify',{phone,token,type:'sms'});if(!result.user?.phone_confirmed_at||!result.access_token)throw Error('Verification was not confirmed');verified=true;$('otp').value='';$('otp').disabled=true;$('status').textContent='تأیید واقعی شماره در Supabase موفق بود ✅\nنشست در این صفحه ذخیره نشد و ورود سایت تغییر نکرد. صفحه را ببندید و نتیجه را گزارش دهید.';}
+ catch(e){$('status').textContent=e.message;$('check').disabled=false;}
+};
+</script></html>
