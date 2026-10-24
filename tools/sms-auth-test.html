@@ -1,6 +1,7 @@
 <!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>تست محدود پیامک نووا</title>
 <style>body{font:16px/1.9 Tahoma,sans-serif;background:#eaf4ff;color:#173653;margin:0;padding:24px}main{max-width:540px;margin:35px auto;background:white;padding:26px;border:1px solid #d9e7f5;border-radius:20px}input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;font:inherit;border-radius:9px;border:1px solid #b7ccdd}input{direction:ltr}button{background:#173653;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:default}small{display:block}#status{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block;margin-top:16px}</style>
 <main><h1>تست پیامک نووا</h1><p>این صفحه مستقل از ورود سایت است. با درخواست کد ممکن است یک حساب تلفنی جدا ساخته شود؛ به حساب ایمیلی شما متصل نمی‌شود.</p><p>فقط شمارهٔ آزمایشی مجاز است. یک بار ارسال کنید؛ در صورت خطا یا نرسیدن پیام، بدون بررسی پنل دوباره درخواست ندهید.</p>
+<button id="diagnose">بررسی اتصال، بدون ارسال پیامک</button>
 <label>شمارهٔ آزمایشی خودتان<input id="phone" type="tel" autocomplete="tel" placeholder="09xxxxxxxxx" maxlength="13"></label>
 <button id="send">درخواست یک کد واقعی</button>
 <form id="verify"><label>کد دریافتی<input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required disabled></label><button id="check" disabled>بررسی کد با Supabase</button></form>
@@ -11,13 +12,29 @@
 const base='https://cfqzlmkgcqytgmncfxst.supabase.co/auth/v1';
 const publicKey='sb_publishable_mUkAyiyaotgkA0HQC-0STQ_lGLT5mnR';
 const $=id=>document.getElementById(id);let phone=null,verified=false;
+$('diagnose').onclick=async()=>{
+ $('diagnose').disabled=true;
+ $('status').textContent='در حال بررسی اتصال مرورگر به تنظیمات عمومی Auth؛ هیچ پیامکی درخواست نمی‌شود…';
+ const started=Date.now();
+ try{
+  const response=await fetch(base+'/settings',{method:'GET',credentials:'omit',cache:'no-store',headers:{apikey:publicKey},signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  const data=await response.json();
+  if(!data.external||typeof data.external.phone!=='boolean')throw Error('Unexpected Auth settings response');
+  $('status').textContent='اتصال مرورگر به Auth موفق است ('+(Date.now()-started)+' ms).\nورود ایمیلی: '+(data.external.email?'فعال':'غیرفعال')+'؛ ورود تلفنی: '+(data.external.phone?'فعال':'غیرفعال')+'\nهیچ پیامکی درخواست نشده است. این بررسی موفقیت مسیر ارسال OTP یا هوک را تضمین نمی‌کند.';
+ }catch(e){$('status').textContent='بررسی اتصال ناموفق: '+e.message+'\nهیچ پیامکی درخواست نشده است. بازکردن مستقیم URL با درخواست دارای هدر apikey از داخل صفحه متفاوت است.';}
+ finally{$('diagnose').disabled=false;}
+};
 async function call(path,body){
  const response=await fetch(base+path,{method:'POST',credentials:'omit',cache:'no-store',headers:{apikey:publicKey,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
  const data=await response.json();
  if(!response.ok)throw Error('HTTP '+response.status+': '+String(data.msg||data.message||data.error_description||data.error||'Request failed'));
  return data;
 }
+const diagnosticOnly=typeof location!=='undefined'&&new URLSearchParams(location.search).has('diagnostic');
+if(diagnosticOnly){$('send').disabled=true;$('status').textContent='حالت بررسی اتصال؛ درخواست پیامک در این صفحه غیرفعال است.';}
 $('send').onclick=async()=>{
+ if(diagnosticOnly)return;
  const n=$('phone').value.trim().replace(/^\+/,'');
  phone=/^09\d{9}$/.test(n)?'98'+n.slice(1):/^989\d{9}$/.test(n)?n:null;
  if(!phone){$('status').textContent='شماره را با فرمت 09… وارد کنید.';return;}
