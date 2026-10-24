@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {createHandler} from '../supabase/functions/send-sms/handler.mjs';
+let sends=0,claims=0;const used=new Set();
+const values={SMS_TEST_ENABLED:'true',SMS_TEST_PHONE:'09120000000',SEND_SMS_HOOK_SECRET:'test',MELIPAYAMAK_USERNAME:'test',MELIPAYAMAK_API_KEY:'test'};
+let payload={user:{phone:'+989120000000'},sms:{otp:'123456'}};
+const handler=createHandler({env:n=>values[n],verify:async(raw,h)=>{if(h['webhook-signature']!=='valid')throw Error();return JSON.parse(raw);},claim:async id=>{claims++;if(used.has(id)||used.size>=5)return false;used.add(id);return true;},fetcher:async(url,options)=>{sends++;assert.equal(url,'https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber');assert.equal(options.body.get('bodyId'),'566954');assert.equal(options.body.get('password'),'test');assert.equal(options.body.get('to'),'09120000000');return new Response('{"Value":123456789012345678,"RetStatus":1}');}});
+const req=(id='one',signature='valid')=>new Request('https://example.test',{method:'POST',headers:{'webhook-id':id,'webhook-signature':signature},body:JSON.stringify(payload)});
+assert.equal((await handler(req('bad','invalid'))).status,401);assert.equal(claims,0);
+payload.user.phone='+989130000000';assert.equal((await handler(req())).status,403);assert.equal(claims,0);
+payload.user.phone='+989120000000';assert.equal((await handler(req())).status,200);assert.equal((await handler(req())).status,429);assert.equal(sends,1);
+values.SMS_TEST_ENABLED='false';assert.equal((await handler(req('two'))).status,503);assert.equal(sends,1);
+console.log('SMS hook: disabled by default, signature gate, allowlist, duplicate rejection, fixed template and HTTPS provider request passed (mock transport).');
