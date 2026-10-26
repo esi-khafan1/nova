@@ -14,6 +14,9 @@ const migration = readFileSync(
   "supabase/migrations/076_study_activity_types.sql",
   "utf8",
 );
+const appendedPrintCss = printCss.slice(
+  printCss.indexOf("/* Weekly plan print: larger readable type"),
+);
 
 test("counselor activity list keeps existing values and adds four requested labels", () => {
   const labels = new Map(activityTypes.map((activity) => [activity.value, activity.label]));
@@ -21,7 +24,7 @@ test("counselor activity list keeps existing values and adds four requested labe
   assert.equal(labels.get("offline_class"), "آفلاین کلاس");
   assert.equal(labels.get("exam_analysis"), "تحلیل آزمون");
   assert.equal(labels.get("simulation_exam"), "آزمون شبیه ساز");
-  assert.equal(labels.get("practice_tests"), "تست\u200cزنی");
+  assert.equal(labels.get("practice_tests"), "تست زنی");
   assert.equal(new Set(activityTypes.map((activity) => activity.value)).size, activityTypes.length);
 });
 
@@ -46,6 +49,17 @@ test("print view writes the full duration and reflects the new enum values", () 
     assert.match(migration, new RegExp(`add value if not exists '${value}'`));
   }
   assert.match(migration, /notify pgrst, 'reload schema'/);
-  assert.match(printCss, /\.print-plan-page \.print-activity-title b \{[\s\S]*?font-size: 11pt/);
-  assert.match(printCss, /\.print-plan-page \.print-activity-chapter,\s*\.print-plan-page \.print-activity-summary \{ font-size: 9pt/);
+  assert.match(appendedPrintCss, /\.print-plan-page \.print-activity-duration \{[\s\S]*?font-size: 10pt/);
+  assert.match(appendedPrintCss, /\.print-plan-page \.print-activity-chapter,\s*\.print-plan-page \.print-activity-summary \{ font-size: 7\.5pt/);
+});
+
+test("print names are never ellipsized and Persian words keep their spaces", () => {
+  assert.match(printComponent, /زده شده: \.{12,} تست/);
+  assert.doesNotMatch(printComponent, /زده\u200cشده/);
+  assert.match(printCss, /overflow-wrap: anywhere/);
+  assert.match(appendedPrintCss, /text-overflow: clip/);
+  assert.match(appendedPrintCss, /white-space: normal/);
+  assert.doesNotMatch(appendedPrintCss, /text-overflow: ellipsis/);
+  assert.doesNotMatch(appendedPrintCss, /-webkit-line-clamp: [1-9]/);
+  assert.match(appendedPrintCss, /-webkit-line-clamp: unset/);
 });

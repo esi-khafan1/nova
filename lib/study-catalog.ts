@@ -310,7 +310,7 @@ export const activityTypes = [
   { value: "lesson", label: "مطالعه درسنامه" },
   { value: "textbook_reading", label: "خواندن کتاب درسی" },
   { value: "notes", label: "کار روی جزوه" },
-  { value: "practice_tests", label: "تست‌زنی" },
+  { value: "practice_tests", label: "تست زنی" },
   { value: "class", label: "کلاس" },
   { value: "offline_class", label: "آفلاین کلاس" },
   { value: "exam", label: "آزمون" },
