@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PrintPlanButton } from "@/components/dashboard/print-plan-button";
+import { FitText } from "@/components/dashboard/print-fit-text";
 import {
   addDays,
   formatPersianWeekday,
@@ -148,39 +149,40 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                   <span>{formatPersianDay(dayDate)}</span>
                 </header>
                 <div className="print-day-items">
-                  {dayItems.map((item) => (
-                    <article className="print-activity" key={item.id}>
-                      <div className="print-activity-title">
-                        <span aria-hidden="true">□</span>
-                        <strong>{item.subject}</strong>
-                        <b>{item.duration_minutes.toLocaleString("fa-IR")} د</b>
-                      </div>
-                      <p
-                        className={`print-activity-chapter${
-                          (item.chapter?.length || 0) > 32 ? " is-long" : ""
-                        }`}
-                      >
-                        {item.chapter || "مبحث آزاد"}
-                      </p>
-                      <p className="print-activity-summary">
-                        {activityLabels.get(item.activity_type) ||
-                          "فعالیت درسی"}
-                        {item.activity_type === "practice_tests" &&
-                          item.target_test_count &&
-                          ` · هدف ${item.target_test_count.toLocaleString(
-                            "fa-IR",
-                          )} تست`}
-                      </p>
-                      {item.activity_type === "practice_tests" && (
-                        <p className="print-activity-test-result">
-                          زده شده: ................ تست
-                        </p>
-                      )}
-                      {item.details && (
-                        <p className="print-activity-details">{item.details}</p>
-                      )}
-                    </article>
-                  ))}
+                  {dayItems.map((item) => {
+                    const activityLabel =
+                      activityLabels.get(item.activity_type) || "فعالیت درسی";
+                    const isTest = item.activity_type === "practice_tests";
+                    const testTarget = item.target_test_count ?? 0;
+                    const durationText = `${item.duration_minutes.toLocaleString(
+                      "fa-IR",
+                    )} دقیقه ${activityLabel}`;
+                    const lastText = isTest
+                      ? `ــــــــ زده شده از ${testTarget.toLocaleString("fa-IR")} تست`
+                      : item.details || "";
+                    return (
+                      <article className="print-activity" key={item.id}>
+                        <div className="print-activity-title">
+                          <span aria-hidden="true">□</span>
+                          <FitText basePt={10.5} className="print-activity-subject">
+                            {item.subject}
+                          </FitText>
+                        </div>
+                        <FitText basePt={8.5} className="print-activity-chapter">
+                          {item.chapter || "مبحث آزاد"}
+                        </FitText>
+                        <FitText basePt={8.5} className="print-activity-summary">
+                          {durationText}
+                        </FitText>
+                        <FitText
+                          basePt={7.5}
+                          className={`print-activity-last${isTest ? " is-test" : ""}`}
+                        >
+                          {lastText}
+                        </FitText>
+                      </article>
+                    );
+                  })}
                   {Array.from({
                     length: Math.max(0, 5 - dayItems.length),
                   }).map((_, index) => (
@@ -192,16 +194,18 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                   <article className="print-activity print-routine" key={`routine-${dayIndex}`} data-weekday={weekday}>
                     <div className="print-activity-title">
                       <span aria-hidden="true">□</span>
-                      <strong>روتین</strong>
+                      <FitText basePt={9} className="print-activity-subject">
+                        روتین
+                      </FitText>
                     </div>
-                    <p className="print-activity-chapter">
+                    <FitText basePt={7.5} className="print-activity-chapter">
                       {routines[dayIndex].subject
                         ? `درس: ${routines[dayIndex].subject}`
                         : "درس: انتخاب نشده"}
-                    </p>
-                    <p className="print-activity-details">
+                    </FitText>
+                    <FitText basePt={7} className="print-activity-last">
                       {routines[dayIndex].details || "توضیحی ثبت نشده"}
-                    </p>
+                    </FitText>
                   </article>
                 </div>
               </section>

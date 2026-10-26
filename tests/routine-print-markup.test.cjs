@@ -26,17 +26,20 @@ const plan = {
     subject: "فارسی ۱",
     details: "مرور فرمولها",
   })),
-  weekly_plan_items: Array.from({ length: 35 }, (_, index) => ({
-    id: `item-${index}`,
-    day_of_week: Math.floor(index / 5),
-    duration_minutes: 90,
-    subject: "فارسی ۱",
-    chapter: "فصل ۱",
-    activity_type: "lesson",
-    target_test_count: null,
-    details: null,
-    sort_order: index % 5,
-  })),
+  weekly_plan_items: Array.from({ length: 35 }, (_, index) => {
+    const isTest = index % 7 === 0;
+    return {
+      id: `item-${index}`,
+      day_of_week: Math.floor(index / 5),
+      duration_minutes: 90,
+      subject: "فارسی ۱",
+      chapter: "فصل ۱",
+      activity_type: isTest ? "practice_tests" : "lesson",
+      target_test_count: isTest ? 12 : null,
+      details: null,
+      sort_order: index % 5,
+    };
+  }),
 };
 const props = {
   plan,
@@ -94,15 +97,19 @@ const stubs = {
   const routineWeekdays = [
     ...html.matchAll(/<article class="print-activity print-routine"[^>]*data-weekday="([^"]+)"/g),
   ].map((match) => match[1]);
-  const routineTitles = html.match(/<strong>روتین<\/strong>/g) || [];
+  const routineTitles = html.match(/class="print-fit-text print-activity-subject"[^>]*>روتین<\/span>/g) || [];
 
   assert.deepEqual(headings, expectedWeekdays, "day headers must follow week_start");
   assert.deepEqual(routineWeekdays, expectedWeekdays, "routine data-weekday must follow week_start");
   assert.equal(routineTitles.length, 7, "exactly seven routine boxes");
   assert.equal((html.match(/class="print-day-column"/g) || []).length, 7, "seven day columns");
   assert.ok(!html.includes("روتین ·"), "routine title must not contain a static weekday");
-  assert.ok(html.includes("۹۰ د"), "original compact duration stays");
-  console.log("PASS: routine weekdays come from week_start, title is just روتین, print layout preserved");
+  assert.ok(html.includes("۹۰ دقیقه"), "duration is written out in the third row");
+  assert.ok(!html.includes(">۹۰ د<"), "old compact duration badge is gone");
+  assert.ok(html.includes("زده شده از"), "test boxes show solved-out-of-target line");
+  assert.ok(!html.includes("زده شده: "), "old generic solved-test line is gone");
+  assert.ok(!html.includes("هدف "), "no extra target-test text in the third row");
+  console.log("PASS: routine weekdays come from week_start, title is just روتین, approved four-row print layout");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

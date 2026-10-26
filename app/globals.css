@@ -8489,3 +8489,116 @@ main .feature-card:before {
   }
   .print-plan-page .print-routine{margin-inline:4px;padding:2px;border-right-width:2px}
 }
+
+/* Approved four-row weekly-plan print boxes: larger type, one line per row. */
+.print-plan-page .print-week-grid{
+  gap:1mm!important;
+}
+.print-plan-page .print-day-items{
+  gap:0.8mm!important;
+  padding:0.8mm!important;
+}
+.print-plan-page .print-activity{
+  display:grid;
+  grid-template-rows:auto auto auto 1fr;
+  gap:0.3mm;
+  padding:1mm;
+  border-right-width:2px;
+}
+.print-plan-page .print-activity-title{
+  grid-template-columns:3mm minmax(0,1fr)!important;
+  align-items:center;
+  gap:2px!important;
+}
+.print-plan-page .print-activity-title > span{
+  font-size:10pt;
+  line-height:1;
+}
+.print-fit-text{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
+  line-height:1.25;
+}
+.print-plan-page .print-activity-subject{
+  font-weight:850;
+  color:#14263b;
+}
+.print-plan-page .print-activity-chapter,
+.print-plan-page .print-activity-summary,
+.print-plan-page .print-activity-last,
+.print-plan-page .print-activity-details{
+  display:block;
+  margin:0;
+  -webkit-line-clamp:unset!important;
+  -webkit-box-orient:unset!important;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:clip;
+}
+.print-plan-page .print-activity-chapter{
+  color:#633014;
+  font-weight:750;
+}
+.print-plan-page .print-activity-summary{
+  color:#183f67;
+  font-weight:850;
+}
+.print-plan-page .print-activity-last{
+  color:#854019;
+  align-self:start;
+}
+.print-plan-page .print-activity-last.is-test{
+  color:#74320b;
+  font-weight:800;
+}
+.print-plan-page .print-routine{
+  grid-template-rows:auto auto 1fr;
+  margin-inline:2px;
+}
+.print-plan-page .print-routine .print-activity-title{
+  grid-template-columns:3mm minmax(0,1fr)!important;
+}
+.print-plan-page .print-routine .print-activity-chapter,
+.print-plan-page .print-routine .print-activity-last,
+.print-plan-page .print-routine .print-activity-details{
+  -webkit-line-clamp:unset!important;
+}
+@media print{
+  .print-plan-page .print-week-grid{
+    gap:1mm!important;
+  }
+  .print-plan-page .print-day-items{
+    gap:0.8mm!important;
+    padding:0.8mm!important;
+  }
+  .print-plan-page .print-activity{
+    grid-template-rows:auto auto auto 1fr!important;
+    gap:0.3mm!important;
+    padding:1mm!important;
+    border-right-width:2px!important;
+  }
+  .print-plan-page .print-activity-title{
+    gap:2px!important;
+  }
+  .print-plan-page .print-routine{
+    margin-inline:2px!important;
+  }
+  .print-plan-page .print-activity-chapter,
+  .print-plan-page .print-activity-summary,
+  .print-plan-page .print-activity-last,
+  .print-plan-page .print-activity-details{
+    -webkit-line-clamp:unset!important;
+    white-space:nowrap!important;
+    text-overflow:clip!important;
+  }
+  .print-plan-page .print-routine .print-activity-chapter,
+  .print-plan-page .print-routine .print-activity-last,
+  .print-plan-page .print-routine .print-activity-details{
+    -webkit-line-clamp:unset!important;
+  }
+}

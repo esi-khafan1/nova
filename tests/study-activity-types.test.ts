@@ -10,6 +10,7 @@ const printComponent = readFileSync(
   "utf8",
 );
 const printCss = readFileSync("app/globals.css", "utf8");
+const fitText = readFileSync("components/dashboard/print-fit-text.tsx", "utf8");
 const migration = readFileSync(
   "supabase/migrations/076_study_activity_types.sql",
   "utf8",
@@ -39,11 +40,20 @@ test("new study-like activities remain study time while simulation exams remain 
   assert.doesNotMatch(progress, /studyActivities = new Set\([\s\S]*?"simulation_exam"/);
 });
 
-test("print view is back to its original compact duration and has no later visual overrides", () => {
-  assert.match(printComponent, /duration_minutes\.toLocaleString\("fa-IR"\)\} د/);
-  assert.doesNotMatch(printComponent, /دقیقه|print-activity-duration/);
-  assert.match(printComponent, /زده شده: \.{12,} تست/);
+test("print view uses the approved larger four-row layout", () => {
+  assert.match(printComponent, /import \{ FitText \}/);
+  assert.match(printComponent, /} دقیقه \$\{activityLabel\}`/);
+  assert.match(printComponent, /className="print-activity-last/);
+  assert.match(printComponent, /زده شده از/);
+  assert.doesNotMatch(printComponent, /زده شده: \.{12,} تست/);
+  assert.doesNotMatch(printComponent, /· هدف /);
   assert.doesNotMatch(printComponent, /زده\u200cشده/);
+  assert.match(printCss, /Approved four-row weekly-plan print boxes/);
+  assert.match(printCss, /\.print-fit-text/);
+  assert.match(fitText, /scaleX\(\$\{ratio\}\)/);
+  assert.match(fitText, /transformOrigin = "right center"/);
+  assert.match(fitText, /addEventListener\("beforeprint", schedule\)/);
+  assert.match(fitText, /data-min-pt=\{minPt\}/);
   assert.doesNotMatch(printCss, /Weekly plan print: larger readable type/);
   assert.doesNotMatch(printCss, /print-activity-duration/);
   for (const value of ["exam_analysis", "simulation_exam", "offline_class", "textbook_reading"]) {

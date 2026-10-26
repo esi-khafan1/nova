@@ -37,7 +37,8 @@ test("routine weekdays come from week_start and the routine title is just روت
   assert.match(print, /formatPersianWeekday/);
   assert.match(print, /const weekday = formatPersianWeekday\(dayDate\)/);
   assert.match(print, /data-weekday=\{weekday\}/);
-  assert.match(print, /<strong>روتین<\/strong>/);
+  assert.match(print, /FitText basePt=\{9\}/);
+  assert.doesNotMatch(print, /<strong>روتین/);
   assert.doesNotMatch(print, /روتین ·/);
   assert.match(builder, /formatPersianWeekday/);
   assert.match(builder, /const realWeekday = formatPersianWeekday\(dayDate\(weekStart, dayIndex\)\)/);
@@ -63,7 +64,14 @@ test("print plan keeps seven day columns and puts one routine last in each day",
   assert.match(print, /className="print-activity print-routine"/);
   assert.match(css, /grid-template-rows:repeat\(5,minmax\(0,0\.88fr\)\) minmax\(0,0\.66fr\)!important/);
   assert.match(css, /\.print-plan-page \.print-routine\{[\s\S]*?margin-inline:4px/);
-  assert.match(print, /<b>\{item\.duration_minutes\.toLocaleString\("fa-IR"\)\} د<\/b>/);
+  assert.match(print, /FitText/);
+  assert.match(print, /دقیقه \$\{activityLabel\}/);
+  assert.match(print, /زده شده از/);
+  assert.match(print, /print-activity-last/);
+  assert.doesNotMatch(print, /· هدف /);
+  assert.doesNotMatch(print, /زده شده: /);
+  assert.match(css, /\.print-fit-text/);
+  assert.match(css, /text-overflow:clip/);
 });
 
 test("counselor anti-cheat timestamp is server-preserved and hidden from students", () => {
