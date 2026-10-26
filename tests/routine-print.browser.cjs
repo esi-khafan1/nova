@@ -20,7 +20,8 @@ const weekly_plan_items=Array.from({length:35},(_,index)=>{
 const routines=Array.from({length:7},(_,dayOfWeek)=>({
  dayOfWeek,subject:subjects[dayOfWeek],details:'مرور فرمولها، نکتهها و تمرینهای پرتکرار',
 }));
-const plan={id:'plan-1',student_id:'student-1',week_start:'2026-10-24',title:'برنامه هفتگی نمونه',notes:'یادداشت کلی مشاور.',status:'published',routines,weekly_plan_items};
+const expectedWeekdays=['پنجشنبه','جمعه','شنبه','یکشنبه','دوشنبه','سه\u200cشنبه','چهارشنبه'];
+const plan={id:'plan-1',student_id:'student-1',week_start:'2026-10-22',title:'برنامه هفتگی نمونه',notes:'یادداشت کلی مشاور.',status:'published',routines,weekly_plan_items};
 const props={plan,student:{full_name:'نمونه دانشآموز',grade:12,study_field:'experimental_sciences'},counselorName:'مشاور نووا',backHref:'/dashboard/counselor/plans'};
 
 (async()=>{
@@ -71,6 +72,8 @@ const props={plan,student:{full_name:'نمونه دانشآموز',grade:12,stud
     dayColumns:dayColumns.length,routines:routines.length,activities:activities.length,clipped,
     routinePerDay:dayColumns.map(c=>c.querySelectorAll('.print-routine').length),
     routineWidth:routines[0]?.getBoundingClientRect().width,
+    routineWeekdays:routines.map(box=>box.getAttribute('data-weekday')),
+    dayHeadings:dayColumns.map(column=>column.querySelector('h2')?.textContent?.trim()),
     activityWidth:activities[0]?.getBoundingClientRect().width,
     subjectFont:px('.print-activity-title strong'),durationFont:px('.print-activity-title b'),chapterFont:px('.print-activity-chapter'),
     durationText:document.querySelector('.print-activity-title b')?.textContent?.trim(),
@@ -86,12 +89,14 @@ const props={plan,student:{full_name:'نمونه دانشآموز',grade:12,stud
   assert.equal(checks.clipped,0,'clipped box');
   assert.ok(checks.routineWidth<checks.activityWidth,'routine must be slightly narrower');
   assert.equal(checks.durationText,'۹۰ د');
-  assert.match(checks.routineTitle,/^روتین/u);
+  assert.equal(checks.routineTitle,'روتین');
+  assert.deepEqual(checks.routineWeekdays,expectedWeekdays);
+  assert.deepEqual(checks.dayHeadings,expectedWeekdays);
   assert.ok(checks.subjectFont>0&&checks.durationFont>0&&checks.chapterFont>0,'fonts must be unchanged');
   await page.screenshot({path:path.join(process.cwd(),'preview/actual-routine-b.png'),fullPage:false});
   const pdf=await page.pdf({path:path.join(process.cwd(),'preview/actual-routine-b.pdf'),preferCSSPageSize:true,printBackground:true,displayHeaderFooter:false});
   assert.equal((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length,1,'one A4 page');
   await page.close();
-  console.log('Actual PrintWeeklyPlan sample B: 7 day columns, 7 narrower routine boxes, 90 د, unchanged fonts, no clipping, one A4 page.');
+  console.log('Actual PrintWeeklyPlan sample B: 7 day columns, real weekdays from week_start, 7 narrower routine boxes titled روتین, 90 د, unchanged fonts, no clipping, one A4 page.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

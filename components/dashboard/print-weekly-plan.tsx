@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PrintPlanButton } from "@/components/dashboard/print-plan-button";
 import {
   addDays,
+  formatPersianWeekday,
   formatPersianWeekRange,
   parseIsoDate,
   persianMonthNames,
@@ -49,10 +50,9 @@ function formatPersianDay(date: Date) {
 
 function normalizeRoutines(routines: PrintablePlan["routines"]) {
   const source = Array.isArray(routines) ? routines : [];
-  return weekDays.map((day, index) => {
+  return weekDays.map((_, index) => {
     const match = source.find((routine) => Number(routine?.dayOfWeek) === index);
     return {
-      day,
       subject: typeof match?.subject === "string" ? match.subject : "",
       details: typeof match?.details === "string" ? match.details : "",
     };
@@ -135,15 +135,17 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
         )}
 
         <div className="print-week-grid">
-          {weekDays.map((day, dayIndex) => {
+          {weekDays.map((_, dayIndex) => {
             const dayItems = items.filter(
               (item) => item.day_of_week === dayIndex,
             );
+            const dayDate = addDays(weekStart, dayIndex);
+            const weekday = formatPersianWeekday(dayDate);
             return (
-              <section className="print-day-column" key={day}>
+              <section className="print-day-column" key={dayIndex}>
                 <header>
-                  <h2>{new Intl.DateTimeFormat("fa-IR", { weekday: "long" }).format(addDays(weekStart, dayIndex))}</h2>
-                  <span>{formatPersianDay(addDays(weekStart, dayIndex))}</span>
+                  <h2>{weekday}</h2>
+                  <span>{formatPersianDay(dayDate)}</span>
                 </header>
                 <div className="print-day-items">
                   {dayItems.map((item) => (
@@ -187,10 +189,10 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                       key={`empty-${index}`}
                     />
                   ))}
-                  <article className="print-activity print-routine" key={`routine-${dayIndex}`}>
+                  <article className="print-activity print-routine" key={`routine-${dayIndex}`} data-weekday={weekday}>
                     <div className="print-activity-title">
                       <span aria-hidden="true">□</span>
-                      <strong>روتین · {day}</strong>
+                      <strong>روتین</strong>
                     </div>
                     <p className="print-activity-chapter">
                       {routines[dayIndex].subject

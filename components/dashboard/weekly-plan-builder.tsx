@@ -3,7 +3,7 @@
 import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
 import { useState } from "react";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
-import { formatPersianFullDate, parseIsoDate } from "@/lib/persian-date";
+import { formatPersianFullDate, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
 import { saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import {
@@ -13,7 +13,7 @@ import {
   type StudyField,
 } from "@/lib/study-catalog";
 
-import { planningGrades, curriculumBooks, inferItemGrade, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
+import { planningGrades, curriculumBooks, inferItemGrade, routineSubjectOptions, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
 
 type Student = {
   student_id: string;
@@ -158,10 +158,7 @@ export function WeeklyPlanBuilder({
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
-  const routineSubjects=Array.from(new Set(planningGrades.flatMap(grade=>[
-    ...curriculumBooks(student?.study_field??null,grade,"konkur"),
-    ...curriculumBooks(student?.study_field??null,grade,"final_exam"),
-  ]).map(book=>book.subject))).filter(Boolean);
+  const routineSubjects=routineSubjectOptions(student?.study_field??null,student?.grade??null);
   const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:""}:item));
 
   const loadPlan = (studentId: string, nextWeek: string) => {
@@ -324,13 +321,15 @@ export function WeeklyPlanBuilder({
 
       {hasOverlap && <div className="portal-alert error" role="alert">این بازه با برنامهٔ دیگری هم‌پوشانی دارد. تاریخ شروع را بعد از پایان برنامهٔ قبلی انتخاب کن.</div>}
       <div className="weekly-days">
-        {weekDays.map((day, dayIndex) => {
+        {weekDays.map((_, dayIndex) => {
           const dayIsLocked = isLockedDay(dayIndex);
           const dayItems = items.filter((item) => item.dayOfWeek === dayIndex);
+          const realWeekday = formatPersianWeekday(dayDate(weekStart, dayIndex));
           return (
             <section
               className={`portal-card plan-day${dayIsLocked ? " past" : ""}`}
-              key={day}
+              key={dayIndex}
+              aria-label={realWeekday}
             >
               <header>
                 <div>
@@ -580,8 +579,8 @@ export function WeeklyPlanBuilder({
               )}
               {!dayIsLocked && (() => {
                 const routine = routines[dayIndex];
-                return <section className="plan-routine" aria-labelledby={`routine-${dayIndex}`}>
-                  <h3 id={`routine-${dayIndex}`}>روتین</h3>
+                return <section className="plan-routine" aria-label={`روتین ${realWeekday}`}>
+                  <h3>روتین</h3>
                   <p>برای این روز فقط همین یک روتین ثبت میشود.</p>
                   <label>درس روتین
                     <select value={routine.subject} onChange={event=>updateRoutine(dayIndex,"subject",event.target.value)}>

@@ -11,6 +11,21 @@ export function curriculumBooks(field:StudyField|null,grade:Grade,track:Preparat
  if(track==='konkur')return studyCatalog[field][grade]??[];
  return schoolBooks(field,grade);
 }
+
+/** Routine subjects come from the student's own field (specialist and school
+ *  tracks). If no field is registered, all fields are offered. Field-specific
+ *  extras such as the experimental-sciences lab stay with their own field. */
+export function routineSubjectOptions(field:StudyField|null,grade:number|null):string[]{
+ const validField=field&&Object.prototype.hasOwnProperty.call(studyCatalog,field)?field:null;
+ const fields:StudyField[]=validField?[validField]:Object.keys(studyCatalog) as StudyField[];
+ const levels=validField&&grade?availableGrades(grade):planningGrades;
+ return Array.from(new Set(fields.flatMap(currentField=>
+  levels.flatMap(level=>[
+   ...curriculumBooks(currentField,level,'konkur').map(book=>book.subject),
+   ...curriculumBooks(currentField,level,'final_exam').map(book=>book.subject),
+  ])
+ ))).filter(Boolean);
+}
 export function inferItemGrade(item:Pick<StudyItem,'subject'|'source_grade'>,field:StudyField|null,maxGrade:number|null):Grade|null{
  if(item.source_grade)return item.source_grade;
  const matches=availableGrades(maxGrade).filter(g=>curriculumBooks(field,g,'konkur').some(b=>b.subject===item.subject));
