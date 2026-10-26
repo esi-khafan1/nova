@@ -23,3 +23,15 @@
 }
 
 .counselor-portal .exam-timing-hint{font-size:14px;line-height:1.9;padding:12px 16px;border:1px solid #ccddf3;border-radius:10px;background:#eef5ff;color:#15324f;margin:0}
+
+/* Daily routine editor: exactly one fixed block per day. */
+.plan-routine{margin-top:18px;padding:16px;border:2px solid #ffb56b;border-radius:12px;background:#fff8f2}
+.plan-routine h3{margin:0 0 4px;font-size:16px;color:#9d3f06}
+.plan-routine > p{margin:0 0 12px;font-size:12px;color:#547191;line-height:1.8}
+.plan-routine label{display:grid;gap:6px;margin-bottom:10px;font-size:13px;font-weight:650;color:#12304d}
+.plan-routine select,.plan-routine textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid #c8daff;border-radius:8px;padding:10px;background:#fff;color:#12304d;font:inherit}
+.plan-routine textarea{min-height:64px;resize:vertical}
+.plan-routine-readonly{margin-top:12px;padding:12px;border:1px dashed #d99a6a;border-radius:10px;background:#fff8f2;color:#633014}
+.plan-routine-readonly strong,.plan-routine-readonly span,.plan-routine-readonly small{display:block}
+.plan-routine-readonly span,.plan-routine-readonly small{margin-top:4px;font-size:12px;line-height:1.8}
+@media(max-width:600px){.plan-routine{padding:14px}.plan-routine label{font-size:12px}}

@@ -47,6 +47,12 @@ export async function updateStudentProfile(fd: FormData) {
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+type WeeklyPlanRoutineInput = {
+  dayOfWeek: number;
+  subject: string;
+  details: string;
+};
+
 type WeeklyPlanItemInput = {
   dayOfWeek: number;
   durationMinutes: number;
@@ -74,6 +80,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   const notes = clean(fd.get("notes"), 2000);
   const status = clean(fd.get("status"), 20);
   const rawItems = clean(fd.get("items"), 100_000);
+  const rawRoutines = clean(fd.get("routines"), 20_000);
 
   if (
     !uuidPattern.test(studentId) ||
@@ -106,6 +113,31 @@ export async function saveWeeklyPlan(fd: FormData) {
     items = parsed;
   } catch {
     redirect("/dashboard/counselor/plans?error=plan");
+  }
+
+  let rawRoutineList: unknown[] = [];
+  try {
+    const parsed = JSON.parse(rawRoutines);
+    if (!Array.isArray(parsed) || parsed.length !== 7) throw new Error("Invalid routines");
+    rawRoutineList = parsed;
+  } catch {
+    redirect("/dashboard/counselor/plans?error=routines");
+  }
+
+  const safeRoutines: WeeklyPlanRoutineInput[] = rawRoutineList.map((routine) => {
+    const value = routine as Record<string, unknown> | null;
+    return {
+      dayOfWeek: Number(value?.dayOfWeek),
+      subject: clean(String(value?.subject ?? "") as FormDataEntryValue, 100),
+      details: clean(String(value?.details ?? "") as FormDataEntryValue, 500),
+    };
+  });
+  const routineDays = new Set(safeRoutines.map((routine) => routine.dayOfWeek));
+  if (
+    safeRoutines.some((routine) => !Number.isInteger(routine.dayOfWeek) || routine.dayOfWeek < 0 || routine.dayOfWeek > 6) ||
+    routineDays.size !== 7
+  ) {
+    redirect("/dashboard/counselor/plans?error=routines");
   }
 
   const allowedActivityTypes = new Set<string>(
@@ -160,7 +192,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
   if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
-  const { error } = await s.rpc("save_weekly_plan_v4", {
+  const { error } = await s.rpc("save_weekly_plan_v5", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,
@@ -168,6 +200,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     target_notes: notes,
     target_status: status,
     target_items: safeItems,
+    target_routines: safeRoutines,
   });
 
   if (error) redirect(`/dashboard/counselor/plans?error=${error.code === "23P01" ? "overlap" : "plan"}`);

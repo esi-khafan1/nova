@@ -15,6 +15,12 @@ import {
   type StudyField,
 } from "@/lib/study-catalog";
 
+export type PrintablePlanRoutine = {
+  dayOfWeek?: number | string | null;
+  subject?: string | null;
+  details?: string | null;
+};
+
 export type PrintablePlan = {
   id: string;
   student_id: string;
@@ -22,6 +28,7 @@ export type PrintablePlan = {
   title: string;
   notes: string | null;
   status: "draft" | "published";
+  routines?: PrintablePlanRoutine[] | null;
   weekly_plan_items: Array<{
     id: string;
     day_of_week: number;
@@ -40,6 +47,18 @@ function formatPersianDay(date: Date) {
   return `${persianNumber.format(parts.day)} ${persianMonthNames[parts.month - 1]}`;
 }
 
+function normalizeRoutines(routines: PrintablePlan["routines"]) {
+  const source = Array.isArray(routines) ? routines : [];
+  return weekDays.map((day, index) => {
+    const match = source.find((routine) => Number(routine?.dayOfWeek) === index);
+    return {
+      day,
+      subject: typeof match?.subject === "string" ? match.subject : "",
+      details: typeof match?.details === "string" ? match.details : "",
+    };
+  });
+}
+
 export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:PrintablePlan;student:{full_name:string;grade:number|null;study_field:StudyField|null}|undefined;counselorName:string;backHref:string}){
   const weekStart = parseIsoDate(plan.week_start);
   const activityLabels = new Map<string, string>(
@@ -50,6 +69,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
       first.day_of_week - second.day_of_week ||
       first.sort_order - second.sort_order,
   );
+  const routines = normalizeRoutines(plan.routines);
 
   return (
     <main className="print-plan-page" dir="rtl">
@@ -167,6 +187,20 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                       key={`empty-${index}`}
                     />
                   ))}
+                  <article className="print-activity print-routine" key={`routine-${dayIndex}`}>
+                    <div className="print-activity-title">
+                      <span aria-hidden="true">□</span>
+                      <strong>روتین · {day}</strong>
+                    </div>
+                    <p className="print-activity-chapter">
+                      {routines[dayIndex].subject
+                        ? `درس: ${routines[dayIndex].subject}`
+                        : "درس: انتخاب نشده"}
+                    </p>
+                    <p className="print-activity-details">
+                      {routines[dayIndex].details || "توضیحی ثبت نشده"}
+                    </p>
+                  </article>
                 </div>
               </section>
             );

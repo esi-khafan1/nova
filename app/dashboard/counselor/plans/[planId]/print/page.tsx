@@ -14,7 +14,7 @@ export default async function PrintWeeklyPlanPage({
     supabase
       .from("weekly_plans")
       .select(
-        "id,student_id,week_start,title,notes,status,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order)",
+        "id,student_id,week_start,title,notes,status,routines,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order)",
       )
       .eq("id", planId)
       .eq("counselor_id", profile.id)

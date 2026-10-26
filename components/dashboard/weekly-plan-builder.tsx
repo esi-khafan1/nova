@@ -36,6 +36,12 @@ type PlanItem = {
   preparationTrack: PreparationTrack;
 };
 
+export type PlanRoutine = {
+  dayOfWeek: number;
+  subject: string;
+  details: string;
+};
+
 export type CounselorWeeklyPlan = {
   id: string;
   student_id: string;
@@ -43,6 +49,7 @@ export type CounselorWeeklyPlan = {
   title: string;
   notes: string | null;
   status: "draft" | "published";
+  routines?: PlanRoutine[];
   weekly_plan_items: Array<{
     id: string;
     day_of_week: number;
@@ -74,6 +81,21 @@ const newItem = (
   sourceGrade:null,
   preparationTrack:"konkur",
 });
+
+const defaultRoutines = (): PlanRoutine[] =>
+  weekDays.map((_, dayOfWeek) => ({ dayOfWeek, subject: "", details: "" }));
+
+const planRoutines = (plan?: CounselorWeeklyPlan | null): PlanRoutine[] => {
+  const source = Array.isArray(plan?.routines) ? plan!.routines : [];
+  return defaultRoutines().map((routine) => {
+    const match = source.find((item) => Number(item?.dayOfWeek) === routine.dayOfWeek);
+    return {
+      dayOfWeek: routine.dayOfWeek,
+      subject: typeof match?.subject === "string" ? match.subject : "",
+      details: typeof match?.details === "string" ? match.details : "",
+    };
+  });
+};
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
 
@@ -125,6 +147,7 @@ export function WeeklyPlanBuilder({
   );
   const [title, setTitle] = useState(initialPlan?.title ?? "برنامه هفتگی");
   const [notes, setNotes] = useState(initialPlan?.notes ?? "");
+  const [routines, setRoutines] = useState<PlanRoutine[]>(() => planRoutines(initialPlan));
   const [items, setItems] = useState<PlanItem[]>(() => [
     ...(initialPlan
       ? planItems(initialPlan)
@@ -135,6 +158,10 @@ export function WeeklyPlanBuilder({
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
+  const routineSubjects=Array.from(new Set(planningGrades.flatMap(grade=>[
+    ...curriculumBooks(student?.study_field??null,grade,"konkur"),
+    ...curriculumBooks(student?.study_field??null,grade,"final_exam"),
+  ]).map(book=>book.subject))).filter(Boolean);
   const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:""}:item));
 
   const loadPlan = (studentId: string, nextWeek: string) => {
@@ -145,6 +172,7 @@ export function WeeklyPlanBuilder({
     setPlanStatus(plan?.status ?? null);
     setTitle(plan?.title ?? "برنامه هفتگی");
     setNotes(plan?.notes ?? "");
+    setRoutines(planRoutines(plan));
     setItems(
       plan
         ? planItems(plan)
@@ -166,6 +194,17 @@ export function WeeklyPlanBuilder({
   const periodEnded = dayIso(weekStart, 6) < tehranToday();
   const hasOverlap = overlapsWindow(weekStart, plans, student?.student_id ?? "", planId);
   const editableItems = items.filter((item) => !isLockedDay(item.dayOfWeek));
+
+  const updateRoutine = <K extends keyof PlanRoutine>(
+    dayOfWeek: number,
+    property: K,
+    value: PlanRoutine[K],
+  ) =>
+    setRoutines((current) =>
+      current.map((routine) =>
+        routine.dayOfWeek === dayOfWeek ? { ...routine, [property]: value } : routine,
+      ),
+    );
 
   const updateItem = <K extends keyof PlanItem>(
     key: string,
@@ -332,6 +371,14 @@ export function WeeklyPlanBuilder({
                       {item.details && <small>{item.details}</small>}
                     </article>
                   ))}
+                  {(() => {
+                    const routine = routines[dayIndex];
+                    return <article className="plan-routine-readonly" key={`routine-${dayIndex}`}>
+                      <strong>روتین</strong>
+                      <span>{routine.subject || "درس انتخاب نشده"}</span>
+                      {routine.details && <small>{routine.details}</small>}
+                    </article>;
+                  })()}
                 </div>
               ) : dayItems.length === 0 ? (
                 <p className="plan-day-empty">برای این روز فعالیتی ثبت نشده.</p>
@@ -531,6 +578,23 @@ export function WeeklyPlanBuilder({
                   ))}
                 </div>
               )}
+              {!dayIsLocked && (() => {
+                const routine = routines[dayIndex];
+                return <section className="plan-routine" aria-labelledby={`routine-${dayIndex}`}>
+                  <h3 id={`routine-${dayIndex}`}>روتین</h3>
+                  <p>برای این روز فقط همین یک روتین ثبت میشود.</p>
+                  <label>درس روتین
+                    <select value={routine.subject} onChange={event=>updateRoutine(dayIndex,"subject",event.target.value)}>
+                      <option value="">انتخاب درس</option>
+                      {routine.subject&&!routineSubjects.includes(routine.subject)&&<option value={routine.subject}>{routine.subject} (ثبت قبلی)</option>}
+                      {routineSubjects.map(subject=><option key={subject} value={subject}>{subject}</option>)}
+                    </select>
+                  </label>
+                  <label>توضیح روتین
+                    <textarea value={routine.details} maxLength={500} rows={2} onChange={event=>updateRoutine(dayIndex,"details",event.target.value)} placeholder="مثلاً مرور فرمولهای پرتکرار" />
+                  </label>
+                </section>;
+              })()}
             </section>
           );
         })}
@@ -567,6 +631,7 @@ export function WeeklyPlanBuilder({
             })),
           )}
         />
+        <input type="hidden" name="routines" value={JSON.stringify(routines)} />
         <div>
           {planStatus !== "published" && (
             <button

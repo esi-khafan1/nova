@@ -18,3 +18,5 @@ cloudflare-env.d.ts
 /public/pdfjs/standard_fonts/
 
 *.tsbuildinfo
+
+/preview/

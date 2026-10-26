@@ -53,3 +53,6 @@
 .student-account-layout .account-delete-box{min-width:0;gap:14px}
 .student-account-layout .account-delete-box input{width:100%;min-width:0}
 @media(max-width:600px){.student-account-layout{gap:20px}.student-account-layout .student-account-form{grid-template-columns:1fr;gap:18px}.student-account-form>.button{width:100%}.student-account-layout .account-delete-box{padding:16px}}
+
+/* Counselor study hours and silent check-time audit */
+.sp-tick-time{margin:8px 0 0;padding:8px 12px;border:1px solid #f5d6bd;border-radius:8px;background:#fff8f2;color:#9d3f06;font-size:13px;font-weight:700;line-height:1.8}
