@@ -131,6 +131,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                       <div className="print-activity-title">
                         <span aria-hidden="true">□</span>
                         <strong>{item.subject}</strong>
+                        <b>{item.duration_minutes.toLocaleString("fa-IR")} د</b>
                       </div>
                       <p
                         className={`print-activity-chapter${
@@ -140,9 +141,6 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                         {item.chapter || "مبحث آزاد"}
                       </p>
                       <p className="print-activity-summary">
-                        <b className="print-activity-duration">
-                          {persianNumber.format(item.duration_minutes)} دقیقه
-                        </b>
                         {activityLabels.get(item.activity_type) ||
                           "فعالیت درسی"}
                         {item.activity_type === "practice_tests" &&
@@ -151,15 +149,13 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                             "fa-IR",
                           )} تست`}
                       </p>
-                      {item.activity_type === "practice_tests" ? (
+                      {item.activity_type === "practice_tests" && (
                         <p className="print-activity-test-result">
                           زده شده: ................ تست
-                          {item.details ? ` · ${item.details}` : ""}
                         </p>
-                      ) : (
-                        <p className="print-activity-details">
-                          {item.details || "انجام شد: ☐"}
-                        </p>
+                      )}
+                      {item.details && (
+                        <p className="print-activity-details">{item.details}</p>
                       )}
                     </article>
                   ))}
