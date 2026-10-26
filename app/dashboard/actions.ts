@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
+import { activityTypes } from "@/lib/study-catalog";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
   String(v ?? "")
     .trim()
@@ -107,17 +108,9 @@ export async function saveWeeklyPlan(fd: FormData) {
     redirect("/dashboard/counselor/plans?error=plan");
   }
 
-  const activityTypes = new Set([
-    "lesson",
-    "notes",
-    "practice_tests",
-    "class",
-    "exam",
-    "review",
-    "homework",
-    "summary",
-    "other",
-  ]);
+  const allowedActivityTypes = new Set<string>(
+    activityTypes.map((activity) => activity.value),
+  );
 
   const safeItems = items
     .slice(0, 100)
@@ -144,7 +137,7 @@ export async function saveWeeklyPlan(fd: FormData) {
         item.durationMinutes >= 15 &&
         item.durationMinutes <= 720 &&
         item.subject.length > 0 &&
-        activityTypes.has(item.activityType) &&
+        allowedActivityTypes.has(item.activityType) &&
         (item.activityType === "practice_tests"
           ? Number.isInteger(item.targetTestCount) &&
             Number(item.targetTestCount) >= 1 &&

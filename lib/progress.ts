@@ -47,6 +47,9 @@ const studyActivities = new Set([
   "summary",
   "class",
   "other",
+  "exam_analysis",
+  "offline_class",
+  "textbook_reading",
 ]);
 
 function buildScope(

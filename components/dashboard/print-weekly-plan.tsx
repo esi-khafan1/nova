@@ -131,7 +131,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                       <div className="print-activity-title">
                         <span aria-hidden="true">□</span>
                         <strong>{item.subject}</strong>
-                        <b>{item.duration_minutes.toLocaleString("fa-IR")} د</b>
+                        <b>{persianNumber.format(item.duration_minutes)} دقیقه</b>
                       </div>
                       <p
                         className={`print-activity-chapter${

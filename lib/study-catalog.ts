@@ -308,10 +308,14 @@ export const studyCatalog: Record<
 
 export const activityTypes = [
   { value: "lesson", label: "مطالعه درسنامه" },
+  { value: "textbook_reading", label: "خواندن کتاب درسی" },
   { value: "notes", label: "کار روی جزوه" },
   { value: "practice_tests", label: "تست‌زنی" },
   { value: "class", label: "کلاس" },
+  { value: "offline_class", label: "آفلاین کلاس" },
   { value: "exam", label: "آزمون" },
+  { value: "exam_analysis", label: "تحلیل آزمون" },
+  { value: "simulation_exam", label: "آزمون شبیه ساز" },
   { value: "review", label: "مرور" },
   { value: "homework", label: "تمرین و تکلیف" },
   { value: "summary", label: "خلاصه‌نویسی" },
