@@ -2,6 +2,7 @@
 // larger four-row layout with varied subjects, chapters, activities and test targets.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
+const os=require('node:os');
 const path=require('node:path');
 const esbuild=require('esbuild');
 const {chromium}=require('playwright-core');
@@ -176,8 +177,8 @@ const props={plan,student:{full_name:'شیما حسین زاده',grade:12,study
   assert.deepEqual(checks.routineWeekdays,expectedWeekdays);
   assert.deepEqual(checks.dayHeadings,expectedWeekdays);
   assert.equal(checks.subjectBase,'10.5');
-  await page.screenshot({path:path.join(process.cwd(),'preview/actual-print-font.png'),fullPage:false});
-  const pdf=await page.pdf({path:path.join(process.cwd(),'preview/actual-print-font.pdf'),preferCSSPageSize:true,printBackground:true,displayHeaderFooter:false});
+  await page.screenshot({path:path.join(os.tmpdir(),'nova-actual-print-font.png'),fullPage:false});
+  const pdf=await page.pdf({path:path.join(os.tmpdir(),'nova-actual-print-font.pdf'),preferCSSPageSize:true,printBackground:true,displayHeaderFooter:false});
   assert.equal((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length,1,'one A4 page');
   await page.close();
   console.log('Actual PrintWeeklyPlan: approved four-row layout, larger auto-fit fonts, no overflow/ellipsis/wrap, real weekdays, one A4 page.');

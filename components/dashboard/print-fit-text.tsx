@@ -56,20 +56,26 @@ export function FitText({
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(fit);
     };
+    // `beforeprint` must refit synchronously: a queued animation frame may not
+    // run before the browser takes its print snapshot.
+    const fitForPrint = () => {
+      cancelAnimationFrame(frame);
+      fit();
+    };
 
     fit();
     if (document.fonts?.ready) document.fonts.ready.then(schedule);
     const observer = new ResizeObserver(schedule);
     if (el.parentElement) observer.observe(el.parentElement);
     window.addEventListener("resize", schedule);
-    window.addEventListener("beforeprint", schedule);
+    window.addEventListener("beforeprint", fitForPrint);
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener("resize", schedule);
-      window.removeEventListener("beforeprint", schedule);
+      window.removeEventListener("beforeprint", fitForPrint);
     };
   }, [basePt, minPt, children]);
 

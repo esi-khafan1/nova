@@ -52,7 +52,8 @@ test("print view uses the approved larger four-row layout", () => {
   assert.match(printCss, /\.print-fit-text/);
   assert.match(fitText, /scaleX\(\$\{ratio\}\)/);
   assert.match(fitText, /transformOrigin = "right center"/);
-  assert.match(fitText, /addEventListener\("beforeprint", schedule\)/);
+  assert.match(fitText, /addEventListener\("beforeprint", fitForPrint\)/);
+  assert.match(fitText, /const fitForPrint = \(\) => \{\s*cancelAnimationFrame\(frame\);\s*fit\(\);\s*\}/);
   assert.match(fitText, /data-min-pt=\{minPt\}/);
   assert.doesNotMatch(printCss, /Weekly plan print: larger readable type/);
   assert.doesNotMatch(printCss, /print-activity-duration/);

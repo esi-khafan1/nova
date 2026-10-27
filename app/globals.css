@@ -4938,8 +4938,11 @@ main .eyebrow span {
   justify-content: space-between;
   gap: 18px;
   margin-top: 12px;
-  padding-top: 9px;
+  /* `footer` and `main footer` globals add 48px bottom padding and a cream
+     background; reset both so the sheet does not end with a big blank band. */
+  padding: 9px 0 0;
   border-top: 1px solid #e7b991;
+  background: transparent;
   color: #854019;
   font-size: 8px;
 }
@@ -8605,3 +8608,102 @@ main .feature-card:before {
 
 /* Counselor plan builder: exam box request status */
 .plan-exam-box-status{grid-column:1/-1;margin:0;padding:8px 12px;border:1px dashed #c9a86a;border-radius:10px;background:#fff8ec;color:#7a4c10;font-size:12px;line-height:1.8}
+
+/* Final weekly-plan print rules.
+   These come last on purpose: older print blocks above set conflicting fixed
+   heights and assumed the optional notes section always exists. In print the
+   A4 sheet is the only thing that should reach the printer. */
+@media print {
+  /* Floating/global UI is never part of the printed weekly plan. */
+  .nova-support,
+  .support-popup,
+  .support-launcher,
+  .nova-menu-scrim,
+  .nova-menu-panel,
+  .mobile-menu-backdrop,
+  .mobile-menu-panel,
+  .exam-modal-overlay,
+  .site-header,
+  .site-footer,
+  .nova-site-header,
+  .nova-footer,
+  .dashboard-sidebar,
+  .portal-sidebar,
+  .portal-header,
+  .print-plan-toolbar,
+  nextjs-portal,
+  next-route-announcer,
+  [data-print-hide],
+  [aria-label*="پشتیبان"],
+  [aria-label*="گفتگو با"],
+  [class*="support-widget"],
+  [class*="chat-launcher"],
+  [class*="chat-widget"] {
+    display: none !important;
+  }
+
+  /* On weekly-plan print pages, keep only the A4 sheet (and no body margin). */
+  body:has(.print-plan-page) {
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+  body:has(.print-plan-page) > *:not(.print-plan-page):not(:has(.print-plan-page)),
+  *:has(> .print-plan-page) > *:not(.print-plan-page):not(:has(.print-plan-page)) {
+    display: none !important;
+  }
+  .print-plan-page {
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 6mm !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+  .print-plan-page > *:not(.a4-weekly-plan) {
+    display: none !important;
+  }
+
+  /* Flex instead of the old five-row grid: the notes section is optional, so
+     a grid with `1fr` on row 4 gave the footer that row and stretched it into
+     a huge empty band. Flex always gives the free space to the week grid. */
+  .a4-weekly-plan {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 198mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+  .a4-weekly-plan > * {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+  .print-plan-footer {
+    margin: 1.5mm 0 0 !important;
+    padding: 1.5mm 0 0 !important;
+    border-top: 1px solid #e7b991 !important;
+    background: transparent !important;
+    font-size: 7pt !important;
+  }
+  .print-week-grid {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+  .print-day-column {
+    min-height: 0;
+  }
+}
