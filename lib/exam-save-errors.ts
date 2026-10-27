@@ -1,5 +1,6 @@
 const messages: Record<string, string> = {
-  students: "دانش‌آموزان انتخاب‌شده معتبر نیستند؛ برای انتشار حداقل یک دانش‌آموز انتخاب کن.",
+  students: "دانش‌آموزان انتخاب‌شده معتبر نیستند؛ برای انتشار حداقل یک دانش‌آموز یا یک باکس آزمون انتخاب کن.",
+  boxes: "باکس‌های آزمون انتخاب‌شده معتبر نیستند؛ فقط باکس‌های آزمون برنامهریزی‌شدهٔ امروز یا آینده قابل اتصال هستند.",
   template: "ساختار الگوی کنکور ثابت است و قابل تغییر نیست. الگو را دوباره انتخاب کن.",
   window: "پایان بازهٔ شروع باید بعد از شروع بازه و در همان روز باشد؛ ساعت‌ها به وقت تهران هستند.",
   started_exam: "آزمونی که دانش‌آموز شروع کرده است قابل ویرایش نیست؛ برای تغییرات، آزمون جدید بساز.",
@@ -23,6 +24,7 @@ export function examSaveErrorCode(error: { message: string; code?: string }): st
   const message = error.message.toLowerCase();
   if (message.includes("template")) return "template";
   if (message.includes("selected students")) return "students";
+  if (message.includes("exam boxes")) return "boxes";
   if (message.includes("only exam designers")) return "permission";
   if (message.includes("floating start window")) return "window";
   if (message.includes("started sessions cannot be edited")) return "started_exam";

@@ -1,6 +1,7 @@
 "use client";
 
 import { ExamStudentPicker, type ExamStudent } from "@/components/dashboard/exam-student-picker";
+import { ExamBoxPicker, type ExamBox } from "@/components/dashboard/exam-box-picker";
 import "@/app/exam-designer.css";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { parseExamStartWindow } from "@/lib/floating-exams";
@@ -19,14 +20,28 @@ import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 
 type BookletItem = { id: string; title: string; pdfUrl: string; questionCount: number; durationMinutes: number; keyAnswers: Record<string, number> };
 
-export type ExamBuilderInitial = {id:string;title:string;description:string|null;examField:StudyField|"";booklets:BookletItem[];students:ExamStudent[];scheduledDate:string;scheduledTime:string;windowEndTime:string|null};
-export function ExamBuilder({initial}:{initial?:ExamBuilderInitial}) {
+export type ExamBuilderInitial = {id:string;title:string;description:string|null;examField:StudyField|"";booklets:BookletItem[];students:ExamStudent[];scheduledDate:string;scheduledTime:string;windowEndTime:string|null;boxIds?:string[]};
+export function ExamBuilder({initial,boxes=[],initialBoxId}:{initial?:ExamBuilderInitial;boxes?:ExamBox[];initialBoxId?:string}) {
   const uid = useId();
   const [publicationAttempted, setPublicationAttempted] = useState(false);
   const publicationPanel = useRef<HTMLElement>(null);
   const [examField, setExamField] = useState<StudyField | "">(initial?.examField??"");
   const [booklets, setBooklets] = useState<BookletItem[]>(initial?.booklets??[{ id: `${uid}-b1`, title: "ریاضی", pdfUrl: "", questionCount: 20, durationMinutes: 30, keyAnswers: {} }]);
   const [students,setStudents]=useState<ExamStudent[]>(initial?.students??[]);
+  const [boxIds, setBoxIds] = useState<string[]>(() => {
+    const linked = initial?.id
+      ? boxes.filter((box) => box.linked_exam_id === initial.id || initial.boxIds?.includes(box.item_id)).map((box) => box.item_id)
+      : [];
+    const requested = initialBoxId && boxes.some((box) => box.item_id === initialBoxId && !box.linked_exam_id)
+      ? [initialBoxId]
+      : [];
+    return [...new Set([...linked, ...requested])];
+  });
+  const selectedBoxes = boxes.filter((box) => boxIds.includes(box.item_id));
+  const assignedStudentCount = new Set([
+    ...students.map((student) => student.id),
+    ...selectedBoxes.map((box) => box.student_id),
+  ]).size;
   const [clock, setClock] = useState(() => Date.now());
   const scheduleBounds = earliestExamSchedule(new Date(clock));
   const today = scheduleBounds.today;
@@ -67,7 +82,7 @@ export function ExamBuilder({initial}:{initial?:ExamBuilderInitial}) {
   const removeBooklet = (index: number) => { if (booklets.length > 1) setBooklets((prev) => remapBookletKeys(prev, prev.filter((_, idx) => idx !== index))); };
   const applyExamField = (field: StudyField | "") => { setExamField(field); if (!field) setBooklets([{id:`${uid}-custom`,title:"ریاضی",pdfUrl:"",questionCount:20,durationMinutes:30,keyAnswers:{}}]); if (field) setBooklets(konkurBookletPresets[field].map((preset, index) => ({ id: `${uid}-${field}-${index}-${Date.now()}`, title: preset.title, pdfUrl: "", questionCount: preset.questionCount, durationMinutes: preset.durationMinutes, keyAnswers: {} }))); };
   const windowValid = schedulingMode !== "floating" || Boolean(parseExamStartWindow(scheduledDate,scheduledTime,windowEndTime));
-  const readiness = examPublicationReadiness(booklets, students.length, windowValid);
+  const readiness = examPublicationReadiness(booklets, assignedStudentCount, windowValid);
   const { allKeysComplete, durationValid } = readiness;
   const canPublish = readiness.canPublish && scheduleValid;
 
@@ -92,7 +107,7 @@ export function ExamBuilder({initial}:{initial?:ExamBuilderInitial}) {
   };
 
   return <form action={saveExam} onSubmit={checkPublication} className="portal-card exam-builder">
-    <input type="hidden" name="exam_id" value={initial?.id??""}/><input type="hidden" name="student_ids" value={JSON.stringify(students.map(s=>s.id))}/><input type="hidden" name="booklets" value={JSON.stringify(booklets)} /><input type="hidden" name="exam_field" value={examField} />
+    <input type="hidden" name="exam_id" value={initial?.id??""}/><input type="hidden" name="student_ids" value={JSON.stringify(students.map(s=>s.id))}/><input type="hidden" name="box_ids" value={JSON.stringify(boxIds)}/><input type="hidden" name="booklets" value={JSON.stringify(booklets)} /><input type="hidden" name="exam_field" value={examField} />
     <div className="portal-card-title"><div><span>آزمون کنکوری</span><h2>{initial?"ویرایش آزمون دفترچه‌ای":"ساخت آزمون دفترچه‌ای"}</h2></div><div className="exam-summary-pill"><span>{toPersianDigits(booklets.length)} دفترچه</span><span>·</span><span>{toPersianDigits(totalQuestions)} سؤال</span><span>·</span><span>{toPersianDigits(totalDuration)} دقیقه</span></div></div>
     <div className="exam-meta-grid">
       <label>رشته امتحانی (اختیاری)<select style={{ color: "#14263b", backgroundColor: "#fffdf8" }} value={examField} onChange={(event) => applyExamField(event.target.value as StudyField | "")}><option style={{ color: "#14263b", backgroundColor: "#fffdf8" }} value="">بدون الگوی رشته</option>{Object.entries(studyFieldLabels).map(([value, label]) => <option style={{ color: "#14263b", backgroundColor: "#fffdf8" }} key={value} value={value}>{label}</option>)}</select></label>
@@ -106,6 +121,15 @@ export function ExamBuilder({initial}:{initial?:ExamBuilderInitial}) {
     </div>
     {scheduledDate === today && <p className="exam-schedule-hint" role="status">{todayHasTime ? `ساعت‌ها به وقت تهران هستند؛ اولین زمان مجاز امروز ${toPersianDigits(scheduleBounds.time)} است (حداقل ۵ دقیقه پس از زمان فعلی).` : "برای امروز زمان مجازی باقی نمانده است؛ روز بعد را انتخاب کن."}</p>}
     <ExamStudentPicker selected={students} onChange={setStudents}/>
+    <ExamBoxPicker
+      boxes={boxes}
+      selectedIds={boxIds}
+      onChange={setBoxIds}
+      examId={initial?.id}
+      onPickDate={(date) => {
+        if (!initial?.id && date >= scheduleBounds.date) changeScheduledDate(date);
+      }}
+    />
     {examField&&<p className="portal-alert success">الگوی استاندارد کنکور (ساختار تأییدشدهٔ ۱۴۰۴) فعال است؛ تعداد، ترتیب، زمان و بازهٔ دروس ثابت‌اند. فقط PDF و کلید را وارد کن. برای آزمون سفارشی «بدون الگوی رشته» را انتخاب کن.</p>}
     <div className="exam-booklets-section"><div className="exam-booklets-heading"><div><h3>دفترچه‌های آزمون</h3><p>مانند کنکور سراسری، هر دفترچه شامل فایل سؤالات، تعداد سؤال و زمان‌بندی مستقل خود است.</p></div></div><div className="exam-booklets-list">
       {booklets.map((booklet, bIndex) => { const range = bookletRanges[bIndex]; const qList = Array.from({ length: range.count }, (_, i) => range.start + i); return <article key={booklet.id} className="exam-booklet-card">
@@ -121,7 +145,7 @@ export function ExamBuilder({initial}:{initial?:ExamBuilderInitial}) {
       <h3 id={`${uid}-publication-title`}>آمادگی انتشار آزمون</h3>
       {publicationAttempted && !canPublish && <p className="exam-publication-error" role="alert">انتشار انجام نشد؛ موارد زیر را کامل کن. اطلاعات فرم حفظ شده‌اند.</p>}
       <ul className="exam-publication-summary">
-        <li data-ready={students.length > 0}><span aria-hidden="true">{students.length ? "✓" : "!"}</span>{students.length ? `${toPersianDigits(students.length)} دانش‌آموز انتخاب شده` : "حداقل یک دانش‌آموز را انتخاب کن."}</li>
+        <li data-ready={assignedStudentCount > 0}><span aria-hidden="true">{assignedStudentCount ? "✓" : "!"}</span>{assignedStudentCount ? `${toPersianDigits(assignedStudentCount)} دانش‌آموز انتخاب شده (شامل باکس‌های آزمون)` : "حداقل یک دانش‌آموز یا یک باکس آزمون را انتخاب کن."}</li>
         <li data-ready={readiness.allBookletsHavePdf}><span aria-hidden="true">{readiness.allBookletsHavePdf ? "✓" : "!"}</span>فایل PDF: {toPersianDigits(readiness.progress.filter(item => item.hasPdf).length)} از {toPersianDigits(booklets.length)} دفترچه بارگذاری شده</li>
         <li data-ready={allKeysComplete}><span aria-hidden="true">{allKeysComplete ? "✓" : "!"}</span>کلید پاسخ: {toPersianDigits(readiness.completedKeys)} از {toPersianDigits(readiness.totalQuestions)} سؤال تعیین شده</li>
       </ul>

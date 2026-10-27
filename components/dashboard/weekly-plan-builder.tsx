@@ -34,6 +34,7 @@ type PlanItem = {
   details: string;
   sourceGrade: Grade|null;
   preparationTrack: PreparationTrack;
+  linkedExamId?: string|null;
 };
 
 export type PlanRoutine = {
@@ -63,6 +64,7 @@ export type CounselorWeeklyPlan = {
     source_grade?:Grade|null;
     preparation_track?:PreparationTrack;
     exam_year?:number|null;
+    linked_exam_id?:string|null;
   }>;
 };
 
@@ -122,6 +124,7 @@ function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
       details: item.details ?? "",
       sourceGrade:item.source_grade??null,
       preparationTrack:item.preparation_track??"konkur",
+      linkedExamId:item.linked_exam_id??null,
     }));
 }
 
@@ -521,6 +524,13 @@ export function WeeklyPlanBuilder({
                             ))}
                           </select>
                         </label>
+                        {item.activityType === "exam" && (
+                          <p className="plan-exam-box-status" role="status">
+                            {item.linkedExamId
+                              ? "این باکس آزمون برای طراح آزمون ارسال شده و آزمون به آن متصل است؛ دانشآموز از داخل برنامه وارد آزمون میشود."
+                              : "این باکس با روز و درس برای طراح آزمون ارسال میشود تا آزمون مناسب آن ساخته شود."}
+                          </p>
+                        )}
                         {item.activityType === "practice_tests" && (
                           <label>
                             تعداد تست هدف

@@ -1,5 +1,5 @@
 import { addDays, parseIsoDate, toIsoDate } from "@/lib/persian-date";
-export type StudyItem = { id:string; plan_id:string; day_of_week:number; duration_minutes:number; subject:string; chapter:string|null; activity_type:string; target_test_count:number|null; details:string|null; sort_order:number; source_grade?:10|11|12|null; preparation_track?:"konkur"|"final_exam"; exam_year?:number|null };
+export type StudyItem = { id:string; plan_id:string; day_of_week:number; duration_minutes:number; subject:string; chapter:string|null; activity_type:string; target_test_count:number|null; details:string|null; sort_order:number; source_grade?:10|11|12|null; preparation_track?:"konkur"|"final_exam"; exam_year?:number|null; linked_exam_id?:string|null };
 export type StudyPlan = { id:string; title:string; week_start:string; notes:string|null; weekly_plan_items:StudyItem[] };
 export type StudyCompletion = { item_id:string; completed_at:string; checked_at?:string|null; completed_test_count:number|null };
 export function tehranToday() { const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tehran",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const value=(type:string)=>parts.find(p=>p.type===type)?.value??"";return `${value("year")}-${value("month")}-${value("day")}`; }

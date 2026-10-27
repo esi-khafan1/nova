@@ -8,7 +8,8 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
  create table public.weekly_plans(id uuid primary key,student_id uuid,title text,week_start date,notes text,status text);
- create table public.weekly_plan_items(id uuid primary key,plan_id uuid references public.weekly_plans(id),day_of_week integer default 0,duration_minutes integer default 60,subject text default 'Math',chapter text,activity_type text default 'study',target_test_count integer,details text,sort_order integer default 0,source_grade integer,preparation_track text default 'konkur',exam_year integer,visible boolean default true);
+ create table public.weekly_plan_items(id uuid primary key,plan_id uuid references public.weekly_plans(id),day_of_week integer default 0,duration_minutes integer default 60,subject text default 'Math',chapter text,activity_type text default 'study',target_test_count integer,details text,sort_order integer default 0,source_grade integer,preparation_track text default 'konkur',exam_year integer,visible boolean default true,linked_exam_id uuid);
+ create table public.exams(id uuid primary key,status text);
  create table public.weekly_plan_item_completions(item_id uuid,student_id uuid,completed_at timestamptz default now(),completed_test_count integer);
  grant usage on schema public,private,auth to authenticated;
  grant select on all tables in schema public to authenticated;
@@ -24,7 +25,11 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  await db.query("insert into public.weekly_plans values(md5('draft')::uuid,$1,'Secret draft',date '2050-01-01',null,'draft'),(md5('other')::uuid,$2,'Other student',date '2050-01-01',null,'published'),(md5('inactive')::uuid,$3,'Inactive plan',date '2050-01-01',null,'published')",[own,other,inactive]);
  await db.exec("insert into public.weekly_plan_items(id,plan_id,visible) values(md5('hidden')::uuid,md5('plan201')::uuid,false)");
  await db.query("insert into public.weekly_plan_item_completions(item_id,student_id) values(md5('hidden')::uuid,$1)",[own]);
- await db.exec(fs.readFileSync('supabase/migrations/065_student_dashboard_page.sql','utf8'));
+ await db.query("insert into public.exams values('99999999-9999-9999-9999-999999999999','published'),('88888888-8888-8888-8888-888888888888','draft')");
+ await db.query("update public.weekly_plan_items set linked_exam_id='99999999-9999-9999-9999-999999999999' where id=md5('item201')::uuid");
+ await db.query("update public.weekly_plan_items set linked_exam_id='88888888-8888-8888-8888-888888888888' where id=md5('item1')::uuid");
+ await db.exec(fs.readFileSync('supabase/migrations/065_student_dashboard_page.sql','utf8').replace(/^notify .*$/gim,''));
+ await db.exec(fs.readFileSync('supabase/migrations/080_student_dashboard_exam_links.sql','utf8').replace(/^notify .*$/gim,''));
  const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const page=async offset=>(await db.query('select public.student_dashboard_page($1) as result',[offset])).rows[0].result;
  await actor(own);let first=await page(0),last=await page(200);
@@ -33,6 +38,8 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  assert.equal(first.completions.length+last.completions.length,201);
  assert.equal(first.plans[0].title,'Plan 201');assert.equal(first.plans[0].weekly_plan_items.length,1,'hidden RLS item must stay hidden');
  assert.equal(first.plans[0].weekly_plan_items[0].duration_minutes,60);
+ assert.equal(first.plans[0].weekly_plan_items[0].linked_exam_id,'99999999-9999-9999-9999-999999999999','published linked exam is visible');
+ assert.equal(last.plans[0].weekly_plan_items[0].linked_exam_id,null,'draft exam is never linked in a plan');
  assert.equal((await page(400)).plans.length,0);
  await assert.rejects(()=>page(-1),/Invalid offset/);await assert.rejects(()=>page(null),/Invalid offset/);
  await actor(other);assert.equal((await page(0)).plans.length,1);assert.equal((await page(0)).completions.length,0);

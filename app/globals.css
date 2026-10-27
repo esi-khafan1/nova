@@ -8602,3 +8602,6 @@ main .feature-card:before {
     -webkit-line-clamp:unset!important;
   }
 }
+
+/* Counselor plan builder: exam box request status */
+.plan-exam-box-status{grid-column:1/-1;margin:0;padding:8px 12px;border:1px dashed #c9a86a;border-radius:10px;background:#fff8ec;color:#7a4c10;font-size:12px;line-height:1.8}

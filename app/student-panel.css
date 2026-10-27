@@ -56,3 +56,8 @@
 
 /* Counselor study hours and silent check-time audit */
 .sp-tick-time{margin:8px 0 0;padding:8px 12px;border:1px solid #f5d6bd;border-radius:8px;background:#fff8f2;color:#9d3f06;font-size:13px;font-weight:700;line-height:1.8}
+
+/* Direct exam entry from an exam box in the daily/weekly plan */
+.student-portal .sp-exam-link{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid var(--sp-blue);border-radius:10px;background:var(--sp-blue);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
+.student-portal .sp-exam-link:hover{background:#174a8c}
+.student-portal .sp-exam-linked{font-size:14px;color:var(--sp-blue);font-weight:700}

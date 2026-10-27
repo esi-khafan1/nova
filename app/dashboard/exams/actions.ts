@@ -31,6 +31,9 @@ export async function saveExam(formData: FormData) {
   let studentIds: string[] = [];
   try { studentIds=JSON.parse(String(formData.get("student_ids") || "[]")); } catch { redirect("/dashboard/exam_designer?error=students"); }
   if (!Array.isArray(studentIds) || studentIds.some(id=>typeof id!=="string" || !uuidPattern.test(id))) redirect("/dashboard/exam_designer?error=students");
+  let boxIds: string[] = [];
+  try { boxIds=JSON.parse(String(formData.get("box_ids") || "[]")); } catch { redirect("/dashboard/exam_designer?error=boxes"); }
+  if (!Array.isArray(boxIds) || boxIds.length>200 || boxIds.some(id=>typeof id!=="string" || !uuidPattern.test(id))) redirect("/dashboard/exam_designer?error=boxes");
   const status = clean(formData.get("status"), 20);
   const scheduledDate = clean(formData.get("scheduled_date"), 10);
   const scheduledTime = clean(formData.get("scheduled_time"), 5);
@@ -63,7 +66,7 @@ export async function saveExam(formData: FormData) {
   }
 
   if (examField && !matchesKonkurTemplate(examField as StudyField,booklets)) redirect("/dashboard/exam_designer?error=template");
-  if (status === "published" && studentIds.length === 0) redirect("/dashboard/exam_designer?error=students");
+  if (status === "published" && studentIds.length === 0 && boxIds.length === 0) redirect("/dashboard/exam_designer?error=students");
   let totalDuration = 0;
   for (const b of booklets) {
     const qCount = Number(b.questionCount);
@@ -90,6 +93,7 @@ export async function saveExam(formData: FormData) {
     target_booklets: booklets,
     target_exam_field: examField || null,
     target_start_window_ends_at: window?.end.toISOString() || null,
+    target_box_ids: boxIds,
   });
   if (error) {
     const category = examSaveErrorCode(error);
@@ -100,7 +104,9 @@ export async function saveExam(formData: FormData) {
 
   revalidatePath("/dashboard/exam_designer");
   revalidatePath("/dashboard/counselor/exams");
+  revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student/exams");
+  revalidatePath("/dashboard/student");
   redirect(`/dashboard/exam_designer?saved=${status}`);
 }
 
