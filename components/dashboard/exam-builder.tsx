@@ -1,7 +1,8 @@
 "use client";
 
 import { ExamStudentPicker, type ExamStudent } from "@/components/dashboard/exam-student-picker";
-import { ExamBoxPicker, type ExamBox } from "@/components/dashboard/exam-box-picker";
+import { ExamBoxPicker } from "@/components/dashboard/exam-box-picker";
+import type { ExamBox } from "@/lib/exam-boxes";
 import "@/app/exam-designer.css";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { parseExamStartWindow } from "@/lib/floating-exams";

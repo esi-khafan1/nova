@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ExamBuilder } from "@/components/dashboard/exam-builder";
-import { boxLabel, type ExamBox } from "@/components/dashboard/exam-box-picker";
+import { boxLabel, type ExamBox } from "@/lib/exam-boxes";
 import { requireProfile } from "@/lib/auth";
 import { examSaveErrorMessage } from "@/lib/exam-save-errors";
 import { formatExamSchedule } from "@/lib/exams";
@@ -12,7 +12,7 @@ export default async function ExamDesignerPage({searchParams}:{searchParams:Prom
   supabase.from("exams").select("id,title,status,starts_at,duration_minutes").eq("counselor_id",profile.id).order("created_at",{ascending:false}),
   supabase.rpc("designer_exam_boxes"),
  ]);
- const boxes=(boxesData??[]) as ExamBox[];
+ const boxes=(Array.isArray(boxesData)?boxesData:[]) as ExamBox[];
  const pending=boxes.filter(box=>!box.linked_exam_id);
  return <DashboardShell role="exam_designer" name={profile.full_name}><section className="portal-heading"><div><span>پنل طراح آزمون</span><h1>طراحی و مدیریت آزمون</h1><p>دفترچه‌ها را آماده کن، کلید را وارد کن و دانش‌آموزها را با جست‌وجوی نام به آزمون اضافه کن.</p></div></section>
  {params.saved&&<div className="portal-alert success">{params.saved==="published"?"آزمون منتشر شد و برای دانش‌آموزهای انتخاب‌شده قابل مشاهده است.":"پیش‌نویس ذخیره شد."}</div>}{params.error&&<div className="portal-alert error">{examSaveErrorMessage(params.error)}</div>}
