@@ -24,5 +24,6 @@ assert.match(review,/supabase\.rpc\("student_exam_review"/);
 assert.doesNotMatch(detail,/timeState === "ended" &&.*StudentExamReview/);
 assert.match(builder,/purpose="exam-explanation"/);
 assert.match(uploader,/\["exam-question", "exam-explanation"\]/);
-assert.match(reviewComponent,/booklet\?\.explanationPdf/);
+assert.match(reviewComponent,/booklet\?\.explanationPdf\s*&&\s*<div className="review-explanation">/);
+assert.doesNotMatch(reviewComponent,/پاسخنامهٔ تشریحی این دفترچه هنوز بارگذاری نشده است/);
 console.log('Exam review release: owner-only immediate answer sheet, persistent route, optional per-booklet PDF and locked-editor upload guards passed.');

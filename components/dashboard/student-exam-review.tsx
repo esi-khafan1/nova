@@ -23,7 +23,7 @@ export function StudentExamReview({ questions }: { questions: ExamReviewQuestion
       <div><span className="review-eyebrow">پاسخ‌ها ثبت شده‌اند · حالت فقط‌خواندنی</span><h2 id="exam-review-title">بررسی دفترچه و پاسخ‌برگ</h2><p>همان فایل PDF آزمون و انتخاب‌های ثبت‌شدهٔ تو؛ پاسخ‌ها قابل تغییر نیستند.</p></div>
       <label className="review-booklet-label">دفترچه<select aria-label="دفترچه" value={booklet?.id ?? ""} onChange={event => { setBookletId(event.target.value); setFilter("all"); }}>{booklets.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}</select></label>
     </div>
-    <div className="review-explanation">{booklet?.explanationPdf ? <a href={booklet.explanationPdf} target="_blank" rel="noopener noreferrer">مشاهده و دریافت پاسخنامهٔ تشریحی {booklet.title} (PDF)</a> : <span>پاسخنامهٔ تشریحی این دفترچه هنوز بارگذاری نشده است.</span>}</div>
+    {booklet?.explanationPdf && <div className="review-explanation"><a href={booklet.explanationPdf} target="_blank" rel="noopener noreferrer">مشاهده و دریافت پاسخنامهٔ تشریحی {booklet.title} (PDF)</a></div>}
     <div className="exam-konkur-grid review-workspace">
       <div className="exam-pdf-container">{booklet?.pdf ? <PdfViewer key={booklet.id} url={booklet.pdf} title={booklet.title} /> : <p className="exam-pdf-placeholder">فایل دفترچه در دسترس نیست.</p>}</div>
       <aside className="exam-answersheet-panel review-answersheet" aria-label="پاسخ‌برگ ثبت‌شده">
