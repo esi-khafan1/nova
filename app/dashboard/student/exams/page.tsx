@@ -22,7 +22,7 @@ export default async function StudentExamsPage({
           "id,title,description,mode,audience,starts_at,start_window_ends_at,duration_minutes,created_at,exam_booklets(id,question_count)",
         )
         .eq("status", "published")
-        .order("starts_at", { ascending: true }),
+        .order("starts_at", { ascending: false }),
       supabase
         .from("exam_attempts")
         .select("exam_id,score,correct_answers,total_questions,submitted_at")
