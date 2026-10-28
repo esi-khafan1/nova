@@ -16,7 +16,7 @@ test("counselor builder has exactly one default routine per day and no add/remov
   assert.match(builder, /weekDays\.map\(\(_, dayOfWeek\)/);
   assert.match(builder, /useState<PlanRoutine\[\]>\(\(\) => planRoutines\(initialPlan\)\)/);
   assert.match(builder, /className="plan-routine"/);
-  assert.match(builder, /فقط همین یک روتین ثبت میشود/);
+  assert.match(builder, /فقط همین یک روتین ثبت می‌شود/);
   assert.doesNotMatch(builder, /افزودن روتین|حذف روتین/);
   assert.match(builder, /name="routines" value=\{JSON\.stringify\(routines\)\}/);
 });

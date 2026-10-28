@@ -527,8 +527,8 @@ export function WeeklyPlanBuilder({
                         {item.activityType === "exam" && (
                           <p className="plan-exam-box-status" role="status">
                             {item.linkedExamId
-                              ? "این باکس آزمون برای طراح آزمون ارسال شده و آزمون به آن متصل است؛ دانشآموز از داخل برنامه وارد آزمون میشود."
-                              : "این باکس با روز و درس برای طراح آزمون ارسال میشود تا آزمون مناسب آن ساخته شود."}
+                              ? "این باکس آزمون برای طراح آزمون ارسال شده و آزمون به آن متصل است؛ دانش‌آموز از داخل برنامه وارد آزمون می‌شود."
+                              : "این باکس با روز و درس برای طراح آزمون ارسال می‌شود تا آزمون مناسب آن ساخته شود."}
                           </p>
                         )}
                         {item.activityType === "practice_tests" && (
@@ -591,7 +591,7 @@ export function WeeklyPlanBuilder({
                 const routine = routines[dayIndex];
                 return <section className="plan-routine" aria-label={`روتین ${realWeekday}`}>
                   <h3>روتین</h3>
-                  <p>برای این روز فقط همین یک روتین ثبت میشود.</p>
+                  <p>برای این روز فقط همین یک روتین ثبت می‌شود.</p>
                   <label>درس روتین
                     <select value={routine.subject} onChange={event=>updateRoutine(dayIndex,"subject",event.target.value)}>
                       <option value="">انتخاب درس</option>
@@ -600,7 +600,7 @@ export function WeeklyPlanBuilder({
                     </select>
                   </label>
                   <label>توضیح روتین
-                    <textarea value={routine.details} maxLength={500} rows={2} onChange={event=>updateRoutine(dayIndex,"details",event.target.value)} placeholder="مثلاً مرور فرمولهای پرتکرار" />
+                    <textarea value={routine.details} maxLength={500} rows={2} onChange={event=>updateRoutine(dayIndex,"details",event.target.value)} placeholder="مثلاً مرور فرمول‌های پرتکرار" />
                   </label>
                 </section>;
               })()}

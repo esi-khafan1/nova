@@ -43,24 +43,24 @@ export function ExamBoxPicker({
 
   return (
     <section className="exam-box-picker" id="exam-boxes">
-      <h3>باکسهای آزمون برنامهریزیشده</h3>
+      <h3>باکس‌های آزمون برنامه‌ریزی‌شده</h3>
       <p>
-        مشاورها فقط باکسهای «آزمون» را با روز و درس برای تو میفرستند؛ آزمون شبیهساز
-        ارسال نمیشود. باکسهایی را انتخاب کن که این آزمون باید در برنامهٔ هفتگی و
-        روزانهٔ همان دانشآموز باز شود. دانشآموزان دیگری را هم میتوانی از بخش
-        «انتخاب دانشآموزها» به همین آزمون اضافه کنی.
+        مشاورها فقط باکس‌های «آزمون» را با روز و درس برای تو می‌فرستند؛ آزمون شبیه‌ساز
+        ارسال نمی‌شود. باکس‌هایی را انتخاب کن که این آزمون باید در برنامهٔ هفتگی و
+        روزانهٔ همان دانش‌آموز باز شود. دانش‌آموزان دیگری را هم می‌توانی از بخش
+        «انتخاب دانش‌آموزها» به همین آزمون اضافه کنی.
       </p>
       <p className="exam-box-picker-count" aria-live="polite">
-        {toPersianDigits(pending)} باکس بدون آزمون · {toPersianDigits(selected.size)} باکس انتخابشده
+        {toPersianDigits(pending)} باکس بدون آزمون · {toPersianDigits(selected.size)} باکس انتخاب‌شده
       </p>
       <label className="exam-box-picker-search">
-        جستوجوی دانشآموز، درس یا تاریخ
+        جست‌وجوی دانش‌آموز، درس یا تاریخ
         <input
           type="search"
           value={query}
           maxLength={100}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="مثلاً زیستشناسی یا نام دانشآموز…"
+          placeholder="مثلاً زیست‌شناسی یا نام دانش‌آموز…"
         />
       </label>
       <div className="exam-box-picker-list" aria-busy="false">
@@ -99,7 +99,7 @@ export function ExamBoxPicker({
                   type="button"
                   className="exam-box-row-date"
                   onClick={() => onPickDate(box.box_date)}
-                  title="قراردادن تاریخ این باکس بهعنوان تاریخ آزمون"
+                  title="قراردادن تاریخ این باکس به‌عنوان تاریخ آزمون"
                 >
                   تنظیم تاریخ آزمون
                 </button>
@@ -109,14 +109,14 @@ export function ExamBoxPicker({
         })}
         {!filtered.length && (
           <p className="exam-box-picker-empty">
-            {boxes.length ? "باکسی با این جستوجو پیدا نشد." : "فعلاً باکس آزمون تازهای ارسال نشده است."}
+            {boxes.length ? "باکسی با این جست‌وجو پیدا نشد." : "فعلاً باکس آزمون تازه‌ای ارسال نشده است."}
           </p>
         )}
       </div>
       {selected.size > 0 && (
         <p className="exam-box-picker-note" role="status">
-          دانشآموزان این باکسها بدون نیاز به افزودن دستی، از همان جعبهٔ برنامه به
-          آزمون دسترسی پیدا میکنند.
+          دانش‌آموزان این باکس‌ها بدون نیاز به افزودن دستی، از همان جعبهٔ برنامه به
+          آزمون دسترسی پیدا می‌کنند.
         </p>
       )}
     </section>
