@@ -1,4 +1,6 @@
 .student-exam-review{--review-blue:#1e5faf;--review-ink:#15324f;--review-line:#d6e3f4;color:var(--review-ink)}
+/* The result card and review header are adjacent siblings, not one joined card. */
+.student-portal-main > .exam-submitted + .student-exam-review{margin-block-start:24px}
 .student-exam-review .review-heading{background:#f2f7ff;border:1px solid var(--review-line);border-radius:12px;gap:24px;align-items:center;flex-wrap:wrap;padding:20px 24px}
 .review-heading h2{font-size:24px;margin:8px 0;color:#15324f}.review-heading p{font-size:16px;color:#4c6279;margin:0}.review-eyebrow{font-size:14px;color:#a74409;font-weight:700}
 .review-booklet-label{display:grid;gap:8px;font-size:14px;min-width:200px}.review-booklet-label select{min-height:44px;border:1px solid #86a9d2;border-radius:8px;background:#fff;padding:8px 12px;color:#15324f;font:inherit}
