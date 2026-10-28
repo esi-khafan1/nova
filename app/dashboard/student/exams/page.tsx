@@ -41,7 +41,8 @@ export default async function StudentExamsPage({
 
   return (
     <DashboardShell role="student" name={profile.full_name}>
-      <StudentExamsOverview exams={exams} attempts={attempts} sessions={sessions} error={Boolean(params.error)} />
+      {profile.registration_status !== "active" && <StudentServiceNotice status={profile.registration_status}/>}
+      <StudentExamsOverview exams={profile.registration_status === "active" ? exams : exams.filter(exam => attempts.has(exam.id))} attempts={attempts} sessions={sessions} error={Boolean(params.error)} />
     </DashboardShell>
   );
 }

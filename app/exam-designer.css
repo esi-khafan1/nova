@@ -26,3 +26,8 @@
 .exam-box-requests .exam-list h3{margin:0 0 4px}
 .exam-box-requests .exam-list p{margin:0;color:#526777;font-size:14px}
 @media(max-width:700px){.exam-box-row{flex-direction:column;align-items:stretch}.exam-box-requests .exam-list article{flex-direction:column;align-items:stretch}}
+
+/* Pair each booklet with its optional explanatory answer PDF. */
+.exam-booklet-upload{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.exam-booklet-upload .exam-upload{min-width:0}
+@media(max-width:760px){.exam-booklet-upload{grid-template-columns:1fr}}

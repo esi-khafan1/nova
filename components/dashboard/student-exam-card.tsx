@@ -44,8 +44,8 @@ export function StudentExamCard({ exam, attempt, session, now = new Date() }: {
         </div>
         <div className="se-card-footer">
           {attempt ? <div className="se-completed"><strong>آزمون داده شد ✅</strong>
-            {timeState === "ended" && attempt.score !== null && <span className="se-score">درصد کنکوری: {toPersianDigits(attempt.score)}٪</span>}
-            <Link className="se-action se-action--secondary" href={`/dashboard/student/exams/${exam.id}#exam-review`}>{timeState === "ended" ? "بررسی دفترچه و پاسخ‌برگ" : "مشاهدهٔ وضعیت ثبت آزمون"}<span aria-hidden="true">←</span></Link>
+            {attempt.score !== null && <span className="se-score">درصد کنکوری: {toPersianDigits(attempt.score)}٪</span>}
+            <Link className="se-action se-action--secondary" href={`/dashboard/student/exams/${exam.id}/review`}>بررسی دفترچه و پاسخ‌برگ<span aria-hidden="true">←</span></Link>
           </div> : exam.start_window_ends_at ? (
             floatingEntry === "startable" || floatingEntry === "resumable" || floatingEntry === "expired"
               ? <Link className="se-action" href={`/dashboard/student/exams/${exam.id}`}>{floatingEntry === "resumable" ? "ادامهٔ آزمون" : floatingEntry === "expired" ? "ثبت پاسخ‌های ذخیره‌شده" : "مشاهده و شروع آزمون"}<span aria-hidden="true">←</span></Link>

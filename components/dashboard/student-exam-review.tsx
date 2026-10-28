@@ -9,7 +9,7 @@ import "./student-exam-review.css";
 const labels = { all: "همه", correct: "درست", incorrect: "غلط", unanswered: "نزده", ungraded: "بررسی آماده نیست" };
 const symbols = { correct: "✓", incorrect: "×", unanswered: "—", ungraded: "؟" };
 export function StudentExamReview({ questions }: { questions: ExamReviewQuestion[] }) {
-  const booklets = Array.from(new Map(questions.map(q => [q.booklet_id, { id: q.booklet_id, title: q.booklet_title, pdf: q.pdf_url }])).values());
+  const booklets = Array.from(new Map(questions.map(q => [q.booklet_id, { id: q.booklet_id, title: q.booklet_title, pdf: q.pdf_url, explanationPdf: q.explanation_pdf_url }])).values());
   const [bookletId, setBookletId] = useState(booklets[0]?.id ?? "");
   const [filter, setFilter] = useState<ReviewFilter>("all");
   const booklet = booklets.find(b => b.id === bookletId) ?? booklets[0];
@@ -20,9 +20,10 @@ export function StudentExamReview({ questions }: { questions: ExamReviewQuestion
   const filters: ReviewFilter[] = ["all", "correct", "incorrect", "unanswered"];
   return <section id="exam-review" className="exam-konkur-container student-exam-review" aria-labelledby="exam-review-title">
     <div className="exam-konkur-topbar review-heading">
-      <div><span className="review-eyebrow">آزمون پایان یافته · حالت فقط‌خواندنی</span><h2 id="exam-review-title">بررسی دفترچه و پاسخ‌برگ</h2><p>همان فایل PDF آزمون و انتخاب‌های ثبت‌شدهٔ تو؛ پاسخ‌ها قابل تغییر نیستند.</p></div>
+      <div><span className="review-eyebrow">پاسخ‌ها ثبت شده‌اند · حالت فقط‌خواندنی</span><h2 id="exam-review-title">بررسی دفترچه و پاسخ‌برگ</h2><p>همان فایل PDF آزمون و انتخاب‌های ثبت‌شدهٔ تو؛ پاسخ‌ها قابل تغییر نیستند.</p></div>
       <label className="review-booklet-label">دفترچه<select aria-label="دفترچه" value={booklet?.id ?? ""} onChange={event => { setBookletId(event.target.value); setFilter("all"); }}>{booklets.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}</select></label>
     </div>
+    <div className="review-explanation">{booklet?.explanationPdf ? <a href={booklet.explanationPdf} target="_blank" rel="noopener noreferrer">مشاهده و دریافت پاسخنامهٔ تشریحی {booklet.title} (PDF)</a> : <span>پاسخنامهٔ تشریحی این دفترچه هنوز بارگذاری نشده است.</span>}</div>
     <div className="exam-konkur-grid review-workspace">
       <div className="exam-pdf-container">{booklet?.pdf ? <PdfViewer key={booklet.id} url={booklet.pdf} title={booklet.title} /> : <p className="exam-pdf-placeholder">فایل دفترچه در دسترس نیست.</p>}</div>
       <aside className="exam-answersheet-panel review-answersheet" aria-label="پاسخ‌برگ ثبت‌شده">

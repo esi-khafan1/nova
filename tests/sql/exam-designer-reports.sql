@@ -22,6 +22,7 @@ do $$ declare b jsonb;eid uuid;denied boolean;details jsonb;begin
  details:=public.designer_exam_details(eid);
  if jsonb_array_length(details->'booklets')<>2 or (details->'booklets'->1->'subject_ranges'->1->>'start')::integer<>76 then raise exception 'Canonical chemistry boundary wrong';end if;
  denied:=false;begin perform key_answers from public.exam_booklets where exam_id=eid;exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Direct key SELECT permitted';end if;
+ denied:=false;begin perform explanation_pdf_url from public.exam_booklets where exam_id=eid;exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Direct explanation SELECT permitted';end if;
  denied:=false;begin perform * from public.exam_attempts_for_counselor(eid);exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Designer can review reports';end if;
  denied:=false;begin perform public.save_exam(null,'QA obsolete',null,'own_students',now()+interval '2 hours','draft',b,null);exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Obsolete save callable';end if;
 end $$;
@@ -39,8 +40,14 @@ do $$ declare result record;ans jsonb;denied boolean;begin
  select jsonb_object_agg(q::text,case when q<=75 then 1 else 2 end) into ans from generate_series(41,105) q;
  select * into result from public.submit_booklet_exam(current_setting('qa.exam')::uuid,ans);
  if result.score<>23.81 or result.correct_answers<>35 or result.incorrect_answers<>30 or result.unanswered_count<>40 then raise exception 'Precise grading incorrect: %',row_to_json(result);end if;
- denied:=false;begin perform * from public.exam_booklets_for_student_report(current_setting('qa.exam')::uuid);exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Early report available';end if;
- if exists(select 1 from public.student_exam_subject_history(current_setting('qa.student')::uuid,12) where exam_id::text=current_setting('qa.exam')) then raise exception 'Early report history leaked';end if;
+ if (select count(*) from public.student_exam_review(current_setting('qa.exam')::uuid))<>105 then raise exception 'Submitted student cannot review immediately';end if;
+ if (select count(*) from public.exam_booklets_for_student_report(current_setting('qa.exam')::uuid))<>2 then raise exception 'Submitted student report missing';end if;
+ if not exists(select 1 from public.student_exam_subject_history(current_setting('qa.student')::uuid,12) where exam_id::text=current_setting('qa.exam')) then raise exception 'Submitted student history missing';end if;
+end $$;
+select set_config('request.jwt.claim.sub',current_setting('qa.other'),true);
+do $$ declare denied boolean:=false;begin
+ begin perform public.student_exam_review(current_setting('qa.exam')::uuid);exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Unsubmitted student saw answer key';end if;
 end $$;
 reset role;
 update public.exams set starts_at=now()-interval '146 minutes' where id::text=current_setting('qa.exam');
@@ -71,4 +78,4 @@ do $$ begin
  if exists(select 1 from public.exam_attempts where exam_id::text=current_setting('qa.exam')) then raise exception 'Designer sees results via table';end if;
 end $$;
 rollback;
-select 'PASS: immutable template, recipient selection, RLS, role separation and retired legacy counselor builder, 23.81% precision, correct physics/chemistry boundaries, global report-release guard, identical subject history. QA data rolled back.' as result;
+select 'PASS: immutable template, recipient selection, RLS, role separation and retired legacy counselor builder, 23.81% precision, correct physics/chemistry boundaries, immediate owner-only report-release guard, identical subject history. QA data rolled back.' as result;

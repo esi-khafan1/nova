@@ -1,0 +1,28 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const sql = fs.readFileSync('supabase/migrations/082_immediate_exam_review_explanations.sql','utf8');
+const actions = fs.readFileSync('app/dashboard/exams/actions.ts','utf8');
+const detail = fs.readFileSync('app/dashboard/student/exams/[id]/page.tsx','utf8');
+const review = fs.readFileSync('app/dashboard/student/exams/[id]/review/page.tsx','utf8');
+const builder = fs.readFileSync('components/dashboard/exam-builder.tsx','utf8');
+const uploader = fs.readFileSync('app/api/imagekit-auth/route.ts','utf8');
+const reviewComponent = fs.readFileSync('components/dashboard/student-exam-review.tsx','utf8');
+
+assert.match(sql,/alter table public\.exam_booklets add column explanation_pdf_url text/);
+assert.match(sql,/revoke select \(explanation_pdf_url\) on public\.exam_booklets from public,anon,authenticated/);
+assert.match(sql,/target_student_id=\(select auth\.uid\(\)\).*exists\(/s);
+assert.match(sql,/a\.student_id=target_student_id and a\.submitted_at is not null/);
+assert.match(sql,/student_has_submitted_exam\(e\.id,\(select auth\.uid\(\)\)\)/);
+assert.match(sql,/select b\.id,b\.title,b\.pdf_url,b\.explanation_pdf_url,b\.sort_order/);
+assert.match(sql,/update public\.exam_booklets b set explanation_pdf_url=/);
+assert.match(sql,/set_designer_exam_explanation\(target_exam_id uuid,target_booklet_id uuid,target_url text\)/);
+assert.doesNotMatch(sql.slice(sql.indexOf('create function public.student_exam_review'),sql.indexOf('-- Report/booklet access')),/now\(\) >= coalesce\(e\.start_window_ends_at/);
+assert.equal((actions.match(/redirect\(`\/dashboard\/student\/exams\/\$\{examId\}\/review`\)/g)||[]).length,2,'both submission flows redirect to the owner-only review page');
+assert.match(review,/requireProfile\(\["student"\], true\)/);
+assert.match(review,/\.eq\("student_id", profile\.id\)\.not\("submitted_at", "is", null\)/);
+assert.match(review,/supabase\.rpc\("student_exam_review"/);
+assert.doesNotMatch(detail,/timeState === "ended" &&.*StudentExamReview/);
+assert.match(builder,/purpose="exam-explanation"/);
+assert.match(uploader,/\["exam-question", "exam-explanation"\]/);
+assert.match(reviewComponent,/booklet\?\.explanationPdf/);
+console.log('Exam review release: owner-only immediate answer sheet, persistent route, optional per-booklet PDF and locked-editor upload guards passed.');

@@ -13,3 +13,5 @@
 @media(max-width:1000px){.student-exam-review .review-workspace{display:grid;grid-template-columns:1fr}.student-exam-review .review-answersheet{max-height:none;min-height:0}.student-exam-review .review-bubbles-list{max-height:440px}.student-exam-review .exam-pdf-container{height:65vh;min-height:420px}.student-exam-review .review-heading{padding:16px;gap:16px}.review-booklet-label{width:100%}.review-heading h2{font-size:22px}}
 
 .review-unavailable{font-size:16px;color:#4c6279;line-height:1.9;margin:16px 0;background:#fff;}
+
+.review-explanation{margin:12px 0;padding:14px 18px;border:1px solid #b7cfe9;border-radius:12px;background:#f2f7ff;color:#34516f;line-height:1.9}.review-explanation a{color:#145787;font-weight:700;text-decoration:underline;text-underline-offset:4px}

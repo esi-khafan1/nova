@@ -3,6 +3,7 @@ export type ExamReviewQuestion = {
   booklet_id: string;
   booklet_title: string;
   pdf_url: string;
+  explanation_pdf_url?: string | null;
   sort_order: number;
   question_number: number;
   student_choice: number | null;

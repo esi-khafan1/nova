@@ -9,7 +9,7 @@ export function ExamPdfUpload({
   onChange,
   label,
 }: {
-  purpose: "exam-question" | "exam-answer";
+  purpose: "exam-question" | "exam-answer" | "exam-explanation";
   value: string;
   onChange: (url: string) => void;
   label: string;
@@ -48,7 +48,7 @@ export function ExamPdfUpload({
       const result = await upload({
         file,
         fileName: file.name,
-        folder: purpose === "exam-question" ? "/nova/exams/questions" : "/nova/exams/answers",
+        folder: purpose === "exam-question" ? "/nova/exams/questions" : purpose === "exam-explanation" ? "/nova/exams/explanations" : "/nova/exams/answers",
         tags: ["nova", purpose],
         useUniqueFileName: true,
         token: auth.token,

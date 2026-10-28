@@ -13,6 +13,7 @@ export type ExamBooklet = {
   exam_id?: string;
   title: string;
   pdf_url: string;
+  explanation_pdf_url?: string | null;
   question_count: number;
   start_question_number: number;
   end_question_number: number;

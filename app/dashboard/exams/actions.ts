@@ -17,6 +17,7 @@ const clean = (value: FormDataEntryValue | null, max = 500) =>
 type RawBooklet = {
   title?: string;
   pdfUrl?: string;
+  explanationPdfUrl?: string;
   questionCount?: number;
   durationMinutes?: number;
   keyAnswers?: Record<string, number>;
@@ -75,6 +76,8 @@ export async function saveExam(formData: FormData) {
       redirect("/dashboard/exam_designer?error=booklet_params");
     totalDuration += duration;
     if (status === "published" && (!b.pdfUrl || !b.pdfUrl.startsWith("https://")))
+      redirect("/dashboard/exam_designer?error=booklet_pdf");
+    if (b.explanationPdfUrl && (typeof b.explanationPdfUrl !== "string" || b.explanationPdfUrl.length > 2048 || !b.explanationPdfUrl.startsWith("https://")))
       redirect("/dashboard/exam_designer?error=booklet_pdf");
   }
 
@@ -147,7 +150,8 @@ export async function submitExam(formData: FormData) {
   revalidatePath("/dashboard/student/exams");
   revalidatePath(`/dashboard/student/exams/${examId}`);
   revalidatePath(`/dashboard/counselor/exams/${examId}`);
-  redirect(`/dashboard/student/exams/${examId}?submitted=1`);
+  revalidatePath(`/dashboard/student/exams/${examId}/review`);
+  redirect(`/dashboard/student/exams/${examId}/review`);
 }
 
 
@@ -174,5 +178,26 @@ export async function submitSavedFloatingExam(formData: FormData) {
   const {error}=await supabase.rpc("submit_floating_booklet_exam",{target_exam_id:examId,expected_booklet_index:null,target_answers:{},use_saved_answers:true});
   if(error) redirect(`/dashboard/student/exams/${examId}?error=submit`);
   revalidatePath("/dashboard/student/exams");
-  redirect(`/dashboard/student/exams/${examId}?submitted=1`);
+  revalidatePath(`/dashboard/student/exams/${examId}/review`);
+  redirect(`/dashboard/student/exams/${examId}/review`);
+}
+
+/** Update only the explanatory PDF; started exams keep their keys and attempts immutable. */
+export async function saveExamExplanation(formData: FormData) {
+  const { supabase } = await requireProfile(["exam_designer"]);
+  const examId = clean(formData.get("exam_id"), 50);
+  const bookletId = clean(formData.get("booklet_id"), 50);
+  const url = clean(formData.get("explanation_pdf_url"), 2049);
+  if (!uuidPattern.test(examId) || !uuidPattern.test(bookletId) || !url.startsWith("https://") || url.length > 2048)
+    redirect("/dashboard/exam_designer?error=booklet_pdf");
+  const { error } = await supabase.rpc("set_designer_exam_explanation", {
+    target_exam_id: examId, target_booklet_id: bookletId, target_url: url,
+  });
+  if (error) {
+    console.error("[nova:exam_explanation]", { code: error.code });
+    redirect(`/dashboard/exam_designer/${examId}?error=explanation`);
+  }
+  revalidatePath(`/dashboard/exam_designer/${examId}`);
+  revalidatePath(`/dashboard/student/exams/${examId}/review`);
+  redirect(`/dashboard/exam_designer/${examId}?saved=explanation`);
 }

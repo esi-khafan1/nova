@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { beginFloatingExam, submitSavedFloatingExam } from "@/app/dashboard/exams/actions";
 import { getFloatingExamEntryState, floatingSessionDeadline, floatingExamErrorMessage, type FloatingExamSession } from "@/lib/floating-exams";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { StudentExamReview } from "@/components/dashboard/student-exam-review";
-import type { ExamReviewQuestion } from "@/lib/exam-review";
 import { StudentExamForm } from "@/components/dashboard/student-exam-form";
 import { requireProfile } from "@/lib/auth";
 import {
@@ -24,7 +22,7 @@ export default async function StudentExamPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const { supabase, profile } = await requireProfile(["student"]);
+  const { supabase, profile } = await requireProfile(["student"], true);
 
   const [{ data: exam }, { data: attempt }] = await Promise.all([
     supabase
@@ -46,6 +44,8 @@ export default async function StudentExamPage({
   ]);
 
   if (!exam) notFound();
+  // Old in-flight forms may still land on the former ?submitted=1 URL.
+  if (attempt && query.submitted === "1") redirect(`/dashboard/student/exams/${id}/review`);
 
   const booklets = ((exam.exam_booklets ?? []) as ExamBooklet[]).sort(
     (a, b) => a.sort_order - b.sort_order,
@@ -54,10 +54,6 @@ export default async function StudentExamPage({
   const {data:sessionData}=exam.start_window_ends_at && !attempt ? await supabase.rpc("get_floating_exam_session",{target_exam_id:id}) : {data:null};
   const session=(sessionData?.[0] ?? undefined) as FloatingExamSession | undefined;
   const floatingEntry=exam.start_window_ends_at ? getFloatingExamEntryState(exam.starts_at,exam.start_window_ends_at,session ? {expires_at:new Date(floatingSessionDeadline(session,booklets)).toISOString()}:null):null;
-
-  const { data: reviewData, error: reviewError } = attempt && timeState === "ended" && exam.mode === "booklet"
-    ? await supabase.rpc("student_exam_review", { target_exam_id: id })
-    : { data: null, error: null };
 
   return (
     <DashboardShell role="student" name={profile.full_name}>
@@ -85,7 +81,7 @@ export default async function StudentExamPage({
         <>
         <section className="portal-card exam-submitted">
           <h2>پاسخ‌های شما با موفقیت ثبت شده است ✅</h2>
-          {timeState === "ended" && attempt.score !== null ? (
+          {attempt.score !== null ? (
             <div className="exam-result-summary">
               <div className="exam-result-score-box">
                 <span>درصد نهایی (با نمره منفی)</span>
@@ -112,15 +108,10 @@ export default async function StudentExamPage({
               </div>
             </div>
           ) : (
-            <p>{timeState !== "ended" ? "بررسی پاسخ‌برگ و نتیجه، بعد از پایان زمان آزمون برای همه فعال می‌شود." : "پاسخ شما برای بررسی مشاور ثبت گردید."}</p>
+            <p>پاسخ‌ها ثبت شدند؛ برای مشاهدهٔ پاسخنامه وارد صفحهٔ بررسی شو.</p>
           )}
         </section>
-        {exam.mode === "booklet" && timeState === "ended" && !reviewError && Boolean(reviewData?.length) && <section className="portal-card"><h2>کارنامه و روند پیشرفت</h2><p>درصد هر درس، پاسخ‌های درست و غلط و نمودار پیشرفتت در آزمون‌های اخیر را ببین.</p><Link className="button" href={`/dashboard/student/exams/${id}/report`}>مشاهده و چاپ کارنامه</Link></section>}
-        {exam.mode === "booklet" && timeState === "ended" && (reviewError
-          ? <div className="portal-alert error" role="alert">بررسی پاسخ‌ها فعلاً در دسترس نیست. دوباره صفحه را باز کن؛ پاسخ‌های ثبت‌شده محفوظ‌اند.</div>
-          : reviewData?.length
-            ? <StudentExamReview questions={reviewData as ExamReviewQuestion[]} />
-            : <p className="portal-card">برای این آزمون سؤال قابل بررسی وجود ندارد.</p>)}
+        {exam.mode === "booklet" && <section className="portal-card"><h2>پاسخنامهٔ آزمون</h2><p>گزینه‌های ثبت‌شده، پاسخ‌های صحیح و پاسخنامهٔ تشریحی هر دفترچه را ببین. این صفحه بعداً هم از «آزمون‌های من» در دسترس است.</p><Link className="button" href={`/dashboard/student/exams/${id}/review`}>مشاهدهٔ پاسخنامه</Link> <Link className="button secondary" href={`/dashboard/student/exams/${id}/report`}>مشاهده و چاپ کارنامه</Link></section>}
         </>
       ) : exam.start_window_ends_at ? (
         floatingEntry === "expired" ? <section className="portal-card exam-gate"><h2>زمان پاسخ‌گویی شما تمام شده است</h2><p>زمان شروع قبلی تغییر نمی‌کند. پاسخ‌هایی که روی سرور ذخیره شده‌اند را ثبت کن؛ پاسخ جدید پس از پایان زمان پذیرفته نمی‌شود.</p><form action={submitSavedFloatingExam}><input type="hidden" name="exam_id" value={id}/><button className="button" type="submit">ثبت پاسخ‌های ذخیره‌شده</button></form></section>

@@ -19,7 +19,7 @@ import { allKonkurBookletTitles, konkurBookletPresets } from "@/lib/konkur-prese
 import { toPersianDigits } from "@/lib/persian-date";
 import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 
-type BookletItem = { id: string; title: string; pdfUrl: string; questionCount: number; durationMinutes: number; keyAnswers: Record<string, number> };
+type BookletItem = { id: string; title: string; pdfUrl: string; explanationPdfUrl: string; questionCount: number; durationMinutes: number; keyAnswers: Record<string, number> };
 
 export type ExamBuilderInitial = {id:string;title:string;description:string|null;examField:StudyField|"";booklets:BookletItem[];students:ExamStudent[];scheduledDate:string;scheduledTime:string;windowEndTime:string|null;boxIds?:string[]};
 export function ExamBuilder({initial,boxes=[],initialBoxId}:{initial?:ExamBuilderInitial;boxes?:ExamBox[];initialBoxId?:string}) {
@@ -27,7 +27,7 @@ export function ExamBuilder({initial,boxes=[],initialBoxId}:{initial?:ExamBuilde
   const [publicationAttempted, setPublicationAttempted] = useState(false);
   const publicationPanel = useRef<HTMLElement>(null);
   const [examField, setExamField] = useState<StudyField | "">(initial?.examField??"");
-  const [booklets, setBooklets] = useState<BookletItem[]>(initial?.booklets??[{ id: `${uid}-b1`, title: "ریاضی", pdfUrl: "", questionCount: 20, durationMinutes: 30, keyAnswers: {} }]);
+  const [booklets, setBooklets] = useState<BookletItem[]>(initial?.booklets??[{ id: `${uid}-b1`, title: "ریاضی", pdfUrl: "", explanationPdfUrl: "", questionCount: 20, durationMinutes: 30, keyAnswers: {} }]);
   const [students,setStudents]=useState<ExamStudent[]>(initial?.students??[]);
   const [boxIds, setBoxIds] = useState<string[]>(() => {
     const linked = initial?.id
@@ -79,9 +79,9 @@ export function ExamBuilder({initial,boxes=[],initialBoxId}:{initial?:ExamBuilde
   const updateBooklet = (index: number, patch: Partial<BookletItem>) => setBooklets((prev) => remapBookletKeys(prev, prev.map((item, idx) => idx === index ? { ...item, ...patch } : item)));
   const setQuestionKey = (bookletIndex: number, questionNumber: number, option: number) => setBooklets((prev) => prev.map((item, idx) => { if (idx !== bookletIndex) return item; const nextKeys = { ...item.keyAnswers }; if (item.keyAnswers[String(questionNumber)] === option) delete nextKeys[String(questionNumber)]; else nextKeys[String(questionNumber)] = option; return { ...item, keyAnswers: nextKeys }; }));
   const titleSuggestions = examField ? konkurBookletPresets[examField].map((item) => item.title) : allKonkurBookletTitles;
-  const addBooklet = () => setBooklets((prev) => [...prev, { id: `${uid}-b${Date.now()}`, title: titleSuggestions[0], pdfUrl: "", questionCount: 25, durationMinutes: 35, keyAnswers: {} }]);
+  const addBooklet = () => setBooklets((prev) => [...prev, { id: `${uid}-b${Date.now()}`, title: titleSuggestions[0], pdfUrl: "", explanationPdfUrl: "", questionCount: 25, durationMinutes: 35, keyAnswers: {} }]);
   const removeBooklet = (index: number) => { if (booklets.length > 1) setBooklets((prev) => remapBookletKeys(prev, prev.filter((_, idx) => idx !== index))); };
-  const applyExamField = (field: StudyField | "") => { setExamField(field); if (!field) setBooklets([{id:`${uid}-custom`,title:"ریاضی",pdfUrl:"",questionCount:20,durationMinutes:30,keyAnswers:{}}]); if (field) setBooklets(konkurBookletPresets[field].map((preset, index) => ({ id: `${uid}-${field}-${index}-${Date.now()}`, title: preset.title, pdfUrl: "", questionCount: preset.questionCount, durationMinutes: preset.durationMinutes, keyAnswers: {} }))); };
+  const applyExamField = (field: StudyField | "") => { setExamField(field); if (!field) setBooklets([{id:`${uid}-custom`,title:"ریاضی",pdfUrl:"",explanationPdfUrl:"",questionCount:20,durationMinutes:30,keyAnswers:{}}]); if (field) setBooklets(konkurBookletPresets[field].map((preset, index) => ({ id: `${uid}-${field}-${index}-${Date.now()}`, title: preset.title, pdfUrl: "", explanationPdfUrl: "", questionCount: preset.questionCount, durationMinutes: preset.durationMinutes, keyAnswers: {} }))); };
   const windowValid = schedulingMode !== "floating" || Boolean(parseExamStartWindow(scheduledDate,scheduledTime,windowEndTime));
   const readiness = examPublicationReadiness(booklets, assignedStudentCount, windowValid);
   const { allKeysComplete, durationValid } = readiness;
@@ -138,7 +138,7 @@ export function ExamBuilder({initial,boxes=[],initialBoxId}:{initial?:ExamBuilde
         {examField ? <div className="exam-template-subjects"><strong>{booklet.title} · {toPersianDigits(booklet.questionCount)} سؤال · {toPersianDigits(booklet.durationMinutes)} دقیقه</strong>{konkurBookletPresets[examField][bIndex]?.subjects.map(subject=><span key={subject.id}>{subject.title}: سؤال {toPersianDigits(subject.start)} تا {toPersianDigits(subject.end)}</span>)}</div> : <>
         <div className="exam-booklet-fields"><label>عنوان دفترچه<select required value={booklet.title} onChange={(e) => updateBooklet(bIndex, { title: e.target.value })}>{titleSuggestions.map((title) => <option key={title} value={title}>{title}</option>)}</select></label><label>تعداد سؤالات این دفترچه<PersianNumberStepper min={1} max={200} value={booklet.questionCount} label={`تعداد سؤالات ${booklet.title}`} onChange={(value) => updateBooklet(bIndex, { questionCount: value })} /></label><label>مدت پاسخگویی این دفترچه (دقیقه)<PersianNumberStepper min={1} max={360} value={booklet.durationMinutes} label={`مدت پاسخگویی ${booklet.title}`} onChange={(value) => updateBooklet(bIndex, { durationMinutes: value })} /></label></div></>}
 
-        <div className="exam-booklet-upload"><ExamPdfUpload purpose="exam-question" value={booklet.pdfUrl} onChange={(url) => updateBooklet(bIndex, { pdfUrl: url })} label={`فایل PDF سؤالات ${booklet.title}`} /></div>
+        <div className="exam-booklet-upload"><ExamPdfUpload purpose="exam-question" value={booklet.pdfUrl} onChange={(url) => updateBooklet(bIndex, { pdfUrl: url })} label={`فایل PDF سؤالات ${booklet.title}`} /><ExamPdfUpload purpose="exam-explanation" value={booklet.explanationPdfUrl} onChange={(url) => updateBooklet(bIndex, { explanationPdfUrl: url })} label={`پاسخنامهٔ تشریحی PDF ${booklet.title} (اختیاری)`} /></div>
         <details className="exam-key-accordion" open><summary><span>کلید سؤالات {toPersianDigits(range.start)} تا {toPersianDigits(range.end)} (تصحیح خودکار)</span><span className="exam-key-count">{toPersianDigits(countBookletKeys(booklet.keyAnswers, range.start, range.count))} از {toPersianDigits(range.count)} تعیین شده</span></summary><div className="exam-key-content"><div className="exam-key-grid">{qList.map((qNum) => { const selected = booklet.keyAnswers[String(qNum)]; return <div key={qNum} id={`${uid}-key-${bIndex}-${qNum}`} className="exam-key-item" data-incomplete={publicationAttempted && countBookletKeys(booklet.keyAnswers, qNum, 1) === 0 || undefined}><span className="exam-key-num">{toPersianDigits(qNum)}</span><div className="exam-key-options">{[1,2,3,4].map((opt) => <button type="button" key={opt} aria-label={`سؤال ${toPersianDigits(qNum)}، گزینهٔ ${toPersianDigits(opt)}`} aria-pressed={selected === opt} className={`exam-key-btn ${selected === opt ? "selected" : ""}`} onClick={() => setQuestionKey(bIndex, qNum, opt)}>{toPersianDigits(opt)}</button>)}</div></div>; })}</div></div></details>
       </article>; })}
     </div>{!examField&&<button type="button" className="button secondary exam-add-booklet-btn" onClick={addBooklet}>+ افزودن درس / دفترچه جدید</button>}</div>

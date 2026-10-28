@@ -13,11 +13,12 @@ for (const text of ["آزمون دفترچه‌ای کنکوری", "آزمون �
 assert.ok(render({ starts_at: "2026-10-16T09:00:00Z" }).includes("آزمون هنوز شروع نشده است."));
 assert.ok(render({ starts_at: "2026-10-14T09:00:00Z" }).includes("مهلت شرکت در آزمون تمام شده است."));
 const pendingReview = render({}, attempt);
-assert.ok(pendingReview.includes("مشاهدهٔ وضعیت ثبت آزمون"));
-assert.ok(!pendingReview.includes("درصد کنکوری:"));
+assert.ok(pendingReview.includes("بررسی دفترچه و پاسخ‌برگ"));
+assert.ok(pendingReview.includes('/review'));
+assert.ok(pendingReview.includes("درصد کنکوری: -۳.۳۳٪"));
 const review = render({ starts_at: "2026-10-14T09:00:00Z" }, attempt);
 assert.ok(review.includes("بررسی دفترچه و پاسخ‌برگ"));
-assert.ok(review.includes("#exam-review"));
+assert.ok(review.includes("/review"));
 assert.ok(review.includes("درصد کنکوری: -۳.۳۳٪"));
 assert.ok(!render({ starts_at: "2026-10-14T09:00:00Z" }, { ...attempt, score: null }).includes("درصد کنکوری:"));
 assert.ok(render({ starts_at: "2026-10-14T09:00:00Z" }, { ...attempt, score: 0 }).includes("درصد کنکوری: ۰٪"));
@@ -27,8 +28,8 @@ assert.ok(render(floating, undefined, "2026-10-15T11:00:00Z").includes("ادام
 assert.ok(render(floating, undefined, "2026-10-15T09:59:00Z").includes("ثبت پاسخ‌های ذخیره‌شده"));
 assert.ok(render({ ...floating, starts_at: "2026-10-16T09:00:00Z", start_window_ends_at: "2026-10-16T12:00:00Z" }).includes("بازهٔ شروع هنوز باز نشده است."));
 assert.ok(render({ ...floating, start_window_ends_at: "2026-10-15T09:59:00Z" }).includes("مهلت شروع آزمون تمام شده است."));
-// A floating attempt stays unrevealed until the GLOBAL review window ends.
-assert.ok(!render(floating, attempt).includes("درصد کنکوری:"));
+// The owner sees the result immediately even while peers still have time.
+assert.ok(render(floating, attempt).includes("درصد کنکوری: -۳.۳۳٪"));
 assert.ok(render({ ...floating, start_window_ends_at: "2026-10-15T08:00:00Z", starts_at: "2026-10-15T07:00:00Z" }, attempt).includes("درصد کنکوری:"));
 const read = (p: string) => readFileSync(p, "utf8");
 const shell = read("components/dashboard/dashboard-shell.tsx");
