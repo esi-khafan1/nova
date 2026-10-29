@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { togglePlanItemCompletion } from "@/app/dashboard/actions";
+import { formatStudyDuration, parseStudyDuration } from "@/lib/study-duration";
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
 
@@ -26,29 +27,30 @@ export function StudentPlanCheckbox({
   const router = useRouter();
   const isTestActivity = activityType === "practice_tests";
   const isExamActivity = activityType === "exam" || activityType === "simulation_exam";
+  const savedEntry = isTestActivity ? defaultCompletedTestCount?.toString() ?? "" : formatStudyDuration(defaultCompletedMinutes);
   const [checked, setChecked] = useState(defaultChecked);
-  const [entry, setEntry] = useState(
-    (isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes)?.toString() ?? "",
-  );
+  const [entry, setEntry] = useState(savedEntry);
   const [hasError, setHasError] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const maximum = isTestActivity ? 5000 : 1440;
-  const validEntry = /^[0-9]+$/.test(entry) && Number(entry) >= 1 && Number(entry) <= maximum;
+  const completedValue = isTestActivity
+    ? /^[0-9]+$/.test(entry) && Number(entry) >= 1 && Number(entry) <= 5000 ? Number(entry) : null
+    : parseStudyDuration(entry);
 
   const saveProgress = (nextChecked: boolean) => {
     if (isPending) return;
-    if (nextChecked && !validEntry) {
+    if (nextChecked && completedValue === null) {
       setHasError(true);
       return;
     }
     setHasError(false);
+    if (nextChecked && !isTestActivity) setEntry(formatStudyDuration(completedValue));
     setChecked(nextChecked);
     startTransition(async () => {
       const result = await togglePlanItemCompletion(
         itemId,
         nextChecked,
-        nextChecked && isTestActivity ? Number(entry) : null,
-        nextChecked && !isTestActivity ? Number(entry) : null,
+        nextChecked && isTestActivity ? completedValue : null,
+        nextChecked && !isTestActivity ? completedValue : null,
       );
       if (!result.ok) {
         setChecked(!nextChecked);
@@ -76,28 +78,35 @@ export function StudentPlanCheckbox({
         <strong>{canToggle ? "انجام داده‌ام" : checked ? "انجام‌شده" : "هنوز موعدش نرسیده"}</strong>
       </label>
       <div className="student-test-count">
-        <span>{isTestActivity ? `هدف مشاور: ${targetTestCount ? faNumber(targetTestCount) : "—"} تست` : "زمان واقعی این فعالیت را ثبت کن"}</span>
+        <span>{isTestActivity ? `هدف مشاور: ${targetTestCount ? faNumber(targetTestCount) : "—"} تست` : "زمان را به صورت ساعت:دقیقه وارد کن؛ مثلاً 01:30"}</span>
         <label>
-          {isTestActivity ? "تعداد تست زده شده" : isExamActivity ? "دقیقهٔ انجام آزمون" : "دقیقهٔ مطالعهٔ واقعی"}
+          {isTestActivity ? "تعداد تست زده شده" : isExamActivity ? "مدت آزمون (ساعت:دقیقه)" : "مدت مطالعه (ساعت:دقیقه)"}
           <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={maximum}
-            step={1}
+            type={isTestActivity ? "number" : "text"}
+            inputMode={isTestActivity ? "numeric" : "text"}
+            className={isTestActivity ? undefined : "student-duration-input"}
+            min={isTestActivity ? 1 : undefined}
+            max={isTestActivity ? 5000 : undefined}
+            maxLength={isTestActivity ? undefined : 5}
+            step={isTestActivity ? 1 : undefined}
+            dir="ltr"
+            autoComplete="off"
             value={entry}
             disabled={!canToggle || isPending}
             onChange={(event) => { setEntry(event.target.value); setHasError(false); }}
             onBlur={() => {
-              if (checked && entry !== ((isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes)?.toString() ?? "")) {
-                if (validEntry) saveProgress(true);
+              if (!isTestActivity && completedValue !== null) setEntry(formatStudyDuration(completedValue));
+              if (checked && (isTestActivity
+                ? entry !== savedEntry
+                : completedValue === null ? entry !== savedEntry : completedValue !== defaultCompletedMinutes)) {
+                if (completedValue !== null) saveProgress(true);
                 else setHasError(true);
               }
             }}
-            placeholder={isTestActivity ? "مثلاً ۳۰" : "مثلاً ۴۵"}
+            placeholder={isTestActivity ? "مثلاً ۳۰" : "01:30"}
           />
         </label>
-        {hasError && <small role="alert">{isTestActivity ? "برای ثبت انجام، تعداد تست معتبر (۱ تا ۵۰۰۰) را وارد کن." : "برای ثبت انجام، دقیقهٔ معتبر (۱ تا ۱۴۴۰) را وارد کن."}</small>}
+        {hasError && <small role="alert">{isTestActivity ? "برای ثبت انجام، تعداد تست معتبر (۱ تا ۵۰۰۰) را وارد کن." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن."}</small>}
       </div>
     </div>
   );

@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
+const stub={exports:{}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/study-duration.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:stub,exports:stub.exports});
+const {parseStudyDuration:parse,formatStudyDuration:format}=stub.exports;
+for(const [text,minutes] of [['00:01',1],['0:45',45],['01:30',90],['1:30',90],['۱۲:۰۵',725],['١:٣٠',90],['24:00',1440],[' 02:15 ',135]]) assert.equal(parse(text),minutes,text);
+for(const invalid of ['', '90', '1:5', '01:60', '25:00', '24:01', '00:00', '-1:30', '1:30:00', '1.30', 'abc']) assert.equal(parse(invalid),null,invalid);
+for(const minutes of [1,45,90,720,1440]) assert.equal(parse(format(minutes)),minutes);
+assert.equal(format(null),'','Legacy completion without actual minutes must stay blank');
+console.log('Study duration: HH:MM parsing, localized digits, range and minute round trips passed.');
