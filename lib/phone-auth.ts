@@ -9,6 +9,12 @@ export function normalizeMobile(value: unknown): string | null {
 export function isEnglishMobileInput(value: unknown): value is string {
  return typeof value === "string" && !/[^\x20-\x7e]/.test(value) && normalizeMobile(value) !== null;
 }
+// Only the authenticated, confirmed phone is trusted for student account forms.
+// Supabase stores it in international format; registration records use 09… .
+export function verifiedMobileForAccount(user: {phone?:string|null;phone_confirmed_at?:string|null}): string|null {
+ const normalized=user.phone_confirmed_at?normalizeMobile(user.phone):null;
+ return normalized?`0${normalized.slice(2)}`:null;
+}
 export const englishPhoneMessage = "شماره تلفن همراه را با اعداد انگلیسی وارد کن.";
 export function hasConfirmedContact(user:{email_confirmed_at?:string|null;phone_confirmed_at?:string|null}){
  return Boolean(user.email_confirmed_at||user.phone_confirmed_at);

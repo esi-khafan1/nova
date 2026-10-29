@@ -23,6 +23,7 @@ function load(path, deps) {
 }
 const registration = load('lib/registration.ts', {});
 const accountLoader = load('lib/load-student-account.ts', {});
+const phoneAuth = load('lib/phone-auth.ts', {});
 const link = { default: ({ href, children, ...props }) => React.createElement('a', { href, ...props }, children), __esModule: true };
 const { StudentProfileCompletionNotice } = load('components/dashboard/student-profile-completion-notice.tsx', {
   'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': link,
@@ -31,11 +32,12 @@ const complete = {
   full_name: 'نیما حسینی', phone: '09121234567', telegram_id: 'nima_123',
   grade: 10, study_field: 'mathematics', province: 'تهران', city: 'تهران',
 };
-function setup({ status = 'active', details = null, registrationRow = null, readError = false } = {}) {
+function setup({ status = 'active', details = null, registrationRow = null, readError = false, authPhone = null, profilePhone = complete.phone } = {}) {
   const profile = {
-    id: 'student-id', full_name: complete.full_name, phone: complete.phone,
+    id: 'student-id', full_name: complete.full_name, phone: profilePhone,
     grade: complete.grade, study_field: complete.study_field, registration_status: status,
   };
+  const user = authPhone ? { phone: authPhone, phone_confirmed_at: '2026-10-30T00:00:00Z' } : {};
   const supabase = { from(table) {
     assert.ok(['student_account_details', 'student_registrations'].includes(table));
     return { select() { return this; }, eq() { return this; }, async maybeSingle() {
@@ -47,7 +49,8 @@ function setup({ status = 'active', details = null, registrationRow = null, read
     '@/components/dashboard/dashboard-shell': { DashboardShell: ({ children }) => React.createElement('main', null, children) },
     '@/components/dashboard/student-service-notice': { StudentServiceNotice: () => null },
     '@/components/dashboard/student-profile-completion-notice': { StudentProfileCompletionNotice },
-    '@/lib/auth': { requireProfile: async () => ({ supabase, profile, user: {} }) },
+    '@/lib/auth': { requireProfile: async () => ({ supabase, profile, user }) },
+    '@/lib/phone-auth': phoneAuth,
     '@/lib/load-student-account': { loadStudentAccount: accountLoader.loadStudentAccount },
     '@/lib/registration': registration,
   };
@@ -70,7 +73,7 @@ async function account(options) {
     ...deps,
     '@/components/dashboard/phone-link': { PhoneLink: () => null },
     '@/components/dashboard/delete-account': { DeleteAccount: () => null },
-    '@/components/registration/registration-form': { RegistrationForm: ({ mode }) => React.createElement('form', { 'data-mode': mode }) },
+    '@/components/registration/registration-form': { RegistrationForm: ({ mode, verifiedPhone }) => React.createElement('form', { 'data-mode': mode, 'data-verified-phone': verifiedPhone }) },
     '@/app/registration.css': {},
   });
   return renderToStaticMarkup(await Page());
@@ -102,6 +105,16 @@ test('active student with no account or registration row is prompted, but a pend
   assert.match(await account(), /اطلاعات حسابت را تکمیل کن/);
   assert.doesNotMatch(await dashboard({ status: 'pending' }), /اطلاعات حسابت را تکمیل کن/);
   assert.doesNotMatch(await account({ status: 'pending' }), /اطلاعات حسابت را تکمیل کن/);
+});
+
+test('verified signup phone satisfies completion even when no stored phone exists', async () => {
+  const options = { authPhone: '+989121234567', profilePhone: null, details: { ...complete, phone: null } };
+  assert.doesNotMatch(await dashboard(options), /شمارهٔ همراه را/);
+  assert.doesNotMatch(await dashboard(options), /اطلاعات حسابت را تکمیل کن/);
+  assert.doesNotMatch(await account(options), /اطلاعات حسابت را تکمیل کن/);
+  assert.match(await account(options), /data-verified-phone="09121234567"/);
+  assert.match(await account({ ...options, status: 'pending' }), /data-verified-phone="09121234567"/);
+  assert.match(await dashboard({ ...options, authPhone: null }), /شمارهٔ همراه را/);
 });
 
 test('temporary read errors are not presented as missing student details', async () => {

@@ -5,6 +5,7 @@ import { StudentServiceNotice } from "@/components/dashboard/student-service-not
 import { StudentProfileCompletionNotice } from "@/components/dashboard/student-profile-completion-notice";
 import { requireProfile } from "@/lib/auth";
 import { loadStudentAccount } from "@/lib/load-student-account";
+import { verifiedMobileForAccount } from "@/lib/phone-auth";
 import { loadStudentDashboard } from "@/lib/load-student-dashboard";
 import { validateRegistration } from "@/lib/registration";
 import { tehranToday } from "@/lib/student-planning";
@@ -16,8 +17,8 @@ export default async function StudentDashboard() {
   const [auth, loaded, account] = await Promise.all([
     authPromise,
     loadStudentDashboard(),
-    authPromise.then(({ supabase, profile }) => profile.registration_status === "active"
-      ? loadStudentAccount(supabase, profile).catch(() => null)
+    authPromise.then(({ supabase, profile, user }) => profile.registration_status === "active"
+      ? loadStudentAccount(supabase, profile, verifiedMobileForAccount(user)).catch(() => null)
       : null),
   ]);
   const { profile } = auth;
