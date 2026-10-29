@@ -32,6 +32,9 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  await db.exec(fs.readFileSync('supabase/migrations/065_student_dashboard_page.sql','utf8').replace(/^notify .*$/gim,''));
  await db.exec(fs.readFileSync('supabase/migrations/080_student_dashboard_exam_links.sql','utf8').replace(/^notify .*$/gim,''));
  await db.exec(fs.readFileSync('supabase/migrations/085_konkur_recommended_publisher.sql','utf8').replace(/^notify .*$/gim,''));
+ await db.exec('alter table public.weekly_plan_item_completions add column completed_minutes smallint');
+ await db.exec('create or replace function public.student_dashboard_page('+fs.readFileSync('supabase/migrations/086_student_actual_minutes.sql','utf8').split('create or replace function public.student_dashboard_page(')[1].replace(/^notify .*$/gim,''));
+ await db.query("update public.weekly_plan_item_completions set completed_minutes=37 where item_id=md5('item200')::uuid");
  await db.query("update public.weekly_plan_items set activity_type='practice_tests',recommended_publisher='خیلی سبز' where id=md5('item201')::uuid");
  await assert.rejects(()=>db.query("update public.weekly_plan_items set recommended_publisher='گاج',activity_type='exam' where id=md5('item201')::uuid"),/weekly_plan_item_publisher_check/);
  await assert.rejects(()=>db.query("update public.weekly_plan_items set recommended_publisher='گاج',preparation_track='final_exam' where id=md5('item201')::uuid"),/weekly_plan_item_publisher_check/);
@@ -43,6 +46,7 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  assert.equal(first.completions.length+last.completions.length,201);
  assert.equal(first.plans[0].title,'Plan 201');assert.equal(first.plans[0].weekly_plan_items.length,1,'hidden RLS item must stay hidden');
  assert.equal(first.plans[0].weekly_plan_items[0].duration_minutes,60);
+ assert.equal(first.completions.filter(c=>c.completed_minutes===37).length,1,'own actual minutes are in the paged projection');
  assert.equal(first.plans[0].weekly_plan_items[0].recommended_publisher,'خیلی سبز');
  assert.equal(first.plans[0].weekly_plan_items[0].linked_exam_id,'99999999-9999-9999-9999-999999999999','published linked exam is visible');
  assert.equal(last.plans[0].weekly_plan_items[0].linked_exam_id,null,'draft exam is never linked in a plan');

@@ -4,5 +4,17 @@ import {activityRatio,summarizeItems,dayIso,containsDay,overlapsWindow,type Stud
 const study:StudyItem={id:'a',plan_id:'p',day_of_week:0,duration_minutes:90,subject:'ریاضی',chapter:'تابع',activity_type:'lesson',target_test_count:null,details:null,sort_order:0};
 const tests:StudyItem={...study,id:'b',duration_minutes:60,activity_type:'practice_tests',target_test_count:40};
 const completion=(id:string,count:number|null):StudyCompletion=>({item_id:id,completed_at:'2026-10-14T08:00:00Z',completed_test_count:count});
-test('fulfillment ratios are independent of planned study time',()=>{const map=new Map([['a',completion('a',null)],['b',completion('b',20)]]);assert.equal(activityRatio(study,map.get('a')),1);assert.equal(activityRatio(tests,map.get('b')),0.5);assert.equal(summarizeItems([study,tests],map).percent,75);assert.equal(summarizeItems([study,tests],map).minutes,150);assert.equal(summarizeItems([study,tests],map).tests,20);assert.equal(activityRatio(tests,completion('b',80)),1);assert.equal(activityRatio(tests),0);assert.equal(summarizeItems([],map).percent,null);assert.equal(summarizeItems([study,tests],new Map()).percent,0);});
+test('fulfillment ratios are independent of planned study time',()=>{const map=new Map([['a',completion('a',null)],['b',completion('b',20)]]);assert.equal(activityRatio(study,map.get('a')),1);assert.equal(activityRatio(tests,map.get('b')),0.5);assert.equal(summarizeItems([study,tests],map).percent,75);assert.equal(summarizeItems([study,tests],map).minutes,120);assert.equal(summarizeItems([study,tests],map).tests,20);assert.equal(activityRatio(tests,completion('b',80)),1);assert.equal(activityRatio(tests),0);assert.equal(summarizeItems([],map).percent,null);assert.equal(summarizeItems([study,tests],new Map()).percent,0);});
+test('recorded study minutes drive time and fulfillment; legacy ticks retain planned duration',()=>{
+ const actual={...completion('a',null),completed_minutes:45};
+ const map=new Map([['a',actual],['b',completion('b',20)]]);
+ assert.equal(activityRatio(study,actual),0.5);
+ assert.equal(summarizeItems([study,tests],map).minutes,75);
+ assert.equal(summarizeItems([study,tests],map).weightedMinutes,75);
+ assert.equal(summarizeItems([study,tests],map).percent,50);
+ assert.equal(summarizeItems([study],new Map([['a',completion('a',null)]])).minutes,90);
+ const extra={...actual,completed_minutes:120};
+ assert.equal(activityRatio(study,extra),1,'Over-goal minutes must not exceed 100% fulfillment');
+ assert.equal(summarizeItems([study],new Map([['a',extra]])).minutes,120,'Real extra minutes are still reported');
+});
 test('rolling seven days cross calendar weeks and month boundaries',()=>{assert.equal(dayIso('2026-10-14',6),'2026-10-20');assert.equal(dayIso('2026-12-28',6),'2027-01-03');const plan:StudyPlan={id:'p',title:'تست',week_start:'2026-10-14',notes:null,weekly_plan_items:[]};assert.equal(containsDay(plan,'2026-10-20'),true);assert.equal(containsDay(plan,'2026-10-21'),false);const windows=[{id:'p',student_id:'s',week_start:'2026-10-14',status:'published'}];assert.equal(overlapsWindow('2026-10-20',windows,'s'),true);assert.equal(overlapsWindow('2026-10-21',windows,'s'),false);assert.equal(overlapsWindow('2026-10-14',windows,'s','p'),false);assert.equal(overlapsWindow('2026-10-14',windows,'other'),false);});

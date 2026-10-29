@@ -232,6 +232,7 @@ export async function togglePlanItemCompletion(
   itemId: string,
   completed: boolean,
   completedTestCount: number | null = null,
+  completedMinutes: number | null = null,
 ) {
   const {supabase:s} = await requireProfile(["student"]);
   const {data:{user}}=await s.auth.getUser();
@@ -246,10 +247,16 @@ export async function togglePlanItemCompletion(
   )
     return { ok: false };
 
+  if (
+    (completedMinutes !== null && (!Number.isInteger(completedMinutes) || completedMinutes < 1 || completedMinutes > 1440)) ||
+    (!completed && (completedTestCount !== null || completedMinutes !== null))
+  ) return { ok: false };
+
   const { error } = await s.rpc("set_weekly_plan_item_progress", {
     target_item_id: itemId,
     target_completed: completed,
     target_completed_test_count: completedTestCount,
+    target_completed_minutes: completedMinutes,
   });
 
   if (error) return { ok: false };
