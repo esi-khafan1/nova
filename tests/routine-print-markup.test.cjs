@@ -37,6 +37,7 @@ const plan = {
       activity_type: isTest ? "practice_tests" : "lesson",
       target_test_count: isTest ? 12 : null,
       details: null,
+      recommended_publisher: "گاج",
       sort_order: index % 5,
     };
   }),
@@ -109,6 +110,7 @@ const stubs = {
   assert.ok(html.includes("زده شده از"), "test boxes show solved-out-of-target line");
   assert.ok(!html.includes("زده شده: "), "old generic solved-test line is gone");
   assert.ok(!html.includes("هدف "), "no extra target-test text in the third row");
+  assert.ok(!html.includes("گاج") && !html.includes("منبع پیشنهادی"), "Online-only publisher must never appear in print markup");
   console.log("PASS: routine weekdays come from week_start, title is just روتین, approved four-row print layout");
 })().catch((error) => {
   console.error(error);

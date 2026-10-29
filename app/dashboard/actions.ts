@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
 import { activityTypes } from "@/lib/study-catalog";
+import { canRecommendPublisher, cleanRecommendedPublisher } from "@/lib/recommended-publishers";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
   String(v ?? "")
     .trim()
@@ -63,6 +64,7 @@ type WeeklyPlanItemInput = {
   details: string;
   sourceGrade?:Grade|null;
   preparationTrack?:PreparationTrack;
+  recommendedPublisher?:string|null;
   examYear?:number|null;
 };
 
@@ -158,6 +160,7 @@ export async function saveWeeklyPlan(fd: FormData) {
       details: clean(item.details as unknown as string, 500),
       sourceGrade:item.sourceGrade==null?null:Number(item.sourceGrade),
       preparationTrack:item.preparationTrack??"konkur",
+      recommendedPublisher:cleanRecommendedPublisher(item.recommendedPublisher),
       examYear:item.examYear??null,
     }))
     .filter(
@@ -170,6 +173,8 @@ export async function saveWeeklyPlan(fd: FormData) {
         item.durationMinutes <= 720 &&
         item.subject.length > 0 &&
         allowedActivityTypes.has(item.activityType) &&
+        item.recommendedPublisher !== undefined &&
+        (item.recommendedPublisher === null || canRecommendPublisher(item.preparationTrack, item.activityType)) &&
         (item.activityType === "practice_tests"
           ? Number.isInteger(item.targetTestCount) &&
             Number(item.targetTestCount) >= 1 &&
@@ -203,7 +208,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   }
   const allowedRoutineSubjects=new Set([...routineSubjectOptions(student.study_field,student.grade),...savedRoutineSubjects]);
   if(safeRoutines.some(routine=>routine.subject&&!allowedRoutineSubjects.has(routine.subject)))redirect('/dashboard/counselor/plans?error=routines');
-  const { error } = await s.rpc("save_weekly_plan_v5", {
+  const { error } = await s.rpc("save_weekly_plan_v6", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,

@@ -63,3 +63,7 @@
 .student-portal .sp-exam-link{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid var(--sp-blue);border-radius:10px;background:var(--sp-blue);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
 .student-portal .sp-exam-link:hover{background:#174a8c}
 .student-portal .sp-exam-linked{font-size:14px;color:var(--sp-blue);font-weight:700}
+
+/* Publisher recommendations are on-screen guidance, never part of the A4 plan. */
+.student-portal .sp-recommended-publisher,
+.counselor-portal .sp-recommended-publisher{display:inline-flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;padding:8px 12px;border-radius:8px;background:#eef6ff;color:#123b63;font-size:14px;line-height:1.8}

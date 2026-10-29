@@ -14,6 +14,7 @@ import {
 } from "@/lib/study-catalog";
 
 import { planningGrades, curriculumBooks, inferItemGrade, routineSubjectOptions, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
+import { canRecommendPublisher, recommendedPublishers } from "@/lib/recommended-publishers";
 
 type Student = {
   student_id: string;
@@ -34,6 +35,8 @@ type PlanItem = {
   details: string;
   sourceGrade: Grade|null;
   preparationTrack: PreparationTrack;
+  recommendedPublisher: string | null;
+  otherPublisher: boolean;
   linkedExamId?: string|null;
 };
 
@@ -63,6 +66,7 @@ export type CounselorWeeklyPlan = {
     sort_order: number;
     source_grade?:Grade|null;
     preparation_track?:PreparationTrack;
+    recommended_publisher?:string|null;
     exam_year?:number|null;
     linked_exam_id?:string|null;
   }>;
@@ -82,6 +86,8 @@ const newItem = (
   details: "",
   sourceGrade:null,
   preparationTrack:"konkur",
+  recommendedPublisher:null,
+  otherPublisher:false,
 });
 
 const defaultRoutines = (): PlanRoutine[] =>
@@ -124,6 +130,8 @@ function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
       details: item.details ?? "",
       sourceGrade:item.source_grade??null,
       preparationTrack:item.preparation_track??"konkur",
+      recommendedPublisher:item.recommended_publisher??null,
+      otherPublisher:Boolean(item.recommended_publisher && !(recommendedPublishers as readonly string[]).includes(item.recommended_publisher)),
       linkedExamId:item.linked_exam_id??null,
     }));
 }
@@ -162,7 +170,7 @@ export function WeeklyPlanBuilder({
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
   const routineSubjects=routineSubjectOptions(student?.study_field??null,student?.grade??null);
-  const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:""}:item));
+  const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:"",recommendedPublisher:track==='konkur'?item.recommendedPublisher:null,otherPublisher:track==='konkur'&&item.otherPublisher}:item));
 
   const loadPlan = (studentId: string, nextWeek: string) => {
     const plan = plans.find(
@@ -213,7 +221,11 @@ export function WeeklyPlanBuilder({
   ) =>
     setItems((current) =>
       current.map((item) =>
-        item.key === key ? { ...item, [property]: value } : item,
+        item.key === key ? {
+          ...item, [property]: value,
+          ...(property === "activityType" && !canRecommendPublisher(item.preparationTrack, String(value))
+            ? { recommendedPublisher: null, otherPublisher: false } : {}),
+        } : item,
       ),
     );
 
@@ -370,6 +382,7 @@ export function WeeklyPlanBuilder({
                           item.targetTestCount &&
                           ` · هدف ${faNumber(item.targetTestCount)} تست`}
                       </span>
+                      {item.recommendedPublisher && <small>منبع پیشنهادی کنکور: {item.recommendedPublisher}</small>}
                       {item.details && <small>{item.details}</small>}
                     </article>
                   ))}
@@ -524,6 +537,35 @@ export function WeeklyPlanBuilder({
                             ))}
                           </select>
                         </label>
+                        {canRecommendPublisher(item.preparationTrack, item.activityType) && (
+                          <>
+                            <label>منبع پیشنهادی کنکور (اختیاری)
+                              <select
+                                aria-label="ناشر پیشنهادی کنکور"
+                                value={item.otherPublisher ? "other" : item.recommendedPublisher ?? ""}
+                                onChange={(event) => {
+                                  const other = event.target.value === "other";
+                                  setItems(current => current.map(currentItem => currentItem.key === item.key
+                                    ? { ...currentItem, otherPublisher: other, recommendedPublisher: other ? null : event.target.value || null }
+                                    : currentItem));
+                                }}
+                              >
+                                <option value="">بدون منبع پیشنهادی</option>
+                                {recommendedPublishers.map(publisher => <option key={publisher} value={publisher}>{publisher}</option>)}
+                                <option value="other">ناشر دیگر</option>
+                              </select>
+                            </label>
+                            {item.otherPublisher && <label>نام ناشر دیگر
+                              <input
+                                aria-label="نام ناشر دیگر"
+                                value={item.recommendedPublisher ?? ""}
+                                maxLength={80}
+                                onChange={event => updateItem(item.key, "recommendedPublisher", event.target.value)}
+                                placeholder="نام ناشر را بنویس"
+                              />
+                            </label>}
+                          </>
+                        )}
                         {item.activityType === "exam" && (
                           <p className="plan-exam-box-status" role="status">
                             {item.linkedExamId
@@ -636,6 +678,7 @@ export function WeeklyPlanBuilder({
               details: item.details,
               sourceGrade:itemGrade(item),
               preparationTrack:item.preparationTrack,
+              recommendedPublisher:canRecommendPublisher(item.preparationTrack,item.activityType)?item.recommendedPublisher?.trim()||null:null,
               examYear:null,
             })),
           )}

@@ -21,11 +21,12 @@ test("counselor builder has exactly one default routine per day and no add/remov
   assert.match(builder, /name="routines" value=\{JSON\.stringify\(routines\)\}/);
 });
 
-test("server accepts exactly seven unique daily routines and saves them through v5", () => {
+test("server accepts exactly seven unique daily routines and v6 delegates to v5", () => {
   assert.match(actions, /const rawRoutines = clean\(fd\.get\("routines"\)/);
   assert.match(actions, /parsed\.length !== 7/);
   assert.match(actions, /routineDays\.size !== 7/);
-  assert.match(actions, /s\.rpc\("save_weekly_plan_v5"/);
+  assert.match(actions, /s\.rpc\("save_weekly_plan_v6"/);
+  assert.match(readFileSync("supabase/migrations/085_konkur_recommended_publisher.sql", "utf8"), /saved := public\.save_weekly_plan_v5\(/);
   assert.match(actions, /target_routines: safeRoutines/);
   assert.match(migration, /Exactly seven daily routines are required/);
   assert.match(migration, /Duplicate routine day/);

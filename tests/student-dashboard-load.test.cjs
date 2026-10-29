@@ -4,6 +4,7 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  const own='11111111-1111-1111-1111-111111111111',other='22222222-2222-2222-2222-222222222222',inactive='33333333-3333-3333-3333-333333333333',admin='44444444-4444-4444-4444-444444444444';
  await db.exec(`create role authenticated;create role anon;create schema auth;create schema private;
  create type public.app_role as enum ('student','admin');
+ create type public.content_status as enum ('draft','published');
  create table public.profiles(id uuid primary key,role public.app_role,registration_status text);
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
@@ -30,6 +31,10 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  await db.query("update public.weekly_plan_items set linked_exam_id='88888888-8888-8888-8888-888888888888' where id=md5('item1')::uuid");
  await db.exec(fs.readFileSync('supabase/migrations/065_student_dashboard_page.sql','utf8').replace(/^notify .*$/gim,''));
  await db.exec(fs.readFileSync('supabase/migrations/080_student_dashboard_exam_links.sql','utf8').replace(/^notify .*$/gim,''));
+ await db.exec(fs.readFileSync('supabase/migrations/085_konkur_recommended_publisher.sql','utf8').replace(/^notify .*$/gim,''));
+ await db.query("update public.weekly_plan_items set activity_type='practice_tests',recommended_publisher='خیلی سبز' where id=md5('item201')::uuid");
+ await assert.rejects(()=>db.query("update public.weekly_plan_items set recommended_publisher='گاج',activity_type='exam' where id=md5('item201')::uuid"),/weekly_plan_item_publisher_check/);
+ await assert.rejects(()=>db.query("update public.weekly_plan_items set recommended_publisher='گاج',preparation_track='final_exam' where id=md5('item201')::uuid"),/weekly_plan_item_publisher_check/);
  const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const page=async offset=>(await db.query('select public.student_dashboard_page($1) as result',[offset])).rows[0].result;
  await actor(own);let first=await page(0),last=await page(200);
@@ -38,6 +43,7 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  assert.equal(first.completions.length+last.completions.length,201);
  assert.equal(first.plans[0].title,'Plan 201');assert.equal(first.plans[0].weekly_plan_items.length,1,'hidden RLS item must stay hidden');
  assert.equal(first.plans[0].weekly_plan_items[0].duration_minutes,60);
+ assert.equal(first.plans[0].weekly_plan_items[0].recommended_publisher,'خیلی سبز');
  assert.equal(first.plans[0].weekly_plan_items[0].linked_exam_id,'99999999-9999-9999-9999-999999999999','published linked exam is visible');
  assert.equal(last.plans[0].weekly_plan_items[0].linked_exam_id,null,'draft exam is never linked in a plan');
  assert.equal((await page(400)).plans.length,0);

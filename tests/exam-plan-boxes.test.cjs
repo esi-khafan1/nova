@@ -8,6 +8,7 @@ const explanationSave='create or replace function public.save_designer_exam('+fs
  .split('create or replace function public.save_designer_exam(',2)[1].split('-- A designer may add/correct an explanation',1)[0];
 const assignedPicker=fs.readFileSync('supabase/migrations/084_designer_assigned_student_picker.sql','utf8').replace(/^notify .*$/gim,'');
 const dashboard=fs.readFileSync('supabase/migrations/080_student_dashboard_exam_links.sql','utf8').replace(/^notify .*$/gim,'');
+const publisherSave=fs.readFileSync('supabase/migrations/085_konkur_recommended_publisher.sql','utf8').split('-- Re-issue the student RPC')[0];
 const ids={
  designer:'11111111-1111-1111-1111-111111111111',
  otherDesigner:'22222222-2222-2222-2222-222222222222',
@@ -106,6 +107,7 @@ const uuid=v=>`'${v}'::uuid`;
   (${uuid(ids.boxB)},${uuid(ids.planC)},1,'عربی','درس ۴','exam',0),
   (${uuid(ids.boxPast)},${uuid(ids.planA)},0,'ریاضی','فصل ۱','exam',2)`);
  await db.exec(migration);
+ await db.exec(publisherSave);
  await db.exec(editFix);
  await db.exec(explanationSave);
  await db.exec(assignedPicker);
@@ -249,6 +251,26 @@ const uuid=v=>`'${v}'::uuid`;
  p=await page();
  assert.equal(p.plans.flatMap(pl=>pl.weekly_plan_items).find(i=>i.id===changed.id).linked_exam_id,null,'draft exam is not linked in the plan');
 
+ // The new RPC delegates to v5 and persists only per-box eligible publishers.
+ await actor(ids.counselor);
+ const publisherItems=[
+  {dayOfWeek:1,subject:'زیستشناسی',activityType:'lesson',durationMinutes:60,preparationTrack:'konkur',recommendedPublisher:'گاج'},
+  {dayOfWeek:2,subject:'فیزیک',activityType:'practice_tests',durationMinutes:90,preparationTrack:'konkur',recommendedPublisher:'خیلی سبز'},
+ ];
+ const savePublisher=async list=>db.query(`select public.save_weekly_plan_v6($1,$2,$3,'برنامه',null,'draft',$4,'[]'::jsonb)`,
+  [ids.planB,ids.studentB,new Date().toISOString().slice(0,10),JSON.stringify(list)]);
+ await savePublisher(publisherItems);
+ let savedItems=(await db.query('select subject,recommended_publisher from public.weekly_plan_items where plan_id=$1 order by sort_order',[ids.planB])).rows;
+ assert.deepEqual(savedItems.map(i=>i.recommended_publisher),['گاج','خیلی سبز']);
+ await assert.rejects(()=>savePublisher([{...publisherItems[0],activityType:'exam'}]),/Invalid Konkur publisher/);
+ await assert.rejects(()=>savePublisher([{...publisherItems[0],activityType:'offline_class'}]),/Invalid Konkur publisher/);
+ await assert.rejects(()=>savePublisher([{...publisherItems[0],preparationTrack:'final_exam'}]),/Invalid Konkur publisher/);
+ savedItems=(await db.query('select recommended_publisher from public.weekly_plan_items where plan_id=$1 order by sort_order',[ids.planB])).rows;
+ assert.deepEqual(savedItems.map(i=>i.recommended_publisher),['گاج','خیلی سبز'],'Rejected edits leave prior items intact');
+ await savePublisher([{...publisherItems[0],recommendedPublisher:null}]);
+ assert.equal((await db.query('select recommended_publisher from public.weekly_plan_items where plan_id=$1',[ids.planB])).rows[0].recommended_publisher,null);
+ await actor(ids.otherDesigner);
+ await assert.rejects(()=>savePublisher(publisherItems),/Only counselors/);
  await db.close();
  console.log('Exam plan boxes: exam-only designer queue, day/subject payload, box linking, other-student enrollment, RLS/owner guards, plan re-save durability and student dashboard link passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
