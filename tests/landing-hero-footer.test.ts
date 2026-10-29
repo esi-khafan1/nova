@@ -6,8 +6,18 @@ const approved = readFileSync("app/landing-approved.css", "utf8");
 const refresh = readFileSync("app/landing-hero-refresh.css", "utf8");
 const mobile = readFileSync("app/landing-mobile.css", "utf8");
 
+assert.match(hero, /srcSet="\/nova\/hero-desktop\.webp" type="image\/webp"/);
+assert.match(hero, /srcSet="\/nova\/hero-mobile-outpaint\.webp" type="image\/webp"/);
 assert.match(hero, /src="\/nova\/hero-desktop\.png" width="2172" height="724"/);
-assert.match(hero, /srcSet="\/nova\/hero-mobile-outpaint\.png"/);
+for (const path of ["public/nova/hero-desktop.webp", "public/nova/hero-mobile-outpaint.webp", "public/images/approved-star-clusters.webp"]) {
+  const image = readFileSync(path);
+  assert.equal(image.toString("ascii", 0, 4), "RIFF");
+  assert.equal(image.toString("ascii", 8, 12), "WEBP");
+}
+assert.ok(readFileSync("public/nova/hero-desktop.webp").length < 150_000);
+assert.ok(readFileSync("public/nova/hero-mobile-outpaint.webp").length < 150_000);
+assert.ok(readFileSync("public/images/approved-star-clusters.webp").length < 250_000);
+assert.match(readFileSync("app/path-finder.css", "utf8"), /approved-star-clusters\.webp/);
 assert.match(hero, /<p className="nova-eyebrow">نوآ آکادمی \| همراه مسیر موفقیت<\/p>/);
 assert.match(hero, /<h1 id="nova-hero-title">آینده‌ات رو بساز؛<br \/><em>قدم‌به‌قدم تا کنکور<\/em><\/h1>/);
 assert.match(hero, /با برنامه‌ریزی اصولی، آموزش هدفمند و همراهی مشاوران نوآ،<br \/>مسیر رسیدن به هدفت رو با اطمینان بیشتری طی کن\./);
