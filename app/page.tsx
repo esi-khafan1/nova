@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { LandingHeader } from "@/components/landing-header";
 import { LandingHero } from "@/components/landing-hero";
+import { LandingMotion } from "@/components/landing-motion";
 import { WhyNova } from "@/components/why-nova";
 import { PathFinder, type PathFinderDesign } from "@/components/path-finder";
 import { MagazineLatest, type MagazineDesign, type LatestResource } from "@/components/magazine-latest";
@@ -23,6 +24,7 @@ import "./social-light-preview.css";
 import "./landing-white-sections.css";
 import "./landing-mobile.css";
 import "./landing-hero-refresh.css";
+import "./landing-motion.css";
 import { getPublishedNews } from "@/lib/news";
 import { parseCourseContext } from "@/lib/courses";
 
@@ -48,6 +50,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
   return (
     <main className={`landing-v2d${editorialTheme ? ` editorial-theme--${editorialTheme}` : ""}`}>
+      <LandingMotion />
       <LandingHeader isAuthenticated={Boolean(user)} />
       <LandingHero />
 
