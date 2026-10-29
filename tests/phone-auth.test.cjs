@@ -1,9 +1,11 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 const {NextRequest,NextResponse}=require('next/server');
-function load(file,requires,extra={}){const module={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module,exports:module.exports,require:n=>requires[n],URL,Buffer,process:{env:{PHONE_SIGNUP_ENABLED:'true'}},...extra});return module.exports;}
+function load(file,requires,extra={}){const moduleStub={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:moduleStub,exports:moduleStub.exports,require:n=>requires[n],URL,Buffer,process:{env:{PHONE_SIGNUP_ENABLED:'true'}},...extra});return moduleStub.exports;}
 const helpers=load('lib/phone-auth.ts',{}),password=load('lib/password-input.ts',{}),returns=load('lib/return-path.ts',{});
 for(const n of ['09108312159','+989108312159','00989108312159','۰۹۱۰۸۳۱۲۱۵۹'])assert.equal(helpers.normalizeMobile(n),'989108312159');
 for(const n of ['someone@example.com','+12025551234','0912','091083121590',null,{}])assert.equal(helpers.normalizeMobile(n),null);
+for(const n of ['09108312159','+989108312159','00989108312159'])assert.equal(helpers.isEnglishMobileInput(n),true);
+for(const n of ['۰۹۱۰۸۳۱۲۱۵۹','٠٩١٠٨٣١٢١٥٩','09108312159🙂',null])assert.equal(helpers.isEnglishMobileInput(n),false);
 assert.equal(helpers.hasConfirmedContact({phone_confirmed_at:'now'}),true);assert.equal(helpers.hasConfirmedContact({email_confirmed_at:'now'}),true);assert.equal(helpers.hasConfirmedContact({}),false);
 let proofExpected=false;let calls=[],owner={id:'owner',email_confirmed_at:'now'},error=null;let proofCode='phone_not_confirmed';
 const client={auth:{getUser:async()=>({data:{user:owner},error:null}),signUp:async p=>{calls.push(['signup',p]);proofExpected=true;return {data:{user:{identities:[{}]}},error};},signInWithPassword:async p=>{calls.push(['signin',p]);if(proofExpected){proofExpected=false;return {error:{code:proofCode}};}return {error};},resend:async p=>{calls.push(['resend',p]);return {error};},updateUser:async p=>{calls.push(['update',p]);return {error};},verifyOtp:async p=>{calls.push(['verify',p]);return {data:{user:{id:owner?.id||'new',phone:p.phone,phone_confirmed_at:'now'}},error};}}};
@@ -15,6 +17,17 @@ let response=await route.POST(req({action:'signup',phone:'09108312159',password:
 const proxied=new NextRequest('http://0.0.0.0:3000/api/auth/phone',{method:'POST',headers:{origin:'https://nova-academy.ir','content-type':'application/json','x-forwarded-host':'attacker.test'},body:JSON.stringify({action:'signin',phone:'09108312159',password:'abcdefgh'})});assert.equal((await route.POST(proxied)).status,200,'Canonical browser origin must work behind Runflare');
 const emailStart=calls.length;response=await route.POST(req({action:'signin',email:'old@gmail.com',password:'abcdefgh'}));assert.equal(response.status,200);assert.equal(calls.length,emailStart+1);assert.equal(calls.at(-1)[0],'signin');assert.equal(calls.at(-1)[1].email,'old@gmail.com');assert.equal(calls.at(-1)[1].phone,undefined);
 const initial=calls.length;response=await route.POST(req({action:'signin',phone:'09108312159',password:'abcdefgh'}));assert.equal(response.status,200);assert.equal(calls.length,initial+1);assert.equal(calls.at(-1)[0],'signin','password login must not send SMS');
+for(const action of ['signin','signup','verify','resend']){
+ const before=calls.length;
+ response=await route.POST(req({action,phone:'۰۹۱۰۸۳۱۲۱۵۹',password:'abcdefgh',token:'123456',fullName:'Test Person'}));
+ assert.equal(response.status,400);assert.equal((await response.json()).message,helpers.englishPhoneMessage);
+ assert.equal(calls.length,before,`${action}: Persian digits must be rejected before any Auth/SMS call`);
+}
+for(const action of ['signin','signup']){
+ const before=calls.length;
+ response=await route.POST(req({action,phone:'09108312159',password:'Persian۱۲۳',fullName:'Test Person'}));
+ assert.equal(response.status,400);assert.equal(calls.length,before,`${action}: non-English passwords must be rejected before Auth`);
+}
 response=await route.POST(req({action:'verify',phone:'09108312159',token:'123456',password:'abcdefgh'}));assert.equal(response.status,400);
 response=await route.POST(req({action:'verify',phone:'09108312159',token:'123456',password:'abcdefgh'},'nova_phone_pending=signup:989108312159'));assert.equal(response.status,200);assert.equal(calls.at(-1)[0],'verify');assert.match(response.headers.get('set-cookie'),/Max-Age=0|Expires=/);
 response=await route.POST(req({action:'link',phone:'09108312159'}));assert.equal(response.status,200);assert.match(response.headers.get('set-cookie'),/link%3Aowner|link:owner/);

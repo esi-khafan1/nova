@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { normalizeMobile } from "@/lib/phone-auth";
+import { englishPhoneMessage, normalizeMobile } from "@/lib/phone-auth";
 import { isEnglishPasswordInput } from "@/lib/password-input";
 import { isTrustedAuthOrigin } from "@/lib/auth-origin";
 import { safeReturnPath } from "@/lib/return-path";
@@ -18,6 +18,9 @@ export async function POST(request:NextRequest){
   if(!body||typeof body!=='object'||!actions.includes(body.action))return reply(400,"درخواست معتبر نیست.");
   const email=body.action==='signin'&&typeof body.email==='string'?body.email.trim():null;
   const emailLogin=Boolean(email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  // Keep the quiet legacy email signin path, but never transliterate a submitted
+  // public-auth phone number (including the OTP verification and resend steps).
+  if(!emailLogin&&typeof body.phone==='string'&&/[^\x20-\x7e]/.test(body.phone))return reply(400,englishPhoneMessage);
   const phone=normalizeMobile(body.phone);if(!phone&&!emailLogin)return reply(400,"شماره تلفن همراه معتبر وارد کن.");
   if(body.action!=="signin"&&process.env.PHONE_SIGNUP_ENABLED!=="true")return reply(503,"ثبت‌نام و اتصال شماره فعلاً در دسترس نیست؛ کمی بعد تلاش کن.");
   const client=await createClient();

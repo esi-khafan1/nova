@@ -7,7 +7,7 @@ import { LandingHeader } from "@/components/landing-header";
 import { safeReturnPath } from "@/lib/return-path";
 import { isEnglishPasswordInput, englishPasswordMessage } from "@/lib/password-input";
 import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
-import { normalizeMobile } from "@/lib/phone-auth";
+import { englishPhoneMessage, isEnglishMobileInput, normalizeMobile } from "@/lib/phone-auth";
 
 type AuthMode = "signin" | "signup" | "reset";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,6 +25,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [message, setMessage] = useState(initialMessage);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [phoneValue, setPhoneValue] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
@@ -43,7 +45,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   async function verifyPhone(event:FormEvent<HTMLFormElement>){
     event.preventDefault();if(!challenge||!/^\d{6}$/.test(otp))return setMessage('کد شش‌رقمی را وارد کن.');
     setLoading(true);setMessage('');setSuccess(false);
-    try{await phoneRequest({action:'verify',phone:challenge,token:otp,password:passwordValue});setPasswordValue('');setOtp('');window.location.assign(destination);}
+    // Keep the entered phone/password until navigation actually leaves the page.
+    // Clearing them here strands the student on an empty form if navigation fails.
+    try{await phoneRequest({action:'verify',phone:challenge,token:otp,password:passwordValue});window.location.assign(destination);}
     catch(error){setMessage(error instanceof Error?error.message:'کد تأیید نشد.');setLoading(false);}
   }
   async function resendCode(){
@@ -52,6 +56,14 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     setLoading(true);
     try{await phoneRequest({action:'resend',phone:challenge});setResendAt(Date.now()+60000);setMessage('کد جدید ارسال شد.');}
     catch(error){setMessage(error instanceof Error?error.message:'ارسال انجام نشد.');}finally{setLoading(false);}
+  }
+  function changePhone(value: string) {
+    if (/[^\x20-\x7e]/.test(value)) {
+      setPhoneError(englishPhoneMessage);
+      return;
+    }
+    setPhoneValue(value);
+    setPhoneError("");
   }
   function changePassword(value: string) {
     if (!isEnglishPasswordInput(value)) {
@@ -67,6 +79,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     setMode(nextMode);
     setChallenge(null);setOtp("");setResendAt(0);
     setShowPassword(false);
+    setPhoneValue("");
+    setPhoneError("");
     setPasswordValue("");
     setPasswordError("");
     setMessage("");
@@ -81,8 +95,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
+    if (phoneError || (!emailPattern.test(email) && normalizeMobile(email) && !isEnglishMobileInput(email))) return setPhoneError(englishPhoneMessage);
     if (!email) return setMessage("شماره تلفن همراه را وارد کن.");
-    if (!emailPattern.test(email) && !normalizeMobile(email)) return setMessage("اطلاعات ورود معتبر وارد کن.");
+    if (!emailPattern.test(email) && !isEnglishMobileInput(email)) return setMessage("اطلاعات ورود معتبر وارد کن.");
     if (!isEnglishPasswordInput(password) || passwordError) {
       setPasswordError(englishPasswordMessage);
       return;
@@ -142,7 +157,8 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     const password = String(data.get("password") ?? "");
 
     if (fullName.length < 2) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
-    if (!normalizeMobile(email)) return setMessage("شماره تلفن همراه معتبر وارد کن.");
+    if (phoneError || (normalizeMobile(email) && !isEnglishMobileInput(email))) return setPhoneError(englishPhoneMessage);
+    if (!isEnglishMobileInput(email)) return setMessage("شماره تلفن همراه معتبر وارد کن.");
     if (!phoneSignup) return setMessage("ثبت‌نام فعلاً در دسترس نیست؛ کمی بعد تلاش کن.");
     if (!isEnglishPasswordInput(password) || passwordError) {
       setPasswordError(englishPasswordMessage);
@@ -204,11 +220,14 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
                 </div>}
                 {mode !== "reset" && <div className="nova-auth-field">
                   <label htmlFor={`${mode}-email`}>شماره تلفن همراه</label>
-                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="phone" /></span><input id={`${mode}-email`} name="email" readOnly={!!challenge || loading} type="text" inputMode={mode === "signup" ? "tel" : "text"} dir="ltr" placeholder="09xxxxxxxxx" autoComplete={mode === "signin" ? "username" : "tel"} autoCapitalize="none" spellCheck={false} required /></div>
+                  <div className="nova-auth-input-wrap"><span className="nova-auth-input-icon"><AuthIcon name="phone" /></span><input id={`${mode}-email`} name="email" value={phoneValue} onChange={event => changePhone(event.target.value)} readOnly={!!challenge || loading} aria-invalid={!!phoneError} aria-describedby={`${mode}-phone-help${phoneError ? ` ${mode}-phone-error` : ""}`} type="text" inputMode={mode === "signup" ? "tel" : "text"} dir="ltr" placeholder="09xxxxxxxxx" autoComplete={mode === "signin" ? "username" : "tel"} autoCapitalize="none" spellCheck={false} required /></div>
+                  <small className="nova-auth-input-help" id={`${mode}-phone-help`}>شماره را با اعداد انگلیسی وارد کن.</small>
+                  {phoneError && <p id={`${mode}-phone-error`} role="alert" className="nova-auth-input-error">{phoneError}</p>}
                 </div>}
                 <div className="nova-auth-field">
                   <label htmlFor={`${mode}-password`}>{mode === "reset" ? "رمز عبور جدید" : "رمز عبور"}</label>
-                  <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" value={passwordValue} readOnly={!!challenge || loading} maxLength={128} onChange={event => changePassword(event.target.value)} aria-invalid={!!passwordError} aria-describedby={passwordError ? `${mode}-password-error` : undefined} autoCapitalize="none" autoCorrect="off" spellCheck={false} type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
+                  <div className="nova-auth-input-wrap nova-auth-password"><input id={`${mode}-password`} name="password" value={passwordValue} readOnly={!!challenge || loading} maxLength={128} onChange={event => changePassword(event.target.value)} aria-invalid={!!passwordError} aria-describedby={`${mode}-password-help${passwordError ? ` ${mode}-password-error` : ""}`} autoCapitalize="none" autoCorrect="off" spellCheck={false} type={showPassword ? "text" : "password"} dir="ltr" placeholder={mode === "signin" ? "رمز عبورت را وارد کن" : "حداقل ۸ کاراکتر"} autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /><button type="button" className="nova-auth-reveal" aria-label={showPassword ? "پنهان‌کردن رمز عبور" : "نمایش رمز عبور"} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}><AuthIcon name={showPassword ? "eyeOff" : "eye"} /></button></div>
+                  <small className="nova-auth-input-help" id={`${mode}-password-help`}>رمز عبور را با کیبورد انگلیسی وارد کن.</small>
                 </div>
                 {mode === 'signup' && challenge && <div className="nova-auth-field"><label htmlFor="signup-code">کد تأیید شماره</label><div className="nova-auth-input-wrap"><input id="signup-code" value={otp} onChange={event=>setOtp(event.target.value.replace(/[^0-9]/g,''))} inputMode="numeric" autoComplete="one-time-code" dir="ltr" maxLength={6} autoFocus required /></div><div className="nova-auth-code-actions"><button type="button" disabled={loading} onClick={()=>{setChallenge(null);setOtp('');setSuccess(false);setMessage('شماره را اصلاح کن یا پس از یک دقیقه دوباره دریافت کد را بزن.');}}>اصلاح شماره</button><button type="button" disabled={loading} onClick={resendCode}>دریافت کد جدید</button></div></div>}
                 {passwordError && <p id={`${mode}-password-error`} role="alert" className="nova-auth-message">{passwordError}</p>}
