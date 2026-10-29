@@ -1,6 +1,6 @@
 "use client";
 import { CoursePrice } from "./course-price";
-import { useActionState } from "react";
+import { startTransition, useActionState, type FormEvent } from "react";
 import { submitRegistration } from "@/app/dashboard/registration/actions";
 import { type RegistrationFormValues } from "@/lib/registration";
 import { courseTypeLabel, courseDurationLabel, type CourseSelection } from "@/lib/courses";
@@ -9,7 +9,15 @@ import { studyFieldLabels } from "@/lib/study-catalog";
 export function RegistrationForm({ values, mode = "enrollment", selection }: { values: RegistrationFormValues; mode?: "profile" | "enrollment"; selection?: CourseSelection | null }) {
   const [state, action, pending] = useActionState(submitRegistration, {});
   const enrollment = mode === "enrollment";
-  return <form action={action} className="registration-form">
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    // React resets uncontrolled fields (including the receipt file) after a
+    // form action resolves, even when the server returns a validation error.
+    // Dispatch manually so a failed attempt keeps everything the student typed.
+    event.preventDefault();
+    const submitted = new FormData(event.currentTarget);
+    startTransition(() => action(submitted));
+  }
+  return <form action={action} onSubmit={handleSubmit} className="registration-form">
     <input type="hidden" name="form_mode" value={mode}/>
     {enrollment && selection && <section className="registration-course-summary" aria-label="دورهٔ انتخابی"><h2>انتخاب تو</h2><dl><div><dt>پلن انتخابی</dt><dd>{courseTypeLabel(selection.course)}</dd></div><div><dt>بازهٔ انتخابی</dt><dd>{courseDurationLabel(selection.months)}</dd></div><div><dt>پایهٔ تحصیلی</dt><dd>{selection.grade.toLocaleString("fa-IR")}</dd></div><div><dt>رشته</dt><dd>{studyFieldLabels[selection.field]}</dd></div></dl><div className="registration-price-offer"><CoursePrice selection={selection} offer/></div><input type="hidden" name="course" value={selection.course}/><input type="hidden" name="months" value={selection.months}/><input type="hidden" name="grade" value={selection.grade}/><input type="hidden" name="study_field" value={selection.field}/></section>}
     <div className="registration-fields">
