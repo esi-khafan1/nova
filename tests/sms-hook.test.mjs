@@ -33,3 +33,43 @@ let claimedPhone;
 const publicHook=createHandler({env:n=>values[n],verify:async()=>({user:{phone:'989130000000'},sms:{phone:'+989120000000',otp:'123456'}}),claim:async(id,phone)=>{claimedPhone=phone;return true;},fetcher:async(url,options)=>{assert.equal(options.body.get('to'),'09120000000');return new Response('{"Value":"123456789012345678"}');}});
 assert.equal((await publicHook(req('new-public'))).status,200);assert.equal(claimedPhone,'989120000000');
 console.log('Public hook: explicit release gate, shared claim budget and linked-account destination priority passed.');
+
+// A provider can deliver an OTP and only acknowledge after GoTrue's hook
+// deadline. Returning an early hook response preserves the unconfirmed user;
+// the one claimed send continues in EdgeRuntime.waitUntil, without a retry.
+let completeProvider, background, slowSends=0;
+const slowOutcomes=[];
+const slowHook=createHandler({env:n=>values[n],verify:async()=>payload,claim:async()=>true,
+ ackWindowMs:1,waitUntil:promise=>{background=promise;},
+ report:async(...args)=>slowOutcomes.push(args),
+ fetcher:async()=>{slowSends++;return await new Promise(resolve=>{completeProvider=resolve;});}
+});
+const early=await slowHook(req('slow-public'));
+assert.equal(early.status,200);
+assert.equal(slowSends,1);
+assert.ok(background,'in-flight provider request must stay alive after the hook response');
+completeProvider(new Response('{"Value":"123456789012345678"}'));
+assert.equal((await background).status,200);
+assert.equal(slowOutcomes.at(-1)[1],'accepted');
+assert.equal(slowSends,1,'never send twice after an ambiguous response');
+
+let rejectProvider, rejectedBackground;
+const lateRejectOutcomes=[];
+const lateReject=createHandler({env:n=>values[n],verify:async()=>payload,claim:async()=>true,
+ ackWindowMs:1,waitUntil:promise=>{rejectedBackground=promise;},
+ report:async(...args)=>lateRejectOutcomes.push(args),
+ fetcher:async()=>await new Promise(resolve=>{rejectProvider=resolve;})});
+assert.equal((await lateReject(req('late-reject'))).status,200);
+rejectProvider(new Response('{"Value":0}'));
+assert.equal((await rejectedBackground).status,502);
+assert.equal(lateRejectOutcomes.at(-1)[1],'provider_rejected');
+
+const quickOutcomes=[];
+let quickBackground=false;
+const quickReject=createHandler({env:n=>values[n],verify:async()=>payload,claim:async()=>true,
+ ackWindowMs:100,waitUntil:()=>{quickBackground=true;},
+ report:async(...args)=>quickOutcomes.push(args),fetcher:async()=>new Response('{"Value":0}')});
+assert.equal((await quickReject(req('reject-public'))).status,502);
+assert.equal(quickBackground,false,'known rejections must still fail closed');
+assert.equal(quickOutcomes.at(-1)[1],'provider_rejected');
+console.log('Slow provider acknowledgments preserve signup and record the eventual outcome; fast rejections still fail closed.');

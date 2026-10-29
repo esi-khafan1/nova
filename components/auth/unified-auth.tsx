@@ -153,7 +153,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
 
     if(Date.now()<resendAt)return setMessage('برای دریافت کد جدید حداقل یک دقیقه صبر کن.');
     setLoading(true);
-    try{await phoneRequest({action:'signup',phone:email,password,fullName,next:destination});setChallenge(normalizeMobile(email));setResendAt(Date.now()+60000);setSuccess(true);setMessage('کد به شماره‌ات ارسال شد؛ کد را وارد کن تا مستقیم وارد حساب شوی.');}
+    try{await phoneRequest({action:'signup',phone:email,password,fullName,next:destination});setChallenge(normalizeMobile(email));setResendAt(Date.now()+60000);setSuccess(true);setMessage('درخواست کد ثبت شد؛ اگر پیامک رسید، کد را وارد کن تا وارد حساب شوی.');}
     catch(error){setSuccess(false);setMessage(error instanceof Error?error.message:'ارسال کد انجام نشد.');}
     finally{setLoading(false);}
   }

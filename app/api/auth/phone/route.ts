@@ -71,7 +71,7 @@ export async function POST(request:NextRequest){
    if(error.code==='user_already_exists'||error.code==='phone_exists')return reply(409,link?"این شماره به حساب دیگری متصل است؛ شماره جابه‌جا یا حساب‌ها ادغام نمی‌شوند.":"این حساب قبلاً ساخته شده است؛ وارد شوید.");
    return reply(error.status===429?429:400,"ارسال کد انجام نشد؛ کمی صبر کن. اگر پیام رسیده، قبل از ارسال دوباره وضعیت را بررسی کن.");
   }
-  const response=reply(200,"کد به شماره‌ات ارسال شد.");
+  const response=reply(200,"درخواست کد ثبت شد؛ اگر پیامک رسید، کد را وارد کن.");
   response.cookies.set(pendingCookie,`${link?'link:'+currentId:'signup'}:${phone}`,{httpOnly:true,sameSite:'strict',secure:process.env.NODE_ENV==='production',path:'/api/auth/phone',maxAge:600});
   return response;
  }catch{return reply(400,"ارتباط انجام نشد؛ بدون ارسال پیاپی دوباره تلاش کن.");}
