@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CourseCards } from "@/components/registration/course-cards";
-import { courseDurations, parseCourseContext } from "@/lib/courses";
+import { courseDurations, courseFields, parseCourseContext } from "@/lib/courses";
 import { availableCoursePlans } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
 
@@ -11,8 +11,34 @@ export default async function CourseCatalogPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const context = parseCourseContext(await searchParams);
-  if (!context) notFound();
+  const params = await searchParams;
+  const context = parseCourseContext(params);
+  if (!context && (params.grade !== undefined || params.field !== undefined)) notFound();
+  if (!context) return (
+    <main className="mag-shell course-catalog-shell">
+      <section className="mag-hero course-catalog-hero">
+        <div className="container">
+          <div className="mag-hero-topline"><span className="mag-eyebrow">انتخاب اختصاصی نووا</span></div>
+          <h1>دوره‌های مناسب تو</h1>
+          <p>پایه و رشته‌ات را انتخاب کن تا دوره‌های مناسب را ببینی.</p>
+        </div>
+      </section>
+      <section className="container mag-content course-catalog-content" aria-labelledby="course-context-title">
+        <h2 id="course-context-title">انتخاب پایه و رشته</h2>
+        <form className="course-context-picker" action="/courses" method="get">
+          <label><span>پایهٔ تحصیلی</span><select name="grade" defaultValue="" required>
+            <option value="" disabled>انتخاب پایه</option>
+            {[10, 11, 12].map(grade => <option key={grade} value={grade}>پایهٔ {grade.toLocaleString("fa-IR")}</option>)}
+          </select></label>
+          <label><span>رشتهٔ تحصیلی</span><select name="field" defaultValue="" required>
+            <option value="" disabled>انتخاب رشته</option>
+            {courseFields.map(field => <option key={field} value={field}>{studyFieldLabels[field]}</option>)}
+          </select></label>
+          <button className="course-cta-button" type="submit">مشاهدهٔ دوره‌ها</button>
+        </form>
+      </section>
+    </main>
+  );
 
   const gradeLabel = context.grade.toLocaleString("fa-IR");
   const fieldLabel = studyFieldLabels[context.field];
@@ -24,7 +50,7 @@ export default async function CourseCatalogPage({
         <div className="container">
           <div className="mag-hero-topline">
             <span className="mag-eyebrow">انتخاب اختصاصی نووا</span>
-            <Link className="mag-home" href="/#find-path">
+            <Link className="mag-home" href="/courses">
               <span aria-hidden="true">←</span>
               <span className="mag-desktop-label">بازگشت به انتخاب پایه و رشته</span>
               <span className="mag-mobile-label">بازگشت</span>
@@ -49,7 +75,7 @@ export default async function CourseCatalogPage({
 
       <footer className="mag-footer">
         <div className="container course-catalog-footer">
-          <Link href="/#find-path" className="course-change-selection">تغییر پایه یا رشته</Link>
+          <Link href="/courses" className="course-change-selection">تغییر پایه یا رشته</Link>
           <Link href="/" className="mag-footer-brand" aria-label="صفحهٔ اصلی نووا">
             <Image src="/nova/mark.svg" alt="لوگوی N نووا" width={68} height={68} unoptimized />
           </Link>

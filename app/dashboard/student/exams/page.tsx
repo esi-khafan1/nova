@@ -11,7 +11,7 @@ export default async function StudentExamsPage({
 }) {
   const { supabase, profile } = await requireProfile(["student"], true);
   const params = await searchParams;
-  if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و تخصیص طراح آزمون در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status}/></DashboardShell>;
+  if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و تخصیص طراح آزمون در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/></DashboardShell>;
 
 
   const [{ data: examsData }, { data: attemptsData }, {data:sessionsData}] =
@@ -41,7 +41,7 @@ export default async function StudentExamsPage({
 
   return (
     <DashboardShell role="student" name={profile.full_name}>
-      {profile.registration_status !== "active" && <StudentServiceNotice status={profile.registration_status}/>}
+      {profile.registration_status !== "active" && <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>}
       <StudentExamsOverview exams={profile.registration_status === "active" ? exams : exams.filter(exam => attempts.has(exam.id))} attempts={attempts} sessions={sessions} error={Boolean(params.error)} />
     </DashboardShell>
   );

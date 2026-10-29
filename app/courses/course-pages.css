@@ -45,6 +45,47 @@
 .course-pages .course-catalog-content {
   padding-block: 40px 72px;
 }
+.course-pages .course-context-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  max-width: 760px;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--mag-line);
+  border-radius: 16px;
+  background: #fff;
+}
+.course-pages .course-context-picker label {
+  display: grid;
+  flex: 1 1 180px;
+  gap: 8px;
+  color: var(--mag-ink);
+  font-weight: 700;
+}
+.course-pages .course-context-picker select {
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1px solid var(--mag-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--mag-ink);
+  font: inherit;
+}
+.course-pages .course-context-picker button {
+  cursor: pointer;
+}
+.course-pages .course-context-picker :is(select, button):focus-visible {
+  outline: 3px solid var(--mag-blue);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .course-pages .course-context-picker button {
+    width: 100%;
+  }
+}
 .course-pages .course-plan-carousel {
   width: 100%;
   min-width: 0;

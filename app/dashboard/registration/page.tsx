@@ -5,7 +5,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireProfile } from "@/lib/auth";
 import { getRequestUser } from "@/lib/supabase/request-auth";
 import { safeReturnPath } from "@/lib/return-path";
-import { parseCourseSelection, courseRegistrationPath } from "@/lib/courses";
+import { parseCourseSelection, courseRegistrationPath, studentCourseCatalogPath } from "@/lib/courses";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import "@/app/registration.css";
@@ -25,6 +25,6 @@ export default async function RegistrationPage({ searchParams }: { searchParams:
   const legacy = !invalidSelection && !selection && existing?.receipt_name && !existing.course_type;
   return <DashboardShell role="student" name={profile.full_name}><div className="registration-page"><section className="registration-welcome"><span>به خانوادهٔ نووا خوش آمدی</span><h1>ثبت‌نام دوره را کامل کن</h1><p>اطلاعات و فیش واریزی را ارسال کن. خدمات پولی پس از تأیید فیش و تخصیص مشاور توسط مدیر فعال می‌شوند؛ در این فاصله می‌توانی همهٔ بخش‌های پنل را ببینی.</p><Link href="/dashboard/student">مشاهدهٔ پنل من ←</Link></section>
     {profile.registration_status === "pending" && <section className="registration-pending" role="status"><strong>اطلاعاتت ارسال شده و منتظر بررسی است.</strong><p>تا قبل از تأیید می‌توانی اطلاعات یا فیش همین درخواست را اصلاح کنی.</p></section>}
-    <section className="registration-card">{account.error ? <p role="alert">اطلاعات فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p> : invalidSelection || (!selection && !legacy) ? <><h2>ابتدا دوره‌ات را انتخاب کن</h2><p>با انتخاب پایه و رشته، ۸ دوره در دو پلن و چهار بازهٔ زمانی برایت نمایش داده می‌شود.</p><Link className="button" href="/#find-path">انتخاب دوره</Link><p><Link href="/dashboard/student/account">تکمیل عادی اطلاعات، بدون دوره و فیش ←</Link></p></> : <RegistrationForm key={selection ? courseRegistrationPath(selection) : "legacy"} values={{...account.values,receipt_name:existing?.receipt_name,additional_notes:existing?.additional_notes ?? account.values.additional_notes}} selection={selection}/>}</section>
+    <section className="registration-card">{account.error ? <p role="alert">اطلاعات فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p> : invalidSelection || (!selection && !legacy) ? <><h2>ابتدا دوره‌ات را انتخاب کن</h2><p>با انتخاب پایه و رشته، ۸ دوره در دو پلن و چهار بازهٔ زمانی برایت نمایش داده می‌شود.</p><Link className="button" href={studentCourseCatalogPath(account.values.grade, account.values.study_field)}>انتخاب دوره</Link><p><Link href="/dashboard/student/account">تکمیل عادی اطلاعات، بدون دوره و فیش ←</Link></p></> : <RegistrationForm key={selection ? courseRegistrationPath(selection) : "legacy"} values={{...account.values,receipt_name:existing?.receipt_name,additional_notes:existing?.additional_notes ?? account.values.additional_notes}} selection={selection}/>}</section>
   </div></DashboardShell>;
 }

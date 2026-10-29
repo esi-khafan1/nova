@@ -36,6 +36,13 @@ export function courseCatalogPath(context: CourseContext): string {
   return `/courses?${new URLSearchParams({ grade: String(context.grade), field: context.field })}`;
 }
 
+// Student dashboard links should open the course catalog directly when the
+// profile already has a supported grade/field; otherwise use its selector.
+export function studentCourseCatalogPath(grade: number | null | undefined, field: string | null | undefined): string {
+  const context = parseCourseContext({ grade, field });
+  return context ? courseCatalogPath(context) : "/courses";
+}
+
 export function courseLandingPath(context: CourseContext): string {
   return `/?${new URLSearchParams({ grade: String(context.grade), field: context.field })}#find-path`;
 }
