@@ -39,13 +39,17 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [otp, setOtp] = useState("");
   const [resendAt, setResendAt] = useState(0);
   async function phoneRequest(body:Record<string,unknown>){
+    // AbortSignal.timeout is absent in older iOS Safari. If it throws before
+    // fetch starts, the UI incorrectly reports a network failure on every login.
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 20000);
     try{
-      const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+      const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
       const result=await response.json();if(!response.ok)throw new PhoneRequestError(result.message||'ارتباط انجام نشد.',response.status);return result;
     }catch(error){
       if(error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError'||error.name==='TypeError'))throw new PhoneRequestError('ارتباط با سرور برقرار نشد یا بیش از حد طول کشید؛ کمی بعد دوباره تلاش کن.',null);
       throw error;
-    }
+    }finally{window.clearTimeout(timer);}
   }
   async function verifyPhone(event:FormEvent<HTMLFormElement>){
     event.preventDefault();if(!challenge||!/^\d{6}$/.test(otp))return setMessage('کد شش‌رقمی را وارد کن.');

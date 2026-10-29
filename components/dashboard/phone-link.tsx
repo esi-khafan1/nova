@@ -10,11 +10,13 @@ export function PhoneLink({verifiedPhone,enabled}:{verifiedPhone:string|null;ena
   if(!normalizeMobile(phone)){setMessage('شماره معتبر وارد کن.');return;}
   if(pending&&!/^\d{6}$/.test(code)){setMessage('کد شش‌رقمی را وارد کن.');return;}
   if(!pending&&Date.now()<sentAt+60000){setMessage('برای درخواست جدید یک دقیقه صبر کن.');return;}
+  const controller=new AbortController();
+  const timer=window.setTimeout(()=>controller.abort(),20000);
   setBusy(true);setMessage('');try{
-   const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:pending?'verify-link':'link',phone,token:code}),signal:AbortSignal.timeout(20000)});
+   const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:pending?'verify-link':'link',phone,token:code}),signal:controller.signal});
    const data=await response.json();if(!response.ok)throw Error(data.message);
    if(pending){setCode('');setDone(true);}else{setPending(true);setSentAt(Date.now());setMessage('کد ارسال شد؛ شماره فقط پس از تأیید به همین حساب متصل می‌شود.');}
-  }catch(error){setMessage(error instanceof Error?error.message:'ارتباط برقرار نشد.');}finally{setBusy(false);}
+  }catch(error){setMessage(error instanceof Error?error.message:'ارتباط برقرار نشد.');}finally{window.clearTimeout(timer);setBusy(false);}
  }
  return <section className="portal-card phone-link-card" aria-labelledby="phone-link-title">
   <div className="phone-link-heading"><span className="phone-link-eyebrow">امنیت و ورود به حساب</span><h2 id="phone-link-title">اتصال شماره برای ورود به همین حساب</h2><p>ورود ایمیلی و رمز فعلی حفظ می‌شوند. حساب‌ها ادغام نمی‌شوند.</p></div>

@@ -19,7 +19,8 @@ function load(file, dependencies = {}) {
       throw Error(`Unexpected import: ${name}`);
     },
     window: global.window, document: global.document, FormData: global.FormData,
-    fetch: global.fetch, AbortSignal, URL, Date, Error, TypeError, console,
+    // Emulate an iPhone Safari without the newer AbortSignal.timeout static API.
+    fetch: global.fetch, AbortSignal: Object.freeze({}), AbortController, URL, Date, Error, TypeError, console,
   });
   return moduleStub.exports;
 }
@@ -42,10 +43,13 @@ const phoneAuth = load('lib/phone-auth.ts');
 const passwords = load('lib/password-input.ts');
 const requests = [];
 let signupOutcome = 'normal';
+let signinOutcome = 'normal';
 global.fetch = async (url, options) => {
   assert.equal(url, '/api/auth/phone');
+  assert.ok(options.signal instanceof AbortSignal, 'Every request must have a working abort signal.');
   const request = JSON.parse(options.body);
   requests.push(request);
+  if (request.action === 'signin' && signinOutcome === 'abort') throw Object.assign(new Error('Mock abort'), { name: 'AbortError' });
   if (request.action === 'signup' && signupOutcome === 'network') throw new TypeError('Mock network failure');
   if (request.action === 'signup' && signupOutcome === 'exists') return { ok: false, status: 409, json: async () => ({ message: 'این شماره قبلاً ثبت‌نام شده است؛ اگر شماره‌ات را تأیید کرده‌ای، از بخش ورود با رمز عبورت استفاده کن.' }) };
   const ok = request.action !== 'signin' && !(request.action === 'verify' && request.token === '000000');
@@ -126,6 +130,13 @@ const submit = async () => { await act(async () => { document.querySelector('for
   await submit();
   assert.equal(requests.at(-1).email, 'legacy@example.com', 'Keep quiet legacy email/password signin.');
   assert.equal(requests.at(-1).phone, undefined);
+  signinOutcome = 'abort';
+  const beforeAbort = requests.length;
+  await submit();
+  assert.equal(requests.length, beforeAbort + 1, 'Even without AbortSignal.timeout, the request must reach fetch.');
+  assert.match(document.querySelector('.nova-auth-message').textContent, /ارتباط با سرور برقرار نشد یا بیش از حد طول کشید/);
+  assert.equal(document.querySelector('.nova-auth-submit').disabled, false, 'An aborted request must release the form.');
+  signinOutcome = 'normal';
   await act(async () => signinRoot.unmount());
 
   signupOutcome = 'exists';
