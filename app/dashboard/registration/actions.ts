@@ -17,7 +17,9 @@ export async function submitRegistration(_state: { error?: string; success?: str
     const { error } = await supabase.rpc("save_student_account_details", { payload: values });
     if (error) return { error: "ذخیره اطلاعات حساب انجام نشد؛ دوباره تلاش کن." };
     revalidatePath("/dashboard", "layout");
-    return { success: "اطلاعات حساب ذخیره شد. فعال‌سازی خدمات جداگانه توسط مدیر انجام می‌شود." };
+    return { success: profile.registration_status === "active"
+      ? "اطلاعات حساب ذخیره شد. حسابت فعال است و نیازی به فعال‌سازی دوباره نداری."
+      : "اطلاعات حساب ذخیره شد. فعال‌سازی خدمات جداگانه توسط مدیر انجام می‌شود." };
   }
   if (profile.registration_status === "active") redirect("/dashboard/student");
   const selection = parseCourseSelection({ grade: text("grade"), field: text("study_field"), course: text("course"), months: text("months") });
