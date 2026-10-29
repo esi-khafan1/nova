@@ -3,9 +3,9 @@ export function LandingHero() {
   return <section className="nova-approved-hero" aria-labelledby="nova-hero-title">
     <picture>
       <source media="(max-width: 700px)" srcSet="/nova/hero-mobile-outpaint.webp" type="image/webp" />
-      <source media="(max-width: 700px)" srcSet="/nova/hero-mobile-outpaint.png" />
-      <source srcSet="/nova/hero-desktop.webp" type="image/webp" />
-      <img className="nova-hero-background" src="/nova/hero-desktop.png" width="2172" height="724" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
+      {/* Keep the fallback src lightweight too: preloading/hydration can request it
+          even when the browser displayed the matching WebP <source>. */}
+      <img className="nova-hero-background" src="/nova/hero-desktop.webp" width="2172" height="724" alt="ستارهٔ دانش‌آموز نووا در کنار برنامهٔ مطالعه، هدف و نمودار پیشرفت" fetchPriority="high" />
     </picture>
     <div className="nova-hero-inner"><div className="nova-hero-copy">
       <p className="nova-eyebrow">نوآ آکادمی | همراه مسیر موفقیت</p>

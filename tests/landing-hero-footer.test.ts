@@ -6,9 +6,10 @@ const approved = readFileSync("app/landing-approved.css", "utf8");
 const refresh = readFileSync("app/landing-hero-refresh.css", "utf8");
 const mobile = readFileSync("app/landing-mobile.css", "utf8");
 
-assert.match(hero, /srcSet="\/nova\/hero-desktop\.webp" type="image\/webp"/);
+assert.match(hero, /src="\/nova\/hero-desktop\.webp" width="2172" height="724"/);
 assert.match(hero, /srcSet="\/nova\/hero-mobile-outpaint\.webp" type="image\/webp"/);
-assert.match(hero, /src="\/nova\/hero-desktop\.png" width="2172" height="724"/);
+assert.doesNotMatch(hero, /hero-(?:desktop|mobile-outpaint)\.png/, "Do not advertise large PNG fallbacks in the DOM: Firefox fetched the desktop fallback after WebP.");
+assert.match(hero, /fetchPriority="high"/);
 for (const path of ["public/nova/hero-desktop.webp", "public/nova/hero-mobile-outpaint.webp", "public/images/approved-star-clusters.webp"]) {
   const image = readFileSync(path);
   assert.equal(image.toString("ascii", 0, 4), "RIFF");
