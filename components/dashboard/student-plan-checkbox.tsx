@@ -30,6 +30,8 @@ export function StudentPlanCheckbox({
   const savedEntry = isTestActivity ? defaultCompletedTestCount?.toString() ?? "" : formatStudyDuration(defaultCompletedMinutes);
   const [checked, setChecked] = useState(defaultChecked);
   const [entry, setEntry] = useState(savedEntry);
+  // Track successful edits even if the server refresh has not remounted this box yet.
+  const [recordedValue, setRecordedValue] = useState<number | null>(isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes);
   const [hasError, setHasError] = useState(false);
   const [isPending, startTransition] = useTransition();
   const completedValue = isTestActivity
@@ -38,12 +40,13 @@ export function StudentPlanCheckbox({
 
   const saveProgress = (nextChecked: boolean) => {
     if (isPending) return;
-    if (nextChecked && completedValue === null) {
+    // An empty input is a full planned activity, not a measured actual value.
+    if (nextChecked && entry.trim() !== "" && completedValue === null) {
       setHasError(true);
       return;
     }
     setHasError(false);
-    if (nextChecked && !isTestActivity) setEntry(formatStudyDuration(completedValue));
+    if (nextChecked && !isTestActivity && completedValue !== null) setEntry(formatStudyDuration(completedValue));
     setChecked(nextChecked);
     startTransition(async () => {
       const result = await togglePlanItemCompletion(
@@ -57,6 +60,7 @@ export function StudentPlanCheckbox({
         setHasError(true);
         return;
       }
+      setRecordedValue(nextChecked ? completedValue : null);
       router.refresh();
     });
   };
@@ -78,7 +82,7 @@ export function StudentPlanCheckbox({
         <strong>{canToggle ? "انجام داده‌ام" : checked ? "انجام‌شده" : "هنوز موعدش نرسیده"}</strong>
       </label>
       <div className="student-test-count">
-        <span>{isTestActivity ? `هدف مشاور: ${targetTestCount ? faNumber(targetTestCount) : "—"} تست` : "زمان را به صورت ساعت:دقیقه وارد کن؛ مثلاً 01:30"}</span>
+        <span>{isTestActivity ? `هدف مشاور: ${targetTestCount ? faNumber(targetTestCount) : "—"} تست` : "زمان واقعی را به صورت ساعت:دقیقه وارد کن؛ مثلاً 01:30"}</span>
         <label>
           {isTestActivity ? "تعداد تست زده شده" : isExamActivity ? "مدت آزمون (ساعت:دقیقه)" : "مدت مطالعه (ساعت:دقیقه)"}
           <input
@@ -96,17 +100,17 @@ export function StudentPlanCheckbox({
             onChange={(event) => { setEntry(event.target.value); setHasError(false); }}
             onBlur={() => {
               if (!isTestActivity && completedValue !== null) setEntry(formatStudyDuration(completedValue));
-              if (checked && (isTestActivity
-                ? entry !== savedEntry
-                : completedValue === null ? entry !== savedEntry : completedValue !== defaultCompletedMinutes)) {
-                if (completedValue !== null) saveProgress(true);
+              const recordedEntry = isTestActivity ? recordedValue?.toString() ?? "" : formatStudyDuration(recordedValue);
+              if (checked && (completedValue === null ? entry !== recordedEntry : completedValue !== recordedValue)) {
+                if (entry.trim() === "" || completedValue !== null) saveProgress(true);
                 else setHasError(true);
               }
             }}
             placeholder={isTestActivity ? "مثلاً ۳۰" : "01:30"}
           />
         </label>
-        {hasError && <small role="alert">{isTestActivity ? "برای ثبت انجام، تعداد تست معتبر (۱ تا ۵۰۰۰) را وارد کن." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن."}</small>}
+        <small className="student-progress-optional">{isTestActivity ? "اختیاری؛ اگر خالی بماند، هدف تست کامل حساب می‌شود." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
+        {hasError && <small role="alert">{isTestActivity ? "تعداد تست را بین ۱ تا ۵۰۰۰ وارد کن یا خالی بگذار." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار."}</small>}
       </div>
     </div>
   );

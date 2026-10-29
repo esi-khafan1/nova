@@ -5,6 +5,19 @@ const study:StudyItem={id:'a',plan_id:'p',day_of_week:0,duration_minutes:90,subj
 const tests:StudyItem={...study,id:'b',duration_minutes:60,activity_type:'practice_tests',target_test_count:40};
 const completion=(id:string,count:number|null):StudyCompletion=>({item_id:id,completed_at:'2026-10-14T08:00:00Z',completed_test_count:count});
 test('fulfillment ratios are independent of planned study time',()=>{const map=new Map([['a',completion('a',null)],['b',completion('b',20)]]);assert.equal(activityRatio(study,map.get('a')),1);assert.equal(activityRatio(tests,map.get('b')),0.5);assert.equal(summarizeItems([study,tests],map).percent,75);assert.equal(summarizeItems([study,tests],map).minutes,120);assert.equal(summarizeItems([study,tests],map).tests,20);assert.equal(activityRatio(tests,completion('b',80)),1);assert.equal(activityRatio(tests),0);assert.equal(summarizeItems([],map).percent,null);assert.equal(summarizeItems([study,tests],new Map()).percent,0);});
+test('empty amounts on checked boxes mean full goals without entered actual measurements',()=>{
+ const inferredStudy=completion('a',null),inferredTests=completion('b',null);
+ const map=new Map([['a',inferredStudy],['b',inferredTests]]);
+ assert.equal(activityRatio(study,inferredStudy),1);
+ assert.equal(activityRatio(tests,inferredTests),1);
+ const summary=summarizeItems([study,tests],map);
+ assert.equal(summary.percent,100);
+ assert.equal(summary.minutes,150);
+ assert.equal(summary.tests,40);
+ const noTarget={...tests,target_test_count:null};
+ assert.equal(activityRatio(noTarget,inferredTests),1);
+ assert.equal(summarizeItems([noTarget],map).tests,0,'Do not invent a count for a legacy box without a target');
+});
 test('recorded study minutes drive time and fulfillment; legacy ticks retain planned duration',()=>{
  const actual={...completion('a',null),completed_minutes:45};
  const map=new Map([['a',actual],['b',completion('b',20)]]);

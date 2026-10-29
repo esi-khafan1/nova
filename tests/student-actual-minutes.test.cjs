@@ -30,9 +30,12 @@ const fs=require('node:fs');
  await db.exec(old.slice(old.indexOf('create or replace function public.set_weekly_plan_item_progress('),old.indexOf('-- Keep the older boolean-only RPC')));
  const migration=fs.readFileSync('supabase/migrations/086_student_actual_minutes.sql','utf8');
  await db.exec(migration.split('-- Add the optional value')[0]);
+ await db.exec(fs.readFileSync('supabase/migrations/087_optional_plan_progress_amounts.sql','utf8').replace(/^notify .*$/gim,''));
  const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const save=(id,completed,count,minutes)=>db.query('select public.set_weekly_plan_item_progress($1,$2,$3,$4)',[id,completed,count,minutes]);
  await actor(own);
+ await save(lesson,true,null,null);
+ assert.equal((await db.query('select completed_minutes from public.weekly_plan_item_completions where item_id=$1',[lesson])).rows[0].completed_minutes,null,'Full plan duration is inferred, not stored as actual minutes');
  await save(lesson,true,null,45);
  let row=(await db.query('select completed_minutes,completed_test_count,checked_at from public.weekly_plan_item_completions where item_id=$1',[lesson])).rows[0];
  assert.equal(row.completed_minutes,45);assert.equal(row.completed_test_count,null);
@@ -40,9 +43,13 @@ const fs=require('node:fs');
  await save(lesson,true,null,125);
  row=(await db.query('select completed_minutes,checked_at from public.weekly_plan_item_completions where item_id=$1',[lesson])).rows[0];
  assert.equal(row.completed_minutes,125);assert.equal(row.checked_at.getTime(),checkedAt.getTime(),'editing actual minutes must preserve first tick');
+ await save(tests,true,null,null);
+ assert.equal((await db.query('select completed_test_count,completed_minutes from public.weekly_plan_item_completions where item_id=$1',[tests])).rows[0].completed_test_count,null,'A full test goal with no count must remain inferred');
  await save(tests,true,9,null);
  assert.equal((await db.query('select completed_test_count,completed_minutes from public.weekly_plan_item_completions where item_id=$1',[tests])).rows[0].completed_test_count,9);
- for(const [id,completed,count,minutes] of [[lesson,true,null,0],[lesson,true,null,1441],[lesson,true,3,40],[lesson,true,null,null],[tests,true,9,30],[tests,true,null,null],[tests,false,null,1],['12345678-1234-4123-8123-123456789014',true,null,40],['12345678-1234-4123-8123-123456789015',true,null,40]]){
+ await save(tests,true,null,null);
+ assert.equal((await db.query('select completed_test_count from public.weekly_plan_item_completions where item_id=$1',[tests])).rows[0].completed_test_count,null,'Clearing an actual test count returns to an inferred full goal');
+ for(const [id,completed,count,minutes] of [[lesson,true,null,0],[lesson,true,null,1441],[lesson,true,3,40],[tests,true,9,30],[tests,false,null,1],['12345678-1234-4123-8123-123456789014',true,null,40],['12345678-1234-4123-8123-123456789015',true,null,40]]){
   await assert.rejects(()=>save(id,completed,count,minutes),undefined,`Must reject ${id} / ${completed} / ${count} / ${minutes}`);
  }
  assert.equal((await db.query('select completed_minutes from public.weekly_plan_item_completions where item_id=$1',[lesson])).rows[0].completed_minutes,125,'failed saves roll back previous tick');
