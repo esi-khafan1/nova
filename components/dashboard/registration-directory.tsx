@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { loadRegistrationDirectory } from "@/lib/load-registration-directory";
-import { registrationLabels } from "@/lib/registration";
+import { isPendingUnassignedReceipt, prioritizePendingUnassignedReceipts, registrationLabels } from "@/lib/registration";
 import { courseTypeLabel, courseDurationLabel } from "@/lib/courses";
 import { studyFieldLabels } from "@/lib/study-catalog";
 import {
@@ -31,13 +31,16 @@ export async function RegistrationDirectory({
     return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;
   }
 
+  const orderedRows = prioritizePendingUnassignedReceipts(rows);
+  const waitingForReview = rows.filter(isPendingUnassignedReceipt).length;
+
   return (
     <section className="portal-card registration-directory">
       <div className="portal-card-title">
         <div>
           <h2>ثبت‌نام، فیش و تخصیص مشاور</h2>
           <p>
-            برای دانش‌آموزهای بدون مشاور، مشاور انتخاب کن؛ با اختصاص مشاور، حساب و خدمات دانش‌آموز هم فعال می‌شوند.
+            دانش‌آموزهای دارای فیش که هنوز تأیید نشده‌اند و مشاور ندارند، در ابتدای فهرست هستند. با اختصاص مشاور، حساب و خدمات دانش‌آموز فعال می‌شوند.
           </p>
         </div>
         <a className="button button-secondary" href="/api/registrations/export">
@@ -47,6 +50,7 @@ export async function RegistrationDirectory({
       <small className="registration-export-note">خروجی شامل لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
 
       <div className="registration-summary" aria-label="خلاصه دانش‌آموزها">
+        <span>فیش‌های منتظر تأیید و بدون مشاور <strong>{waitingForReview.toLocaleString("fa-IR")}</strong></span>
         <span>کل دانش‌آموزها <strong>{rows.length.toLocaleString("fa-IR")}</strong></span>
         <span>بدون مشاور <strong>{rows.filter((row) => !row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
         <span>دارای مشاور <strong>{rows.filter((row) => row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
@@ -68,7 +72,7 @@ export async function RegistrationDirectory({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {orderedRows.map((row) => {
                 const canManualActivate =
                   row.registration_status !== "active" && row.has_account_details;
                 const canActivateWithReceipt = row.registration_status === "pending";

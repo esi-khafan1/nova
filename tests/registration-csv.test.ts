@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import { buildRegistrationCsv, registrationCsvHeaders, registrationCsvValues } from "../lib/registration-csv";
-import { type RegistrationRow } from "../lib/registration";
+import { prioritizePendingUnassignedReceipts, type RegistrationRow } from "../lib/registration";
 import { loadRegistrationDirectory } from "../lib/load-registration-directory";
 
 const base: RegistrationRow = {
@@ -40,7 +40,7 @@ assert.ok(route.includes("buildRegistrationCsv(rows)"));
 // Verify actual enrichment, including account-only records and multiple batches,
 // without reading or writing any real student's data.
 async function checkDirectory() {
-  const source = Array.from({ length: 501 }, (_, i) => ({ ...base, student_id: String(i), receipt_path: null }));
+  const source = Array.from({ length: 501 }, (_, i) => ({ ...base, student_id: String(i), receipt_path: i === 500 ? "500/receipt.jpg" : null }));
   const ranges: number[] = [];
   const batches: number[] = [];
   const mock = {
@@ -52,22 +52,28 @@ async function checkDirectory() {
       } };
     },
     from(table: string) {
-      return { select() { return { async in(_key: string, ids: string[]) {
+      return { select() { return { in(_key: string, ids: string[]) {
         batches.push(ids.length);
         const data = table === "student_registrations"
           ? ids.filter(id => id === "0").map(student_id => ({ student_id, course_type: "with_exam", course_duration_months: 6, additional_notes: "توضیحات خرید" }))
-          : ids.filter(id => id === "0" || id === "500").map(student_id => ({ student_id, telegram_id: "account_test", province: "فارس", city: "شیراز", additional_notes: "توضیحات حساب" }));
-        return { data, error: null };
+          : table === "student_account_details"
+            ? ids.filter(id => id === "0" || id === "500").map(student_id => ({ student_id, telegram_id: "account_test", province: "فارس", city: "شیراز", additional_notes: "توضیحات حساب" }))
+            : [];
+        return table === "counselor_students"
+          ? { order: async () => ({ data, error: null }) }
+          : Promise.resolve({ data, error: null });
       } }; } };
     },
   };
   const rows = await loadRegistrationDirectory(mock as unknown as Parameters<typeof loadRegistrationDirectory>[0]);
   assert.deepEqual(ranges, [0, 500]);
-  assert.deepEqual(batches, [200, 200, 200, 200, 101, 101]);
+  assert.deepEqual(batches, [200, 200, 200, 200, 200, 200, 101, 101, 101]);
+  assert.equal(prioritizePendingUnassignedReceipts(rows)[0].student_id, "500", "Receipt on a later page must appear first in the activation view.");
+  assert.equal(rows[0].student_id, "0", "The loader / CSV order must not change.");
   assert.deepEqual(registrationCsvValues(rows[0]).slice(11), ["مشاوره با آزمون", 6, "توضیحات خرید"]);
   assert.deepEqual(registrationCsvValues(rows[500]).slice(11), ["", "", "توضیحات حساب"]);
   assert.deepEqual(registrationCsvValues(rows[1]).slice(11), ["", "", ""]);
-  const failure = { ...mock, from() { return { select() { return { async in() { return { data: null, error: new Error("denied") }; } }; } }; } };
+  const failure = { ...mock, from() { return { select() { return { in() { return { order: async () => ({ data: null, error: new Error("denied") }) }; } }; } }; } };
   await assert.rejects(() => loadRegistrationDirectory(failure as unknown as Parameters<typeof loadRegistrationDirectory>[0]), /Registration details unavailable/);
 }
 checkDirectory().then(() => {

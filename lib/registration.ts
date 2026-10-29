@@ -1,6 +1,21 @@
 export const provinces = ["آذربایجان شرقی","آذربایجان غربی","اردبیل","اصفهان","البرز","ایلام","بوشهر","تهران","چهارمحال و بختیاری","خراسان جنوبی","خراسان رضوی","خراسان شمالی","خوزستان","زنجان","سمنان","سیستان و بلوچستان","فارس","قزوین","قم","کردستان","کرمان","کرمانشاه","کهگیلویه و بویراحمد","گلستان","گیلان","لرستان","مازندران","مرکزی","هرمزگان","همدان","یزد"];
 export const registrationLabels:Record<string,string>={incomplete:"اطلاعات ناقص",pending:"منتظر تأیید و تخصیص مشاور",active:"فعال"};
 export type RegistrationRow={student_id:string;full_name:string;phone:string|null;telegram_id:string|null;grade:number|null;study_field:import("./study-catalog").StudyField|null;province:string|null;city:string|null;registration_status:string;receipt_path:string|null;receipt_name:string|null;counselor_name:string|null;counselor_id?:string|null;created_at:string;course_type?:string|null;course_duration_months?:number|null;additional_notes?:string|null;has_account_details?:boolean};
+
+export function isPendingUnassignedReceipt(row: RegistrationRow): boolean {
+  return row.registration_status === "pending" && Boolean(row.receipt_path) && !row.counselor_id;
+}
+
+// Reorder only the activation view, after loading every directory page. Preserve
+// the existing newest-first order within both groups and leave CSV export alone.
+export function prioritizePendingUnassignedReceipts(rows: RegistrationRow[]): RegistrationRow[] {
+  const priority: RegistrationRow[] = [];
+  const others: RegistrationRow[] = [];
+  for (const row of rows) {
+    (isPendingUnassignedReceipt(row) ? priority : others).push(row);
+  }
+  return [...priority, ...others];
+}
 export type RegistrationFormValues={full_name?:string;first_name?:string;last_name?:string;phone?:string;telegram_id?:string;grade?:number;study_field?:string;province?:string;city?:string;receipt_name?:string;additional_notes?:string};
 export function normalizeDigits(value:string){return value.replace(/[۰-۹٠-٩]/g,c=>String("۰۱۲۳۴۵۶۷۸۹".includes(c)?"۰۱۲۳۴۵۶۷۸۹".indexOf(c):"٠١٢٣٤٥٦٧٨٩".indexOf(c)));}
 export function validateRegistration(v:RegistrationFormValues, accountOnly = false){
