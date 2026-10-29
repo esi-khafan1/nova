@@ -7,8 +7,8 @@ for(const n of ['someone@example.com','+12025551234','0912','091083121590',null,
 for(const n of ['09108312159','+989108312159','00989108312159'])assert.equal(helpers.isEnglishMobileInput(n),true);
 for(const n of ['۰۹۱۰۸۳۱۲۱۵۹','٠٩١٠٨٣١٢١٥٩','09108312159🙂',null])assert.equal(helpers.isEnglishMobileInput(n),false);
 assert.equal(helpers.hasConfirmedContact({phone_confirmed_at:'now'}),true);assert.equal(helpers.hasConfirmedContact({email_confirmed_at:'now'}),true);assert.equal(helpers.hasConfirmedContact({}),false);
-let proofExpected=false;let calls=[],owner={id:'owner',email_confirmed_at:'now'},error=null;let proofCode='phone_not_confirmed';
-const client={auth:{getUser:async()=>({data:{user:owner},error:null}),signUp:async p=>{calls.push(['signup',p]);proofExpected=true;return {data:{user:{identities:[{}]}},error};},signInWithPassword:async p=>{calls.push(['signin',p]);if(proofExpected){proofExpected=false;return {error:{code:proofCode}};}return {error};},resend:async p=>{calls.push(['resend',p]);return {error};},updateUser:async p=>{calls.push(['update',p]);return {error};},verifyOtp:async p=>{calls.push(['verify',p]);return {data:{user:{id:owner?.id||'new',phone:p.phone,phone_confirmed_at:'now'}},error};}}};
+let proofExpected=false;let calls=[],owner={id:'owner',email_confirmed_at:'now'},error=null;let proofCode='phone_not_confirmed',existingConfirmed=false;
+const client={auth:{getUser:async()=>({data:{user:owner},error:null}),signUp:async p=>{calls.push(['signup',p]);proofExpected=!existingConfirmed;return {data:{user:{identities:existingConfirmed?[]:[{}]}},error};},signInWithPassword:async p=>{calls.push(['signin',p]);if(proofExpected){proofExpected=false;return {error:{code:proofCode}};}return {error};},resend:async p=>{calls.push(['resend',p]);return {error};},updateUser:async p=>{calls.push(['update',p]);return {error};},verifyOtp:async p=>{calls.push(['verify',p]);return {data:{user:{id:owner?.id||'new',phone:p.phone,phone_confirmed_at:'now'}},error};}}};
 const originGuard=load('lib/auth-origin.ts',{'@/lib/auth-urls':{AUTH_SITE_ORIGIN:'https://nova-academy.ir'}});
 const route=load('app/api/auth/phone/route.ts',{'next/server':{NextRequest,NextResponse},'@/lib/supabase/server':{createClient:async()=>client},'@/lib/phone-auth':helpers,'@/lib/password-input':password,'@/lib/return-path':returns,'@/lib/auth-origin':originGuard});
 const req=(body,cookie='',origin='https://nova.test')=>new NextRequest('https://nova.test/api/auth/phone',{method:'POST',headers:{origin,'content-type':'application/json',cookie},body:JSON.stringify(body)});
@@ -37,5 +37,11 @@ response=await route.POST(req({action:'signin',phone:'09108312159',password:'abc
 response=await route.POST(req({action:'signin',phone:'09108312159',password:'x'.repeat(9000)}));assert.equal(response.status,413);
 error={code:'phone_exists'};owner={id:'owner'};response=await route.POST(req({action:'link',phone:'09108312159'}));assert.equal(response.status,409);
 proofCode='invalid_credentials';error=null;response=await route.POST(req({action:'signup',phone:'09108312159',password:'abcdefgh',fullName:'Test Person'}));assert.equal(response.status,409);assert.equal(response.headers.get('set-cookie'),null,'Never confirm a pre-registered phone with a mismatched password');
+existingConfirmed=true;
+const beforeExisting=calls.length;
+response=await route.POST(req({action:'signup',phone:'09108312159',password:'abcdefgh',fullName:'Test Person'}));
+assert.equal(response.status,409);assert.match((await response.json()).message,/این شماره قبلاً ثبت‌نام شده است/);
+assert.equal(calls.length,beforeExisting+1,'An existing account must not be signed in or sent a verification challenge');
+assert.equal(response.headers.get('set-cookie'),null);
 console.log('Phone auth: normalization, verified contacts, bounded same-origin requests, metadata stripping, password-only login, signup confirmation/password and same-account linking passed (mocked Supabase).');
 })().catch(e=>{console.error(e);process.exitCode=1;});

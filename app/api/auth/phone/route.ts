@@ -68,10 +68,10 @@ export async function POST(request:NextRequest){
      return reply(409,'این شماره ثبت‌نام قبلی دارد؛ با رمز قبلی ادامه بده یا از پشتیبانی کمک بگیر.');
     }
    }
-   if(!error&&result.data.user?.identities?.length===0)return reply(409,"این حساب قبلاً ساخته شده است؛ وارد شوید.");
+   if(!error&&result.data.user?.identities?.length===0)return reply(409,"این شماره قبلاً ثبت‌نام شده است؛ اگر شماره‌ات را تأیید کرده‌ای، از بخش ورود با رمز عبورت استفاده کن.");
   }
   if(error){
-   if(error.code==='user_already_exists'||error.code==='phone_exists')return reply(409,link?"این شماره به حساب دیگری متصل است؛ شماره جابه‌جا یا حساب‌ها ادغام نمی‌شوند.":"این حساب قبلاً ساخته شده است؛ وارد شوید.");
+   if(error.code==='user_already_exists'||error.code==='phone_exists')return reply(409,link?"این شماره به حساب دیگری متصل است؛ شماره جابه‌جا یا حساب‌ها ادغام نمی‌شوند.":"این شماره قبلاً ثبت‌نام شده است؛ اگر شماره‌ات را تأیید کرده‌ای، از بخش ورود با رمز عبورت استفاده کن.");
    return reply(error.status===429?429:400,"ارسال کد انجام نشد؛ کمی صبر کن. اگر پیام رسیده، قبل از ارسال دوباره وضعیت را بررسی کن.");
   }
   const response=reply(200,"درخواست کد ثبت شد؛ اگر پیامک رسید، کد را وارد کن.");

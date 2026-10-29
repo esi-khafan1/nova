@@ -10,6 +10,10 @@ import { saveRecoveredPassword } from "@/app/auth/recovery/actions";
 import { englishPhoneMessage, isEnglishMobileInput, normalizeMobile } from "@/lib/phone-auth";
 
 type AuthMode = "signin" | "signup" | "reset";
+type SignupRecoveryHint = "existing" | "uncertain" | null;
+class PhoneRequestError extends Error {
+  constructor(message: string, readonly status: number | null) { super(message); }
+}
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const benefits = [
@@ -23,6 +27,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(initialMessage);
+  const [signupRecoveryHint, setSignupRecoveryHint] = useState<SignupRecoveryHint>(null);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [phoneValue, setPhoneValue] = useState("");
@@ -36,9 +41,9 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   async function phoneRequest(body:Record<string,unknown>){
     try{
       const response=await fetch('/api/auth/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
-      const result=await response.json();if(!response.ok)throw Error(result.message||'ارتباط انجام نشد.');return result;
+      const result=await response.json();if(!response.ok)throw new PhoneRequestError(result.message||'ارتباط انجام نشد.',response.status);return result;
     }catch(error){
-      if(error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError'||error.name==='TypeError'))throw Error('ارتباط با سرور برقرار نشد یا بیش از حد طول کشید؛ کمی بعد دوباره تلاش کن.');
+      if(error instanceof Error&&(error.name==='TimeoutError'||error.name==='AbortError'||error.name==='TypeError'))throw new PhoneRequestError('ارتباط با سرور برقرار نشد یا بیش از حد طول کشید؛ کمی بعد دوباره تلاش کن.',null);
       throw error;
     }
   }
@@ -75,15 +80,16 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     setPasswordError("");
   }
 
-  function changeMode(nextMode: AuthMode) {
+  function changeMode(nextMode: AuthMode, keepPhone = false) {
     setMode(nextMode);
     setChallenge(null);setOtp("");setResendAt(0);
     setShowPassword(false);
-    setPhoneValue("");
+    if (!keepPhone) setPhoneValue("");
     setPhoneError("");
     setPasswordValue("");
     setPasswordError("");
     setMessage("");
+    setSignupRecoveryHint(null);
     setSuccess(false);
     window.history.replaceState(null, "", `/auth?mode=${nextMode}&next=${encodeURIComponent(destination)}`);
   }
@@ -151,6 +157,7 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
   async function submitSignUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setSignupRecoveryHint(null);
     const data = new FormData(event.currentTarget);
     const fullName = String(data.get("fullName") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
@@ -170,7 +177,14 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     if(Date.now()<resendAt)return setMessage('برای دریافت کد جدید حداقل یک دقیقه صبر کن.');
     setLoading(true);
     try{await phoneRequest({action:'signup',phone:email,password,fullName,next:destination});setChallenge(normalizeMobile(email));setResendAt(Date.now()+60000);setSuccess(true);setMessage('درخواست کد ثبت شد؛ اگر پیامک رسید، کد را وارد کن تا وارد حساب شوی.');}
-    catch(error){setSuccess(false);setMessage(error instanceof Error?error.message:'ارسال کد انجام نشد.');}
+    catch(error){
+      setSuccess(false);
+      const uncertain = error instanceof PhoneRequestError && error.status === null;
+      setSignupRecoveryHint(error instanceof PhoneRequestError && error.status === 409 ? "existing" : uncertain ? "uncertain" : null);
+      setMessage(uncertain
+        ? 'پاسخ ثبت‌نام نرسید؛ معلوم نیست حساب ساخته شده یا نه. اگر قبلاً کد را تأیید کرده‌ای، ورود را امتحان کن. اگر پیامک رسیده ولی فرم کد باز نشده، درخواست را پیاپی تکرار نکن و با پشتیبانی تماس بگیر.'
+        : error instanceof Error ? error.message : 'ارسال کد انجام نشد.');
+    }
     finally{setLoading(false);}
   }
 
@@ -208,7 +222,12 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
 
             {message && (
               <div className={`nova-auth-message${success ? " success" : ""}`} role={success ? "status" : "alert"} aria-live="polite">
-                <AuthIcon name={success ? "check" : "info"} /><p>{message}</p>
+                <AuthIcon name={success ? "check" : "info"} />
+                <div><p>{message}</p>{mode === "signup" && signupRecoveryHint && (
+                  <button type="button" className="nova-auth-signin-hint" onClick={() => changeMode("signin", true)}>
+                    {signupRecoveryHint === "existing" ? "اگر شماره‌ات تأیید شده، ورود با همین شماره" : "حساب را قبلاً تأیید کرده‌ای؟ ورود با همین شماره"}
+                  </button>
+                )}</div>
               </div>
             )}
 

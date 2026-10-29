@@ -19,7 +19,7 @@ function load(file, dependencies = {}) {
       throw Error(`Unexpected import: ${name}`);
     },
     window: global.window, document: global.document, FormData: global.FormData,
-    fetch: global.fetch, AbortSignal, URL, Date, console,
+    fetch: global.fetch, AbortSignal, URL, Date, Error, TypeError, console,
   });
   return moduleStub.exports;
 }
@@ -41,12 +41,15 @@ const { createRoot } = require('react-dom/client');
 const phoneAuth = load('lib/phone-auth.ts');
 const passwords = load('lib/password-input.ts');
 const requests = [];
+let signupOutcome = 'normal';
 global.fetch = async (url, options) => {
   assert.equal(url, '/api/auth/phone');
   const request = JSON.parse(options.body);
   requests.push(request);
+  if (request.action === 'signup' && signupOutcome === 'network') throw new TypeError('Mock network failure');
+  if (request.action === 'signup' && signupOutcome === 'exists') return { ok: false, status: 409, json: async () => ({ message: 'این شماره قبلاً ثبت‌نام شده است؛ اگر شماره‌ات را تأیید کرده‌ای، از بخش ورود با رمز عبورت استفاده کن.' }) };
   const ok = request.action !== 'signin' && !(request.action === 'verify' && request.token === '000000');
-  return { ok, json: async () => ({ ok, message: ok ? 'ok' : 'کد صحیح نیست یا منقضی شده است.' }) };
+  return { ok, status: ok ? 200 : 400, json: async () => ({ ok, message: ok ? 'ok' : 'کد صحیح نیست یا منقضی شده است.' }) };
 };
 const Link = ({ href, children }) => React.createElement('a', { href }, children);
 const { UnifiedAuth } = load('components/auth/unified-auth.tsx', {
@@ -124,6 +127,38 @@ const submit = async () => { await act(async () => { document.querySelector('for
   assert.equal(requests.at(-1).email, 'legacy@example.com', 'Keep quiet legacy email/password signin.');
   assert.equal(requests.at(-1).phone, undefined);
   await act(async () => signinRoot.unmount());
+
+  signupOutcome = 'exists';
+  const existingRoot = createRoot(document.getElementById('root'));
+  await act(async () => existingRoot.render(React.createElement(UnifiedAuth, { initialMode: 'signup', phoneSignup: true })));
+  await fill(input('signup-name'), 'Test Student');
+  await fill(input('signup-email'), '09120000000');
+  await fill(input('signup-password'), 'TestPass123!');
+  const beforeExisting = requests.length;
+  await submit();
+  assert.equal(requests.length, beforeExisting + 1);
+  assert.match(document.querySelector('.nova-auth-message').textContent, /این شماره قبلاً ثبت‌نام شده است/);
+  assert.equal(input('signup-code'), null, 'Known existing account should not enter the OTP step.');
+  await act(async () => document.querySelector('.nova-auth-signin-hint').click());
+  assert.equal(input('signin-email').value, '09120000000', 'Carry the phone into the sign-in form.');
+  assert.equal(input('signin-password').value, '', 'Do not carry a password across auth modes.');
+  await act(async () => existingRoot.unmount());
+
+  signupOutcome = 'network';
+  const uncertainRoot = createRoot(document.getElementById('root'));
+  await act(async () => uncertainRoot.render(React.createElement(UnifiedAuth, { initialMode: 'signup', phoneSignup: true })));
+  await fill(input('signup-name'), 'Test Student');
+  await fill(input('signup-email'), '09120000000');
+  await fill(input('signup-password'), 'TestPass123!');
+  const beforeTimeout = requests.length;
+  await submit();
+  assert.equal(requests.length, beforeTimeout + 1, 'Ambiguous failure must not automatically resend an SMS.');
+  const uncertainMessage = document.querySelector('.nova-auth-message').textContent;
+  assert.match(uncertainMessage, /معلوم نیست حساب ساخته شده یا نه/);
+  assert.doesNotMatch(uncertainMessage, /این شماره قبلاً ثبت‌نام شده است/);
+  assert.equal(input('signup-code'), null);
+  assert.ok(document.querySelector('.nova-auth-signin-hint'));
+  await act(async () => uncertainRoot.unmount());
   dom.window.close();
-  console.log('Mock DOM auth: English-only phone/password on signup and signin, OTP retry/success retains credentials, legacy email login works; no SMS sent.');
+  console.log('Mock DOM auth: signup/OTP retention, existing-account guidance, ambiguous timeout without retry, safe sign-in switch; no SMS sent.');
 })().catch(error => { console.error(error); process.exitCode = 1; dom.window.close(); });

@@ -67,6 +67,8 @@
 .nova-auth-message { display: flex; align-items: flex-start; gap: 8px; padding: 12px; margin: 0 0 12px; border: 1px solid #f2ccb0; border-radius: 10px; background: #fff7ef; color: #8c410b; font-size: 14px; line-height: 1.9; }
 .nova-auth-message svg { margin-top: 3px; }
 .nova-auth-message p { margin: 0; }
+.nova-auth-message > div { min-width: 0; }
+.nova-auth-signin-hint { display: inline-flex; align-items: center; min-height: 44px; margin-top: 4px; padding: 0 2px; border: 0; background: transparent; color: #165bad; font: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .nova-auth-message.success { color: #246342; border-color: #c3e0ce; background: #f0faf3; }
 .nova-auth-story { grid-area: story; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 36px; margin: 12px 12px 12px 0; border: 1px solid #d8e8fb; border-radius: 20px; background: #edf5ff; }
 .nova-auth-story-copy { padding: 0 8px; position: relative; z-index: 1; }
