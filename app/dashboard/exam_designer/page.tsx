@@ -14,7 +14,7 @@ export default async function ExamDesignerPage({searchParams}:{searchParams:Prom
  ]);
  const boxes=(Array.isArray(boxesData)?boxesData:[]) as ExamBox[];
  const pending=boxes.filter(box=>!box.linked_exam_id);
- return <DashboardShell role="exam_designer" name={profile.full_name}><section className="portal-heading"><div><span>پنل طراح آزمون</span><h1>طراحی و مدیریت آزمون</h1><p>دفترچه‌ها را آماده کن، کلید را وارد کن و دانش‌آموزها را با جست‌وجوی نام به آزمون اضافه کن.</p></div></section>
+ return <DashboardShell role="exam_designer" name={profile.full_name}><section className="portal-heading"><div><span>پنل طراح آزمون</span><h1>طراحی و مدیریت آزمون</h1><p>دفترچه‌ها را آماده کن، کلید را وارد کن و دانش‌آموزان دارای مشاور را با جست‌وجوی نام به آزمون اضافه کن.</p></div></section>
  {params.saved&&<div className="portal-alert success">{params.saved==="published"?"آزمون منتشر شد و برای دانش‌آموزهای انتخاب‌شده قابل مشاهده است.":"پیش‌نویس ذخیره شد."}</div>}{params.error&&<div className="portal-alert error">{examSaveErrorMessage(params.error)}</div>}
  <section className="portal-card exam-box-requests"><div className="portal-card-title"><div><span>درخواست‌های مشاورها</span><h2>باکس‌های آزمون منتظر طراحی</h2></div><span className="exam-summary-pill">{toPersianDigits(pending.length)} درخواست</span></div>
  <p>هر باکس فقط یک «آزمون» در برنامه‌ هفتگی مشاور است؛ روز و درس همان باکس اینجا نمایش داده می‌شود. آزمون شبیه‌ساز ارسال نمی‌شود.</p>

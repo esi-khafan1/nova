@@ -4,6 +4,9 @@ const fs=require('node:fs');
 
 const migration=fs.readFileSync('supabase/migrations/079_exam_plan_boxes.sql','utf8').replace(/^notify .*$/gim,'');
 const editFix=fs.readFileSync('supabase/migrations/081_exam_box_edit_validation.sql','utf8').replace(/^notify .*$/gim,'');
+const explanationSave='create or replace function public.save_designer_exam('+fs.readFileSync('supabase/migrations/082_immediate_exam_review_explanations.sql','utf8')
+ .split('create or replace function public.save_designer_exam(',2)[1].split('-- A designer may add/correct an explanation',1)[0];
+const assignedPicker=fs.readFileSync('supabase/migrations/084_designer_assigned_student_picker.sql','utf8').replace(/^notify .*$/gim,'');
 const dashboard=fs.readFileSync('supabase/migrations/080_student_dashboard_exam_links.sql','utf8').replace(/^notify .*$/gim,'');
 const ids={
  designer:'11111111-1111-1111-1111-111111111111',
@@ -11,6 +14,7 @@ const ids={
  counselor:'33333333-3333-3333-3333-333333333333',
  studentA:'44444444-4444-4444-4444-444444444444',
  studentB:'55555555-5555-5555-5555-555555555555',
+ studentC:'f1111111-1111-1111-1111-111111111111',
  planA:'66666666-6666-6666-6666-666666666666',
  planB:'77777777-7777-7777-7777-777777777777',
  planC:'88888888-8888-8888-8888-888888888888',
@@ -32,6 +36,8 @@ const uuid=v=>`'${v}'::uuid`;
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  create table public.profiles(id uuid primary key,role public.app_role,registration_status text default 'active',full_name text,grade smallint,study_field text);
  create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
+ create function private.normalize_student_name(value text) returns text language sql immutable set search_path='' as $$
+  select regexp_replace(translate(lower(coalesce(value,'')),'يىك‌','ییک '),'[[:space:]]+',' ','g');$$;
  create table public.counselor_students(counselor_id uuid,student_id uuid);
  create table public.weekly_plans(id uuid primary key,counselor_id uuid,student_id uuid,week_start date,title text default 'برنامه',notes text,status public.content_status default 'published',routines jsonb default '[]'::jsonb);
  create table public.weekly_plan_items(id uuid primary key,plan_id uuid references public.weekly_plans(id) on delete cascade,day_of_week smallint,subject text,chapter text,activity_type text,duration_minutes smallint default 90,sort_order smallint default 0,details text,target_test_count smallint,source_grade smallint,preparation_track text default 'konkur',exam_year smallint);
@@ -39,7 +45,7 @@ const uuid=v=>`'${v}'::uuid`;
  create table public.exam_students(exam_id uuid,student_id uuid,primary key(exam_id,student_id));
  create table public.exam_sessions(exam_id uuid,student_id uuid);
  create table public.exam_attempts(exam_id uuid,student_id uuid);
- create table public.exam_booklets(id uuid,exam_id uuid,sort_order int,pdf_url text,question_count int,start_question_number int,end_question_number int,duration_minutes int,key_answers jsonb,subject_ranges jsonb,title text);
+ create table public.exam_booklets(id uuid,exam_id uuid,sort_order int,pdf_url text,explanation_pdf_url text,question_count int,start_question_number int,end_question_number int,duration_minutes int,key_answers jsonb,subject_ranges jsonb,title text);
  create table public.weekly_plan_item_completions(item_id uuid,student_id uuid,completed_at timestamptz default now(),checked_at timestamptz,completed_test_count int);
  grant usage on schema public,private,auth to authenticated;
  grant select on all tables in schema public to authenticated;
@@ -85,7 +91,8 @@ const uuid=v=>`'${v}'::uuid`;
 
  await db.query(`insert into public.profiles(id,role,full_name) values
   (${uuid(ids.designer)},'exam_designer','طراح اصلی'),(${uuid(ids.otherDesigner)},'exam_designer','طراح دوم'),
-  (${uuid(ids.counselor)},'counselor','مشاور'),(${uuid(ids.studentA)},'student','شیما'),(${uuid(ids.studentB)},'student','علی')`);
+  (${uuid(ids.counselor)},'counselor','مشاور'),(${uuid(ids.studentA)},'student','شیما'),(${uuid(ids.studentB)},'student','علی'),
+  (${uuid(ids.studentC)},'student','آرمان بدون مشاور')`);
  await db.query(`insert into public.counselor_students values(${uuid(ids.counselor)},${uuid(ids.studentA)}),(${uuid(ids.counselor)},${uuid(ids.studentB)})`);
  const start=`(current_date - 1)`;
  await db.query(`insert into public.weekly_plans(id,counselor_id,student_id,week_start,status) values
@@ -100,6 +107,8 @@ const uuid=v=>`'${v}'::uuid`;
   (${uuid(ids.boxPast)},${uuid(ids.planA)},0,'ریاضی','فصل ۱','exam',2)`);
  await db.exec(migration);
  await db.exec(editFix);
+ await db.exec(explanationSave);
+ await db.exec(assignedPicker);
 
  const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const boxes=async()=>(await db.query('select * from public.designer_exam_boxes()')).rows;
@@ -116,6 +125,11 @@ const uuid=v=>`'${v}'::uuid`;
  };
 
  await actor(ids.designer);
+ const search=async(text='',offset=0,size=51)=>(await db.query('select * from public.search_exam_students($1,$2,$3)',[text,offset,size])).rows;
+ assert.deepEqual(new Set((await search()).map(s=>s.id)),new Set([ids.studentA,ids.studentB]),'only assigned students appear');
+ assert.deepEqual((await search('آرمان')).map(s=>s.id),[],'unassigned student is absent even in targeted search');
+ assert.deepEqual((await search('علي')).map(s=>s.id),[ids.studentB],'Persian name normalization still works');
+ assert.deepEqual(new Set([...(await search('',0,1)),...(await search('',1,1))].map(s=>s.id)),new Set([ids.studentA,ids.studentB]),'pagination counts only eligible students');
  let rows=await boxes();
  assert.equal(rows.length,2,'only published, current exam boxes are shared');
  assert.deepEqual(new Set(rows.map(r=>r.item_id)),new Set([ids.boxA,ids.boxB]));
@@ -128,8 +142,10 @@ const uuid=v=>`'${v}'::uuid`;
  // Only a designer may read the queue.
  await actor(ids.counselor);
  await assert.rejects(()=>boxes(),/Only exam designers/);
+ await assert.rejects(()=>search(),/Only exam designers/);
  await actor(ids.studentA);
  await assert.rejects(()=>boxes(),/Only exam designers/);
+ await assert.rejects(()=>search(),/Only exam designers/);
 
  // Attaching an exam to a box keeps the box's own student accessible, while
  // other students are still enrolled through the normal picker.
@@ -144,6 +160,16 @@ const uuid=v=>`'${v}'::uuid`;
  const asObj=v=>typeof v==='string'?JSON.parse(v):v;
  const details=asObj((await db.query('select public.designer_exam_details($1) d',[exam])).rows[0].d);
  assert.deepEqual(details.box_ids,[ids.boxA]);
+ assert.equal(Number(details.excluded_student_count),0);
+ await db.exec('reset role');
+ await db.query('insert into public.exam_students(exam_id,student_id) values($1,$2)',[exam,ids.studentC]);
+ await actor(ids.designer);
+ const edited=asObj((await db.query('select public.designer_exam_details($1) d',[exam])).rows[0].d);
+ assert.deepEqual(edited.students,[],'edit picker hides legacy unassigned selections');
+ assert.equal(Number(edited.excluded_student_count),1,'editor warns before a save would remove an old unassigned enrollment');
+ await db.exec('reset role');
+ await db.query('delete from public.exam_students where exam_id=$1 and student_id=$2',[exam,ids.studentC]);
+ await actor(ids.designer);
 
  // Other students can be added to the same exam; unchecking a box detaches it.
  await save({0:exam,3:[ids.studentB],9:[]});
@@ -161,6 +187,8 @@ const uuid=v=>`'${v}'::uuid`;
  await fail({9:[ids.boxDraft]},/Invalid exam boxes/);
  await fail({9:[ids.boxPast]},/Invalid exam boxes/);
  await fail({9:['00000000-0000-0000-0000-000000000000']},/Invalid exam boxes/);
+ await fail({3:[ids.studentC],9:[]},/Invalid selected students/);
+ await fail({3:[ids.studentC],9:[ids.boxA]},/Invalid selected students/);
  await fail({3:[],9:[]},/Invalid selected students/);
  await fail({1:'BAD TEMPLATE',9:[ids.boxA]},/Invalid exam template/);
  assert.equal((await db.query('select linked_exam_id from public.weekly_plan_items where id=$1',[ids.boxA])).rows[0].linked_exam_id,exam,'failed saves leave links untouched');
