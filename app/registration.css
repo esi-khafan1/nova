@@ -2,6 +2,7 @@
 
 .registration-page .registration-full-name{grid-column:1/-1}
 .registration-verified-phone{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:600}.registration-verified-phone strong{display:flex;align-items:center;min-height:46px;padding:10px;border:1px solid #c8daff;border-radius:9px;background:#eff5ff;color:#12304d;font:inherit;letter-spacing:.04em}.registration-verified-phone small{color:#547191;font-size:12px;font-weight:400;line-height:1.8}
+.registration-form label>span>small{color:#547191;font-size:12px;font-weight:400;line-height:1.8}
 .registration-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px 28px;padding:28px 20px;border-top:1px solid #d8e4f5;background:#fff;font-size:14px}
 .registration-footer a{color:#225db2}.registration-footer form{margin:0}.registration-footer button{border:0;background:transparent;color:#b74808;font:inherit;cursor:pointer;min-height:44px;padding:8px}
 .registration-page>.nova-site-header{width:100%;max-width:none;margin:0;padding:0;display:block}

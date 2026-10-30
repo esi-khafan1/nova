@@ -60,6 +60,21 @@ test('both account and enrollment forms show verified number without an input; l
   }
 });
 
+test('optional hints share the label line so Telegram and verified phone controls align', () => {
+  for (const mode of ['profile', 'enrollment']) {
+    const verified = descendants(form('09121234567', mode));
+    const telegram = verified.find(node => node.type === 'label' && descendants(node).some(child => child.type === 'input' && child.props.name === 'telegram_id'));
+    const notes = verified.find(node => node.type === 'label' && node.props.className === 'registration-notes');
+    const phone = descendants(form(null, mode)).find(node => node.type === 'label' && descendants(node).some(child => child.type === 'input' && child.props.name === 'phone'));
+    for (const label of [telegram, notes, phone]) {
+      assert.equal(label.props.children[0].type, 'span', 'Title and optional hint must occupy one row.');
+      assert.ok(descendants(label.props.children[0]).some(child => child.type === 'small'));
+      assert.ok(['input', 'textarea'].includes(label.props.children[1].type));
+    }
+  }
+  assert.match(readFileSync('app/registration.css', 'utf8'), /\.registration-form label>span>small/);
+});
+
 test('course-selection page passes the confirmed phone to the enrollment form before activation', async () => {
   const jsx = (type, props) => ({ type, props });
   const selection = { grade: 10, field: 'mathematics', course: 'base', months: 3 };
