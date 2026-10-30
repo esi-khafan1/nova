@@ -26,7 +26,7 @@ const accountLoader = load('lib/load-student-account.ts', {});
 const phoneAuth = load('lib/phone-auth.ts', {});
 const link = { default: ({ href, children, ...props }) => React.createElement('a', { href, ...props }, children), __esModule: true };
 const { StudentProfileCompletionNotice } = load('components/dashboard/student-profile-completion-notice.tsx', {
-  'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': link,
+  'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': link, react: React,
 });
 const complete = {
   full_name: 'نیما حسینی', phone: '09121234567', telegram_id: 'nima_123',
@@ -116,11 +116,16 @@ test('missing or incomplete signup name prompts active students to complete thei
   }
 });
 
-test('active student with no account or registration row is prompted, but a pending student is not', async () => {
-  assert.match(await dashboard(), /اطلاعات حسابت را تکمیل کن/);
-  assert.match(await account(), /اطلاعات حسابت را تکمیل کن/);
-  assert.doesNotMatch(await dashboard({ status: 'pending' }), /اطلاعات حسابت را تکمیل کن/);
-  assert.doesNotMatch(await account({ status: 'pending' }), /اطلاعات حسابت را تکمیل کن/);
+test('active, pending and inactive students with missing information see the prompt upon panel entry', async () => {
+  for (const status of ['active', 'pending', 'incomplete']) {
+    const home = await dashboard({ status });
+    const edit = await account({ status });
+    assert.match(home, /اطلاعات حسابت را تکمیل کن/);
+    assert.match(edit, /اطلاعات حسابت را تکمیل کن/);
+    assert.match(home, /class="student-profile-completion-dialog"/);
+    assert.match(edit, /href="#student-account-details"/);
+    if (status !== 'active') assert.doesNotMatch(home, /حسابت فعال است/);
+  }
 });
 
 test('verified signup phone satisfies completion even when no stored phone exists', async () => {

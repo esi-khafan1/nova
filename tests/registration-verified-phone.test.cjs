@@ -64,6 +64,7 @@ test('course-selection page passes the confirmed phone to the enrollment form be
   const jsx = (type, props) => ({ type, props });
   const selection = { grade: 10, field: 'mathematics', course: 'base', months: 3 };
   const RegistrationForm = () => null;
+  const StudentProfileCompletionNotice = () => null;
   let accountPhone;
   const { default: Page } = load('app/dashboard/registration/page.tsx', {
     '@/lib/phone-auth': phoneAuth,
@@ -74,14 +75,19 @@ test('course-selection page passes the confirmed phone to the enrollment form be
     '@/lib/supabase/request-auth': { getRequestUser: async () => ({ user: confirmed }) },
     '@/lib/return-path': { safeReturnPath: path => path },
     '@/lib/courses': { parseCourseSelection: () => selection, courseRegistrationPath: () => '/dashboard/registration', studentCourseCatalogPath: () => '/courses' },
-    '@/lib/load-student-account': { loadStudentAccount: async (_db, _profile, phone) => { accountPhone = phone; return { values, registration: null, error: false }; } },
+    '@/lib/load-student-account': { loadStudentAccount: async (_db, _profile, phone) => { accountPhone = phone; return { values: { ...values, grade: null, study_field: null, city: null }, registration: null, error: false }; } },
     '@/components/registration/registration-form': { RegistrationForm },
+    '@/components/dashboard/student-profile-completion-notice': { StudentProfileCompletionNotice },
+    '@/lib/registration': registration,
     '@/app/registration.css': {},
     'react/jsx-runtime': { jsx, jsxs: jsx },
   });
   const page = await Page({ searchParams: Promise.resolve({ grade: '10', field: 'mathematics', course: 'base', months: '3' }) });
   assert.equal(accountPhone, '09121234567');
   assert.equal(descendants(page).find(node => node.type === RegistrationForm).props.verifiedPhone, '09121234567');
+  const reminder = descendants(page).find(node => node.type === StudentProfileCompletionNotice);
+  assert.match(reminder.props.issue, /استان و شهر/);
+  assert.equal(reminder.props.onRegistrationPage, true, 'The chosen course already supplies grade and field; link to the current form.');
 });
 
 function actionContext(user, status = 'active') {

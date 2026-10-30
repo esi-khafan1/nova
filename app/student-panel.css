@@ -69,3 +69,12 @@
 /* Publisher recommendations are on-screen guidance, never part of the A4 plan. */
 .student-portal .sp-recommended-publisher,
 .counselor-portal .sp-recommended-publisher{display:inline-flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;padding:8px 12px;border-radius:8px;background:#eef6ff;color:#123b63;font-size:14px;line-height:1.8}
+
+/* Student account-completion reminder on entering the panel. */
+.student-portal .student-profile-completion-dialog{width:min(92vw,510px);max-height:min(85dvh,680px);margin:auto;padding:28px;border:1px solid var(--sp-line);border-radius:18px;background:#fff;color:var(--sp-ink);box-shadow:0 18px 65px #15324f40;text-align:right;overflow:auto}
+.student-portal .student-profile-completion-dialog::backdrop{background:#102b4baa}
+.student-portal .student-profile-completion-dialog h2{margin:0 0 10px;font-size:22px}
+.student-portal .student-profile-completion-dialog p{margin:0 0 22px;color:var(--sp-copy);line-height:2}
+.student-portal .student-profile-dialog-actions{display:flex;gap:12px;flex-wrap:wrap}
+.student-portal .student-profile-dialog-actions .button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 18px;text-decoration:none;font-weight:700}
+@media(max-width:600px){.student-portal .student-profile-completion-dialog{padding:22px 18px}.student-portal .student-profile-dialog-actions{flex-direction:column}.student-portal .student-profile-dialog-actions .button{width:100%}}

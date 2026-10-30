@@ -13,11 +13,11 @@ export default async function StudentAccountPage() {
   const { supabase, profile, user } = await requireProfile(["student"], true);
   const verifiedPhone = verifiedMobileForAccount(user);
   const account = await loadStudentAccount(supabase, profile, verifiedPhone);
-  const completionIssue = profile.registration_status === "active" && !account.error ? requiredStudentFieldsIssue(account.values, true) : null;
+  const completionIssue = !account.error ? requiredStudentFieldsIssue(account.values, true) : null;
   return <DashboardShell role="student" name={profile.full_name}><div className="student-account-layout">
     <section className="portal-heading"><div><span>حساب کاربری</span><h1>اطلاعات و مدیریت حساب</h1><p>برای تکمیل اطلاعات حساب نیازی به انتخاب دوره یا ارسال فیش نیست.</p></div></section>
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>
-    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} onAccountPage/>}
+    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={profile.registration_status === "active"} onAccountPage/>}
     <section id="student-account-details" className="registration-card"><h2>اطلاعات حساب</h2>{account.error ? <p className="portal-alert error" role="alert">اطلاعات فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p> : <RegistrationForm values={account.values} verifiedPhone={verifiedPhone} mode="profile"/>}</section>
     <PhoneLink enabled={process.env.PHONE_SIGNUP_ENABLED === "true"} verifiedPhone={user.phone_confirmed_at ? user.phone || null : null}/>
     <section className="portal-card account-delete-card"><span>منطقه حساس</span><h2>حذف دائمی حساب</h2><p>با حذف حساب، پروفایل، برنامه‌های مرتبط، ثبت پیشرفت و پاسخ‌های آزمون وابسته به حساب حذف می‌شوند. این عملیات قابل بازگشت نیست.</p><DeleteAccount/></section>
