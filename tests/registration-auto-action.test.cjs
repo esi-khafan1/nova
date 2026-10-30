@@ -15,6 +15,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/dashboard/admin/regis
     if(name==='next/cache')return {revalidatePath:()=>{}};
     if(name==='next/navigation')return {redirect:url=>{throw new Error(url)}};
     if(name==='@/lib/auth')return {requireProfile:async roles=>{assert.deepEqual(Array.from(roles),['admin']);return {supabase}}};
+    if(name==='@/lib/registration')return {receiptImageType:()=>null};
     throw Error(name);
   },FormData,String,
 });

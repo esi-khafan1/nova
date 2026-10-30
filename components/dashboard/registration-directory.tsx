@@ -7,6 +7,7 @@ import { studyFieldLabels } from "@/lib/study-catalog";
 import {
   activateStudent,
   assignCounselor,
+  uploadStudentReceipt,
 } from "@/app/dashboard/admin/registrations/actions";
 import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
 import "@/app/registration.css";
@@ -83,7 +84,7 @@ export async function RegistrationDirectory({
                 const priorityReceipt = isPendingUnassignedReceipt(row);
 
                 return (
-                  <tr key={row.student_id}>
+                  <tr key={row.student_id} className={priorityReceipt ? "registration-priority-row" : hasReceipt ? "registration-receipt-row" : "registration-ordinary-row"}>
                     <td data-label="دانش‌آموز و تماس"><div className="registration-cell-content">
                       <strong>{row.full_name || "نام ثبت نشده"}</strong>
                       {priorityReceipt && <small className="registration-priority-label">اولویت بررسی · فیش ارسال شده</small>}
@@ -186,6 +187,18 @@ export async function RegistrationDirectory({
                               </button>
                             )}
                           </div>
+                        </form>
+                      )}
+                      {audience === "admin" && !isActive && row.has_account_details && (
+                        <form action={uploadStudentReceipt} className="registration-receipt-upload">
+                          <input name="student_id" type="hidden" value={row.student_id} />
+                          <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />
+                          <label>
+                            <span>{hasReceipt ? "جایگزینی فیش دریافت‌شده در تلگرام" : "بارگذاری فیش دریافت‌شده در تلگرام"}</span>
+                            <input name="receipt" type="file" accept="image/jpeg,image/png,image/webp" required aria-label={`عکس فیش ${row.full_name || "دانش‌آموز"}`} />
+                          </label>
+                          <small>عکس JPG، PNG یا WebP تا ۵ مگابایت؛ ثبت فیش به معنی تأیید پرداخت نیست.</small>
+                          <button type="submit" className="button button-secondary">ثبت فیش برای این دانش‌آموز</button>
                         </form>
                       )}
                       {audience === "admin" && !isActive && !canActivate && (

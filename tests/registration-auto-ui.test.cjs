@@ -12,7 +12,7 @@ const row = (name, changes={}) => ({student_id:name,full_name:name,phone:null,te
 const rows=[
   row('manual',{has_account_details:true}),
   row('paid',{registration_status:'pending',receipt_path:receipt,has_account_details:true}),
-  row('active',{registration_status:'active'}),
+  row('active',{registration_status:'active',receipt_path:receipt}),
   row('incomplete'),
 ];
 const moduleStub={exports:{}};
@@ -32,7 +32,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
     };
     if(name==='@/lib/courses')return {courseTypeLabel:()=>'',courseDurationLabel:()=>''};
     if(name==='@/lib/study-catalog')return {studyFieldLabels:{humanities:'انسانی'}};
-    if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{}};
+    if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{},uploadStudentReceipt:()=>{}};
     if(name==='@/components/dashboard/activation-submit-button')return {ActivationSubmitButton:({hasReceipt})=>React.createElement('button',{'data-path':hasReceipt?'receipt':'manual'},hasReceipt?'تأیید فیش و فعال‌سازی':'فعال‌سازی بدون فیش')};
     if(name==='@/app/registration.css')return {};
     throw Error(name);
@@ -46,6 +46,19 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(cards[0],/paid/);
   assert.match(cards[0],/اولویت بررسی · فیش ارسال شده/);
   assert.match(cards[0],/data-path="receipt"/);
+  assert.match(cards[0],/name="receipt"[^>]*type="file"|type="file"[^>]*name="receipt"/);
+  assert.match(cards[0],/جایگزینی فیش دریافت‌شده در تلگرام/);
+  assert.match(cards[1],/بارگذاری فیش دریافت‌شده در تلگرام/);
+  assert.doesNotMatch(cards[2],/name="receipt"/);
+  assert.doesNotMatch(cards[3],/name="receipt"/);
+  const css=fs.readFileSync('app/registration.css','utf8');
+  assert.match(html, /<tr class="registration-priority-row"/);
+  assert.match(html, /<tr class="registration-receipt-row"/);
+  assert.match(html, /<tr class="registration-ordinary-row"/);
+  assert.match(css, /tbody tr\.registration-receipt-row\{width:100%/);
+  assert.match(css, /tbody tr\{width:calc\(100% - 28px\)/);
+  assert.match(css, /tbody tr\.registration-priority-row\{width:100%/);
+  assert.match(css, /@container \(max-width:960px\)[\s\S]*tbody tr\{[^}]*width:calc\(100% - 18px\)/);
   assert.match(cards[1],/manual/);
   assert.match(cards[1],/data-path="manual"/);
   assert.match(cards[2],/active/);

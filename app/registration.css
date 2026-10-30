@@ -19,14 +19,17 @@
 .registration-summary span{display:flex;align-items:center;gap:10px}
 .registration-summary strong{font-size:16px}
 .registration-directory .registration-table-wrap{overflow:visible;min-width:0}
-.registration-directory .registration-table-wrap table{width:100%;min-width:0;table-layout:fixed}
+.registration-directory .registration-table-wrap table{display:block;width:100%;min-width:0}
+.registration-directory thead,.registration-directory tbody{display:block;width:100%}
+.registration-directory thead tr,.registration-directory tbody tr{display:grid;grid-template-columns:16% 10% 10% 17% 19% 28%;min-width:0;box-sizing:border-box}
+.registration-directory thead tr{width:100%}
+.registration-directory tbody tr{width:calc(100% - 28px);margin:8px 0;border:1px solid #e1e9f3;border-radius:12px;background:#f8fafc;transition:width .2s ease}
+.registration-directory tbody tr.registration-receipt-row{width:100%;border-color:#a5bfe2;background:#f3f7ff}
+.registration-directory tbody tr.registration-priority-row{width:100%;border:2px solid #e8a16e;background:#fff6ed;box-shadow:0 3px 14px #b55c201a}
+.registration-directory thead th{min-width:0}
+.registration-directory td{min-width:0}
 .registration-directory th{font-size:11px;padding:12px 8px}
 .registration-directory td{padding:20px 8px;line-height:1.8}
-.registration-directory th:nth-child(1){width:16%}
-.registration-directory th:nth-child(2),.registration-directory th:nth-child(3){width:10%}
-.registration-directory th:nth-child(4){width:17%}
-.registration-directory th:nth-child(5){width:19%}
-.registration-directory th:nth-child(6){width:28%}
 .registration-directory .registration-course-details{min-width:0}
 .registration-directory .registration-cell-content{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:4px}
 .registration-directory td small{font-size:11px;line-height:1.8;text-align:start}
@@ -42,13 +45,20 @@
 .registration-directory .button:disabled{opacity:.5;cursor:not-allowed}
 .registration-directory :is(select,button,a):focus-visible{outline:2px solid #235eb0;outline-offset:3px}
 .registration-directory .registration-assignment-note{line-height:1.8}
+.registration-directory .registration-receipt-upload{display:flex;flex-direction:column;align-items:stretch;gap:8px;max-width:320px;margin-top:14px;padding-top:12px;border-top:1px solid #d8e4f5}
+.registration-directory .registration-receipt-upload label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600}
+.registration-directory .registration-receipt-upload input[type=file]{width:100%;min-width:0;font:inherit;font-size:11px;color:inherit}
+.registration-directory .registration-receipt-upload .button{min-height:42px;white-space:normal;line-height:1.6}
 @container (max-width:960px){
   .registration-directory .portal-card-title{flex-wrap:wrap;gap:14px}
   .registration-directory .portal-card-title>div{flex-basis:100%}
   .registration-directory table,.registration-directory tbody{display:block;width:100%}
   .registration-directory thead{display:none}
   .registration-directory tbody{display:grid;gap:16px}
-  .registration-directory tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;min-width:0;border:1px solid #d8e4f5;border-radius:14px;padding:16px;background:#fff}
+  .registration-directory tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;min-width:0;width:calc(100% - 18px);border:1px solid #d8e4f5;border-radius:14px;padding:16px;background:#fff}
+  .registration-directory tbody tr.registration-receipt-row{width:100%;border-color:#a5bfe2;background:#f3f7ff}
+  .registration-directory tbody tr.registration-priority-row{width:100%;border:2px solid #e8a16e;background:#fff6ed}
+  .registration-directory .registration-receipt-upload{max-width:none}
   .registration-directory td{display:block;min-width:0;width:auto;padding:12px 0;border-bottom:1px solid #d8e4f5}
   .registration-directory td::before{content:attr(data-label);display:block;margin-bottom:6px;color:#547191;font-size:11px;font-weight:600}
   .registration-directory td:first-child{grid-column:1/-1;padding-top:0}

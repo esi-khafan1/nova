@@ -19,7 +19,11 @@ export default async function Registrations({
         </div>
       </section>
 
-      {params.error === "assignment" ? (
+      {params.error === "upload" ? (
+        <p className="portal-alert error" role="alert">
+          ثبت فیش انجام نشد. عکس باید JPG، PNG یا WebP و حداکثر ۵ مگابایت باشد؛ حساب دانش‌آموز باید اطلاعات کامل و راه تماس تأییدشده داشته باشد. اگر فیش تغییر کرده، صفحه را تازه کن.
+        </p>
+      ) : params.error === "assignment" ? (
         <p className="portal-alert error" role="alert">
           تخصیص انجام نشد؛ این دکمه فقط برای دانش‌آموزی است که از قبل فعال و بدون مشاور باشد. مشاور انتخابی هم باید تأییدشده باشد.
         </p>
@@ -32,6 +36,11 @@ export default async function Registrations({
       {params.assigned && (
         <p className="portal-alert success" role="status">
           مشاور به حسابِ از قبل فعال اختصاص داده شد.
+        </p>
+      )}
+      {params.uploaded && (
+        <p className="portal-alert success" role="status">
+          فیش در پروندهٔ دانش‌آموز ثبت شد؛ برای فعال‌سازی، فیش را بررسی کن و مشاور تأییدشده را انتخاب کن.
         </p>
       )}
       {params.saved && (
