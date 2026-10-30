@@ -7,7 +7,7 @@ import { requireProfile } from "@/lib/auth";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { verifiedMobileForAccount } from "@/lib/phone-auth";
 import { loadStudentDashboard } from "@/lib/load-student-dashboard";
-import { validateRegistration } from "@/lib/registration";
+import { requiredStudentFieldsIssue } from "@/lib/registration";
 import { tehranToday } from "@/lib/student-planning";
 
 export default async function StudentDashboard() {
@@ -24,7 +24,7 @@ export default async function StudentDashboard() {
   const { profile } = auth;
   const active = profile.registration_status === "active";
   // A failed account read is not proof of missing information.
-  const completionIssue = active && account && !account.error ? validateRegistration(account.values, true) : null;
+  const completionIssue = active && account && !account.error ? requiredStudentFieldsIssue(account.values, true) : null;
   const failed = active && (loaded.failed || loaded.studentId !== profile.id || !loaded.active);
   const plans = active && !failed ? loaded.plans : [];
   const completions = active && !failed ? loaded.completions : [];

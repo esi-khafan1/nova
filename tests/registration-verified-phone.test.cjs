@@ -48,14 +48,14 @@ function descendants(node, found = []) {
   }
   return found;
 }
-test('both account and enrollment forms show verified number without an input; legacy accounts retain it', () => {
+test('both account and enrollment forms show verified number without an input; legacy accounts may enter one', () => {
   for (const mode of ['profile', 'enrollment']) {
     const verified = descendants(form('09121234567', mode));
     assert.ok(verified.some(node => node.props.className === 'registration-verified-phone'));
     assert.ok(verified.some(node => node.type === 'strong' && node.props.children === '09121234567'));
     assert.ok(!verified.some(node => node.type === 'input' && node.props.name === 'phone'));
     const legacy = descendants(form(null, mode));
-    assert.ok(legacy.some(node => node.type === 'input' && node.props.name === 'phone' && node.props.required));
+    assert.ok(legacy.some(node => node.type === 'input' && node.props.name === 'phone' && !node.props.required));
   }
 });
 
@@ -118,6 +118,29 @@ test('profile save uses verified auth number, ignoring forged form phone; legacy
   assert.ok((await legacy.submitRegistration({}, data('profile', '09111111111'))).success);
   assert.equal(legacy.calls[0].args.payload.phone, '09111111111');
 });
+test('account save and course enrollment accept empty optional name and Telegram, but not missing grade or location', async () => {
+  const sparse = data('profile', '');
+  sparse.set('full_name', '');
+  sparse.set('telegram_id', '');
+  const legacy = actionContext({ email_confirmed_at: '2026-10-30T00:00:00Z' });
+  assert.ok((await legacy.submitRegistration({}, sparse)).success);
+  assert.equal(legacy.calls[0].args.payload.full_name, null);
+  assert.equal(legacy.calls[0].args.payload.phone, null);
+  assert.equal(legacy.calls[0].args.payload.telegram_id, null);
+  const missingGrade = data('profile', '');
+  missingGrade.set('grade', '');
+  assert.match((await legacy.submitRegistration({}, missingGrade)).error, /پایه و رشته/);
+  const missingCity = data('profile', '');
+  missingCity.set('city', '');
+  assert.match((await legacy.submitRegistration({}, missingCity)).error, /استان و شهر/);
+  assert.equal(legacy.calls.length, 1, 'Invalid submissions must not call the account RPC.');
+  sparse.set('form_mode', 'enrollment');
+  const enrolling = actionContext(confirmed, 'incomplete');
+  await assert.rejects(enrolling.submitRegistration({}, sparse), /REDIRECT:\/dashboard\/registration/);
+  assert.equal(enrolling.calls[0].args.payload.telegram_id, null);
+  assert.equal(enrolling.calls[0].args.payload.phone, '09121234567');
+});
+
 test('course enrollment also stores the confirmed auth phone, not a submitted value', async () => {
   const { submitRegistration, calls } = actionContext(confirmed, 'incomplete');
   await assert.rejects(submitRegistration({}, data('enrollment', '09100000000')), /REDIRECT:\/dashboard\/registration/);

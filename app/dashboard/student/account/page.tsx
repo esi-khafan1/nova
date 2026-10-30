@@ -6,14 +6,14 @@ import { StudentServiceNotice } from "@/components/dashboard/student-service-not
 import { StudentProfileCompletionNotice } from "@/components/dashboard/student-profile-completion-notice";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { verifiedMobileForAccount } from "@/lib/phone-auth";
-import { validateRegistration } from "@/lib/registration";
+import { requiredStudentFieldsIssue } from "@/lib/registration";
 import { requireProfile } from "@/lib/auth";
 import "@/app/registration.css";
 export default async function StudentAccountPage() {
   const { supabase, profile, user } = await requireProfile(["student"], true);
   const verifiedPhone = verifiedMobileForAccount(user);
   const account = await loadStudentAccount(supabase, profile, verifiedPhone);
-  const completionIssue = profile.registration_status === "active" && !account.error ? validateRegistration(account.values, true) : null;
+  const completionIssue = profile.registration_status === "active" && !account.error ? requiredStudentFieldsIssue(account.values, true) : null;
   return <DashboardShell role="student" name={profile.full_name}><div className="student-account-layout">
     <section className="portal-heading"><div><span>حساب کاربری</span><h1>اطلاعات و مدیریت حساب</h1><p>برای تکمیل اطلاعات حساب نیازی به انتخاب دوره یا ارسال فیش نیست.</p></div></section>
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>

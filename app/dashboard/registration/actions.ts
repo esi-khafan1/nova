@@ -11,7 +11,8 @@ export async function submitRegistration(_state: { error?: string; success?: str
   const text = (name: string) => String(fd.get(name) ?? "").trim();
   const mode = text("form_mode");
   if (mode && mode !== "profile" && mode !== "enrollment") return { error: "نوع فرم معتبر نیست؛ صفحه را دوباره باز کن." };
-  const values = { full_name: text("full_name").replace(/\s+/g," "), phone: verifiedMobileForAccount(user) ?? normalizeDigits(text("phone")).replace(/[\s-]/g,""), telegram_id: text("telegram_id").replace(/^@/,""), grade: Number(text("grade")), study_field: text("study_field"), province: text("province"), city: text("city"), additional_notes: text("additional_notes") };
+  const typedPhone = normalizeDigits(text("phone")).replace(/[\s-]/g,"");
+  const values = { full_name: text("full_name").replace(/\s+/g," ") || null, phone: verifiedMobileForAccount(user) ?? (typedPhone || null), telegram_id: text("telegram_id").replace(/^@/,"") || null, grade: text("grade") ? Number(text("grade")) : null, study_field: text("study_field") || null, province: text("province"), city: text("city"), additional_notes: text("additional_notes") };
   const invalid = validateRegistration(values, mode === "profile"); if (invalid) return { error: invalid };
   if (mode === "profile") {
     const { error } = await supabase.rpc("save_student_account_details", { payload: values });

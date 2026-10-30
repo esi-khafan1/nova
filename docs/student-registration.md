@@ -2,7 +2,7 @@
 
 - Migration 036 preserves existing profiles as active and defaults future profiles to incomplete.
 - Incomplete/pending students are routed to `/dashboard/registration`; only staff may activate students, atomically with assigning an approved counselor.
-- Required fields and receipt ownership are validated again in the database. Status is not an authenticated-writable profile column.
+- Required study/location fields and receipt ownership are validated again in the database. Status is not an authenticated-writable profile column.
 - Receipts are in a private Supabase bucket (`registration-receipts`, JPEG/PNG/WebP, 5MB). The application verifies image signatures and provides authorization-checked, one-minute signed receipt redirects.
 - Assignment creation/removal is admin-only; old counselor self-assignment RPC execution is revoked. Both directory RPCs filter by current assignments before returning any student data to counselors.
 - Shared-exam result/count reads and result RPCs are scoped to assigned students; admin visibility is retained.
@@ -41,3 +41,9 @@ Approved counselors can set or change the canonical `profiles.grade` and `profil
 `066_counselor_student_study.sql` adds a narrow SECURITY DEFINER RPC with empty search path, fresh database role/approved-counselor checks, a locked own assignment, active student-role guard, required valid grade/enum field and the same per-student advisory lock as plan saving. It grants no direct profile-update permission and accepts no other profile fields. Anonymous execution is denied. Original registration/account submissions, receipts, roles, activation, assignments, plans and progress remain untouched.
 
 The migration was applied to the connected nova database; function security/search path/execute grants were verified read-only. No real student's fields were changed in validation. Disposable PostgreSQL tests (`tests/counselor-student-study.test.cjs`) cover filling null fields, subsequent edits, other counselors, unapproved counselors, other roles, missing/revoked assignments, inactive/non-student targets, invalid values, denied direct writes and preserved history/unrelated fields. `tests/counselor-study-action.test.cjs` checks fresh action role validation, tampered inputs, RPC errors, successful invalidation and selected-student/non-nested-form wiring. TypeScript, targeted ESLint, production build and existing auth, assignment, report and planning regressions passed. No authenticated production-browser interaction is claimed.
+
+## Optional personal details (088)
+
+In both the account form (before or after activation) and course enrollment, grade, study field, province and city remain required. Name, Telegram ID and a manually entered phone are optional; a confirmed signup phone is still read from the authenticated user and used automatically. If an optional field is provided, its format is validated. Selecting a course and submitting a private receipt remain required for normal paid enrollment; saving account details never changes activation or payment status.
+
+Migration 088 relaxes only the `full_name`, `phone` and `telegram_id` non-null columns on the existing account and registration tables, and updates their SECURITY DEFINER functions without opening direct writes. The migration was applied to the connected nova project and verified read-only: grade/field/province/city are still NOT NULL, authenticated users have EXECUTE and anon does not. PGlite tests cover blank optional details, required fields, receipt ownership, role access and activation status; no production test account was created or modified.

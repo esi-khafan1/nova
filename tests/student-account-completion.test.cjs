@@ -32,10 +32,10 @@ const complete = {
   full_name: 'نیما حسینی', phone: '09121234567', telegram_id: 'nima_123',
   grade: 10, study_field: 'mathematics', province: 'تهران', city: 'تهران',
 };
-function setup({ status = 'active', details = null, registrationRow = null, readError = false, authPhone = null, profilePhone = complete.phone } = {}) {
+function setup({ status = 'active', details = null, registrationRow = null, readError = false, authPhone = null, profilePhone = complete.phone, profileGrade = complete.grade } = {}) {
   const profile = {
     id: 'student-id', full_name: complete.full_name, phone: profilePhone,
-    grade: complete.grade, study_field: complete.study_field, registration_status: status,
+    grade: profileGrade, study_field: complete.study_field, registration_status: status,
   };
   const user = authPhone ? { phone: authPhone, phone_confirmed_at: '2026-10-30T00:00:00Z' } : {};
   const supabase = { from(table) {
@@ -80,11 +80,11 @@ async function account(options) {
 }
 
 test('active student with incomplete legacy registration sees a direct account-form link, not enrollment', async () => {
-  const incomplete = { ...complete, telegram_id: null };
+  const incomplete = { ...complete, city: null };
   assert.notEqual(registration.validateRegistration(incomplete, true), null);
   const home = await dashboard({ registrationRow: incomplete });
   assert.match(home, /اطلاعات حسابت را تکمیل کن/);
-  assert.match(home, /آیدی تلگرام معتبر/);
+  assert.match(home, /استان و شهر محل سکونت/);
   assert.match(home, /href="\/dashboard\/student\/account#student-account-details"/);
   assert.doesNotMatch(home, /href="\/dashboard\/registration"/);
   const edit = await account({ registrationRow: incomplete });
@@ -96,6 +96,14 @@ test('active student with incomplete legacy registration sees a direct account-f
 test('complete account details take priority over older incomplete registration and hide the notice', async () => {
   assert.equal(registration.validateRegistration(complete, true), null);
   const options = { details: complete, registrationRow: { ...complete, city: null } };
+  assert.doesNotMatch(await dashboard(options), /اطلاعات حسابت را تکمیل کن/);
+  assert.doesNotMatch(await account(options), /اطلاعات حسابت را تکمیل کن/);
+});
+
+test('optional legacy fields alone never trigger the completion reminder', async () => {
+  const options = { details: { ...complete, full_name: 'تک', phone: null, telegram_id: 'bad' }, profilePhone: null };
+  assert.notEqual(registration.validateRegistration(options.details, true), null, 'Optional values are checked if submitted.');
+  assert.equal(registration.requiredStudentFieldsIssue(options.details, true), null);
   assert.doesNotMatch(await dashboard(options), /اطلاعات حسابت را تکمیل کن/);
   assert.doesNotMatch(await account(options), /اطلاعات حسابت را تکمیل کن/);
 });
@@ -114,7 +122,8 @@ test('verified signup phone satisfies completion even when no stored phone exist
   assert.doesNotMatch(await account(options), /اطلاعات حسابت را تکمیل کن/);
   assert.match(await account(options), /data-verified-phone="09121234567"/);
   assert.match(await account({ ...options, status: 'pending' }), /data-verified-phone="09121234567"/);
-  assert.match(await dashboard({ ...options, authPhone: null }), /شمارهٔ همراه را/);
+  assert.doesNotMatch(await dashboard({ ...options, authPhone: null }), /اطلاعات حسابت را تکمیل کن/);
+  assert.match(await dashboard({ ...options, profileGrade: null, details: { ...complete, grade: null } }), /پایه و رشته را انتخاب کن/);
 });
 
 test('temporary read errors are not presented as missing student details', async () => {

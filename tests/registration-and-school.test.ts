@@ -5,7 +5,10 @@ import { curriculumBooks,journeyGroups,planningGrades } from "../lib/planning-cu
 import type { StudyItem } from "../lib/student-planning";
 const valid={first_name:"علی",last_name:"احمدی",phone:"09121234567",telegram_id:"student_1",grade:11,study_field:"humanities",province:"تهران",city:"تهران"};
 assert.equal(validateRegistration(valid),null);
-for(const key of Object.keys(valid))assert.notEqual(validateRegistration({...valid,[key]:""}),null,`${key} required`);
+for(const key of ["province","city","grade","study_field"] as const)assert.notEqual(validateRegistration({...valid,[key]:""}),null,`${key} required`);
+for(const key of ["phone","telegram_id"] as const)assert.equal(validateRegistration({...valid,[key]:""}),null,`${key} optional`);
+assert.equal(validateRegistration({...valid,first_name:"",last_name:""}),null);
+assert.equal(validateRegistration({grade:11,study_field:"humanities",province:"تهران",city:"تهران"},true),null);
 assert.equal(normalizeDigits("۰۹۱۲١٢٣۴۵۶۷"),"09121234567");
 assert.equal(validateRegistration({...valid,grade:9}),"پایه و رشته را انتخاب کن.");
 assert.equal(receiptImageType(new TextEncoder().encode('<svg></svg>')),null);
@@ -21,7 +24,7 @@ assert.equal(groups.filter(g=>g.subject==='ریاضی ۱').length,1);assert.equa
 assert.ok(groups.some(g=>g.subject==='فارسی ۱'));assert.ok(!groups.some(g=>g.grade===12));
 assert.equal(validateRegistration({...valid,full_name:"سارا محمدی راد"}),null);
 assert.equal(validateRegistration({...valid,first_name:undefined,last_name:undefined,full_name:"سارا محمدی راد"}),null);
-assert.notEqual(validateRegistration({...valid,full_name:""}),null);
+assert.equal(validateRegistration({...valid,full_name:""}),null);
 assert.notEqual(validateRegistration({...valid,full_name:"سارا"}),null);
 assert.deepEqual(planningGrades,[10,11,12]);
 assert.ok(journeyGroups([{...base,source_grade:12,subject:"شیمی ۳"}],"experimental_sciences",10).some(g=>g.grade===12&&g.items.length===1));

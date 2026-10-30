@@ -16,14 +16,22 @@ export function prioritizePendingUnassignedReceipts(rows: RegistrationRow[]): Re
   }
   return [...priority, ...others];
 }
-export type RegistrationFormValues={full_name?:string;first_name?:string;last_name?:string;phone?:string;telegram_id?:string;grade?:number;study_field?:string;province?:string;city?:string;receipt_name?:string;additional_notes?:string};
+export type RegistrationFormValues={full_name?:string|null;first_name?:string|null;last_name?:string|null;phone?:string|null;telegram_id?:string|null;grade?:number|null;study_field?:string|null;province?:string|null;city?:string|null;receipt_name?:string|null;additional_notes?:string|null};
 export function normalizeDigits(value:string){return value.replace(/[۰-۹٠-٩]/g,c=>String("۰۱۲۳۴۵۶۷۸۹".includes(c)?"۰۱۲۳۴۵۶۷۸۹".indexOf(c):"٠١٢٣٤٥٦٧٨٩".indexOf(c)));}
 export function validateRegistration(v:RegistrationFormValues, accountOnly = false){
  if((v.additional_notes?.length??0)>2000)return "توضیحات تکمیلی باید حداکثر ۲۰۰۰ کاراکتر باشد.";
- if(v.full_name!==undefined){const name=v.full_name.trim();if(name.length<3||name.length>121||!/^\S+(?:\s+\S+)+$/u.test(name))return "نام و نام خانوادگی را کامل وارد کن.";}
- else if(!v.first_name||v.first_name.trim().length<2||v.first_name.length>50||!v.last_name||v.last_name.trim().length<2||v.last_name.length>70)return "نام و نام خانوادگی را کامل وارد کن.";
- if(!/^09\d{9}$/.test(v.phone??""))return "شمارهٔ همراه را به صورت ۰۹xxxxxxxxx وارد کن.";
- if(!/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(v.telegram_id??""))return "آیدی تلگرام معتبر را بدون لینک و با حداقل ۵ کاراکتر وارد کن.";
+ // Name, contact details and notes are optional; grade, field and location are required.
+ if(v.full_name?.trim()){const name=v.full_name.trim();if(name.length<3||name.length>121||!/^\S+(?:\s+\S+)+$/u.test(name))return "نام و نام خانوادگی را کامل وارد کن یا خالی بگذار.";}
+ else if(v.first_name?.trim()||v.last_name?.trim()){
+  if(!v.first_name?.trim()||v.first_name.trim().length<2||v.first_name.length>50||!v.last_name?.trim()||v.last_name.trim().length<2||v.last_name.length>70)return "نام و نام خانوادگی را کامل وارد کن یا خالی بگذار.";
+ }
+ if(v.phone && !/^09\d{9}$/.test(v.phone))return "شمارهٔ همراه را به صورت ۰۹xxxxxxxxx وارد کن یا خالی بگذار.";
+ if(v.telegram_id && !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(v.telegram_id))return "آیدی تلگرام معتبر را بدون لینک و با حداقل ۵ کاراکتر وارد کن یا خالی بگذار.";
+ return requiredStudentFieldsIssue(v, accountOnly);
+}
+// Only the four required fields determine whether an active student's
+// completion reminder is shown. Optional legacy values can be fixed on save.
+export function requiredStudentFieldsIssue(v:RegistrationFormValues, accountOnly = false){
  if(![10,11,12].includes(v.grade??0)||!(accountOnly ? ["mathematics","experimental_sciences","humanities","arts","foreign_languages"] : ["mathematics","experimental_sciences","humanities"]).includes(v.study_field??""))return "پایه و رشته را انتخاب کن.";
  if(!provinces.includes(v.province??"")||!v.city||v.city.trim().length<2||v.city.length>60)return "استان و شهر محل سکونت را وارد کن.";
  return null;
