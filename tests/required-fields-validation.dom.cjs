@@ -33,7 +33,7 @@ const { act } = React;
   let serverCalls = 0, confirms = 0;
   dom.window.confirm = () => { confirms++; return false; };
   await act(async () => root.render(React.createElement(RequiredFieldsForm, { className: 'test', action: () => { serverCalls++; } },
-    React.createElement('label', null, 'مشاور', React.createElement('select', { name: 'counselor_id', required: true, defaultValue: '' },
+    React.createElement('label', null, 'مشاور', React.createElement('select', { name: 'counselor_id', required: true, defaultValue: '', 'data-required-message': 'لطفاً مشاور را انتخاب کن' },
       React.createElement('option', { value: '', disabled: true }, 'انتخاب مشاور'),
       React.createElement('option', { value: 'counselor-id' }, 'مشاور تأییدشده'))),
     React.createElement(ActivationSubmitButton, { hasReceipt: true, disabled: false }))));
@@ -43,10 +43,11 @@ const { act } = React;
   const layoutBeforeValidation = form.innerHTML;
   await act(async () => button.click());
   assert.equal(form.innerHTML, layoutBeforeValidation, 'Native browser bubble must not add an inline element or change row layout');
-  assert.doesNotMatch(form.textContent, /لطفاً این فیلد را پر کن/);
+  assert.doesNotMatch(form.textContent, /لطفاً مشاور را انتخاب کن/);
   assert.equal(serverCalls, 0, 'No server action may run without an approved counselor choice');
   assert.equal(confirms, 0, 'Do not confirm an incomplete form');
-  assert.equal(select.validationMessage, 'لطفاً این فیلد را پر کن.', 'Show the native required-field bubble by the select');
+  assert.equal(select.validationMessage, 'لطفاً مشاور را انتخاب کن', 'Show the native counselor-choice bubble without misplaced RTL punctuation');
+  assert.doesNotMatch(select.validationMessage, /[.。]$/u);
   await act(async () => {
     select.value = 'counselor-id';
     select.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
@@ -58,21 +59,21 @@ const { act } = React;
   assert.equal(serverCalls, 0, 'Declining confirmation must not send a request');
   await act(async () => root.render(React.createElement(React.Fragment, null,
     React.createElement(RequiredFieldsForm, { className: 'assign', action: () => { serverCalls++; } },
-      React.createElement('select', { name: 'counselor_id', required: true, defaultValue: '' },
+      React.createElement('select', { name: 'counselor_id', required: true, defaultValue: '', 'data-required-message': 'لطفاً مشاور را انتخاب کن' },
         React.createElement('option', { value: '' }, 'انتخاب مشاور'), React.createElement('option', { value: 'counselor-id' }, 'مشاور')),
       React.createElement('button', { type: 'submit' }, 'اختصاص مشاور')),
     React.createElement(RequiredFieldsForm, { className: 'upload', action: () => { serverCalls++; } },
-      React.createElement('input', { name: 'receipt', type: 'file', required: true }),
+      React.createElement('input', { name: 'receipt', type: 'file', required: true, 'data-required-message': 'لطفاً فیش را انتخاب کن' }),
       React.createElement('button', { type: 'submit' }, 'ثبت فیش')))));
   const assignForm = dom.window.document.querySelector('.assign');
   const uploadForm = dom.window.document.querySelector('.upload');
   const assignLayout = assignForm.innerHTML;
   const uploadLayout = uploadForm.innerHTML;
   await act(async () => assignForm.querySelector('button').click());
-  assert.equal(assignForm.querySelector('select').validationMessage, 'لطفاً این فیلد را پر کن.');
+  assert.equal(assignForm.querySelector('select').validationMessage, 'لطفاً مشاور را انتخاب کن');
   assert.equal(assignForm.innerHTML, assignLayout);
   await act(async () => uploadForm.querySelector('button').click());
-  assert.equal(uploadForm.querySelector('input').validationMessage, 'لطفاً این فیلد را پر کن.');
+  assert.equal(uploadForm.querySelector('input').validationMessage, 'لطفاً فیش را انتخاب کن');
   assert.equal(uploadForm.innerHTML, uploadLayout);
   assert.equal(serverCalls, 0, 'Missing required counselor or receipt never reaches a server action');
   await act(async () => root.unmount());

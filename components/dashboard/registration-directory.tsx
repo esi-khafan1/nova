@@ -154,6 +154,7 @@ export async function RegistrationDirectory({
                             <span>مشاور</span>
                             <select
                               aria-label={`انتخاب مشاور برای ${row.full_name || "دانش‌آموز"}`}
+                              data-required-message="لطفاً مشاور را انتخاب کن"
                               name="counselor_id"
                               required
                               defaultValue={row.counselor_id ?? ""}
@@ -196,7 +197,7 @@ export async function RegistrationDirectory({
                           <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />
                           <label>
                             <span>{hasReceipt ? "جایگزینی فیش دریافت‌شده در تلگرام" : "بارگذاری فیش دریافت‌شده در تلگرام"}</span>
-                            <input name="receipt" type="file" accept="image/jpeg,image/png,image/webp" required aria-label={`عکس فیش ${row.full_name || "دانش‌آموز"}`} />
+                            <input name="receipt" type="file" accept="image/jpeg,image/png,image/webp" required data-required-message="لطفاً فیش را انتخاب کن" aria-label={`عکس فیش ${row.full_name || "دانش‌آموز"}`} />
                           </label>
                           <small>عکس JPG، PNG یا WebP تا ۵ مگابایت؛ ثبت فیش به معنی تأیید پرداخت نیست.</small>
                           <button type="submit" className="button button-secondary">ثبت فیش برای این دانش‌آموز</button>

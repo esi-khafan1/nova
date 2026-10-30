@@ -47,6 +47,8 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(cards[0],/paid/);
   assert.match(cards[0],/اولویت بررسی · فیش ارسال شده/);
   assert.match(cards[0],/data-path="receipt"/);
+  assert.match(cards[0],/data-required-message="لطفاً مشاور را انتخاب کن"/);
+  assert.match(cards[0],/data-required-message="لطفاً فیش را انتخاب کن"/);
   assert.match(cards[0],/name="receipt"[^>]*type="file"|type="file"[^>]*name="receipt"/);
   assert.match(cards[0],/جایگزینی فیش دریافت‌شده در تلگرام/);
   assert.match(cards[1],/بارگذاری فیش دریافت‌شده در تلگرام/);

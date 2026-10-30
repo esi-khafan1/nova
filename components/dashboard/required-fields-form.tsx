@@ -12,7 +12,15 @@ export function RequiredFieldsForm({ action, className, children }: {
   function handleInvalid(event: InvalidEvent<HTMLFormElement>) {
     const field = event.target;
     if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) {
-      if (field.validity.valueMissing) field.setCustomValidity("لطفاً این فیلد را پر کن.");
+      if (field.validity.valueMissing) {
+        const message = field.dataset.requiredMessage ||
+          (field instanceof HTMLSelectElement ? "لطفاً یک گزینه را انتخاب کن" :
+            field instanceof HTMLInputElement && field.type === "file" ? "لطفاً فایل را انتخاب کن" :
+              "لطفاً این فیلد را پر کن");
+        // Native browser validation bubbles float above the form without
+        // moving a row. Omit trailing punctuation in RTL browser chrome.
+        field.setCustomValidity(message);
+      }
     }
   }
   function clearMessage(event: SyntheticEvent<HTMLFormElement>) {
