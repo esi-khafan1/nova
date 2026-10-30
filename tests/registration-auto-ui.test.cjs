@@ -34,6 +34,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
     if(name==='@/lib/study-catalog')return {studyFieldLabels:{humanities:'انسانی'}};
     if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{},uploadStudentReceipt:()=>{}};
     if(name==='@/components/dashboard/activation-submit-button')return {ActivationSubmitButton:({hasReceipt})=>React.createElement('button',{'data-path':hasReceipt?'receipt':'manual'},hasReceipt?'تأیید فیش و فعال‌سازی':'فعال‌سازی بدون فیش')};
+    if(name==='@/components/dashboard/required-fields-form')return {RequiredFieldsForm:({className,children})=>React.createElement('form',{className},children)};
     if(name==='@/app/registration.css')return {};
     throw Error(name);
   },
@@ -57,7 +58,8 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(html, /<tr class="registration-ordinary-row"/);
   assert.match(css, /tbody tr\.registration-receipt-row\{width:100%/);
   assert.match(css, /tbody tr\{width:calc\(100% - 28px\)/);
-  assert.match(css, /tbody tr\.registration-priority-row\{width:100%/);
+  assert.match(css, /tbody tr\.registration-priority-row\{width:100%[^}]*border-right:6px solid/);
+  assert.match(css, /tbody tr\.registration-priority-row td\{padding-top:28px;padding-bottom:28px\}/);
   assert.match(css, /@container \(max-width:960px\)[\s\S]*tbody tr\{[^}]*width:calc\(100% - 18px\)/);
   assert.match(cards[1],/manual/);
   assert.match(cards[1],/data-path="manual"/);

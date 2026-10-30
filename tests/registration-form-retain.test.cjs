@@ -42,8 +42,12 @@ for (const mode of ['profile', 'enrollment']) {
     assert.equal(form.type, 'form');
     assert.equal(typeof form.props.action, 'function', 'Keep native form-action fallback without JavaScript.');
     assert.equal(typeof form.props.onSubmit, 'function');
-    const currentTarget = { fields: { full_name: 'نام واردشده', phone: 'شمارهٔ نامعتبر', city: 'تهران' }, receipt: { name: 'receipt.png' } };
+    const currentTarget = { fields: { full_name: 'نام واردشده', phone: 'شمارهٔ نامعتبر', city: 'تهران' }, receipt: { name: 'receipt.png' }, reportValidity: () => false };
     let prevented = false;
+    form.props.onSubmit({ currentTarget, preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(transitions, 0, 'An empty required field must never reach the student server action.');
+    currentTarget.reportValidity = () => true;
     form.props.onSubmit({ currentTarget, preventDefault() { prevented = true; } });
     assert.equal(prevented, true, 'Prevent React form-action reset on server validation errors.');
     assert.equal(transitions, 1, 'Dispatch the server action in a transition for pending state.');

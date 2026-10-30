@@ -14,6 +14,9 @@ export function RegistrationForm({ values, mode = "enrollment", selection, verif
     // form action resolves, even when the server returns a validation error.
     // Dispatch manually so a failed attempt keeps everything the student typed.
     event.preventDefault();
+    // Explicitly keep required fields in the browser validation path even
+    // when the form is submitted through React's custom action handler.
+    if (!event.currentTarget.reportValidity()) return;
     const submitted = new FormData(event.currentTarget);
     startTransition(() => action(submitted));
   }

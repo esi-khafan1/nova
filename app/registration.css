@@ -25,7 +25,8 @@
 .registration-directory thead tr{width:100%}
 .registration-directory tbody tr{width:calc(100% - 28px);margin:8px 0;border:1px solid #e1e9f3;border-radius:12px;background:#f8fafc;transition:width .2s ease}
 .registration-directory tbody tr.registration-receipt-row{width:100%;border-color:#a5bfe2;background:#f3f7ff}
-.registration-directory tbody tr.registration-priority-row{width:100%;border:2px solid #e8a16e;background:#fff6ed;box-shadow:0 3px 14px #b55c201a}
+.registration-directory tbody tr.registration-priority-row{width:100%;border:2px solid #e8a16e;border-right:6px solid #bd5919;background:#fff6ed;box-shadow:0 3px 14px #b55c201a}
+.registration-directory tbody tr.registration-priority-row td{padding-top:28px;padding-bottom:28px}
 .registration-directory thead th{min-width:0}
 .registration-directory td{min-width:0}
 .registration-directory th{font-size:11px;padding:12px 8px}
@@ -57,7 +58,10 @@
   .registration-directory tbody{display:grid;gap:16px}
   .registration-directory tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;min-width:0;width:calc(100% - 18px);border:1px solid #d8e4f5;border-radius:14px;padding:16px;background:#fff}
   .registration-directory tbody tr.registration-receipt-row{width:100%;border-color:#a5bfe2;background:#f3f7ff}
-  .registration-directory tbody tr.registration-priority-row{width:100%;border:2px solid #e8a16e;background:#fff6ed}
+  .registration-directory tbody tr.registration-priority-row{width:100%;border:2px solid #e8a16e;border-right:6px solid #bd5919;background:#fff6ed}
+  .registration-directory tbody tr.registration-priority-row td{padding-top:14px;padding-bottom:14px}
+  .registration-directory tbody tr.registration-priority-row td:first-child{padding-top:0}
+  .registration-directory tbody tr.registration-priority-row td:last-child{padding-bottom:0}
   .registration-directory .registration-receipt-upload{max-width:none}
   .registration-directory td{display:block;min-width:0;width:auto;padding:12px 0;border-bottom:1px solid #d8e4f5}
   .registration-directory td::before{content:attr(data-label);display:block;margin-bottom:6px;color:#547191;font-size:11px;font-weight:600}

@@ -10,6 +10,7 @@ import {
   uploadStudentReceipt,
 } from "@/app/dashboard/admin/registrations/actions";
 import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
+import { RequiredFieldsForm } from "@/components/dashboard/required-fields-form";
 import "@/app/registration.css";
 
 export async function RegistrationDirectory({
@@ -143,7 +144,7 @@ export async function RegistrationDirectory({
                       </small>
 
                       {audience === "admin" && (canActivate || canAssign) && (
-                        <form action={canActivate ? activateStudent : assignCounselor} className="registration-student-actions">
+                        <RequiredFieldsForm action={canActivate ? activateStudent : assignCounselor} className="registration-student-actions">
                           <input name="student_id" type="hidden" value={row.student_id} />
                           {canActivate && <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />}
 
@@ -187,10 +188,10 @@ export async function RegistrationDirectory({
                               </button>
                             )}
                           </div>
-                        </form>
+                        </RequiredFieldsForm>
                       )}
                       {audience === "admin" && !isActive && row.has_account_details && (
-                        <form action={uploadStudentReceipt} className="registration-receipt-upload">
+                        <RequiredFieldsForm action={uploadStudentReceipt} className="registration-receipt-upload">
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />
                           <label>
@@ -199,7 +200,7 @@ export async function RegistrationDirectory({
                           </label>
                           <small>عکس JPG، PNG یا WebP تا ۵ مگابایت؛ ثبت فیش به معنی تأیید پرداخت نیست.</small>
                           <button type="submit" className="button button-secondary">ثبت فیش برای این دانش‌آموز</button>
-                        </form>
+                        </RequiredFieldsForm>
                       )}
                       {audience === "admin" && !isActive && !canActivate && (
                         <small className="registration-assignment-note" role="status">
