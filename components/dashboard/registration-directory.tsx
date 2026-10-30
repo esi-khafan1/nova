@@ -8,6 +8,7 @@ import {
   activateStudent,
   assignCounselor,
 } from "@/app/dashboard/admin/registrations/actions";
+import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
 import "@/app/registration.css";
 
 export async function RegistrationDirectory({
@@ -40,7 +41,7 @@ export async function RegistrationDirectory({
         <div>
           <h2>ثبت‌نام، فیش و تخصیص مشاور</h2>
           <p>
-            دانش‌آموزهای دارای فیش که هنوز تأیید نشده‌اند و مشاور ندارند، در ابتدای فهرست هستند. با اختصاص مشاور، حساب و خدمات دانش‌آموز فعال می‌شوند.
+            اول فیش‌های ارسال‌شدهٔ منتظر بررسی و بدون مشاور نمایش داده می‌شوند؛ سپس حساب‌های بدون فیش. ارسال فیش به‌تنهایی به معنی تأیید پرداخت نیست.
           </p>
         </div>
         <a className="button button-secondary" href="/api/registrations/export">
@@ -73,14 +74,19 @@ export async function RegistrationDirectory({
             </thead>
             <tbody>
               {orderedRows.map((row) => {
-                const canManualActivate =
-                  row.registration_status !== "active" && row.has_account_details;
-                const canActivateWithReceipt = row.registration_status === "pending";
+                const isActive = row.registration_status === "active";
+                const hasReceipt = Boolean(row.receipt_path);
+                const canActivate = !isActive && (hasReceipt
+                  ? row.registration_status === "pending"
+                  : Boolean(row.has_account_details));
+                const canAssign = isActive && !row.counselor_id;
+                const priorityReceipt = isPendingUnassignedReceipt(row);
 
                 return (
                   <tr key={row.student_id}>
                     <td data-label="دانش‌آموز و تماس"><div className="registration-cell-content">
                       <strong>{row.full_name || "نام ثبت نشده"}</strong>
+                      {priorityReceipt && <small className="registration-priority-label">اولویت بررسی · فیش ارسال شده</small>}
                       <small dir="ltr">{row.phone || "شماره ثبت نشده"}</small>
                       <small dir="ltr">
                         {row.telegram_id ? `@${row.telegram_id}` : "تلگرام ثبت نشده"}
@@ -135,14 +141,10 @@ export async function RegistrationDirectory({
                           : "هنوز اختصاص داده نشده"}
                       </small>
 
-                      {audience === "admin" && (!row.counselor_id || canActivateWithReceipt || canManualActivate) && (
-                        <form action={assignCounselor} className="registration-student-actions">
+                      {audience === "admin" && (canActivate || canAssign) && (
+                        <form action={canActivate ? activateStudent : assignCounselor} className="registration-student-actions">
                           <input name="student_id" type="hidden" value={row.student_id} />
-                          <input
-                            name="receipt_path"
-                            type="hidden"
-                            value={row.receipt_path ?? ""}
-                          />
+                          {canActivate && <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />}
 
                           {row.counselor_id ? (
                             <input name="counselor_id" type="hidden" value={row.counselor_id} />
@@ -168,61 +170,30 @@ export async function RegistrationDirectory({
 
                           {!row.counselor_id && !counselors.length && <small role="status">مشاور تأییدشده‌ای برای تخصیص موجود نیست.</small>}
 
-                          {canActivateWithReceipt && (
-                            <label className="registration-confirmation">
-                              <input name="receipt_confirmation" type="checkbox" />
-                              <span>اطلاعات و فیش بررسی و تأیید شد</span>
-                            </label>
+                          {canActivate && (
+                            <small className="registration-activation-path" role="status">
+                              {hasReceipt
+                                ? "مسیر فیش: پس از بررسی فیش، تأیید آن ثبت و حساب فعال می‌شود."
+                                : "مسیر بدون فیش: فعال‌سازی دستی ثبت می‌شود؛ پرداختی تأیید نمی‌شود."}
+                            </small>
                           )}
-                          {canManualActivate && (
-                            <label className="registration-confirmation">
-                              <input name="manual_confirmation" type="checkbox" />
-                              <span>فعال‌سازی خدمات بدون فیش را تأیید می‌کنم</span>
-                            </label>
-                          )}
-
                           <div className="registration-action-buttons">
-                            {!row.counselor_id && <button
-                              className="button button-secondary"
-                              type="submit"
-                              disabled={!counselors.length}
-                            >
-                              اختصاص مشاور و فعال‌سازی حساب
-                            </button>}
-
-                            {canActivateWithReceipt && (
-                              <button
-                                className="button"
-                                type="submit"
-                                name="activation_mode"
-                                value="receipt"
-                                formAction={activateStudent}
-                                disabled={(!row.counselor_id && !counselors.length) || !row.receipt_path}
-                              >
-                                تأیید و فعال‌سازی
-                              </button>
-                            )}
-
-                            {canManualActivate && (
-                              <button
-                                className="button"
-                                type="submit"
-                                name="activation_mode"
-                                value="manual"
-                                formAction={activateStudent}
-                                disabled={!row.counselor_id && !counselors.length}
-                              >
-                                فعال‌سازی دستی بدون فیش
+                            {canActivate ? (
+                              <ActivationSubmitButton hasReceipt={hasReceipt} disabled={!row.counselor_id && !counselors.length} />
+                            ) : (
+                              <button className="button button-secondary" type="submit" disabled={!counselors.length}>
+                                اختصاص مشاور به حساب فعال
                               </button>
                             )}
                           </div>
-
-                          {!row.counselor_id && row.registration_status === "incomplete" && (
-                            <small className="registration-assignment-note">
-                              با اختصاص مشاور توسط ادمین، حساب فعال می‌شود؛ تأیید جداگانه لازم نیست.
-                            </small>
-                          )}
                         </form>
+                      )}
+                      {audience === "admin" && !isActive && !canActivate && (
+                        <small className="registration-assignment-note" role="status">
+                          {hasReceipt
+                            ? "فیش ثبت شده اما وضعیت ثبت‌نام نیاز به بررسی دارد؛ حساب از مسیر بدون فیش فعال نمی‌شود."
+                            : "برای فعال‌سازی بدون فیش، ابتدا اطلاعات حساب دانش‌آموز باید تکمیل شود."}
+                        </small>
                       )}
                     </div></td>
                   </tr>

@@ -57,24 +57,17 @@ export async function activateStudent(fd: FormData) {
     redirect("/dashboard/admin/registrations?error=1");
   }
 
-  const manual = fd.get("activation_mode") === "manual";
-  if (manual && fd.get("manual_confirmation") !== "on") {
+  // The database chooses the receipt/manual route from its locked registration
+  // row. The expected path only detects a new/replaced receipt since page load.
+  const expectedReceiptPath = fd.get("expected_receipt_path");
+  if (typeof expectedReceiptPath !== "string" || expectedReceiptPath.length > 1000) {
     redirect("/dashboard/admin/registrations?error=1");
   }
-  if (!manual && fd.get("receipt_confirmation") !== "on") {
-    redirect("/dashboard/admin/registrations?error=1");
-  }
-
-  const { error } = manual
-    ? await supabase.rpc("admin_activate_student_without_receipt", {
-        target_student_id: studentId,
-        target_counselor_id: counselorId,
-      })
-    : await supabase.rpc("admin_activate_student", {
-        target_student_id: studentId,
-        target_counselor_id: counselorId,
-        expected_receipt_path: String(fd.get("receipt_path") ?? "") || null,
-      });
+  const { error } = await supabase.rpc("admin_activate_student_auto", {
+    target_student_id: studentId,
+    target_counselor_id: counselorId,
+    expected_receipt_path: expectedReceiptPath || null,
+  });
   if (error) redirect("/dashboard/admin/registrations?error=1");
 
   revalidateRegistrationPaths();

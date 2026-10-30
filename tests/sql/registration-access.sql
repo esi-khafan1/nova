@@ -19,8 +19,12 @@ begin
  if has_column_privilege('authenticated','public.profiles','registration_status','update')then raise exception 'Students can self activate';end if;
  execute 'reset role';
  perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ blocked:=false;begin perform public.admin_assign_student_counselor(s3,c1);exception when others then blocked:=true;end;
+ if not blocked then raise exception 'Inactive student was assigned without receipt/manual activation';end if;
+ -- Active legacy accounts may still receive a counselor without a second approval.
+ update public.profiles set registration_status='active' where id=s3;
  perform public.admin_assign_student_counselor(s3,c1);
- if exists(select 1 from public.profiles where id=s3 and registration_status<>'active')or not exists(select 1 from public.counselor_students where student_id=s3 and counselor_id=c1)then raise exception 'Assignment must activate the student';end if;
+ if not exists(select 1 from public.counselor_students where student_id=s3 and counselor_id=c1)then raise exception 'Active student assignment unavailable';end if;
  perform set_config('request.jwt.claim.sub',c1::text,true);
  execute 'set local role authenticated';
  blocked:=false;begin perform public.admin_assign_student_counselor(s2,c1);exception when others then blocked:=true;end;if not blocked then raise exception 'Counselor can assign via admin RPC';end if;

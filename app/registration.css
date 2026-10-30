@@ -35,8 +35,8 @@
 .registration-directory .registration-student-actions{display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:12px;margin-top:8px;min-width:0;width:100%;max-width:320px}
 .registration-directory .registration-counselor-picker{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;min-width:0}
 .registration-directory .registration-counselor-picker select{width:100%;min-width:0;min-height:44px;background:#fff;color:inherit;padding:9px 10px;font-size:13px;text-overflow:ellipsis}
-.registration-directory .registration-confirmation{display:flex;align-items:flex-start;gap:8px;line-height:1.8;font-size:12px;cursor:pointer}
-.registration-directory .registration-confirmation input{flex:0 0 auto;width:18px;height:18px;margin:2px 0 0;accent-color:#b74808}
+.registration-directory .registration-priority-label{display:inline-block;align-self:flex-start;padding:3px 8px;border-radius:8px;background:#fff2e7;color:#a74409;font-size:11px;font-weight:700}
+.registration-directory .registration-activation-path{line-height:1.8;color:#50637b;font-size:12px}
 .registration-directory .registration-action-buttons{display:flex;flex-direction:column;gap:8px}
 .registration-directory .registration-action-buttons .button{width:100%;min-height:44px;padding:10px 12px;justify-content:center;white-space:normal;text-align:center;font-size:12px;line-height:1.7}
 .registration-directory .button:disabled{opacity:.5;cursor:not-allowed}
