@@ -1,0 +1,15 @@
+const {readFileSync}=require('node:fs');
+const assert=require('node:assert/strict');
+const builder=readFileSync('components/dashboard/weekly-plan-builder.tsx','utf8');
+const loader=readFileSync('lib/load-counselor-plans.ts','utf8');
+const action=readFileSync('app/dashboard/actions.ts','utf8');
+assert.match(builder,/const isLockedDay = \(dayIndex: number\) => isPastDay\(weekStart, dayIndex\)/);
+assert.match(builder,/id: planStatus === "published" && dayIso\(weekStart, item.dayOfWeek\) === tehranToday\(\) \? item.id \?\? null : null/);
+assert.match(builder,/disabled=\{Boolean\(item.completed \|\| item.linkedExamId\)\}/);
+assert.match(builder,/disabled=\{Boolean\(item.linkedExamId \|\| item.completed\)\}/);
+assert.match(loader,/weekly_plan_item_completions\(item_id\)/);
+assert.match(action,/id: item.id == null \? null : String\(item.id\)/);
+assert.match(action,/error.code === "PZ001" \? "protected"/);
+assert.match(action,/s\.rpc\("save_weekly_plan_v7"/);
+assert.doesNotMatch(builder,/برنامه امروز منتشر شده و دیگر قابل تغییر نیست/);
+console.log('PASS: today editable in counselor UI, stable ids submitted, completed and exam-linked items protected');

@@ -38,6 +38,7 @@ type PlanItem = {
   recommendedPublisher: string | null;
   otherPublisher: boolean;
   linkedExamId?: string|null;
+  completed?: boolean;
 };
 
 export type PlanRoutine = {
@@ -69,6 +70,7 @@ export type CounselorWeeklyPlan = {
     recommended_publisher?:string|null;
     exam_year?:number|null;
     linked_exam_id?:string|null;
+    weekly_plan_item_completions?: Array<{ item_id: string }>;
   }>;
 };
 
@@ -109,7 +111,6 @@ const faNumber = (value: number) => value.toLocaleString("fa-IR");
 
 function dayDate(weekStart:string,dayIndex:number){return parseIsoDate(dayIso(weekStart,dayIndex));}
 function isPastDay(start:string,offset:number){return dayIso(start,offset)<tehranToday();}
-function isTodayOrPast(start:string,offset:number){return dayIso(start,offset)<=tehranToday();}
 function firstAvailableDay(start:string){return Math.max(0,weekDays.findIndex((_,i)=>!isPastDay(start,i)));}
 function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
   return [...plan.weekly_plan_items]
@@ -133,6 +134,7 @@ function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
       recommendedPublisher:item.recommended_publisher??null,
       otherPublisher:Boolean(item.recommended_publisher && !(recommendedPublishers as readonly string[]).includes(item.recommended_publisher)),
       linkedExamId:item.linked_exam_id??null,
+      completed:Boolean(item.weekly_plan_item_completions?.length),
     }));
 }
 
@@ -194,10 +196,7 @@ export function WeeklyPlanBuilder({
       .map((plan) => [plan.week_start, plan.status]),
   );
 
-  const isLockedDay = (dayIndex: number) =>
-    planStatus === "published"
-      ? isTodayOrPast(weekStart, dayIndex)
-      : isPastDay(weekStart, dayIndex);
+  const isLockedDay = (dayIndex: number) => isPastDay(weekStart, dayIndex);
 
   const periodEnded = dayIso(weekStart, 6) < tehranToday();
   const hasOverlap = overlapsWindow(weekStart, plans, student?.student_id ?? "", planId);
@@ -327,7 +326,7 @@ export function WeeklyPlanBuilder({
             </strong>
             <span>
               {planStatus === "published"
-                ? "حالت تغییر برنامه فعال است؛ امروز و روزهای گذشته ثابت می‌مانند و فقط روزهای آینده با انتشار مجدد تغییر می‌کنند."
+                ? "حالت تغییر برنامه فعال است؛ روزهای گذشته ثابت می‌مانند؛ برنامهٔ امروز و روزهای آینده را می‌توانی تغییر بدهی. فعالیت‌های تکمیل‌شده و باکس‌های متصل به آزمون قابل حذف نیستند."
                 : "اطلاعات پیش‌نویس بارگذاری شد و می‌توانی ادامه‌اش بدهی."}
             </span>
           </div>
@@ -367,10 +366,7 @@ export function WeeklyPlanBuilder({
               {dayIsLocked ? (
                 <div className="plan-locked-day">
                   <p className="plan-day-empty">
-                    {planStatus === "published" &&
-                    !isPastDay(weekStart, dayIndex)
-                      ? "برنامه امروز منتشر شده و دیگر قابل تغییر نیست."
-                      : "این روز گذشته و دیگر قابل تغییر نیست."}
+                    این روز گذشته و دیگر قابل تغییر نیست.
                   </p>
                   {dayItems.map((item) => (
                     <article className="plan-item-readonly" key={item.key}>
@@ -405,8 +401,15 @@ export function WeeklyPlanBuilder({
                         {faNumber(index + 1)}
                       </div>
                       <div className="plan-item-fields">
-                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
-                        <label>مسیر آمادگی<select value={item.preparationTrack} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
+                        {(item.completed || item.linkedExamId) && (
+                          <p className="plan-exam-box-status">
+                            {item.linkedExamId
+                              ? "این باکس به آزمون متصل است؛ حذف یا تغییر درس، فصل و نوع آن مجاز نیست."
+                              : "فعالیت تکمیل‌شده است و حذف یا تغییر نوع آن مجاز نیست."}
+                          </p>
+                        )}
+                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         <label>
                           مدت (دقیقه)
                           <select
@@ -433,6 +436,7 @@ export function WeeklyPlanBuilder({
                           {itemBooks(item).length ? (
                             <select
                               value={item.subject}
+                              disabled={Boolean(item.linkedExamId)}
                               onChange={(event) => {
                                 updateItem(
                                   item.key,
@@ -454,6 +458,7 @@ export function WeeklyPlanBuilder({
                           ) : (
                             <input
                               value={item.subject}
+                              disabled={Boolean(item.linkedExamId)}
                               onChange={(event) =>
                                 updateItem(
                                   item.key,
@@ -479,7 +484,7 @@ export function WeeklyPlanBuilder({
                                   event.target.value,
                                 )
                               }
-                              disabled={!item.subject}
+                              disabled={!item.subject || Boolean(item.linkedExamId)}
                             >
                               <option value="">
                                 {item.subject
@@ -496,6 +501,7 @@ export function WeeklyPlanBuilder({
                           ) : (
                             <input
                               value={item.chapter}
+                              disabled={Boolean(item.linkedExamId)}
                               onChange={(event) =>
                                 updateItem(
                                   item.key,
@@ -512,6 +518,7 @@ export function WeeklyPlanBuilder({
                           نوع فعالیت
                           <select
                             value={item.activityType}
+                            disabled={Boolean(item.linkedExamId || item.completed)}
                             onChange={(event) => {
                               const activityType = event.target
                                 .value as PlanItem["activityType"];
@@ -615,6 +622,8 @@ export function WeeklyPlanBuilder({
                         type="button"
                         className="plan-remove"
                         aria-label="حذف فعالیت"
+                        disabled={Boolean(item.completed || item.linkedExamId)}
+                        title={item.completed ? "فعالیت تکمیل‌شده قابل حذف نیست" : item.linkedExamId ? "باکس متصل به آزمون قابل حذف نیست" : undefined}
                         onClick={() =>
                           setItems((current) =>
                             current.filter(
@@ -669,6 +678,7 @@ export function WeeklyPlanBuilder({
           name="items"
           value={JSON.stringify(
             editableItems.map((item) => ({
+              id: planStatus === "published" && dayIso(weekStart, item.dayOfWeek) === tehranToday() ? item.id ?? null : null,
               dayOfWeek: item.dayOfWeek,
               durationMinutes: item.durationMinutes,
               subject: item.subject,

@@ -55,6 +55,7 @@ type WeeklyPlanRoutineInput = {
 };
 
 type WeeklyPlanItemInput = {
+  id?: string | null;
   dayOfWeek: number;
   durationMinutes: number;
   subject: string;
@@ -149,6 +150,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   const safeItems = items
     .slice(0, 100)
     .map((item) => ({
+      id: item.id == null ? null : String(item.id),
       dayOfWeek: Number(item.dayOfWeek),
       startTime: "",
       durationMinutes: Number(item.durationMinutes),
@@ -165,6 +167,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     }))
     .filter(
       (item) =>
+        (item.id === null || uuidPattern.test(item.id)) &&
         Number.isInteger(item.dayOfWeek) &&
         item.dayOfWeek >= 0 &&
         item.dayOfWeek <= 6 &&
@@ -208,7 +211,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   }
   const allowedRoutineSubjects=new Set([...routineSubjectOptions(student.study_field,student.grade),...savedRoutineSubjects]);
   if(safeRoutines.some(routine=>routine.subject&&!allowedRoutineSubjects.has(routine.subject)))redirect('/dashboard/counselor/plans?error=routines');
-  const { error } = await s.rpc("save_weekly_plan_v6", {
+  const { error } = await s.rpc("save_weekly_plan_v7", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,
@@ -219,7 +222,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     target_routines: safeRoutines,
   });
 
-  if (error) redirect(`/dashboard/counselor/plans?error=${error.code === "23P01" ? "overlap" : "plan"}`);
+  if (error) redirect(`/dashboard/counselor/plans?error=${error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : "plan"}`);
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student");

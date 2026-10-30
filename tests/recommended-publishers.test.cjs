@@ -26,7 +26,7 @@ const actions = fs.readFileSync('app/dashboard/actions.ts', 'utf8');
 const student = fs.readFileSync('components/dashboard/student-planning-panel.tsx', 'utf8');
 assert.match(builder, /canRecommendPublisher\(item\.preparationTrack, item\.activityType\)/);
 assert.match(builder, /name="items"[\s\S]*?recommendedPublisher:/);
-assert.match(actions, /s\.rpc\("save_weekly_plan_v6"/);
+assert.match(actions, /s\.rpc\("save_weekly_plan_v7"/);
 assert.match(student, /item\.recommended_publisher&&<p className="sp-recommended-publisher"/);
 for (const path of ['components/dashboard/print-weekly-plan.tsx', 'app/dashboard/counselor/plans/[planId]/print/page.tsx', 'app/dashboard/student/plans/[planId]/print/page.tsx']) {
   assert.doesNotMatch(fs.readFileSync(path, 'utf8'), /recommended_publisher|recommendedPublisher/, `${path}: print must not fetch or show publisher`);
