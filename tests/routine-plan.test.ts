@@ -25,7 +25,7 @@ test("server accepts exactly seven unique daily routines and v7 delegates throug
   assert.match(actions, /const rawRoutines = clean\(fd\.get\("routines"\)/);
   assert.match(actions, /parsed\.length !== 7/);
   assert.match(actions, /routineDays\.size !== 7/);
-  assert.match(actions, /s\.rpc\("save_weekly_plan_v7"/);
+  assert.match(actions, /s\.rpc\("save_weekly_plan_v8"/);
   assert.match(readFileSync("supabase/migrations/090_edit_published_plan_today.sql", "utf8"), /return public\.save_weekly_plan_v6\(/);
   assert.match(readFileSync("supabase/migrations/085_konkur_recommended_publisher.sql", "utf8"), /saved := public\.save_weekly_plan_v5\(/);
   assert.match(actions, /target_routines: safeRoutines/);

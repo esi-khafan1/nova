@@ -75,7 +75,7 @@ export default async function CounselorPlansPage({
       )}
       {params.error && (
         <div className="portal-alert error">
-          {params.error === "overlap" ? "این بازه با برنامهٔ دیگری برای دانش‌آموز هم‌پوشانی دارد. شروع را بعد از پایان برنامهٔ قبلی انتخاب کن." : params.error === "week" ? "برای برنامهٔ جدید، امروز یا یک روز آینده را انتخاب کن؛ برنامهٔ تمام‌شده قابل تغییر نیست." : params.error === "protected" ? "فعالیت تکمیل‌شده یا باکس متصل به آزمون در برنامهٔ امروز قابل حذف یا تغییر هویت نیست. صفحه را تازه‌سازی کن و بقیهٔ فعالیت‌ها را ویرایش کن." : params.error === "routines" ? "روتین هر هفت روز باید کامل و یکتا باشد و درس روتین باید مربوط به رشتهٔ دانش‌آموز باشد." : "ذخیره انجام نشد. اطلاعات برنامه را بررسی و دوباره تلاش کن."}
+          {params.error === "overlap" ? "این بازه با برنامهٔ دیگری برای دانش‌آموز هم‌پوشانی دارد. شروع را بعد از پایان برنامهٔ قبلی انتخاب کن." : params.error === "week" ? "برای برنامهٔ جدید، امروز یا یک روز آینده را انتخاب کن؛ برنامهٔ تمام‌شده قابل تغییر نیست." : params.error === "protected" ? "باکس انجام‌شده قابل تغییر یا حذف نیست. ممکن است دانش‌آموز پس از باز شدن فرم آن را انجام داده باشد؛ صفحه را تازه‌سازی کن و بقیهٔ فعالیت‌ها را ویرایش کن." : params.error === "routines" ? "روتین هر هفت روز باید کامل و یکتا باشد و درس روتین باید مربوط به رشتهٔ دانش‌آموز باشد." : "ذخیره انجام نشد. اطلاعات برنامه را بررسی و دوباره تلاش کن."}
         </div>
       )}
 
@@ -135,7 +135,7 @@ export default async function CounselorPlansPage({
         </section>
       )}
 
-      <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} initialStudentId={params.student} />
+      <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} initialStudentId={params.student} initialPlanId={params.plan} initialWeekStart={params.week_start} />
 
       {counselorPlans.length > 0 && (
         <section className="portal-card recent-plans">

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const todayMigration = fs.readFileSync('supabase/migrations/090_edit_published_plan_today.sql', 'utf8');
+const completedMigration = fs.readFileSync('supabase/migrations/091_completed_boxes_and_linked_exam_removal.sql', 'utf8');
 const examMigration = fs.readFileSync('supabase/migrations/079_exam_plan_boxes.sql', 'utf8');
 const v5 = 'create or replace function public.save_weekly_plan_v5(' + examMigration.split('create or replace function public.save_weekly_plan_v5(')[1].split('revoke all on function public.save_weekly_plan_v5(')[0];
 const v6 = fs.readFileSync('supabase/migrations/085_konkur_recommended_publisher.sql', 'utf8').split('-- Re-issue the student RPC')[0];
@@ -66,15 +67,16 @@ const item = (day, subject, options = {}) => ({
   await db.exec(todayMigration);
   await db.exec(v5);
   await db.exec(v6);
+  await db.exec(completedMigration);
   const date = (await db.query(`select (timezone('Asia/Tehran',now())::date-1)::text as day`)).rows[0].day;
   const actor = id => db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
   await actor(ids.counselor);
   const initial = [
-    item(1,'تکمیل‌شده',{id:ids.completed,activityType:'practice_tests',targetTestCount:20,details:'متن جدید',recommendedPublisher:'گاج'}),
+    item(1,'تکمیل‌شده',{id:ids.completed,activityType:'practice_tests',targetTestCount:20,sourceGrade:null}),
     item(1,'آزمون',{id:ids.linked,activityType:'exam',chapter:'فصل ۱',durationMinutes:90}),
     item(1,'فعالیت جدید'), item(2,'درس فردا'),
   ];
-  const save = list => db.query(`select public.save_weekly_plan_v7($1,$2,$3,'هفتهٔ تازه',null,'published',$4::jsonb,'[]'::jsonb)`,
+  const save = list => db.query(`select public.save_weekly_plan_v8($1,$2,$3,'هفتهٔ تازه',null,'published',$4::jsonb,'[]'::jsonb)`,
     [ids.plan,ids.student,date,JSON.stringify(list)]);
   const oldClient = () => db.query(`select public.save_weekly_plan_v6($1,$2,$3,'قدیمی',null,'published',$4::jsonb,'[]'::jsonb)`,
     [ids.plan,ids.student,date,JSON.stringify([item(2,'فردای قدیمی')])]);
@@ -83,8 +85,8 @@ const item = (day, subject, options = {}) => ({
   await save(initial);
   let rows = (await db.query('select id,subject,details,duration_minutes,linked_exam_id,recommended_publisher from public.weekly_plan_items where plan_id=$1 order by day_of_week,sort_order',[ids.plan])).rows;
   assert.equal(rows.find(r=>r.id===ids.past)?.subject,'گذشته','past is unchanged');
-  assert.equal(rows.find(r=>r.id===ids.completed)?.details,'متن جدید','today checked item is editable in place');
-  assert.equal(rows.find(r=>r.id===ids.completed)?.recommended_publisher,'گاج','today publisher is updated');
+  assert.equal(rows.find(r=>r.id===ids.completed)?.details,null,'completed activity is unchanged');
+  assert.equal(rows.find(r=>r.id===ids.completed)?.recommended_publisher,null,'completed publisher is unchanged');
   assert.equal(rows.find(r=>r.id===ids.linked)?.duration_minutes,90);
   assert.equal(rows.find(r=>r.id===ids.linked)?.linked_exam_id,ids.exam,'today exam link and box id survive');
   assert.ok(!rows.some(r=>r.id===ids.unused),'unused today item can be removed');
@@ -99,12 +101,19 @@ const item = (day, subject, options = {}) => ({
     assert.deepEqual(await signature(),before,'rejected save is atomic');
   };
   await rejects(initial.filter(i=>i.id!==ids.completed),/Cannot remove a completed activity/);
-  await rejects(initial.filter(i=>i.id!==ids.linked),/Cannot remove a completed activity/);
-  await rejects(initial.map(i=>i.id===ids.completed?{...i,activityType:'lesson',targetTestCount:null}:i),/Today activity has changed/);
+  await rejects(initial.map(i=>i.id===ids.completed?{...i,activityType:'lesson',targetTestCount:null}:i),/Today activity has changed|Completed plan activity cannot be changed/);
+  await rejects(initial.map(i=>i.id===ids.completed?{...i,details:'ویرایش نشده'}:i),/Completed plan activity cannot be changed/);
+  await rejects(initial.map(i=>i.id===ids.completed?{...i,recommendedPublisher:'گاج'}:i),/Completed plan activity cannot be changed/);
+  await rejects(initial.map(i=>i.id===ids.completed?{...i,sourceGrade:10}:i),/Completed plan activity cannot be changed/);
   await rejects(initial.map(i=>i.id===ids.linked?{...i,subject:'آزمون دیگر'}:i),/Today activity has changed/);
   await rejects([...initial,{...initial[0]}],/duplicate plan item id/);
   await rejects([...initial,item(0,'گذشتهٔ غیرمجاز')],/Invalid or locked plan item/);
+  await save([...initial.filter(i=>i.id!==ids.linked),item(1,'آزمون',{activityType:'exam',chapter:'فصل ۱'})]);
+  assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_items where id=$1',[ids.linked])).rows[0].n,0,'confirmed linked box can be removed');
+  assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_items where linked_exam_id=$1',[ids.exam])).rows[0].n,0,'removed exam link is not reattached to a same-subject box');
+  assert.equal((await db.query('select count(*)::int as n from public.exams where id=$1',[ids.exam])).rows[0].n,1,'deleting a box does not delete its exam');
+  assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_item_completions where item_id=$1',[ids.completed])).rows[0].n,1,'completed box remains intact');
   await actor(ids.other);
-  await rejects(initial,/Only counselors can save plans|Student not assigned/);
-  console.log('PASS: published today edits persist; completed progress and exam links survive; past and protected items stay locked');
+  await assert.rejects(save(initial),/Only counselors can save plans|Student not assigned/);
+  console.log('PASS: completed boxes immutable; linked boxes removable without deleting exams; past and progress stay protected');
 })().catch(error => { console.error(error); process.exitCode = 1; });

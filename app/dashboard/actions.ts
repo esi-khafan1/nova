@@ -84,6 +84,14 @@ export async function saveWeeklyPlan(fd: FormData) {
   const status = clean(fd.get("status"), 20);
   const rawItems = clean(fd.get("items"), 100_000);
   const rawRoutines = clean(fd.get("routines"), 20_000);
+  const planUrl = (key: "error" | "saved", value: string, savedId = planId) => {
+    const params = new URLSearchParams({ [key]: value });
+    if (uuidPattern.test(studentId)) params.set("student", studentId);
+    if (uuidPattern.test(savedId)) params.set("plan", savedId);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) params.set("week_start", weekStart);
+    return `/dashboard/counselor/plans?${params.toString()}`;
+  };
+  function planError(reason: string): never { redirect(planUrl("error", reason)); }
 
   if (
     !uuidPattern.test(studentId) ||
@@ -91,7 +99,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     !/^\d{4}-\d{2}-\d{2}$/.test(weekStart) ||
     !["draft", "published"].includes(status)
   ) {
-    redirect("/dashboard/counselor/plans?error=plan");
+    planError("plan");
   }
 
   const tehranParts = new Intl.DateTimeFormat("en-US", {
@@ -107,7 +115,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   );
   const selectedWeek = new Date(`${weekStart}T12:00:00Z`);
   const endOfPeriod = new Date(selectedWeek); endOfPeriod.setUTCDate(endOfPeriod.getUTCDate()+6);
-  if (Number.isNaN(selectedWeek.getTime()) || selectedWeek.toISOString().slice(0,10)!==weekStart || (!planId && selectedWeek<today) || endOfPeriod<today) redirect("/dashboard/counselor/plans?error=week");
+  if (Number.isNaN(selectedWeek.getTime()) || selectedWeek.toISOString().slice(0,10)!==weekStart || (!planId && selectedWeek<today) || endOfPeriod<today) planError("week");
 
   let items: WeeklyPlanItemInput[] = [];
   try {
@@ -115,7 +123,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     if (!Array.isArray(parsed) || parsed.some(item => !item || typeof item!=="object" || Array.isArray(item))) throw new Error("Invalid items");
     items = parsed;
   } catch {
-    redirect("/dashboard/counselor/plans?error=plan");
+    planError("plan");
   }
 
   let rawRoutineList: unknown[] = [];
@@ -124,7 +132,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     if (!Array.isArray(parsed) || parsed.length !== 7) throw new Error("Invalid routines");
     rawRoutineList = parsed;
   } catch {
-    redirect("/dashboard/counselor/plans?error=routines");
+    planError("routines");
   }
 
   const safeRoutines: WeeklyPlanRoutineInput[] = rawRoutineList.map((routine) => {
@@ -140,7 +148,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     safeRoutines.some((routine) => !Number.isInteger(routine.dayOfWeek) || routine.dayOfWeek < 0 || routine.dayOfWeek > 6) ||
     routineDays.size !== 7
   ) {
-    redirect("/dashboard/counselor/plans?error=routines");
+    planError("routines");
   }
 
   const allowedActivityTypes = new Set<string>(
@@ -195,23 +203,24 @@ export async function saveWeeklyPlan(fd: FormData) {
     safeItems.length !== items.length ||
     (!safeItems.length && !(planId && status === "published"))
   )
-    redirect("/dashboard/counselor/plans?error=items");
+    planError("items");
 
   const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
-  if(directoryError||!student||safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))redirect('/dashboard/counselor/plans?error=items');
+  if(directoryError||!student)planError("items");
+  if(safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))planError("items");
   let savedRoutineSubjects:string[]=[];
   if(planId){
     const {data:existingPlan,error:existingPlanError}=await s.from("weekly_plans").select("routines").eq("id",planId).eq("counselor_id",user.id).maybeSingle();
-    if(existingPlanError)redirect('/dashboard/counselor/plans?error=plan');
+    if(existingPlanError)planError("plan");
     const savedRoutines:unknown=existingPlan?.routines;
     savedRoutineSubjects=(Array.isArray(savedRoutines)?savedRoutines:[])
       .map((routine)=>typeof routine?.subject==="string"?routine.subject.trim():"")
       .filter(Boolean);
   }
   const allowedRoutineSubjects=new Set([...routineSubjectOptions(student.study_field,student.grade),...savedRoutineSubjects]);
-  if(safeRoutines.some(routine=>routine.subject&&!allowedRoutineSubjects.has(routine.subject)))redirect('/dashboard/counselor/plans?error=routines');
-  const { error } = await s.rpc("save_weekly_plan_v7", {
+  if(safeRoutines.some(routine=>routine.subject&&!allowedRoutineSubjects.has(routine.subject)))planError("routines");
+  const { data: savedId, error } = await s.rpc("save_weekly_plan_v8", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,
@@ -222,13 +231,11 @@ export async function saveWeeklyPlan(fd: FormData) {
     target_routines: safeRoutines,
   });
 
-  if (error) redirect(`/dashboard/counselor/plans?error=${error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : "plan"}`);
+  if (error) planError(error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : "plan");
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student");
-  redirect(
-    `/dashboard/counselor/plans?saved=${status === "published" ? "published" : "draft"}`,
-  );
+  redirect(planUrl("saved", status === "published" ? "published" : "draft", String(savedId ?? planId)));
 }
 
 export async function togglePlanItemCompletion(

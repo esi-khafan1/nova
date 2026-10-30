@@ -142,18 +142,23 @@ export function WeeklyPlanBuilder({
   students,
   plans,
   initialStudentId,
+  initialPlanId,
+  initialWeekStart,
 }: {
   students: Student[];
   plans: CounselorWeeklyPlan[];
-  initialStudentId?:string;
+  initialStudentId?: string;
+  initialPlanId?: string;
+  initialWeekStart?: string;
 }) {
-  const [studentIndex, setStudentIndex] = useState(Math.max(0,students.findIndex(s=>s.student_id===initialStudentId)));
-  const [weekStart, setWeekStart] = useState(tehranToday);
-  const initialPlan = plans.find(
-    (plan) =>
-      plan.student_id === students[Math.max(0,students.findIndex(s=>s.student_id===initialStudentId))]?.student_id &&
-      plan.week_start === tehranToday(),
-  );
+  const selectedStudentIndex = Math.max(0, students.findIndex(s => s.student_id === initialStudentId));
+  const [studentIndex, setStudentIndex] = useState(selectedStudentIndex);
+  const selectedStudentId = students[selectedStudentIndex]?.student_id;
+  const selectedStart = initialWeekStart && /^\d{4}-\d{2}-\d{2}$/.test(initialWeekStart) ? initialWeekStart : tehranToday();
+  const initialPlan = plans.find(plan => plan.student_id === selectedStudentId && plan.id === initialPlanId)
+    ?? plans.find(plan => plan.student_id === selectedStudentId && plan.week_start === selectedStart);
+  const initialStart = initialPlan?.week_start ?? selectedStart;
+  const [weekStart, setWeekStart] = useState(initialStart);
   const [planId, setPlanId] = useState(initialPlan?.id ?? "");
   const [planStatus, setPlanStatus] = useState<"draft" | "published" | null>(
     initialPlan?.status ?? null,
@@ -164,7 +169,7 @@ export function WeeklyPlanBuilder({
   const [items, setItems] = useState<PlanItem[]>(() => [
     ...(initialPlan
       ? planItems(initialPlan)
-      : [newItem(firstAvailableDay(tehranToday()), "initial-item")]),
+      : [newItem(firstAvailableDay(initialStart), "initial-item")]),
   ]);
 
   const student = students[studentIndex] ?? students[0];
@@ -326,7 +331,7 @@ export function WeeklyPlanBuilder({
             </strong>
             <span>
               {planStatus === "published"
-                ? "حالت تغییر برنامه فعال است؛ روزهای گذشته ثابت می‌مانند؛ برنامهٔ امروز و روزهای آینده را می‌توانی تغییر بدهی. فعالیت‌های تکمیل‌شده و باکس‌های متصل به آزمون قابل حذف نیستند."
+                ? "حالت تغییر برنامه فعال است؛ روزهای گذشته ثابت می‌مانند. فعالیت‌های انجام‌شده قابل تغییر یا حذف نیستند؛ حذف باکس متصل به آزمون نیاز به تأیید دارد."
                 : "اطلاعات پیش‌نویس بارگذاری شد و می‌توانی ادامه‌اش بدهی."}
             </span>
           </div>
@@ -395,17 +400,25 @@ export function WeeklyPlanBuilder({
                 <p className="plan-day-empty">برای این روز فعالیتی ثبت نشده.</p>
               ) : (
                 <div className="plan-item-list">
-                  {dayItems.map((item, index) => (
+                  {dayItems.map((item, index) => item.completed ? (
+                    <article className="plan-item-readonly" key={item.key}>
+                      <strong>{item.subject}</strong>
+                      <span>{item.chapter || "بدون مبحث"} · {faNumber(item.durationMinutes)} دقیقه
+                        {item.activityType === "practice_tests" && item.targetTestCount && ` · هدف ${faNumber(item.targetTestCount)} تست`}
+                      </span>
+                      {item.recommendedPublisher && <small>منبع پیشنهادی کنکور: {item.recommendedPublisher}</small>}
+                      {item.details && <small>{item.details}</small>}
+                      <p className="plan-exam-box-status" role="status">این باکس انجام شده و قابل تغییر یا حذف نیست.</p>
+                    </article>
+                  ) : (
                     <article className="plan-item-editor" key={item.key}>
                       <div className="plan-item-number">
                         {faNumber(index + 1)}
                       </div>
                       <div className="plan-item-fields">
-                        {(item.completed || item.linkedExamId) && (
+                        {item.linkedExamId && (
                           <p className="plan-exam-box-status">
-                            {item.linkedExamId
-                              ? "این باکس به آزمون متصل است؛ حذف یا تغییر درس، فصل و نوع آن مجاز نیست."
-                              : "فعالیت تکمیل‌شده است و حذف یا تغییر نوع آن مجاز نیست."}
+                            این باکس به آزمون متصل است؛ با تأیید هشدار می‌توانی آن را حذف کنی، اما اتصال دانش‌آموز از این باکس به آزمون از بین می‌رود.
                           </p>
                         )}
                         <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
@@ -518,7 +531,7 @@ export function WeeklyPlanBuilder({
                           نوع فعالیت
                           <select
                             value={item.activityType}
-                            disabled={Boolean(item.linkedExamId || item.completed)}
+                            disabled={Boolean(item.linkedExamId)}
                             onChange={(event) => {
                               const activityType = event.target
                                 .value as PlanItem["activityType"];
@@ -622,15 +635,10 @@ export function WeeklyPlanBuilder({
                         type="button"
                         className="plan-remove"
                         aria-label="حذف فعالیت"
-                        disabled={Boolean(item.completed || item.linkedExamId)}
-                        title={item.completed ? "فعالیت تکمیل‌شده قابل حذف نیست" : item.linkedExamId ? "باکس متصل به آزمون قابل حذف نیست" : undefined}
-                        onClick={() =>
-                          setItems((current) =>
-                            current.filter(
-                              (currentItem) => currentItem.key !== item.key,
-                            ),
-                          )
-                        }
+                        onClick={() => {
+                          if (item.linkedExamId && !window.confirm("این باکس به آزمون متصل است. با حذف آن، دسترسی دانش‌آموز به آزمون از طریق این باکس قطع می‌شود. آزمون و پاسخ‌های ثبت‌شده حذف نمی‌شوند. آیا از حذف باکس مطمئنی؟")) return;
+                          setItems(current => current.filter(currentItem => currentItem.key !== item.key));
+                        }}
                       >
                         حذف
                       </button>
@@ -686,7 +694,7 @@ export function WeeklyPlanBuilder({
               activityType: item.activityType,
               targetTestCount: item.targetTestCount,
               details: item.details,
-              sourceGrade:itemGrade(item),
+              sourceGrade:item.completed ? item.sourceGrade : itemGrade(item),
               preparationTrack:item.preparationTrack,
               recommendedPublisher:canRecommendPublisher(item.preparationTrack,item.activityType)?item.recommendedPublisher?.trim()||null:null,
               examYear:null,
