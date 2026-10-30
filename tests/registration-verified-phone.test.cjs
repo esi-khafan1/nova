@@ -51,6 +51,7 @@ function descendants(node, found = []) {
 test('both account and enrollment forms show verified number without an input; legacy accounts may enter one', () => {
   for (const mode of ['profile', 'enrollment']) {
     const verified = descendants(form('09121234567', mode));
+    assert.ok(verified.some(node => node.type === 'input' && node.props.name === 'full_name' && node.props.required && node.props.defaultValue === values.full_name));
     assert.ok(verified.some(node => node.props.className === 'registration-verified-phone'));
     assert.ok(verified.some(node => node.type === 'strong' && node.props.children === '09121234567'));
     assert.ok(!verified.some(node => node.type === 'input' && node.props.name === 'phone'));
@@ -118,15 +119,17 @@ test('profile save uses verified auth number, ignoring forged form phone; legacy
   assert.ok((await legacy.submitRegistration({}, data('profile', '09111111111'))).success);
   assert.equal(legacy.calls[0].args.payload.phone, '09111111111');
 });
-test('account save and course enrollment accept empty optional name and Telegram, but not missing grade or location', async () => {
+test('account save and course enrollment reuse a required name while contact details stay optional', async () => {
   const sparse = data('profile', '');
-  sparse.set('full_name', '');
   sparse.set('telegram_id', '');
   const legacy = actionContext({ email_confirmed_at: '2026-10-30T00:00:00Z' });
   assert.ok((await legacy.submitRegistration({}, sparse)).success);
-  assert.equal(legacy.calls[0].args.payload.full_name, null);
+  assert.equal(legacy.calls[0].args.payload.full_name, values.full_name);
   assert.equal(legacy.calls[0].args.payload.phone, null);
   assert.equal(legacy.calls[0].args.payload.telegram_id, null);
+  const missingName = data('profile', '');
+  missingName.set('full_name', '');
+  assert.match((await legacy.submitRegistration({}, missingName)).error, /نام و نام خانوادگی/);
   const missingGrade = data('profile', '');
   missingGrade.set('grade', '');
   assert.match((await legacy.submitRegistration({}, missingGrade)).error, /پایه و رشته/);
@@ -137,6 +140,7 @@ test('account save and course enrollment accept empty optional name and Telegram
   sparse.set('form_mode', 'enrollment');
   const enrolling = actionContext(confirmed, 'incomplete');
   await assert.rejects(enrolling.submitRegistration({}, sparse), /REDIRECT:\/dashboard\/registration/);
+  assert.equal(enrolling.calls[0].args.payload.full_name, values.full_name);
   assert.equal(enrolling.calls[0].args.payload.telegram_id, null);
   assert.equal(enrolling.calls[0].args.payload.phone, '09121234567');
 });

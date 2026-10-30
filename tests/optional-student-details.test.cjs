@@ -40,10 +40,18 @@ test('optional personal details preserve required study/location fields and rece
     await db.query('insert into auth.users values($1,null,now()),($2,null,now())', [active, enrolling]);
     await db.query("insert into public.profiles values($1,'student','active','Initial Name',null,null,null),($2,'student','incomplete','Signup Name',null,null,null)", [active, enrolling]);
     await db.query('insert into storage.objects values($1,$2)', ['registration-receipts', `${enrolling}/receipt.png`]);
+    // Rows saved during the short 088 window can have a null name; 089 recovers
+    // it only from the same student's existing, valid signup profile.
+    await db.query("insert into public.student_account_details(student_id,grade,study_field,province,city) values($1,11,'humanities','تهران','تهران')", [active]);
+    await db.query("insert into public.student_registrations(student_id,grade,study_field,province,city,receipt_path,receipt_name) values($1,11,'humanities','تهران','تهران',$2,'receipt.png')", [enrolling, `${enrolling}/receipt.png`]);
+    await db.exec(readFileSync('supabase/migrations/089_required_student_name.sql', 'utf8'));
+    assert.equal((await db.query('select full_name from public.student_account_details where student_id=$1', [active])).rows[0].full_name, 'Initial Name');
+    assert.equal((await db.query('select full_name from public.student_registrations where student_id=$1', [enrolling])).rows[0].full_name, 'Signup Name');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [active]);
     await db.exec('set role authenticated');
     const save = payload => db.query('select public.save_student_account_details($1)', [payload]);
-    const profile = { grade: 11, study_field: 'humanities', province: 'تهران', city: 'تهران' };
+    const profile = { full_name: 'Initial Name', grade: 11, study_field: 'humanities', province: 'تهران', city: 'تهران' };
+    await assert.rejects(() => save({ ...profile, full_name: null }), /Complete full name required/);
     await save(profile);
     await assert.rejects(() => save({ ...profile, grade: null }), /Grade and study field required/);
     await assert.rejects(() => save({ ...profile, study_field: null }), /Grade and study field required/);
@@ -52,7 +60,7 @@ test('optional personal details preserve required study/location fields and rece
     await assert.rejects(() => save({ ...profile, telegram_id: 'bad' }), /violates check constraint/);
     await db.exec('reset role');
     let row = await db.query('select full_name,phone,telegram_id,grade,study_field,province,city from public.student_account_details where student_id=$1', [active]);
-    assert.equal(row.rows[0].full_name, null);
+    assert.equal(row.rows[0].full_name, 'Initial Name');
     assert.equal(row.rows[0].phone, null);
     assert.equal(row.rows[0].telegram_id, null);
     assert.equal(row.rows[0].province, 'تهران');
@@ -61,14 +69,15 @@ test('optional personal details preserve required study/location fields and rece
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [enrolling]);
     await db.exec('set role authenticated');
     const enroll = payload => db.query('select public.submit_student_registration($1)', [payload]);
-    const request = { ...profile, receipt_path: `${enrolling}/receipt.png`, receipt_name: 'receipt.png', course_type: 'base', course_duration_months: 3 };
+    const request = { ...profile, full_name: 'Signup Name', receipt_path: `${enrolling}/receipt.png`, receipt_name: 'receipt.png', course_type: 'base', course_duration_months: 3 };
     await assert.rejects(() => enroll({ ...request, receipt_path: `${active}/receipt.png` }), /private receipt/);
     await assert.rejects(() => enroll({ ...request, grade: null }), /Grade and study field required/);
     await assert.rejects(() => enroll({ ...request, study_field: null }), /Grade and study field required/);
+    await assert.rejects(() => enroll({ ...request, full_name: null }), /Complete full name required/);
     await enroll(request);
     await db.exec('reset role');
     row = await db.query('select full_name,phone,telegram_id,grade,study_field,province,city,receipt_path from public.student_registrations where student_id=$1', [enrolling]);
-    assert.equal(row.rows[0].full_name, null);
+    assert.equal(row.rows[0].full_name, 'Signup Name');
     assert.equal(row.rows[0].phone, null);
     assert.equal(row.rows[0].telegram_id, null);
     assert.equal(row.rows[0].grade, 11);

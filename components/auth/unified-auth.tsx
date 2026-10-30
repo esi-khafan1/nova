@@ -163,11 +163,11 @@ export function UnifiedAuth({ initialMode, returnTo = "/dashboard", initialMessa
     setMessage("");
     setSignupRecoveryHint(null);
     const data = new FormData(event.currentTarget);
-    const fullName = String(data.get("fullName") ?? "").trim();
+    const fullName = String(data.get("fullName") ?? "").trim().replace(/\s+/gu," ");
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
-    if (fullName.length < 2) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
+    if (fullName.length < 3 || fullName.length > 100 || !/^\S+\s+\S+(?:\s+\S+)*$/u.test(fullName)) return setMessage("لطفاً نام و نام خانوادگی را کامل وارد کن.");
     if (phoneError || (normalizeMobile(email) && !isEnglishMobileInput(email))) return setPhoneError(englishPhoneMessage);
     if (!isEnglishMobileInput(email)) return setMessage("شماره تلفن همراه معتبر وارد کن.");
     if (!phoneSignup) return setMessage("ثبت‌نام فعلاً در دسترس نیست؛ کمی بعد تلاش کن.");

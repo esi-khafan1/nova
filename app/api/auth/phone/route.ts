@@ -55,8 +55,9 @@ export async function POST(request:NextRequest){
   let error;
   if(link){({error}=await client.auth.updateUser({phone}));}
   else{
-   if(typeof body.fullName!=='string'||body.fullName.trim().length<2||body.fullName.trim().length>100)return reply(400,"نام و نام خانوادگی را کامل وارد کن.");
-   const result=await client.auth.signUp({phone,password:body.password,options:{channel:'sms',data:{full_name:body.fullName.trim(),course_return_to:safeReturnPath(body.next)}}});
+   const signupName=typeof body.fullName==='string'?body.fullName.trim().replace(/\s+/gu,' '):'';
+   if(signupName.length<3||signupName.length>100||!/^\S+\s+\S+(?:\s+\S+)*$/u.test(signupName))return reply(400,"نام و نام خانوادگی را کامل وارد کن.");
+   const result=await client.auth.signUp({phone,password:body.password,options:{channel:'sms',data:{full_name:signupName,course_return_to:safeReturnPath(body.next)}}});
    error=result.error;
    if(!error&&result.data.user?.identities?.length!==0){
     // Repeated signUp does not overwrite an unconfirmed account's password.

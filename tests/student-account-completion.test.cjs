@@ -32,9 +32,9 @@ const complete = {
   full_name: 'نیما حسینی', phone: '09121234567', telegram_id: 'nima_123',
   grade: 10, study_field: 'mathematics', province: 'تهران', city: 'تهران',
 };
-function setup({ status = 'active', details = null, registrationRow = null, readError = false, authPhone = null, profilePhone = complete.phone, profileGrade = complete.grade } = {}) {
+function setup({ status = 'active', details = null, registrationRow = null, readError = false, authPhone = null, profilePhone = complete.phone, profileGrade = complete.grade, profileName = complete.full_name } = {}) {
   const profile = {
-    id: 'student-id', full_name: complete.full_name, phone: profilePhone,
+    id: 'student-id', full_name: profileName, phone: profilePhone,
     grade: profileGrade, study_field: complete.study_field, registration_status: status,
   };
   const user = authPhone ? { phone: authPhone, phone_confirmed_at: '2026-10-30T00:00:00Z' } : {};
@@ -100,12 +100,20 @@ test('complete account details take priority over older incomplete registration 
   assert.doesNotMatch(await account(options), /اطلاعات حسابت را تکمیل کن/);
 });
 
-test('optional legacy fields alone never trigger the completion reminder', async () => {
-  const options = { details: { ...complete, full_name: 'تک', phone: null, telegram_id: 'bad' }, profilePhone: null };
+test('optional legacy contact fields alone never trigger the completion reminder', async () => {
+  const options = { details: { ...complete, phone: null, telegram_id: 'bad' }, profilePhone: null };
   assert.notEqual(registration.validateRegistration(options.details, true), null, 'Optional values are checked if submitted.');
   assert.equal(registration.requiredStudentFieldsIssue(options.details, true), null);
   assert.doesNotMatch(await dashboard(options), /اطلاعات حسابت را تکمیل کن/);
   assert.doesNotMatch(await account(options), /اطلاعات حسابت را تکمیل کن/);
+});
+
+test('missing or incomplete signup name prompts active students to complete their name', async () => {
+  for (const name of ['', 'نیما']) {
+    const options = { profileName: name, details: { ...complete, full_name: null } };
+    assert.match(await dashboard(options), /نام و نام خانوادگی را کامل وارد کن/);
+    assert.match(await account(options), /نام و نام خانوادگی را کامل وارد کن/);
+  }
 });
 
 test('active student with no account or registration row is prompted, but a pending student is not', async () => {
