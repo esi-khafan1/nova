@@ -4,6 +4,7 @@ const fs = require('node:fs');
 
 const todayMigration = fs.readFileSync('supabase/migrations/090_edit_published_plan_today.sql', 'utf8');
 const completedMigration = fs.readFileSync('supabase/migrations/091_completed_boxes_and_linked_exam_removal.sql', 'utf8');
+const counselorFlags = fs.readFileSync('supabase/migrations/092_counselor_completed_plan_boxes.sql', 'utf8');
 const examMigration = fs.readFileSync('supabase/migrations/079_exam_plan_boxes.sql', 'utf8');
 const v5 = 'create or replace function public.save_weekly_plan_v5(' + examMigration.split('create or replace function public.save_weekly_plan_v5(')[1].split('revoke all on function public.save_weekly_plan_v5(')[0];
 const v6 = fs.readFileSync('supabase/migrations/085_konkur_recommended_publisher.sql', 'utf8').split('-- Re-issue the student RPC')[0];
@@ -68,8 +69,15 @@ const item = (day, subject, options = {}) => ({
   await db.exec(v5);
   await db.exec(v6);
   await db.exec(completedMigration);
+  await db.exec(counselorFlags);
   const date = (await db.query(`select (timezone('Asia/Tehran',now())::date-1)::text as day`)).rows[0].day;
   const actor = id => db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
+  await actor(ids.counselor);
+  assert.deepEqual((await db.query('select item_id from public.counselor_completed_plan_item_ids()')).rows.map(row=>row.item_id),[ids.completed], 'authoritative counselor flags identify exactly completed boxes');
+  await actor(ids.other);
+  assert.deepEqual((await db.query('select item_id from public.counselor_completed_plan_item_ids()')).rows,[], 'unassigned counselor cannot see progress');
+  await actor(ids.student);
+  await assert.rejects(db.query('select * from public.counselor_completed_plan_item_ids()'), /Only counselors/);
   await actor(ids.counselor);
   const initial = [
     item(1,'تکمیل‌شده',{id:ids.completed,activityType:'practice_tests',targetTestCount:20,sourceGrade:null}),

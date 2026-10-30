@@ -26,16 +26,18 @@ export default async function CounselorPlansPage({
 }) {
   const { supabase, profile } = await requireProfile(["counselor"]);
   const params = await searchParams;
-  const [{data:directoryData,error:directoryError},loadedPlans]=await Promise.all([
+  const [{data:directoryData,error:directoryError},loadedPlans,{data:completedRows,error:completedError}]=await Promise.all([
     supabase.rpc("counselor_student_directory"),
     loadCounselorPlans(supabase,profile.id).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
+    supabase.rpc("counselor_completed_plan_item_ids"),
   ]);
   const plans=loadedPlans.data,plansFailed=loadedPlans.failed;
-  if(directoryError||plansFailed)return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
+  if(directoryError||plansFailed||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
 
   const directory = (directoryData ?? []) as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
   const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
+  const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
   const requestedProgressStudent = params.progress_student;
   const progressStudent =
     selectedStudents.find(
@@ -135,7 +137,15 @@ export default async function CounselorPlansPage({
         </section>
       )}
 
-      <WeeklyPlanBuilder students={selectedStudents} plans={counselorPlans} initialStudentId={params.student} initialPlanId={params.plan} initialWeekStart={params.week_start} />
+      <WeeklyPlanBuilder
+        key={[params.student, params.plan, params.week_start, params.error, params.saved, ...completedItemIds].join(":")}
+        students={selectedStudents}
+        plans={counselorPlans}
+        initialStudentId={params.student}
+        initialPlanId={params.plan}
+        initialWeekStart={params.week_start}
+        completedItemIds={completedItemIds}
+      />
 
       {counselorPlans.length > 0 && (
         <section className="portal-card recent-plans">

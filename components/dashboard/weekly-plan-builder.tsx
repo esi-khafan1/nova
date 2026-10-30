@@ -70,7 +70,6 @@ export type CounselorWeeklyPlan = {
     recommended_publisher?:string|null;
     exam_year?:number|null;
     linked_exam_id?:string|null;
-    weekly_plan_item_completions?: Array<{ item_id: string }>;
   }>;
 };
 
@@ -112,7 +111,7 @@ const faNumber = (value: number) => value.toLocaleString("fa-IR");
 function dayDate(weekStart:string,dayIndex:number){return parseIsoDate(dayIso(weekStart,dayIndex));}
 function isPastDay(start:string,offset:number){return dayIso(start,offset)<tehranToday();}
 function firstAvailableDay(start:string){return Math.max(0,weekDays.findIndex((_,i)=>!isPastDay(start,i)));}
-function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
+function planItems(plan: CounselorWeeklyPlan, completedItemIds: ReadonlySet<string>): PlanItem[] {
   return [...plan.weekly_plan_items]
     .sort(
       (first, second) =>
@@ -134,7 +133,7 @@ function planItems(plan: CounselorWeeklyPlan): PlanItem[] {
       recommendedPublisher:item.recommended_publisher??null,
       otherPublisher:Boolean(item.recommended_publisher && !(recommendedPublishers as readonly string[]).includes(item.recommended_publisher)),
       linkedExamId:item.linked_exam_id??null,
-      completed:Boolean(item.weekly_plan_item_completions?.length),
+      completed:completedItemIds.has(item.id),
     }));
 }
 
@@ -144,13 +143,16 @@ export function WeeklyPlanBuilder({
   initialStudentId,
   initialPlanId,
   initialWeekStart,
+  completedItemIds,
 }: {
   students: Student[];
   plans: CounselorWeeklyPlan[];
   initialStudentId?: string;
   initialPlanId?: string;
   initialWeekStart?: string;
+  completedItemIds: string[];
 }) {
+  const completedIdSet = new Set(completedItemIds);
   const selectedStudentIndex = Math.max(0, students.findIndex(s => s.student_id === initialStudentId));
   const [studentIndex, setStudentIndex] = useState(selectedStudentIndex);
   const selectedStudentId = students[selectedStudentIndex]?.student_id;
@@ -168,7 +170,7 @@ export function WeeklyPlanBuilder({
   const [routines, setRoutines] = useState<PlanRoutine[]>(() => planRoutines(initialPlan));
   const [items, setItems] = useState<PlanItem[]>(() => [
     ...(initialPlan
-      ? planItems(initialPlan)
+      ? planItems(initialPlan, completedIdSet)
       : [newItem(firstAvailableDay(initialStart), "initial-item")]),
   ]);
 
@@ -190,7 +192,7 @@ export function WeeklyPlanBuilder({
     setRoutines(planRoutines(plan));
     setItems(
       plan
-        ? planItems(plan)
+        ? planItems(plan, completedIdSet)
         : [newItem(firstAvailableDay(nextWeek), `week-${nextWeek}`)],
     );
   };
