@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** One-shot, progressive enhancement: all content remains visible without JS. */
+/** Progressive enhancement: content stays readable without JS, observers or WAAPI. */
 export function LandingMotion() {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".landing-v2d");
@@ -17,9 +17,36 @@ export function LandingMotion() {
         observer.unobserve(entry.target);
         const element = entry.target as HTMLElement;
         if (reducedMotion.matches || typeof element.animate !== "function") continue;
+
+        // Distinct one-shot entrances for the timeline, benefits, course finder,
+        // articles, podcasts, news and social links. Keep the first keyframe
+        // partly visible so delayed/hydrating content never disappears.
+        const index = Array.prototype.indexOf.call(element.parentElement?.children ?? [], element) as number;
+        const stagger = Math.min(Math.max(index, 0), 4) * 65;
+        let start: Keyframe = { opacity: 0.6, transform: "translate3d(0, 18px, 0)" };
+        let duration = 520;
+        if (element.matches(".proof-item")) {
+          start = { opacity: 0.65, transform: "translate3d(0, 22px, 0) scale(.96)" };
+          duration = 460;
+        } else if (element.matches(".nova-why-item")) {
+          start = { opacity: 0.62, transform: `translate3d(${index % 2 ? "-22" : "22"}px, 0, 0)` };
+          duration = 480;
+        } else if (element.matches(".nova-path-panel")) {
+          start = { opacity: 0.62, transform: "scale(.97)" };
+          duration = 590;
+        } else if (element.matches(".nova-mag-article")) {
+          if (element.closest(".nova-podcasts")) start = { opacity: 0.65, transform: "translate3d(0, 12px, 0) scale(.95)" };
+          else if (element.closest(".nova-konkur-news")) start = { opacity: 0.65, transform: "translate3d(-24px, 0, 0)" };
+          else start = { opacity: 0.65, transform: "translate3d(0, 24px, 0)" };
+          duration = 540;
+        } else if (element.matches(".social-card")) {
+          start = { opacity: 0.68, transform: `translate3d(0, 12px, 0) scale(.96) rotate(${index % 2 ? 1.5 : -1.5}deg)` };
+          duration = 560;
+        }
         const animation = element.animate(
-          [{ opacity: 0.55, transform: "translate3d(0, 16px, 0)" }, { opacity: 1, transform: "translate3d(0, 0, 0)" }],
-          { duration: 480, easing: "cubic-bezier(.22, 1, .36, 1)" },
+          [start, { opacity: 1, transform: "none" }],
+          { duration, delay: element.matches(".proof-item, .nova-why-item, .nova-mag-article, .social-card") ? stagger : 0,
+            easing: "cubic-bezier(.22, 1, .36, 1)", fill: "backwards" },
         );
         running.add(animation);
         animation.addEventListener("finish", () => running.delete(animation), { once: true });
@@ -31,8 +58,7 @@ export function LandingMotion() {
       ".nova-magazine .nova-mag-header, .nova-magazine .nova-mag-article, " +
       ".social-head, .social-card",
     );
-    // Don't animate what's already on screen when hydration completes or when
-    // visiting a hash anchor. Observed content is never hidden while waiting.
+    // Do not animate elements already visible at hydration or a hash anchor.
     targets.forEach((element) => {
       if (element.getBoundingClientRect().top > window.innerHeight + 24) observer.observe(element);
     });

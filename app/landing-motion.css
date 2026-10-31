@@ -1,39 +1,93 @@
-/* Lightweight, one-time landing motion. No layout changes, libraries or image downloads. */
+/* Motion-only enhancement: no layout changes, extra requests or hidden content. */
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes nova-landing-arrive {
+  @keyframes nova-hero-pan {
+    from { opacity: .82; transform: translate3d(-.6%, 0, 0) scale(1.025); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  @keyframes nova-hero-kicker {
+    from { opacity: 0; transform: translate3d(22px, 0, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  @keyframes nova-hero-title {
+    from { opacity: .5; clip-path: inset(0 0 100% 0); transform: translate3d(0, 10px, 0); }
+    to { opacity: 1; clip-path: inset(0 0 0 0); transform: translate3d(0, 0, 0); }
+  }
+  @keyframes nova-hero-rise {
     from { opacity: 0; transform: translate3d(0, 16px, 0); }
     to { opacity: 1; transform: translate3d(0, 0, 0); }
   }
-  @keyframes nova-landing-image {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  @keyframes nova-hero-actions-in {
+    from { opacity: 0; transform: translate3d(0, 12px, 0) scale(.96); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  @keyframes nova-star-glimmer {
+    0%, 100% { opacity: .48; }
+    50% { opacity: .95; }
   }
 
   .landing-v2d .nova-approved-hero .nova-hero-background {
-    animation: nova-landing-image .8s ease-out both;
+    animation: nova-hero-pan 1.15s cubic-bezier(.22, 1, .36, 1) both;
   }
-  .landing-v2d .nova-hero-copy > .nova-eyebrow,
-  .landing-v2d .nova-hero-copy > h1,
-  .landing-v2d .nova-hero-copy > .nova-hero-lead,
+  .landing-v2d .nova-hero-copy > .nova-eyebrow {
+    animation: nova-hero-kicker .52s cubic-bezier(.22, 1, .36, 1) .07s both;
+  }
+  .landing-v2d .nova-hero-copy > h1 {
+    animation: nova-hero-title .72s cubic-bezier(.22, 1, .36, 1) .14s both;
+  }
+  .landing-v2d .nova-hero-copy > .nova-hero-lead {
+    animation: nova-hero-rise .55s cubic-bezier(.22, 1, .36, 1) .27s both;
+  }
   .landing-v2d .nova-hero-copy > .nova-hero-actions {
-    animation: nova-landing-arrive .58s cubic-bezier(.22, 1, .36, 1) both;
+    animation: nova-hero-actions-in .56s cubic-bezier(.22, 1, .36, 1) .37s both;
   }
-  .landing-v2d .nova-hero-copy > .nova-eyebrow { animation-delay: .08s; }
-  .landing-v2d .nova-hero-copy > h1 { animation-delay: .16s; }
-  .landing-v2d .nova-hero-copy > .nova-hero-lead { animation-delay: .27s; }
-  .landing-v2d .nova-hero-copy > .nova-hero-actions { animation-delay: .36s; }
+
+  /* Decorative stars shimmer only in the course finder. Preserve each star's
+     inline rotation by animating opacity, not the SVG transform. */
+  .landing-v2d .nova-path-stars svg {
+    animation: nova-star-glimmer 4.8s ease-in-out infinite;
+  }
+  .landing-v2d .nova-path-stars svg:nth-child(3n + 1) { animation-delay: -1.6s; }
+  .landing-v2d .nova-path-stars svg:nth-child(3n + 2) { animation-delay: -3.2s; }
 
   @media (hover: hover) and (pointer: fine) {
     .landing-v2d .nova-hero-actions a,
     .landing-v2d .nova-path-primary {
-      transition: transform .2s ease, box-shadow .2s ease, background .15s ease, border-color .15s ease;
+      transition: transform .22s ease, box-shadow .22s ease, background .15s ease, border-color .15s ease;
     }
     .landing-v2d .nova-hero-actions a:hover,
     .landing-v2d .nova-path-primary:hover:not(:disabled) {
       transform: translateY(-3px);
       box-shadow: 0 8px 18px rgba(18, 59, 99, .12);
     }
-    .landing-v2d .nova-mag-cover img { transition: transform .35s ease; }
-    .landing-v2d .nova-mag-card:hover .nova-mag-cover img { transform: scale(1.025); }
+    .landing-v2d .nova-hero-actions a svg,
+    .landing-v2d .nova-mag-read > span { transition: transform .22s ease; }
+    .landing-v2d .nova-hero-actions a:hover svg,
+    .landing-v2d .nova-hero-actions a:focus-visible svg,
+    .landing-v2d .nova-mag-card:hover .nova-mag-read > span,
+    .landing-v2d .nova-mag-card:focus-visible .nova-mag-read > span { transform: translateX(-4px); }
+
+    .landing-v2d .proof-item .step-label,
+    .landing-v2d .nova-why-icon svg { transition: transform .28s cubic-bezier(.22, 1, .36, 1); }
+    .landing-v2d .proof-item:hover .step-label { transform: translateY(-3px); }
+    .landing-v2d .nova-why-item:hover .nova-why-icon svg { transform: rotate(-9deg) scale(1.08); }
+
+    .landing-v2d .nova-mag-cover img { transition: transform .4s cubic-bezier(.22, 1, .36, 1); }
+    .landing-v2d .nova-mag-card:hover .nova-mag-cover img,
+    .landing-v2d .nova-mag-card:focus-visible .nova-mag-cover img { transform: scale(1.035); }
+    .landing-v2d .nova-podcasts .podcast-cover-badge { transition: transform .28s ease; }
+    .landing-v2d .nova-podcasts .nova-mag-card:hover .podcast-cover-badge { transform: rotate(-10deg) scale(1.08); }
+
+    .landing-v2d .social-card .icon-box { transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+    .landing-v2d .social-card:hover .icon-box,
+    .landing-v2d .social-card:focus-visible .icon-box { transform: rotate(6deg) scale(1.06); }
   }
+
+  @media (max-width: 700px) {
+    .landing-v2d .nova-path-stars svg:nth-child(n + 7) { animation: none; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-v2d .nova-approved-hero .nova-hero-background,
+  .landing-v2d .nova-hero-copy > *,
+  .landing-v2d .nova-path-stars svg { animation: none !important; }
 }
