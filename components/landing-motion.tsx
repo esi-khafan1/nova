@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** One-shot accents on visible details, never a page-wide translate/reveal of content. */
+/** Opt-in, one-shot section reveals; without JS/IO or with reduced motion nothing is hidden. */
 export function LandingMotion() {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".landing-v2d");
@@ -10,37 +10,45 @@ export function LandingMotion() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (reducedMotion.matches) return;
 
-    // Only the existing details animate: a timeline label, benefit icon, course
-    // panel, editorial cover, podcast play badge, news accent or social icon.
-    // Text and links are always fully present; no card moves in from offscreen.
     const targets = root.querySelectorAll<HTMLElement>(
       ".proof-item, .nova-why-item, #find-path, " +
-      "#mag .nova-mag-article, #podcasts .nova-mag-article, " +
-      "#konkur-news .nova-mag-article, #social .social-card",
+      ".nova-magazine .nova-mag-header, .nova-magazine .nova-mag-article, " +
+      "#social .social-head, #social .social-card",
     );
     const observer = typeof window.IntersectionObserver === "function"
       ? new IntersectionObserver((entries) => {
           for (const entry of entries) {
-            if (!entry.isIntersecting || reducedMotion.matches) continue;
+            // IntersectionObserver also reports an initial intersection of 0.
+            // Wait until a meaningful part of the item is inside the inner 70%
+            // of the viewport, so its animation plays while it is in view.
+            if (!entry.isIntersecting || entry.intersectionRatio < 0.12 || reducedMotion.matches) continue;
             const element = entry.target as HTMLElement;
             element.dataset.landingMotion = "played";
             observer?.unobserve(element);
           }
-        }, { rootMargin: "0px 0px -7% 0px", threshold: 0.05 })
+        }, { rootMargin: "0px 0px -30% 0px", threshold: [0, 0.12] })
       : null;
 
-    // Without IntersectionObserver, all sections stay static and readable.
-    // Above-fold/hash-anchored content is left untouched at hydration as well.
-    targets.forEach((element) => {
-      const rect = element.getBoundingClientRect();
-      if (rect.top > window.innerHeight || rect.bottom <= 0) observer?.observe(element);
-      // A hash link can land directly on the course finder. Its decorative
-      // stars and panel accent may play immediately; no text is masked.
-      else if (element.id === "find-path" && observer) element.dataset.landingMotion = "played";
+    // Arm only items that were already fully below the viewport at hydration.
+    // Never make a visible item (or a hash-anchored section) disappear on load.
+    // No observer means no pending attribute and therefore no hidden content.
+    if (observer) targets.forEach((element) => {
+      if (element.getBoundingClientRect().top > window.innerHeight + 16) {
+        element.dataset.landingMotion = "pending";
+        observer.observe(element);
+      }
     });
 
-    // A small pointer-following light on the social links (fine pointers only).
-    // No global mouse tracking, RAF loop, or custom cursor over the page.
+    const onFocus = (event: FocusEvent) => {
+      const pending = (event.target as Element).closest<HTMLElement>('[data-landing-motion="pending"]');
+      if (pending) {
+        pending.dataset.landingMotion = "played";
+        observer?.unobserve(pending);
+      }
+    };
+    root.addEventListener("focusin", onFocus);
+
+    // Keep the existing fine-pointer social spotlight, scoped to its section.
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
     const social = root.querySelector<HTMLElement>("#social");
     const onPointerMove = (event: PointerEvent) => {
@@ -55,6 +63,12 @@ export function LandingMotion() {
 
     const stop = () => {
       observer?.disconnect();
+      // If the preference changes or the component unmounts, expose anything
+      // still waiting; no content remains blank after motion is disabled.
+      targets.forEach((element) => {
+        if (element.dataset.landingMotion === "pending") delete element.dataset.landingMotion;
+      });
+      root.removeEventListener("focusin", onFocus);
       social?.removeEventListener("pointermove", onPointerMove);
     };
     const onPreferenceChange = (event: MediaQueryListEvent) => { if (event.matches) stop(); };

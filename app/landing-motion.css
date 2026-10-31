@@ -1,4 +1,4 @@
-/* Motion accents, not a global scroll reveal. Content and layout are never hidden pending JS. */
+/* Scroll reveals are armed only by JS for offscreen content; without JS everything stays visible. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes nova-hero-pan {
     from { opacity: .82; transform: translate3d(-.6%, 0, 0) scale(1.025); }
@@ -85,6 +85,104 @@
   .landing-v2d .nova-hero-copy > .nova-hero-actions {
     animation: nova-hero-actions-in .56s cubic-bezier(.22,1,.36,1) .36s both;
   }
+
+  /* Different, deliberately visible arrivals. The pending state is set only
+     on items below the viewport; no-JS and reduced-motion pages never hide them. */
+  @keyframes nova-proof-enter {
+    from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(30px); }
+    to { opacity: 1; clip-path: inset(0); transform: none; }
+  }
+  @keyframes nova-why-enter {
+    from { opacity: 0; clip-path: inset(50% 0 50% 0); transform: scale(.82); }
+    75% { opacity: 1; clip-path: inset(0); transform: scale(1.035); }
+    to { opacity: 1; clip-path: inset(0); transform: none; }
+  }
+  @keyframes nova-path-enter {
+    from { opacity: 0; transform: perspective(850px) rotateX(-13deg) scale(.86); }
+    75% { opacity: 1; transform: perspective(850px) rotateX(2deg) scale(1.015); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes nova-mag-heading-enter {
+    from { opacity: 0; clip-path: inset(0 0 100% 0); }
+    to { opacity: 1; clip-path: inset(0); }
+  }
+  @keyframes nova-mag-enter {
+    from { opacity: 0; clip-path: inset(0 100% 0 0); transform: scale(.96); }
+    to { opacity: 1; clip-path: inset(0); transform: none; }
+  }
+  @keyframes nova-podcast-heading-enter {
+    from { opacity: 0; transform: translateX(45px) skewX(-7deg); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes nova-podcast-enter {
+    from { opacity: 0; transform: perspective(700px) rotateY(55deg) scale(.82); }
+    75% { opacity: 1; transform: perspective(700px) rotateY(-4deg) scale(1.02); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes nova-news-heading-enter {
+    from { opacity: 0; filter: blur(7px); }
+    to { opacity: 1; filter: blur(0); }
+  }
+  @keyframes nova-news-enter {
+    from { opacity: 0; clip-path: inset(0 0 0 100%); transform: translateX(-40px); }
+    to { opacity: 1; clip-path: inset(0); transform: none; }
+  }
+  @keyframes nova-social-heading-enter {
+    from { opacity: 0; clip-path: circle(0% at 50% 50%); }
+    to { opacity: 1; clip-path: circle(75% at 50% 50%); }
+  }
+  @keyframes nova-social-enter {
+    from { opacity: 0; transform: perspective(850px) rotateY(-55deg) scale(.84); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .landing-v2d :is(.proof-item, .nova-why-item, .nova-mag-header, .nova-mag-article, .social-head, .social-card)[data-landing-motion="pending"],
+  .landing-v2d #find-path[data-landing-motion="pending"] .nova-path-inner { opacity: 0; }
+
+  .landing-v2d .proof-item[data-landing-motion="played"] {
+    animation: nova-proof-enter .9s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d .proof-item:nth-child(2)[data-landing-motion="played"] { animation-delay: .12s; }
+  .landing-v2d .proof-item:nth-child(3)[data-landing-motion="played"] { animation-delay: .24s; }
+  .landing-v2d .proof-item:nth-child(4)[data-landing-motion="played"] { animation-delay: .36s; }
+  .landing-v2d .nova-why-item[data-landing-motion="played"] {
+    animation: nova-why-enter 1s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d .nova-why-item:nth-child(3n + 2)[data-landing-motion="played"] { animation-delay: .12s; }
+  .landing-v2d .nova-why-item:nth-child(3n + 3)[data-landing-motion="played"] { animation-delay: .24s; }
+  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-inner {
+    animation: nova-path-enter 1.2s cubic-bezier(.22,1,.36,1) both;
+    transform-origin: center bottom;
+  }
+  .landing-v2d #mag .nova-mag-header[data-landing-motion="played"] {
+    animation: nova-mag-heading-enter 1s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d #mag .nova-mag-article[data-landing-motion="played"] {
+    animation: nova-mag-enter 1.05s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d #podcasts .nova-mag-header[data-landing-motion="played"] {
+    animation: nova-podcast-heading-enter 1s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d #podcasts .nova-mag-article[data-landing-motion="played"] {
+    animation: nova-podcast-enter 1.1s cubic-bezier(.22,1,.36,1) both;
+    transform-origin: center center;
+  }
+  .landing-v2d #konkur-news .nova-mag-header[data-landing-motion="played"] {
+    animation: nova-news-heading-enter 1.1s ease-out both;
+  }
+  .landing-v2d #konkur-news .nova-mag-article[data-landing-motion="played"] {
+    animation: nova-news-enter 1s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d .nova-mag-layout .nova-mag-article:nth-child(2)[data-landing-motion="played"] { animation-delay: .14s; }
+  .landing-v2d .nova-mag-layout .nova-mag-article:nth-child(3)[data-landing-motion="played"] { animation-delay: .28s; }
+  .landing-v2d #social .social-head[data-landing-motion="played"] {
+    animation: nova-social-heading-enter 1.05s cubic-bezier(.22,1,.36,1) both;
+  }
+  .landing-v2d #social .social-card[data-landing-motion="played"] {
+    animation: nova-social-enter 1.05s cubic-bezier(.22,1,.36,1) both;
+    transform-origin: center center;
+  }
+  .landing-v2d #social .social-card:nth-child(2)[data-landing-motion="played"] { animation-delay: .2s; }
 
   /* Timeline: the accent is drawn under each grade, rather than moving cards. */
   .landing-v2d .proof-item .step-label { position: relative; display: inline-block; }
@@ -201,4 +299,10 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-v2d .nova-approved-hero .nova-hero-background,
   .landing-v2d .nova-hero-copy > * { animation: none !important; }
+}
+@media print {
+  .landing-v2d [data-landing-motion],
+  .landing-v2d [data-landing-motion] * { animation: none !important; }
+  .landing-v2d [data-landing-motion="pending"],
+  .landing-v2d #find-path[data-landing-motion="pending"] .nova-path-inner { opacity: 1 !important; }
 }
