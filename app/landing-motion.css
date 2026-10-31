@@ -1,308 +1,110 @@
-/* Scroll reveals are armed only by JS for offscreen content; without JS everything stays visible. */
+/* Reference-inspired motion only. Nova keeps its own content, colors and layout.
+   The reference's reveal is opacity 0 / y 22 -> opacity 1 / y 0,
+   once, 80px viewport inset, 600ms no-bounce spring (see landing-motion.tsx). */
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes nova-hero-pan {
-    from { opacity: .82; transform: translate3d(-.6%, 0, 0) scale(1.025); }
-    to { opacity: 1; transform: none; }
+  @keyframes nova-vitto-enter {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes nova-hero-kicker {
-    from { opacity: 0; transform: translateX(22px); }
-    to { opacity: 1; transform: none; }
+  @keyframes nova-vitto-header-enter {
+    from { opacity: 0; transform: translateY(-24px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes nova-hero-title {
-    from { clip-path: inset(0 0 100% 0); }
-    to { clip-path: inset(0); }
+  @keyframes nova-vitto-float {
+    50% { transform: translateY(-6px); }
   }
-  @keyframes nova-hero-ink {
-    from { opacity: .2; }
-    to { opacity: 1; }
-  }
-  @keyframes nova-hero-actions-in {
-    from { opacity: .2; transform: translateX(24px); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes nova-timeline-draw {
-    from { transform: scaleX(0); }
-    to { transform: scaleX(1); }
-  }
-  @keyframes nova-icon-spring {
-    0% { transform: scale(.65) rotate(-28deg); opacity: .4; }
-    64% { transform: scale(1.18) rotate(7deg); opacity: 1; }
-    100% { transform: none; opacity: 1; }
-  }
-  @keyframes nova-panel-beacon {
-    0%, 100% { box-shadow: 0 12px 40px rgba(18,59,99,.045), 0 0 0 0 rgba(23,107,206,0); }
-    45% { box-shadow: 0 12px 40px rgba(18,59,99,.045), 0 0 0 14px rgba(23,107,206,.16); }
-  }
-  @keyframes nova-compass-settle {
-    from { transform: rotate(-75deg) scale(.7); }
-    70% { transform: rotate(8deg) scale(1.08); }
-    to { transform: none; }
-  }
-  @keyframes nova-star-glimmer {
-    0%, 100% { opacity: .48; }
-    50% { opacity: .95; }
-  }
-  @keyframes nova-cover-wipe {
-    from { clip-path: inset(0 100% 0 0); transform: scale(1.07); }
-    to { clip-path: inset(0); transform: none; }
-  }
-  @keyframes nova-play-ring {
-    from { opacity: .75; transform: scale(.6); }
-    to { opacity: 0; transform: scale(1.7); }
-  }
-  @keyframes nova-play-pop {
-    0% { transform: scale(.65) rotate(-28deg); }
-    65% { transform: scale(1.12) rotate(8deg); }
-    100% { transform: none; }
-  }
-  @keyframes nova-news-underline {
-    from { background-size: 0 2px; }
-    to { background-size: 100% 2px; }
-  }
-  @keyframes nova-news-scan {
-    from { transform: translateX(110%); }
-    to { transform: translateX(-110%); }
-  }
-  @keyframes nova-social-flip {
-    from { transform: perspective(350px) rotateY(-85deg) scale(.8); }
-    70% { transform: perspective(350px) rotateY(12deg) scale(1.07); }
-    to { transform: none; }
+  @keyframes nova-vitto-pulse {
+    50% { opacity: .9; }
   }
 
-  /* Above the fold: image zoom, a title mask, ink fade and sideways actions. */
-  .landing-v2d .nova-approved-hero .nova-hero-background {
-    animation: nova-hero-pan 1.15s cubic-bezier(.22,1,.36,1) both;
+  /* The page starts empty and fills in: header, hero media, then each line. */
+  .landing-v2d .nova-site-header {
+    animation: nova-vitto-header-enter .6s cubic-bezier(.22,1,.36,1) both;
   }
-  .landing-v2d .nova-hero-copy > .nova-eyebrow {
-    animation: nova-hero-kicker .52s cubic-bezier(.22,1,.36,1) .07s both;
+  .landing-v2d .nova-hero-background {
+    animation: nova-vitto-enter .6s cubic-bezier(.22,1,.36,1) .14s both;
   }
-  .landing-v2d .nova-hero-copy > h1 {
-    animation: nova-hero-title .72s cubic-bezier(.22,1,.36,1) .14s both;
+  .landing-v2d .nova-hero-copy > * {
+    animation: nova-vitto-enter .6s cubic-bezier(.22,1,.36,1) both;
   }
-  .landing-v2d .nova-hero-copy > .nova-hero-lead {
-    animation: nova-hero-ink .7s ease-out .23s both;
+  .landing-v2d .nova-hero-copy > :nth-child(1) { animation-delay: .1s; }
+  .landing-v2d .nova-hero-copy > :nth-child(2) { animation-delay: .18s; }
+  .landing-v2d .nova-hero-copy > :nth-child(3) { animation-delay: .26s; }
+  .landing-v2d .nova-hero-copy > :nth-child(4) { animation-delay: .34s; }
+  /* The proof strip is often partly in the first viewport on desktop. */
+  .landing-v2d .proof-item[data-landing-motion="initial"] {
+    animation: nova-vitto-enter .6s cubic-bezier(.22,1,.36,1) .42s both;
   }
-  .landing-v2d .nova-hero-copy > .nova-hero-actions {
-    animation: nova-hero-actions-in .56s cubic-bezier(.22,1,.36,1) .36s both;
+  .landing-v2d .proof-item:nth-child(2)[data-landing-motion="initial"] { animation-delay: .5s; }
+  .landing-v2d .proof-item:nth-child(3)[data-landing-motion="initial"] { animation-delay: .58s; }
+  .landing-v2d .proof-item:nth-child(4)[data-landing-motion="initial"] { animation-delay: .66s; }
+
+  /* JS only marks offscreen content. If JS or IntersectionObserver is absent,
+     nothing here is hidden; deep-linked/in-view sections remain visible. */
+  .landing-v2d [data-landing-motion="pending"],
+  .landing-v2d [data-landing-motion="animating"] {
+    opacity: 0;
+    transform: translateY(22px);
   }
 
-  /* Different, deliberately visible arrivals. The pending state is set only
-     on items below the viewport; no-JS and reduced-motion pages never hide them. */
-  @keyframes nova-proof-enter {
-    from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(30px); }
-    to { opacity: 1; clip-path: inset(0); transform: none; }
-  }
-  @keyframes nova-why-enter {
-    from { opacity: 0; clip-path: inset(50% 0 50% 0); transform: scale(.82); }
-    75% { opacity: 1; clip-path: inset(0); transform: scale(1.035); }
-    to { opacity: 1; clip-path: inset(0); transform: none; }
-  }
-  @keyframes nova-path-enter {
-    from { opacity: 0; transform: perspective(850px) rotateX(-13deg) scale(.86); }
-    75% { opacity: 1; transform: perspective(850px) rotateX(2deg) scale(1.015); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes nova-mag-heading-enter {
-    from { opacity: 0; clip-path: inset(0 0 100% 0); }
-    to { opacity: 1; clip-path: inset(0); }
-  }
-  @keyframes nova-mag-enter {
-    from { opacity: 0; clip-path: inset(0 100% 0 0); transform: scale(.96); }
-    to { opacity: 1; clip-path: inset(0); transform: none; }
-  }
-  @keyframes nova-podcast-heading-enter {
-    from { opacity: 0; transform: translateX(45px) skewX(-7deg); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes nova-podcast-enter {
-    from { opacity: 0; transform: perspective(700px) rotateY(55deg) scale(.82); }
-    75% { opacity: 1; transform: perspective(700px) rotateY(-4deg) scale(1.02); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes nova-news-heading-enter {
-    from { opacity: 0; filter: blur(7px); }
-    to { opacity: 1; filter: blur(0); }
-  }
-  @keyframes nova-news-enter {
-    from { opacity: 0; clip-path: inset(0 0 0 100%); transform: translateX(-40px); }
-    to { opacity: 1; clip-path: inset(0); transform: none; }
-  }
-  @keyframes nova-social-heading-enter {
-    from { opacity: 0; clip-path: circle(0% at 50% 50%); }
-    to { opacity: 1; clip-path: circle(75% at 50% 50%); }
-  }
-  @keyframes nova-social-enter {
-    from { opacity: 0; transform: perspective(850px) rotateY(-55deg) scale(.84); }
-    to { opacity: 1; transform: none; }
-  }
+  /* Gentle floating details and image hovers are also present on the reference;
+     remove the previous wipes, flips, spotlights, beacons and scan effects. */
+  .landing-v2d #social .icon-box { animation: nova-vitto-float 5s ease-in-out infinite; }
+  .landing-v2d #social .social-card:nth-child(2) .icon-box { animation-delay: -2.5s; }
+  .landing-v2d .nova-path-stars svg { animation: nova-vitto-pulse 4.5s ease-in-out infinite; }
+  .landing-v2d .nova-path-stars svg:nth-child(3n + 2) { animation-delay: -1.5s; }
+  .landing-v2d .nova-path-stars svg:nth-child(3n + 3) { animation-delay: -3s; }
+  .landing-v2d .nova-mag-cover img { transition: transform .4s ease; }
+  .landing-v2d .nova-mag-card:hover .nova-mag-cover img,
+  .landing-v2d .nova-mag-card:focus-visible .nova-mag-cover img { transform: scale(1.04); }
 
-  .landing-v2d :is(.proof-item, .nova-why-item, .nova-mag-header, .nova-mag-article, .social-head, .social-card)[data-landing-motion="pending"],
-  .landing-v2d #find-path[data-landing-motion="pending"] .nova-path-inner { opacity: 0; }
+  /* Motion animates the panel and links with the reference's spring settings. */
+  .landing-v2d .nova-site-header { transition: background .25s ease, box-shadow .25s ease; }
+}
 
-  .landing-v2d .proof-item[data-landing-motion="played"] {
-    animation: nova-proof-enter .9s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d .proof-item:nth-child(2)[data-landing-motion="played"] { animation-delay: .12s; }
-  .landing-v2d .proof-item:nth-child(3)[data-landing-motion="played"] { animation-delay: .24s; }
-  .landing-v2d .proof-item:nth-child(4)[data-landing-motion="played"] { animation-delay: .36s; }
-  .landing-v2d .nova-why-item[data-landing-motion="played"] {
-    animation: nova-why-enter 1s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d .nova-why-item:nth-child(3n + 2)[data-landing-motion="played"] { animation-delay: .12s; }
-  .landing-v2d .nova-why-item:nth-child(3n + 3)[data-landing-motion="played"] { animation-delay: .24s; }
-  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-inner {
-    animation: nova-path-enter 1.2s cubic-bezier(.22,1,.36,1) both;
-    transform-origin: center bottom;
-  }
-  .landing-v2d #mag .nova-mag-header[data-landing-motion="played"] {
-    animation: nova-mag-heading-enter 1s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d #mag .nova-mag-article[data-landing-motion="played"] {
-    animation: nova-mag-enter 1.05s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d #podcasts .nova-mag-header[data-landing-motion="played"] {
-    animation: nova-podcast-heading-enter 1s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d #podcasts .nova-mag-article[data-landing-motion="played"] {
-    animation: nova-podcast-enter 1.1s cubic-bezier(.22,1,.36,1) both;
-    transform-origin: center center;
-  }
-  .landing-v2d #konkur-news .nova-mag-header[data-landing-motion="played"] {
-    animation: nova-news-heading-enter 1.1s ease-out both;
-  }
-  .landing-v2d #konkur-news .nova-mag-article[data-landing-motion="played"] {
-    animation: nova-news-enter 1s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d .nova-mag-layout .nova-mag-article:nth-child(2)[data-landing-motion="played"] { animation-delay: .14s; }
-  .landing-v2d .nova-mag-layout .nova-mag-article:nth-child(3)[data-landing-motion="played"] { animation-delay: .28s; }
-  .landing-v2d #social .social-head[data-landing-motion="played"] {
-    animation: nova-social-heading-enter 1.05s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d #social .social-card[data-landing-motion="played"] {
-    animation: nova-social-enter 1.05s cubic-bezier(.22,1,.36,1) both;
-    transform-origin: center center;
-  }
-  .landing-v2d #social .social-card:nth-child(2)[data-landing-motion="played"] { animation-delay: .2s; }
-
-  /* Timeline: the accent is drawn under each grade, rather than moving cards. */
-  .landing-v2d .proof-item .step-label { position: relative; display: inline-block; }
-  .landing-v2d .proof-item .step-label::after {
-    content: ""; position: absolute; inset-inline: 0; bottom: -4px;
-    border-bottom: 2px solid currentColor; transform: scaleX(0); transform-origin: right;
-  }
-  .landing-v2d .proof-item[data-landing-motion="played"] .step-label::after {
-    animation: nova-timeline-draw .6s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d .proof-item:nth-child(2) .step-label::after { animation-delay: .1s; }
-  .landing-v2d .proof-item:nth-child(3) .step-label::after { animation-delay: .2s; }
-  .landing-v2d .proof-item:nth-child(4) .step-label::after { animation-delay: .3s; }
-
-  /* Benefits: pictograms bounce open, while all explanatory text stays still. */
-  .landing-v2d .nova-why-item[data-landing-motion="played"] .nova-why-icon {
-    animation: nova-icon-spring .62s cubic-bezier(.22,1,.36,1) both;
-  }
-  .landing-v2d .nova-why-item:nth-child(3n + 2) .nova-why-icon { animation-delay: .09s; }
-  .landing-v2d .nova-why-item:nth-child(3n + 3) .nova-why-icon { animation-delay: .18s; }
-
-  /* Course finder: a brief border beacon and a settling compass, no panel slide. */
-  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-panel {
-    animation: nova-panel-beacon 1.15s ease-out;
-  }
-  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-symbol svg {
-    animation: nova-compass-settle .78s cubic-bezier(.22,1,.36,1) both;
-  }
-  /* Decorative stars keep their inline rotation; only opacity changes. */
-  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-stars svg {
-    animation: nova-star-glimmer 4.8s ease-in-out infinite;
-  }
-  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-stars svg:nth-child(3n + 1) { animation-delay: -1.6s; }
-  .landing-v2d #find-path[data-landing-motion="played"] .nova-path-stars svg:nth-child(3n + 2) { animation-delay: -3.2s; }
-
-  /* Editorial: only the picture opens like a shutter, never its card or copy. */
-  .landing-v2d #mag .nova-mag-article[data-landing-motion="played"] .nova-mag-cover > img,
-  .landing-v2d #mag .nova-mag-article[data-landing-motion="played"] .nova-mag-cover-fallback {
-    animation: nova-cover-wipe .8s cubic-bezier(.22,1,.36,1);
-  }
-
-  /* Podcasts: a two-beat sound ring around the existing play glyph. */
-  .landing-v2d #podcasts .nova-mag-article[data-landing-motion="played"] .podcast-cover-badge {
-    animation: nova-play-pop .65s cubic-bezier(.22,1,.36,1);
-  }
-  .landing-v2d #podcasts .podcast-cover-badge::after {
-    content: ""; position: absolute; inset: -5px; border-radius: 50%;
-    border: 2px solid currentColor; opacity: 0; pointer-events: none;
-  }
-  .landing-v2d #podcasts .nova-mag-article[data-landing-motion="played"] .podcast-cover-badge::after {
-    animation: nova-play-ring .75s ease-out .2s 2;
-  }
-
-  /* News: a light scans the cover while ink traces the headline. */
-  .landing-v2d #konkur-news .nova-mag-cover::after {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(90deg, transparent 12%, rgba(255,255,255,.36) 50%, transparent 88%);
-    transform: translateX(110%);
-  }
-  .landing-v2d #konkur-news .nova-mag-article[data-landing-motion="played"] .nova-mag-cover::after {
-    animation: nova-news-scan .9s cubic-bezier(.22,1,.36,1);
-  }
-  .landing-v2d #konkur-news .nova-mag-card h3 {
-    background-image: linear-gradient(90deg, var(--mag-blue), transparent);
-    background-repeat: no-repeat; background-position: right bottom; background-size: 0 2px;
-  }
-  .landing-v2d #konkur-news .nova-mag-article[data-landing-motion="played"] h3 {
-    animation: nova-news-underline .9s cubic-bezier(.22,1,.36,1) .12s forwards;
-  }
-
-  /* Social: icon flip on arrival; a light follows fine pointers across the link. */
-  .landing-v2d #social .social-card[data-landing-motion="played"] .icon-box {
-    animation: nova-social-flip .72s cubic-bezier(.22,1,.36,1);
-  }
-  .landing-v2d #social .social-card { position: relative; }
-  .landing-v2d #social .social-card::after {
-    content: ""; position: absolute; inset: 1px; border-radius: inherit;
-    background: radial-gradient(220px circle at var(--motion-x, 50%) var(--motion-y, 50%), rgba(30,95,175,.17), transparent 85%);
-    opacity: 0; pointer-events: none; transition: opacity .24s ease;
-  }
-  .landing-v2d #social .social-card:focus-visible::after { opacity: 1; }
-
-  @media (hover: hover) and (pointer: fine) {
-    .landing-v2d #social .social-card:hover::after { opacity: 1; }
-    .landing-v2d .nova-hero-actions a,
-    .landing-v2d .nova-path-primary {
-      transition: transform .22s ease, box-shadow .22s ease, background .15s ease, border-color .15s ease;
-    }
-    .landing-v2d .nova-hero-actions a:hover,
-    .landing-v2d .nova-path-primary:hover:not(:disabled) {
-      transform: translateY(-3px); box-shadow: 0 8px 18px rgba(18,59,99,.12);
-    }
-    .landing-v2d .nova-hero-actions a svg,
-    .landing-v2d .nova-mag-read > span { transition: transform .22s ease; }
-    .landing-v2d .nova-hero-actions a:hover svg,
-    .landing-v2d .nova-hero-actions a:focus-visible svg,
-    .landing-v2d .nova-mag-card:hover .nova-mag-read > span,
-    .landing-v2d .nova-mag-card:focus-visible .nova-mag-read > span { transform: translateX(-4px); }
-    .landing-v2d .nova-why-icon svg { transition: transform .28s cubic-bezier(.22,1,.36,1); }
-    .landing-v2d .nova-why-item:hover .nova-why-icon svg { transform: rotate(-9deg) scale(1.08); }
-    .landing-v2d .nova-mag-cover img { transition: transform .4s cubic-bezier(.22,1,.36,1); }
-    .landing-v2d .nova-mag-card:hover .nova-mag-cover img,
-    .landing-v2d .nova-mag-card:focus-visible .nova-mag-cover img { transform: scale(1.035); }
-    .landing-v2d #podcasts .podcast-cover-badge { transition: transform .28s ease; }
-    .landing-v2d #podcasts .nova-mag-card:hover .podcast-cover-badge { transform: rotate(-10deg) scale(1.08); }
-    .landing-v2d #social .icon-box { transition: transform .3s cubic-bezier(.22,1,.36,1); }
-    .landing-v2d #social .social-card:hover .icon-box,
-    .landing-v2d #social .social-card:focus-visible .icon-box { transform: rotate(6deg) scale(1.06); }
-  }
-  @media (max-width: 700px) {
-    .landing-v2d .nova-path-stars svg:nth-child(n + 7) { animation: none !important; }
-  }
+.landing-v2d .nova-site-header--scrolled {
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 8px 32px rgba(18,59,99,.09);
+  backdrop-filter: blur(14px);
+}
+.landing-v2d .nova-menu-scrim { background: rgba(14,34,59,.48); }
+.landing-v2d .nova-menu-panel {
+  inset: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)) auto;
+  width: min(86vw, 360px);
+  max-width: none;
+  border: 1px solid #dceafb;
+  border-radius: 28px;
+  box-shadow: -16px 20px 60px rgba(18,59,99,.22);
+  transform-origin: top right;
+}
+.landing-v2d .nova-menu-panel nav { gap: 0; }
+.landing-v2d .nova-burger { position: relative; }
+.landing-v2d .nova-burger > span {
+  position: absolute;
+  top: calc(50% - 1px);
+  left: calc(50% - 10px);
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+@media (max-width: 700px) {
+  .landing-v2d .nova-menu-panel { padding: 20px 16px; }
+  .landing-v2d .nova-menu-panel nav a { font-size: 14px; gap: 10px; padding: 14px 4px; min-height: 58px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .landing-v2d .nova-approved-hero .nova-hero-background,
-  .landing-v2d .nova-hero-copy > * { animation: none !important; }
+  .landing-v2d .nova-site-header,
+  .landing-v2d .nova-hero-background,
+  .landing-v2d .nova-hero-copy > *,
+  .landing-v2d #social .icon-box,
+  .landing-v2d .nova-path-stars svg { animation: none !important; }
+  .landing-v2d [data-landing-motion] { opacity: 1 !important; transform: none !important; }
+  .landing-v2d .nova-menu-panel,
+  .landing-v2d .nova-menu-panel *,
+  .landing-v2d .nova-site-header { transition: none !important; }
 }
 @media print {
-  .landing-v2d [data-landing-motion],
-  .landing-v2d [data-landing-motion] * { animation: none !important; }
-  .landing-v2d [data-landing-motion="pending"],
-  .landing-v2d #find-path[data-landing-motion="pending"] .nova-path-inner { opacity: 1 !important; }
+  .landing-v2d [data-landing-motion] { opacity: 1 !important; transform: none !important; }
+  .landing-v2d .nova-hero-background, .landing-v2d .nova-hero-copy > *,
+  .landing-v2d .nova-site-header { animation: none !important; }
 }

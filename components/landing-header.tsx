@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const items = [
   { label: "آزمون های من", href: "/dashboard/student/exams", icon: "exam", private: true },
@@ -13,7 +14,6 @@ const items = [
 
 function Icon({ type }: { type: string }) {
   const drawings: Record<string, React.ReactNode> = {
-    menu: <path d="M4 6h16M4 12h16M4 18h10" />,
     close: <path d="m6 6 12 12M6 18 18 6" />,
     account: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
     cart: <><path d="M3 3h2l3 13h10l3-10H6" /><circle cx="9" cy="21" r="1" /><circle cx="18" cy="21" r="1" /></>,
@@ -26,6 +26,17 @@ function Icon({ type }: { type: string }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{drawings[type]}</svg>;
 }
 
+// The reference's bars: ±6.5px to a cross, with the middle sliding out.
+function MenuBars({ open, enter = false }: { open: boolean; enter?: boolean }) {
+  const reduced = useReducedMotion();
+  const spring = reduced ? { duration: 0 } : { type: "spring" as const, bounce: 0, duration: .4 };
+  return <>
+    <motion.span initial={enter && !reduced ? { y: -6.5, rotate: 0 } : false} animate={{ y: open ? 0 : -6.5, rotate: open ? 45 : 0 }} transition={spring} />
+    <motion.span initial={enter && !reduced ? { opacity: 1, x: 0 } : false} animate={{ opacity: open ? 0 : 1, x: open ? 8 : 0 }} transition={{ duration: reduced ? 0 : .2 }} />
+    <motion.span initial={enter && !reduced ? { y: 6.5, rotate: 0 } : false} animate={{ y: open ? 0 : 6.5, rotate: open ? -45 : 0 }} transition={spring} />
+  </>;
+}
+
 const counselorItems = [{label:"نمای کلی",href:"/dashboard/counselor",icon:"about",private:true},{label:"دانش‌آموزان و گزارش‌ها",href:"/dashboard/counselor/students",icon:"day",private:true},{label:"برنامه‌های هفتگی",href:"/dashboard/counselor/plans",icon:"week",private:true},{label:"آزمون‌ها",href:"/dashboard/counselor/exams",icon:"exam",private:true},{label:"استودیوی محتوا",href:"/dashboard/counselor/content",icon:"exam",private:true},{label:"اخبار کنکور",href:"/dashboard/counselor/news",icon:"exam",private:true},{label:"پادکست‌ها",href:"/dashboard/counselor/podcasts",icon:"about",private:true},{label:"مشاهده سایت",href:"/",icon:"about",private:false}];
 
 const examDesignerItems = [
@@ -35,11 +46,20 @@ const examDesignerItems = [
 
 export function LandingHeader({ isAuthenticated, studentPanel = false, counselorPanel = false, examDesignerPanel = false }: { isAuthenticated: boolean; studentPanel?: boolean; counselorPanel?: boolean; examDesignerPanel?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const reduced = useReducedMotion();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   const cart = useRef<HTMLDialogElement>(null);
 
   function close() { setOpen(false); trigger.current?.focus(); }
+
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 16);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -60,9 +80,9 @@ export function LandingHeader({ isAuthenticated, studentPanel = false, counselor
   }, [open]);
 
   return <>
-    <header className="nova-site-header">
+    <header className={`nova-site-header${scrolled ? " nova-site-header--scrolled" : ""}`}>
       <div className="nova-header-inner">
-        <button ref={trigger} type="button" className="nova-icon-button nova-menu-trigger" aria-label="باز کردن منو" aria-expanded={open} aria-controls="nova-navigation" onClick={() => setOpen(true)}><Icon type="menu" /></button>
+        <button ref={trigger} type="button" className="nova-icon-button nova-menu-trigger nova-burger" aria-label="باز کردن منو" aria-expanded={open} aria-controls="nova-navigation" onClick={() => setOpen(true)}><MenuBars open={open} /></button>
         <Link href="/" className="nova-header-brand" aria-label="صفحه اصلی نوا"><img src="/nova/mark.svg" width="84" height="84" alt="لوگوی N نوا" /></Link>
         <div className="nova-header-tools">
           <Link href={examDesignerPanel ? "/dashboard/exam_designer" : counselorPanel ? "/dashboard/counselor" : studentPanel ? "/dashboard/student/account" : isAuthenticated ? "/dashboard" : "/auth?mode=signin"} className="nova-icon-button" aria-label="حساب کاربری"><Icon type="account" /></Link>
@@ -70,14 +90,25 @@ export function LandingHeader({ isAuthenticated, studentPanel = false, counselor
         </div>
       </div>
     </header>
-    {open && <>
-      <button type="button" className="nova-menu-scrim" aria-label="بستن منو" onClick={close} />
-      <aside ref={panel} id="nova-navigation" className="nova-menu-panel" role="dialog" aria-modal="true" aria-labelledby="nova-menu-title">
-        <div className="nova-panel-heading"><strong id="nova-menu-title">نوا، همراه مسیر تو</strong><button className="nova-icon-button" type="button" aria-label="بستن منو" onClick={close}><Icon type="close" /></button></div>
-        <nav aria-label="منوی اصلی">{(examDesignerPanel ? examDesignerItems : counselorPanel ? counselorItems : items).map(item => <Link key={item.href} href={studentPanel && item.icon === "week" ? "/dashboard/student#weekly-plan" : item.private && !isAuthenticated ? `/auth?mode=signin&next=${encodeURIComponent(item.href)}` : item.href} prefetch={false} onClick={close}><Icon type={item.icon} /><span>{item.label}</span></Link>)}</nav>
-        <p>آموزش، برنامه‌ریزی و یک آینده روشن‌تر.</p>
-      </aside>
-    </>}
+    <AnimatePresence>
+      {open && <motion.button key="backdrop" type="button" className="nova-menu-scrim" aria-label="بستن منو"
+        initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        transition={{ duration: reduced ? 0 : .25 }} onClick={close} />}
+      {open && <motion.aside key="panel" ref={panel} id="nova-navigation" className="nova-menu-panel" role="dialog" aria-modal="true" aria-labelledby="nova-menu-title"
+          initial={reduced ? false : { opacity: 0, scale: .76, y: -12, borderRadius: 14 }}
+          animate={{ opacity: 1, scale: 1, y: 0, borderRadius: 28 }}
+          exit={{ opacity: 0, scale: .76, y: -12, borderRadius: 14 }}
+          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 28, mass: .9 }}>
+          <div className="nova-panel-heading"><strong id="nova-menu-title">نوا، همراه مسیر تو</strong><button className="nova-icon-button nova-burger" type="button" aria-label="بستن منو" onClick={close}><MenuBars open enter /></button></div>
+          <nav aria-label="منوی اصلی">{(examDesignerPanel ? examDesignerItems : counselorPanel ? counselorItems : items).map((item, index) =>
+            <motion.div key={item.href} initial={reduced ? false : { opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 18 }} transition={reduced ? { duration: 0 } : { type: "spring", bounce: .2, duration: .5, delay: .18 + index * .05 }}>
+              <Link href={studentPanel && item.icon === "week" ? "/dashboard/student#weekly-plan" : item.private && !isAuthenticated ? `/auth?mode=signin&next=${encodeURIComponent(item.href)}` : item.href} prefetch={false} onClick={close}><Icon type={item.icon} /><span>{item.label}</span></Link>
+            </motion.div>)}</nav>
+          <motion.p initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={reduced ? { duration: 0 } : { type: "spring", bounce: 0, duration: .5, delay: .32 }}>آموزش، برنامه‌ریزی و یک آینده روشن‌تر.</motion.p>
+        </motion.aside>}
+    </AnimatePresence>
     <dialog ref={cart} className="nova-cart-dialog" aria-labelledby="nova-cart-title" onClick={event => { if (event.target === cart.current) { const r = cart.current.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) cart.current.close(); } }}>
       <div className="nova-panel-heading"><h2 id="nova-cart-title">سبد خرید</h2><button className="nova-icon-button" type="button" aria-label="بستن سبد خرید" onClick={() => cart.current?.close()}><Icon type="close" /></button></div>
       <p>در حال حاضر خرید آنلاین از این بخش فعال نیست.</p>

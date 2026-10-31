@@ -56,22 +56,22 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <section className="proof" aria-label="مسیر تحصیلی">
         <div className="container proof-grid">
-          <div className="proof-item">
+          <div className="proof-item" data-landing-motion="initial">
             <span className="step-label">دهم</span>
             <h4>ساخت پایه قوی</h4>
             <p>شروع درست با منابع پایه</p>
           </div>
-          <div className="proof-item">
+          <div className="proof-item" data-landing-motion="initial">
             <span className="step-label">یازدهم</span>
             <h4>پیشروی هدفمند</h4>
             <p>تمرکز بر نقاط قوت</p>
           </div>
-          <div className="proof-item">
+          <div className="proof-item" data-landing-motion="initial">
             <span className="step-label">دوازدهم</span>
             <h4>جمع‌بندی مطمئن</h4>
             <p>آزمون‌های آزمایشی</p>
           </div>
-          <div className="proof-item">
+          <div className="proof-item" data-landing-motion="initial">
             <span className="step-label">نتیجه</span>
             <h4>تا روز نتیجه</h4>
             <p>همراهی کامل</p>
