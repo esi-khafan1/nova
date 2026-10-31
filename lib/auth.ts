@@ -9,7 +9,7 @@ export type CurrentProfile = {
   role: AppRole;
   grade: number | null;
   phone: string | null;
-  registration_status: "incomplete"|"pending"|"active";
+  registration_status: "incomplete"|"pending"|"active"|"disabled";
   study_field:
     | "mathematics"
     | "experimental_sciences"
@@ -51,6 +51,7 @@ export async function requireProfile(allowed?: AppRole[], allowInactive = false)
   const { supabase, user, profile } = await getRequestProfile();
   if (profile.role === "student" && !hasConfirmedContact(user)) redirect("/auth?mode=signin&error=unconfirmed");
   if (allowed && !allowed.includes(profile.role)) redirect("/dashboard");
+  if(profile.role === "student" && !allowInactive && profile.registration_status === "disabled") redirect("/dashboard/student");
   if(profile.role === "student" && profile.registration_status !== "active" && !allowInactive) redirect("/dashboard/registration");
   return { supabase, user, profile };
 }

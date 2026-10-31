@@ -8,9 +8,13 @@ import {
   activateStudent,
   assignCounselor,
   uploadStudentReceipt,
+  disableStudent,
+  resumeStudent,
+  changeStudentCounselor,
 } from "@/app/dashboard/admin/registrations/actions";
 import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
 import { RequiredFieldsForm } from "@/components/dashboard/required-fields-form";
+import { RegistrationManagementButton } from "@/components/dashboard/registration-management-button";
 import "@/app/registration.css";
 
 export async function RegistrationDirectory({
@@ -77,8 +81,9 @@ export async function RegistrationDirectory({
             <tbody>
               {orderedRows.map((row) => {
                 const isActive = row.registration_status === "active";
+                const isDisabled = row.registration_status === "disabled";
                 const hasReceipt = Boolean(row.receipt_path);
-                const canActivate = !isActive && (hasReceipt
+                const canActivate = !isActive && !isDisabled && (hasReceipt
                   ? row.registration_status === "pending"
                   : Boolean(row.has_account_details));
                 const canAssign = isActive && !row.counselor_id;
@@ -191,7 +196,7 @@ export async function RegistrationDirectory({
                           </div>
                         </RequiredFieldsForm>
                       )}
-                      {audience === "admin" && !isActive && row.has_account_details && (
+                      {audience === "admin" && !isActive && !isDisabled && row.has_account_details && (
                         <RequiredFieldsForm action={uploadStudentReceipt} className="registration-receipt-upload">
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />
@@ -203,7 +208,53 @@ export async function RegistrationDirectory({
                           <button type="submit" className="button button-secondary">ثبت فیش برای این دانش‌آموز</button>
                         </RequiredFieldsForm>
                       )}
-                      {audience === "admin" && !isActive && !canActivate && (
+                      {isActive && row.counselor_id && (
+                        <RequiredFieldsForm action={changeStudentCounselor} className="registration-admin-control">
+                          <input name="student_id" type="hidden" value={row.student_id} />
+                          <input name="expected_counselor_id" type="hidden" value={row.counselor_id} />
+                          <label className="registration-counselor-picker">
+                            <span>تغییر مشاور</span>
+                            <select name="counselor_id" required defaultValue="" data-required-message="لطفاً مشاور را انتخاب کن"
+                              aria-label={`مشاور جدید ${row.full_name || "دانش‌آموز"}`}
+                              disabled={!counselors.some(c => c.id !== row.counselor_id)}>
+                              <option value="" disabled>انتخاب مشاور جدید</option>
+                              {counselors.filter(c => c.id !== row.counselor_id).map(c =>
+                                <option key={c.id} value={c.id}>{c.full_name || "مشاور نووا"}</option>)}
+                            </select>
+                          </label>
+                          <small>برنامه‌ها و آزمون‌های قبلی محفوظ می‌مانند و مشاور جدید سوابق را می‌بیند.</small>
+                          <RegistrationManagementButton label="ثبت تغییر مشاور"
+                            message="مشاور فعلی دسترسی خود را به این دانش‌آموز از دست می‌دهد و مشاور جدید سوابق را می‌بیند. تغییر انجام شود؟"
+                            disabled={!counselors.some(c => c.id !== row.counselor_id)} />
+                        </RequiredFieldsForm>
+                      )}
+                      {isActive && (
+                        <RequiredFieldsForm action={disableStudent} className="registration-admin-control registration-disable-control">
+                          <input name="student_id" type="hidden" value={row.student_id} />
+                          <input name="expected_counselor_id" type="hidden" value={row.counselor_id ?? ""} />
+                          <RegistrationManagementButton label="غیرفعال‌سازی خدمات" className="button button-secondary"
+                            message="خدمات این دانش‌آموز غیرفعال شود؟ مشاور برداشته می‌شود و برنامه‌ها و آزمون‌ها تا فعال‌سازی دوباره پنهان می‌مانند؛ سوابق حذف نمی‌شوند." />
+                        </RequiredFieldsForm>
+                      )}
+                      {isDisabled && (
+                        <RequiredFieldsForm action={resumeStudent} className="registration-admin-control">
+                          <input name="student_id" type="hidden" value={row.student_id} />
+                          <label className="registration-counselor-picker">
+                            <span>مشاور برای فعال‌سازی دوباره</span>
+                            <select name="counselor_id" required defaultValue="" data-required-message="لطفاً مشاور را انتخاب کن"
+                              aria-label={`مشاور برای فعال‌سازی دوبارهٔ ${row.full_name || "دانش‌آموز"}`}
+                              disabled={!counselors.length}>
+                              <option value="" disabled>انتخاب مشاور</option>
+                              {counselors.map(c => <option key={c.id} value={c.id}>{c.full_name || "مشاور نووا"}</option>)}
+                            </select>
+                          </label>
+                          <small>سوابق قبلی بدون تغییر، دوباره قابل مشاهده می‌شوند.</small>
+                          <RegistrationManagementButton label="فعال‌سازی دوباره و اختصاص مشاور"
+                            message="خدمات دانش‌آموز دوباره فعال شود و سوابق برنامه‌ها و آزمون‌ها نمایش داده شوند؟"
+                            disabled={!counselors.length} />
+                        </RequiredFieldsForm>
+                      )}
+                      {audience === "admin" && !isActive && !isDisabled && !canActivate && (
                         <small className="registration-assignment-note" role="status">
                           {hasReceipt
                             ? "فیش ثبت شده اما وضعیت ثبت‌نام نیاز به بررسی دارد؛ حساب از مسیر بدون فیش فعال نمی‌شود."

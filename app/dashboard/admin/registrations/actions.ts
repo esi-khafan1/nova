@@ -112,3 +112,58 @@ export async function uploadStudentReceipt(fd: FormData) {
   revalidateRegistrationPaths();
   redirect("/dashboard/admin/registrations?uploaded=1");
 }
+
+export async function disableStudent(fd: FormData) {
+  const { supabase } = await requireProfile(["admin"]);
+  const studentId = fd.get("student_id");
+  const expected = fd.get("expected_counselor_id");
+  if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
+      typeof expected !== "string" || (expected !== "" && !uuidPattern.test(expected))) {
+    redirect("/dashboard/admin/registrations?error=disable");
+  }
+  const { error } = await supabase.rpc("admin_disable_student", {
+    target_student_id: studentId,
+    expected_counselor_id: expected || null,
+  });
+  if (error) redirect("/dashboard/admin/registrations?error=disable");
+  revalidateRegistrationPaths();
+  redirect("/dashboard/admin/registrations?disabled=1");
+}
+
+export async function resumeStudent(fd: FormData) {
+  const { supabase } = await requireProfile(["admin"]);
+  const studentId = fd.get("student_id");
+  const counselorId = fd.get("counselor_id");
+  if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
+      typeof counselorId !== "string" || !uuidPattern.test(counselorId)) {
+    redirect("/dashboard/admin/registrations?error=resume");
+  }
+  const { error } = await supabase.rpc("admin_resume_student", {
+    target_student_id: studentId,
+    target_counselor_id: counselorId,
+  });
+  if (error) redirect("/dashboard/admin/registrations?error=resume");
+  revalidateRegistrationPaths();
+  redirect("/dashboard/admin/registrations?resumed=1");
+}
+
+export async function changeStudentCounselor(fd: FormData) {
+  const { supabase } = await requireProfile(["admin"]);
+  const studentId = fd.get("student_id");
+  const oldCounselorId = fd.get("expected_counselor_id");
+  const newCounselorId = fd.get("counselor_id");
+  if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
+      typeof oldCounselorId !== "string" || !uuidPattern.test(oldCounselorId) ||
+      typeof newCounselorId !== "string" || !uuidPattern.test(newCounselorId) ||
+      oldCounselorId === newCounselorId) {
+    redirect("/dashboard/admin/registrations?error=reassign");
+  }
+  const { error } = await supabase.rpc("admin_change_student_counselor", {
+    target_student_id: studentId,
+    expected_counselor_id: oldCounselorId,
+    target_counselor_id: newCounselorId,
+  });
+  if (error) redirect("/dashboard/admin/registrations?error=reassign");
+  revalidateRegistrationPaths();
+  redirect("/dashboard/admin/registrations?reassigned=1");
+}

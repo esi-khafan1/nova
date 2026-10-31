@@ -14,6 +14,8 @@ const rows=[
   row('paid',{registration_status:'pending',receipt_path:receipt,has_account_details:true}),
   row('active',{registration_status:'active',receipt_path:receipt}),
   row('incomplete'),
+  row('assigned',{registration_status:'active',counselor_id:counselor,has_account_details:true}),
+  row('disabled',{registration_status:'disabled',has_account_details:true,receipt_path:receipt}),
 ];
 const moduleStub={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/registration-directory.tsx','utf8'),{
@@ -32,8 +34,9 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
     };
     if(name==='@/lib/courses')return {courseTypeLabel:()=>'',courseDurationLabel:()=>''};
     if(name==='@/lib/study-catalog')return {studyFieldLabels:{humanities:'انسانی'}};
-    if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{},uploadStudentReceipt:()=>{}};
+    if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{},uploadStudentReceipt:()=>{},disableStudent:()=>{},resumeStudent:()=>{},changeStudentCounselor:()=>{}};
     if(name==='@/components/dashboard/activation-submit-button')return {ActivationSubmitButton:({hasReceipt})=>React.createElement('button',{'data-path':hasReceipt?'receipt':'manual'},hasReceipt?'تأیید فیش و فعال‌سازی':'فعال‌سازی بدون فیش')};
+    if(name==='@/components/dashboard/registration-management-button')return {RegistrationManagementButton:({label})=>React.createElement('button',null,label)};
     if(name==='@/components/dashboard/required-fields-form')return {RequiredFieldsForm:({className,children})=>React.createElement('form',{className},children)};
     if(name==='@/app/registration.css')return {};
     throw Error(name);
@@ -43,7 +46,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   const html=renderToStaticMarkup(await moduleStub.exports.RegistrationDirectory({audience:'admin'}));
   const body=html.slice(html.indexOf('<tbody>'));
   const cards=[...body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].map(match=>match[1]);
-  assert.equal(cards.length,4);
+  assert.equal(cards.length,6);
   assert.match(cards[0],/paid/);
   assert.match(cards[0],/اولویت بررسی · فیش ارسال شده/);
   assert.match(cards[0],/data-path="receipt"/);
@@ -68,6 +71,11 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(cards[2],/active/);
   assert.match(cards[2],/اختصاص مشاور به حساب فعال/);
   assert.doesNotMatch(cards[3],/data-path=|اختصاص مشاور به حساب فعال/);
+  assert.match(cards[2],/غیرفعال‌سازی خدمات/);
+  assert.match(cards[4],/تغییر مشاور/);
+  assert.match(cards[4],/ثبت تغییر مشاور/);
+  assert.match(cards[5],/فعال‌سازی دوباره و اختصاص مشاور/);
+  assert.doesNotMatch(cards[5],/name="receipt"|تأیید فیش و فعال‌سازی|فعال‌سازی بدون فیش/);
   assert.doesNotMatch(body,/receipt_confirmation|manual_confirmation|فعال‌سازی دستی بدون فیش|اختصاص مشاور و فعال‌سازی حساب/);
   const confirm=fs.readFileSync('components/dashboard/activation-submit-button.tsx','utf8');
   assert.match(confirm,/window\.confirm\(message\)/);

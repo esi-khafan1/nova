@@ -23,6 +23,7 @@ export default async function StudentExamPage({
   const { id } = await params;
   const query = await searchParams;
   const { supabase, profile } = await requireProfile(["student"], true);
+  if (profile.registration_status !== "active") redirect("/dashboard/student/exams");
 
   const [{ data: exam }, { data: attempt }] = await Promise.all([
     supabase

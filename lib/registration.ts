@@ -1,5 +1,5 @@
 export const provinces = ["آذربایجان شرقی","آذربایجان غربی","اردبیل","اصفهان","البرز","ایلام","بوشهر","تهران","چهارمحال و بختیاری","خراسان جنوبی","خراسان رضوی","خراسان شمالی","خوزستان","زنجان","سمنان","سیستان و بلوچستان","فارس","قزوین","قم","کردستان","کرمان","کرمانشاه","کهگیلویه و بویراحمد","گلستان","گیلان","لرستان","مازندران","مرکزی","هرمزگان","همدان","یزد"];
-export const registrationLabels:Record<string,string>={incomplete:"اطلاعات ناقص",pending:"منتظر تأیید و تخصیص مشاور",active:"فعال"};
+export const registrationLabels:Record<string,string>={incomplete:"اطلاعات ناقص",pending:"منتظر تأیید و تخصیص مشاور",active:"فعال",disabled:"خدمات غیرفعال توسط مدیر"};
 export type RegistrationRow={student_id:string;full_name:string;phone:string|null;telegram_id:string|null;grade:number|null;study_field:import("./study-catalog").StudyField|null;province:string|null;city:string|null;registration_status:string;receipt_path:string|null;receipt_name:string|null;counselor_name:string|null;counselor_id?:string|null;created_at:string;course_type?:string|null;course_duration_months?:number|null;additional_notes?:string|null;has_account_details?:boolean};
 
 export function isPendingUnassignedReceipt(row: RegistrationRow): boolean {

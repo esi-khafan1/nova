@@ -22,6 +22,7 @@ export async function submitRegistration(_state: { error?: string; success?: str
       ? "اطلاعات حساب ذخیره شد. حسابت فعال است و نیازی به فعال‌سازی دوباره نداری."
       : "اطلاعات حساب ذخیره شد. فعال‌سازی خدمات جداگانه توسط مدیر انجام می‌شود." };
   }
+  if (profile.registration_status === "disabled") return { error: "خدمات حساب توسط مدیر غیرفعال است؛ برای پیگیری با پشتیبانی تماس بگیر." };
   if (profile.registration_status === "active") redirect("/dashboard/student");
   const selection = parseCourseSelection({ grade: text("grade"), field: text("study_field"), course: text("course"), months: text("months") });
   const { data: previous, error: readError } = await supabase.from("student_registrations").select("receipt_path,receipt_name,course_type,course_duration_months").eq("student_id",profile.id).maybeSingle();

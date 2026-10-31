@@ -9,6 +9,7 @@ import { toPersianDigits } from "@/lib/persian-date";
 export default async function StudentExamAnswerSheet({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, profile } = await requireProfile(["student"], true);
+  if (profile.registration_status !== "active") notFound();
   // An attempt is the only release gate. Never trust query params or the client
   // to decide whether answer keys and explanatory PDFs can be displayed.
   const { data: attempt } = await supabase.from("exam_attempts")

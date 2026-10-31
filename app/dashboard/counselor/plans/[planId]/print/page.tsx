@@ -14,10 +14,9 @@ export default async function PrintWeeklyPlanPage({
     supabase
       .from("weekly_plans")
       .select(
-        "id,student_id,week_start,title,notes,status,routines,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order)",
+        "id,student_id,counselor_id,week_start,title,notes,status,routines,weekly_plan_items(id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order)",
       )
       .eq("id", planId)
-      .eq("counselor_id", profile.id)
       .single(),
     supabase.rpc("counselor_student_directory"),
   ]);
@@ -28,5 +27,8 @@ export default async function PrintWeeklyPlanPage({
   const student = (directoryData as StudentDirectoryRow[] | null)?.find(
     (item) => item.student_id === plan.student_id,
   );
-  return <PrintWeeklyPlan plan={plan} student={student} counselorName={profile.full_name} backHref="/dashboard/counselor/plans"/>;
+  // RLS allows prior published plans only for the student's current counselor.
+  // Drafts stay restricted to their author; never print an unassigned student.
+  if (!student || (planData.counselor_id !== profile.id && planData.status !== "published")) notFound();
+  return <PrintWeeklyPlan plan={plan} student={student} counselorName={planData.counselor_id === profile.id ? profile.full_name : "مشاور پیشین نووا"} backHref="/dashboard/counselor/plans"/>;
 }
