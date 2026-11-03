@@ -68,6 +68,29 @@ const click = async element => act(async () => element.dispatchEvent(new window.
   window.scrollY = 30;
   await act(async () => window.dispatchEvent(new window.Event('scroll')));
   assert.ok(document.querySelector('.nova-site-header--scrolled'));
+  // The same header is rendered outside .landing-v2d on every dashboard role.
+  const style = document.createElement('style');
+  style.textContent = fs.readFileSync('app/landing-approved.css', 'utf8');
+  document.head.appendChild(style);
+  for (const [props, expectedHref, forbiddenHref] of [
+    [{studentPanel:true}, '/dashboard/student/exams', '/dashboard/counselor/exams'],
+    [{counselorPanel:true}, '/dashboard/counselor/students', '/dashboard/student/exams'],
+    [{examDesignerPanel:true}, '/dashboard/exam_designer', '/dashboard/student/exams'],
+    [{contentManagerPanel:true}, '/dashboard/content_manager', '/dashboard/student/exams'],
+    [{supportAgentPanel:true}, '/dashboard/support_agent', '/dashboard/student/exams'],
+  ]) {
+    await act(async () => root.render(React.createElement(moduleStub.exports.LandingHeader, {isAuthenticated:true,...props})));
+    const bar = document.querySelector('.nova-menu-trigger > span');
+    const computed = window.getComputedStyle(bar);
+    assert.equal(computed.width,'20px','Hamburger bars must be visible outside the landing page.');
+    assert.equal(computed.height,'2px');
+    assert.equal(computed.position,'absolute');
+    await click(document.querySelector('.nova-menu-trigger'));
+    const destinations = [...document.querySelectorAll('.nova-menu-panel nav a')].map(a => new URL(a.href).pathname);
+    assert.ok(destinations.includes(expectedHref), `Role menu needs ${expectedHref}`);
+    assert.ok(!destinations.includes(forbiddenHref), `Role menu must not expose ${forbiddenHref}`);
+    await click(document.querySelector('.nova-menu-panel button'));
+  }
   await act(async () => root.unmount());
   dom.window.close();
   console.log('Menu controls, scroll chrome, backdrop, Escape, focus trap and reduced-motion hook passed.');

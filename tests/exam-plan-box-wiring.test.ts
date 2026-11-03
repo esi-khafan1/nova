@@ -51,7 +51,7 @@ test("designer UI receives the box queue and submits the selection", () => {
   assert.match(builder, /examPublicationReadiness\(booklets, assignedStudentCount, windowValid\)/);
   assert.match(picker, /linked_exam_owned/);
   assert.match(picker, /تنظیم تاریخ آزمون/);
-  assert.match(picker, /آزمون شبیهساز/);
+  assert.match(picker, /آزمون شبیه‌ساز/);
   assert.match(saveExam, /formData\.get\("box_ids"\)/);
   assert.match(saveExam, /target_box_ids: boxIds/);
   assert.match(saveExam, /studentIds\.length === 0 && boxIds\.length === 0/);

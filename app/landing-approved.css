@@ -3,6 +3,9 @@
 .nova-header-inner{max-width:1280px;height:100%;margin:auto;padding:0 24px;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center}
 .nova-icon-button{display:inline-flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:48px;min-height:48px;border-radius:12px;border:0;background:transparent;color:#123b63;cursor:pointer}
 .nova-icon-button svg{width:24px;height:24px;flex-shrink:0}.nova-icon-button:hover{background:#eef6ff}.nova-menu-trigger{justify-self:start}.nova-header-brand{justify-self:center}.nova-header-brand img{display:block;width:84px;height:84px;object-fit:contain}.nova-header-tools{display:flex;justify-self:end;gap:12px}.nova-header-tools .nova-icon-button{border:1px solid #dceafb}
+/* Shared header appears in dashboards too; bars must not depend on .landing-v2d. */
+.nova-burger{position:relative}
+.nova-burger>span{position:absolute;top:calc(50% - 1px);left:calc(50% - 10px);width:20px;height:2px;border-radius:2px;background:currentColor}
 .nova-approved-hero{position:relative;isolation:isolate;width:100%;aspect-ratio:2000/667;overflow:hidden;background:#fff8f2;color:#123b63}
 .nova-hero-background{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-1;display:block}
 .nova-hero-inner{position:absolute;inset:0;max-width:1280px;margin:auto;padding:0 32px;display:flex;align-items:center}

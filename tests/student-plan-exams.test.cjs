@@ -20,9 +20,11 @@ const simulated = [{ ...linked[0], weekly_plan_items: [{ ...linked[0].weekly_pla
 assert.deepEqual(standalonePlanExams([a, b], simulated), [a, b], 'Simulation boxes must not be sent to the designer.');
 const panel = fs.readFileSync('components/dashboard/student-planning-panel.tsx', 'utf8');
 assert.match(panel, /sp-task--designer-exam/);
+assert.doesNotMatch(panel, /sp-exam-assignments|exams\.map\(exam=><DesignerExamBox/, 'No duplicated full exam grid above the study report.');
 assert.match(panel, /راهنمای طراح آزمون: \{exam\.description\}/);
 assert.match(panel, /byId\.get\(item\.linked_exam_id\)\?\.description/);
 assert.match(panel, /assigned=\{dailyExams\}/);
+assert.match(fs.readFileSync('components/landing-header.tsx','utf8'), /href: \"\/dashboard\/student\/exams\"/, 'Student menu still leads to the full exam catalog.');
 assert.match(panel, /standalone\.filter\(exam=>examPlanDay\(exam\.starts_at\)===selectedWeekDate\)/);
 const dashboard = fs.readFileSync('app/dashboard/student/page.tsx', 'utf8');
 assert.match(dashboard, /\.from\("exams"\)\.select\("id,title,description,starts_at,start_window_ends_at,duration_minutes"\)/);

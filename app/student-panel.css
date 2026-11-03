@@ -81,8 +81,6 @@
 
 /* Designer-assigned exams use the existing study-box visual language. These
    read-only entries never masquerade as counselor-authored progress items. */
-.student-portal .sp-exam-assignments{margin:24px 0 8px}
-.student-portal .sp-exam-assignments .sp-tasks{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
 .student-portal .sp-task--designer-exam{border-inline-start:4px solid var(--sp-blue)}
 .student-portal .sp-exam-description{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-size:14px;background:var(--sp-ice);border-radius:8px;padding:12px 16px;margin:16px 0;color:var(--sp-ink)}
 .student-portal .sp-task--designer-exam .sp-exam-link{margin-top:8px}

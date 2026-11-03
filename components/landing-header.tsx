@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const items = [
-  { label: "آزمون های من", href: "/dashboard/student/exams", icon: "exam", private: true },
+  { label: "آزمون‌های من", href: "/dashboard/student/exams", icon: "exam", private: true },
   { label: "برنامه هفتگی", href: "/dashboard/student", icon: "week", private: true },
   { label: "دریافت برنامه روزانه", href: "/dashboard/student#daily-plan", icon: "day", private: true },
   { label: "سوالات متداول", href: "/faq", icon: "help", private: false },
@@ -44,7 +44,18 @@ const examDesignerItems = [
   { label: "مشاهده سایت", href: "/", icon: "about", private: false },
 ];
 
-export function LandingHeader({ isAuthenticated, studentPanel = false, counselorPanel = false, examDesignerPanel = false }: { isAuthenticated: boolean; studentPanel?: boolean; counselorPanel?: boolean; examDesignerPanel?: boolean }) {
+const contentManagerItems = [
+  { label: "میز بررسی محتوا", href: "/dashboard/content_manager", icon: "about", private: true },
+  { label: "حساب کاربری", href: "/dashboard/account", icon: "account", private: true },
+  { label: "مشاهده سایت", href: "/", icon: "about", private: false },
+];
+const supportAgentItems = [
+  { label: "گفت‌وگو با کاربران", href: "/dashboard/support_agent", icon: "day", private: true },
+  { label: "حساب کاربری", href: "/dashboard/account", icon: "account", private: true },
+  { label: "مشاهده سایت", href: "/", icon: "about", private: false },
+];
+
+export function LandingHeader({ isAuthenticated, studentPanel = false, counselorPanel = false, examDesignerPanel = false, contentManagerPanel = false, supportAgentPanel = false }: { isAuthenticated: boolean; studentPanel?: boolean; counselorPanel?: boolean; examDesignerPanel?: boolean; contentManagerPanel?: boolean; supportAgentPanel?: boolean }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const reduced = useReducedMotion();
@@ -85,7 +96,7 @@ export function LandingHeader({ isAuthenticated, studentPanel = false, counselor
         <button ref={trigger} type="button" className="nova-icon-button nova-menu-trigger nova-burger" aria-label="باز کردن منو" aria-expanded={open} aria-controls="nova-navigation" onClick={() => setOpen(true)}><MenuBars open={open} /></button>
         <Link href="/" className="nova-header-brand" aria-label="صفحه اصلی نوا"><img src="/nova/mark.svg" width="84" height="84" alt="لوگوی N نوا" /></Link>
         <div className="nova-header-tools">
-          <Link href={examDesignerPanel ? "/dashboard/exam_designer" : counselorPanel ? "/dashboard/counselor" : studentPanel ? "/dashboard/student/account" : isAuthenticated ? "/dashboard" : "/auth?mode=signin"} className="nova-icon-button" aria-label="حساب کاربری"><Icon type="account" /></Link>
+          <Link href={examDesignerPanel ? "/dashboard/exam_designer" : counselorPanel ? "/dashboard/counselor" : contentManagerPanel || supportAgentPanel ? "/dashboard/account" : studentPanel ? "/dashboard/student/account" : isAuthenticated ? "/dashboard" : "/auth?mode=signin"} className="nova-icon-button" aria-label="حساب کاربری"><Icon type="account" /></Link>
           <button type="button" className="nova-icon-button" aria-label="سبد خرید" onClick={() => cart.current?.showModal()}><Icon type="cart" /></button>
         </div>
       </div>
@@ -100,7 +111,7 @@ export function LandingHeader({ isAuthenticated, studentPanel = false, counselor
           exit={{ opacity: 0, scale: .76, y: -12, borderRadius: 14 }}
           transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 28, mass: .9 }}>
           <div className="nova-panel-heading"><strong id="nova-menu-title">نوا، همراه مسیر تو</strong><button className="nova-icon-button nova-burger" type="button" aria-label="بستن منو" onClick={close}><MenuBars open enter /></button></div>
-          <nav aria-label="منوی اصلی">{(examDesignerPanel ? examDesignerItems : counselorPanel ? counselorItems : items).map((item, index) =>
+          <nav aria-label="منوی اصلی">{(examDesignerPanel ? examDesignerItems : counselorPanel ? counselorItems : contentManagerPanel ? contentManagerItems : supportAgentPanel ? supportAgentItems : items).map((item, index) =>
             <motion.div key={item.href} initial={reduced ? false : { opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 18 }} transition={reduced ? { duration: 0 } : { type: "spring", bounce: .2, duration: .5, delay: .18 + index * .05 }}>
               <Link href={studentPanel && item.icon === "week" ? "/dashboard/student#weekly-plan" : item.private && !isAuthenticated ? `/auth?mode=signin&next=${encodeURIComponent(item.href)}` : item.href} prefetch={false} onClick={close}><Icon type={item.icon} /><span>{item.label}</span></Link>

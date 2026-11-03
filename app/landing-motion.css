@@ -78,16 +78,6 @@
   transform-origin: top right;
 }
 .landing-v2d .nova-menu-panel nav { gap: 0; }
-.landing-v2d .nova-burger { position: relative; }
-.landing-v2d .nova-burger > span {
-  position: absolute;
-  top: calc(50% - 1px);
-  left: calc(50% - 10px);
-  width: 20px;
-  height: 2px;
-  border-radius: 2px;
-  background: currentColor;
-}
 @media (max-width: 700px) {
   .landing-v2d .nova-menu-panel { padding: 20px 16px; }
   .landing-v2d .nova-menu-panel nav a { font-size: 14px; gap: 10px; padding: 14px 4px; min-height: 58px; }
