@@ -11,9 +11,11 @@ import {
   disableStudent,
   resumeStudent,
   changeStudentCounselor,
+  changeStudentCourse,
 } from "@/app/dashboard/admin/registrations/actions";
 import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
 import { AdminFinalCoursePicker } from "@/components/dashboard/admin-final-course-picker";
+import { CourseChangeSubmitButton } from "@/components/dashboard/course-change-submit-button";
 import { RequiredFieldsForm } from "@/components/dashboard/required-fields-form";
 import { RegistrationManagementButton } from "@/components/dashboard/registration-management-button";
 import "@/app/registration.css";
@@ -213,6 +215,16 @@ export async function RegistrationDirectory({
                           </label>
                           <small>عکس JPG، PNG یا WebP تا ۵ مگابایت؛ ثبت فیش به معنی تأیید پرداخت نیست.</small>
                           <button type="submit" className="button button-secondary">ثبت فیش برای این دانش‌آموز</button>
+                        </RequiredFieldsForm>
+                      )}
+                      {isActive && (
+                        <RequiredFieldsForm action={changeStudentCourse} className="registration-admin-control registration-course-control">
+                          <input name="student_id" type="hidden" value={row.student_id} />
+                          <input name="expected_service_course_type" type="hidden" value={row.service_course_type ?? ""} />
+                          <input name="expected_service_course_duration_months" type="hidden" value={row.service_course_duration_months ?? ""} />
+                          <AdminFinalCoursePicker initialCourse={row.service_course_type} initialMonths={row.service_course_duration_months} />
+                          <small>اصلاح دوره فقط برای حساب فعال است؛ مشاور، فیش و درخواست ثبت‌شدهٔ دانش‌آموز تغییر نمی‌کنند.</small>
+                          <CourseChangeSubmitButton />
                         </RequiredFieldsForm>
                       )}
                       {isActive && row.counselor_id && (

@@ -22,6 +22,7 @@ export default async function Registrations({
       {["disable", "resume", "reassign"].includes(params.error ?? "") && (
         <p className="portal-alert error" role="alert">عملیات انجام نشد؛ ممکن است وضعیت دانش‌آموز یا مشاور از زمان بازشدن صفحه تغییر کرده باشد. صفحه را تازه کن و فقط مشاور تأییدشده انتخاب کن.</p>
       )}
+      {params.error === "course-change" && <p className="portal-alert error" role="alert">دوره تغییر نکرد؛ اگر وضعیت یا دورهٔ فعلی دانش‌آموز تغییر کرده، صفحه را تازه کن. برای اصلاح، دوره یا مدت متفاوتی انتخاب کن.</p>}
       {params.error === "course" && <p className="portal-alert error" role="alert">دوره و مدت را با هم انتخاب کن یا هر دو را خالی بگذار.</p>}
       {params.error === "upload" ? (
         <p className="portal-alert error" role="alert">
@@ -31,7 +32,7 @@ export default async function Registrations({
         <p className="portal-alert error" role="alert">
           تخصیص انجام نشد؛ این دکمه فقط برای دانش‌آموزی است که از قبل فعال و بدون مشاور باشد. مشاور انتخابی هم باید تأییدشده باشد.
         </p>
-      ) : params.error && !["disable", "resume", "reassign", "course"].includes(params.error) ? (
+      ) : params.error && !["disable", "resume", "reassign", "course", "course-change"].includes(params.error) ? (
         <p className="portal-alert error" role="alert">
           فعال‌سازی انجام نشد؛ اگر فیشی ارسال شده، باید همان فیش را بررسی کنی و وضعیت ثبت‌نام آمادهٔ تأیید باشد. بدون فیش، اطلاعات حساب و راه تماس تأییدشده لازم است. صفحه را تازه کن و دوباره بررسی کن.
         </p>
@@ -49,6 +50,7 @@ export default async function Registrations({
       )}
       {params.disabled && <p className="portal-alert success" role="status">خدمات دانش‌آموز غیرفعال شد؛ مشاور برداشته شد و سوابق محفوظ ماندند.</p>}
       {params.resumed && <p className="portal-alert success" role="status">خدمات دوباره فعال و مشاور تأییدشده اختصاص یافت؛ سوابق قبلی قابل مشاهده‌اند.</p>}
+      {params.course_changed && <p className="portal-alert success" role="status">دورهٔ نهایی دانش‌آموز اصلاح و در سابقهٔ مدیریتی ثبت شد؛ وضعیت خدمات و مشاور تغییر نکردند.</p>}
       {params.reassigned && <p className="portal-alert success" role="status">مشاور تغییر کرد؛ مشاور قبلی دیگر به سوابق دانش‌آموز دسترسی ندارد.</p>}
       {params.saved && (
         <p className="portal-alert success" role="status">

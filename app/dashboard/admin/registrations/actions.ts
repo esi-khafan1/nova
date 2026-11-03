@@ -157,6 +157,27 @@ export async function resumeStudent(fd: FormData) {
   redirect("/dashboard/admin/registrations?resumed=1");
 }
 
+export async function changeStudentCourse(fd: FormData) {
+  const { supabase } = await requireProfile(["admin"]);
+  const studentId = fd.get("student_id");
+  const expected = parseAdminFinalCourse(fd, "expected_");
+  const selected = parseAdminFinalCourse(fd);
+  if (typeof studentId !== "string" || !uuidPattern.test(studentId) || !expected || !selected ||
+      (expected.course === selected.course && expected.months === selected.months)) {
+    redirect("/dashboard/admin/registrations?error=course-change");
+  }
+  const { error } = await supabase.rpc("admin_change_student_course", {
+    target_student_id: studentId,
+    expected_course_type: expected.course,
+    expected_course_duration_months: expected.months,
+    target_course_type: selected.course,
+    target_course_duration_months: selected.months,
+  });
+  if (error) redirect("/dashboard/admin/registrations?error=course-change");
+  revalidateRegistrationPaths();
+  redirect("/dashboard/admin/registrations?course_changed=1");
+}
+
 export async function changeStudentCounselor(fd: FormData) {
   const { supabase } = await requireProfile(["admin"]);
   const studentId = fd.get("student_id");

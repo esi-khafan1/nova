@@ -35,6 +35,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
     if(name==='@/lib/courses')return {courseTypeLabel:()=>'',courseDurationLabel:()=>''};
     if(name==='@/lib/study-catalog')return {studyFieldLabels:{humanities:'انسانی'}};
     if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{},uploadStudentReceipt:()=>{},disableStudent:()=>{},resumeStudent:()=>{},changeStudentCounselor:()=>{}};
+    if(name==='@/components/dashboard/course-change-submit-button')return {CourseChangeSubmitButton:()=>React.createElement('button',{'data-course-change':true},'ثبت تغییر دوره')};
     if(name==='@/components/dashboard/admin-final-course-picker')return {AdminFinalCoursePicker:({initialCourse})=>React.createElement('div',{'data-final-course':initialCourse||'empty'},'انتخاب دورهٔ نهایی')};
     if(name==='@/components/dashboard/activation-submit-button')return {ActivationSubmitButton:({hasReceipt})=>React.createElement('button',{'data-path':hasReceipt?'receipt':'manual'},hasReceipt?'تأیید فیش و فعال‌سازی':'فعال‌سازی بدون فیش')};
     if(name==='@/components/dashboard/registration-management-button')return {RegistrationManagementButton:({label})=>React.createElement('button',null,label)};
@@ -73,9 +74,13 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(cards[1],/data-path="manual"/);
   assert.match(cards[2],/active/);
   assert.match(cards[2],/اختصاص مشاور به حساب فعال/);
+  assert.match(cards[2],/data-course-change="true"/);
+  assert.match(cards[2],/expected_service_course_type/);
   assert.doesNotMatch(cards[3],/data-path=|اختصاص مشاور به حساب فعال/);
   assert.match(cards[2],/غیرفعال‌سازی خدمات/);
   assert.match(cards[4],/تغییر مشاور/);
+  assert.match(cards[4],/data-course-change="true"/);
+  assert.doesNotMatch(cards[5],/data-course-change="true"/);
   assert.match(cards[4],/ثبت تغییر مشاور/);
   assert.match(cards[5],/فعال‌سازی دوباره و اختصاص مشاور/);
   assert.match(cards[5],/data-final-course="empty"/);

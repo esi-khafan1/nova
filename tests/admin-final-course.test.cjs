@@ -59,6 +59,7 @@ for (const [course, months] of [['progress',''],['','3'],['vip','3'],['progress'
     end; $$;
   `);
   await db.exec(readFileSync('supabase/migrations/097_admin_final_student_course.sql', 'utf8'));
+  await db.exec(readFileSync('supabase/migrations/098_admin_change_active_student_course.sql', 'utf8'));
   await db.query("insert into public.profiles values ($1,'admin','active'),($2,'student','pending'),($3,'student','pending')", [ids.admin,ids.student,ids.second]);
   await db.query("insert into public.student_registrations values ($1,'base',3,'receipt.jpg')", [ids.student]);
   const actor = async name => {
@@ -68,9 +69,11 @@ for (const [course, months] of [['progress',''],['','3'],['vip','3'],['progress'
   };
   const activate = (student, receipt, course, months) => db.query('select public.admin_activate_student_with_course($1,$2,$3,$4,$5)',[student,ids.admin,receipt,course,months]);
   const resume = (course,months) => db.query('select public.admin_resume_student_with_course($1,$2,$3,$4)',[ids.student,ids.admin,course,months]);
+  const change = (expectedCourse,expectedMonths,nextCourse,nextMonths) => db.query('select public.admin_change_student_course($1,$2,$3,$4,$5)',[ids.student,expectedCourse,expectedMonths,nextCourse,nextMonths]);
   const state = async () => (await db.query('select registration_status,service_course_type,service_course_duration_months from public.profiles where id=$1',[ids.student])).rows[0];
   await actor('student');
   await assert.rejects(activate(ids.student,'receipt.jpg','progress',6),/Admin only/);
+  await assert.rejects(change(null,null,'base',3),/Admin only/);
   await assert.rejects(db.query("update public.profiles set service_course_type='base' where id=$1",[ids.student]),/permission denied/);
   await actor('admin');
   await assert.rejects(activate(ids.student,'old.jpg','progress',6),/Receipt changed/);
@@ -83,22 +86,35 @@ for (const [course, months] of [['progress',''],['','3'],['vip','3'],['progress'
   const requested = (await db.query('select course_type,course_duration_months,receipt_path from public.student_registrations where student_id=$1',[ids.student])).rows[0];
   assert.deepEqual(requested,{course_type:'base',course_duration_months:3,receipt_path:'receipt.jpg'});
   await assert.rejects(activate(ids.student,'receipt.jpg','base',3),/Pending required/);
+  await assert.rejects(change('base',3,'progress',1),/Course changed/);
+  await assert.rejects(change('progress',6,'progress',6),/Choose a different/);
+  await assert.rejects(change('progress',6,'cip',3),/Invalid final course/);
+  await assert.rejects(change('progress',6,'base',2),/Invalid final course/);
+  await change('progress',6,'base',12);
+  assert.deepEqual(stateToPlain(await state()),{ registration_status:'active', service_course_type:'base', service_course_duration_months:12 });
+  assert.deepEqual((await db.query('select course_type,course_duration_months,receipt_path from public.student_registrations where student_id=$1',[ids.student])).rows[0],requested);
+  await assert.rejects(change('progress',6,null,null),/Course changed/);
   await db.exec('reset role');
   await db.query("update public.profiles set registration_status='disabled' where id=$1",[ids.student]);
   await actor('admin');
+  await assert.rejects(change('base',12,null,null),/Active student required/);
   await resume(null,null);
   assert.deepEqual(stateToPlain(await state()),{ registration_status:'active', service_course_type:null, service_course_duration_months:null });
   await assert.rejects(resume('base',3),/Disabled required/);
+  await change(null,null,'progress',1);
+  assert.deepEqual(stateToPlain(await state()),{ registration_status:'active', service_course_type:'progress', service_course_duration_months:1 });
   await db.exec('reset role');
   const events=(await db.query('select event_type,previous_course_type,new_course_type from private.student_service_events order by id')).rows;
   assert.deepEqual(events,[
     {event_type:'course_activated',previous_course_type:null,new_course_type:'progress'},
-    {event_type:'course_resumed',previous_course_type:'progress',new_course_type:null},
+    {event_type:'course_changed',previous_course_type:'progress',new_course_type:'base'},
+    {event_type:'course_resumed',previous_course_type:'base',new_course_type:null},
+    {event_type:'course_changed',previous_course_type:null,new_course_type:'progress'},
   ]);
   // Blank assignment is also valid for the first activation, not just resume.
   await actor('admin');
   await activate(ids.second,null,null,null);
   await db.close();
-  console.log('PASS: admin-only final course, optional paired duration, receipt guard, original purchase preserved, audited atomic activation/resume');
+  console.log('PASS: admin-only final course, optional paired duration, receipt guard, original purchase preserved, audited atomic activation/resume/change');
 })().catch(err=>{console.error(err);process.exitCode=1});
 function stateToPlain(row){return { registration_status:row.registration_status, service_course_type:row.service_course_type, service_course_duration_months:row.service_course_duration_months };}

@@ -16,7 +16,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/dashboard/admin/regis
     if(name==='next/navigation')return {redirect:url=>{throw new Error(url)}};
     if(name==='@/lib/auth')return {requireProfile:async roles=>{assert.deepEqual(Array.from(roles),['admin']);return {supabase}}};
     if(name==='@/lib/registration')return {receiptImageType:()=>null};
-    if(name==='@/lib/admin-final-course')return {parseAdminFinalCourse:fd=>({course:fd.get('service_course_type')||null,months:fd.get('service_course_duration_months')?Number(fd.get('service_course_duration_months')):null})};
+    if(name==='@/lib/admin-final-course')return {parseAdminFinalCourse:(fd,prefix='')=>({course:fd.get(prefix+'service_course_type')||null,months:fd.get(prefix+'service_course_duration_months')?Number(fd.get(prefix+'service_course_duration_months')):null})};
     throw Error(name);
   },FormData,String,
 });
@@ -35,6 +35,21 @@ const form=(receipt,extras={})=>{const fd=new FormData();for(const [k,v] of Obje
   error={message:'stale receipt'};
   await assert.rejects(mod.exports.activateStudent(form('student/receipt.jpg')),/error=1/);
   error=null;
+  await assert.rejects(mod.exports.changeStudentCourse(form('',{
+    expected_service_course_type:'base',expected_service_course_duration_months:'3',
+    service_course_type:'progress',service_course_duration_months:'6',
+  })),/course_changed=1/);
+  assert.equal(calls.at(-1).name,'admin_change_student_course');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1).args)),{
+    target_student_id:student,expected_course_type:'base',expected_course_duration_months:3,
+    target_course_type:'progress',target_course_duration_months:6,
+  });
+  const before=calls.length;
+  await assert.rejects(mod.exports.changeStudentCourse(form('',{
+    expected_service_course_type:'base',expected_service_course_duration_months:'3',
+    service_course_type:'base',service_course_duration_months:'3',
+  })),/error=course-change/);
+  assert.equal(calls.length,before,'unchanged selection must not reach RPC');
   await assert.rejects(mod.exports.assignCounselor(form('')),/assigned=1/);
   assert.equal(calls.at(-1).name,'admin_assign_student_counselor');
   console.log('PASS: admin action routes via one DB-authoritative activation RPC, requires fresh receipt, and keeps active-only assignment separate');
