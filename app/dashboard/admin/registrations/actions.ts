@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import { receiptImageType } from "@/lib/registration";
+import { parseAdminFinalCourse } from "@/lib/admin-final-course";
 
 const uuidPattern = /^[0-9a-f-]{36}$/i;
 const revalidateRegistrationPaths = () => {
@@ -58,16 +59,21 @@ export async function activateStudent(fd: FormData) {
     redirect("/dashboard/admin/registrations?error=1");
   }
 
+  const finalCourse = parseAdminFinalCourse(fd);
+  if (!finalCourse) redirect("/dashboard/admin/registrations?error=course");
+
   // The database chooses the receipt/manual route from its locked registration
   // row. The expected path only detects a new/replaced receipt since page load.
   const expectedReceiptPath = fd.get("expected_receipt_path");
   if (typeof expectedReceiptPath !== "string" || expectedReceiptPath.length > 1000) {
     redirect("/dashboard/admin/registrations?error=1");
   }
-  const { error } = await supabase.rpc("admin_activate_student_auto", {
+  const { error } = await supabase.rpc("admin_activate_student_with_course", {
     target_student_id: studentId,
     target_counselor_id: counselorId,
     expected_receipt_path: expectedReceiptPath || null,
+    target_course_type: finalCourse.course,
+    target_course_duration_months: finalCourse.months,
   });
   if (error) redirect("/dashboard/admin/registrations?error=1");
 
@@ -138,9 +144,13 @@ export async function resumeStudent(fd: FormData) {
       typeof counselorId !== "string" || !uuidPattern.test(counselorId)) {
     redirect("/dashboard/admin/registrations?error=resume");
   }
-  const { error } = await supabase.rpc("admin_resume_student", {
+  const finalCourse = parseAdminFinalCourse(fd);
+  if (!finalCourse) redirect("/dashboard/admin/registrations?error=course");
+  const { error } = await supabase.rpc("admin_resume_student_with_course", {
     target_student_id: studentId,
     target_counselor_id: counselorId,
+    target_course_type: finalCourse.course,
+    target_course_duration_months: finalCourse.months,
   });
   if (error) redirect("/dashboard/admin/registrations?error=resume");
   revalidateRegistrationPaths();

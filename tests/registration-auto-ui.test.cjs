@@ -35,6 +35,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
     if(name==='@/lib/courses')return {courseTypeLabel:()=>'',courseDurationLabel:()=>''};
     if(name==='@/lib/study-catalog')return {studyFieldLabels:{humanities:'انسانی'}};
     if(name==='@/app/dashboard/admin/registrations/actions')return {activateStudent:()=>{},assignCounselor:()=>{},uploadStudentReceipt:()=>{},disableStudent:()=>{},resumeStudent:()=>{},changeStudentCounselor:()=>{}};
+    if(name==='@/components/dashboard/admin-final-course-picker')return {AdminFinalCoursePicker:({initialCourse})=>React.createElement('div',{'data-final-course':initialCourse||'empty'},'انتخاب دورهٔ نهایی')};
     if(name==='@/components/dashboard/activation-submit-button')return {ActivationSubmitButton:({hasReceipt})=>React.createElement('button',{'data-path':hasReceipt?'receipt':'manual'},hasReceipt?'تأیید فیش و فعال‌سازی':'فعال‌سازی بدون فیش')};
     if(name==='@/components/dashboard/registration-management-button')return {RegistrationManagementButton:({label})=>React.createElement('button',null,label)};
     if(name==='@/components/dashboard/required-fields-form')return {RequiredFieldsForm:({className,children})=>React.createElement('form',{className},children)};
@@ -50,6 +51,8 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(cards[0],/paid/);
   assert.match(cards[0],/اولویت بررسی · فیش ارسال شده/);
   assert.match(cards[0],/data-path="receipt"/);
+  assert.match(cards[0],/data-final-course="empty"/);
+  assert.match(cards[0],/درخواست دانش‌آموز \(نه دورهٔ فعال\)/);
   assert.match(cards[0],/data-required-message="لطفاً مشاور را انتخاب کن"/);
   assert.match(cards[0],/data-required-message="لطفاً فیش را انتخاب کن"/);
   assert.match(cards[0],/name="receipt"[^>]*type="file"|type="file"[^>]*name="receipt"/);
@@ -75,6 +78,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   assert.match(cards[4],/تغییر مشاور/);
   assert.match(cards[4],/ثبت تغییر مشاور/);
   assert.match(cards[5],/فعال‌سازی دوباره و اختصاص مشاور/);
+  assert.match(cards[5],/data-final-course="empty"/);
   assert.doesNotMatch(cards[5],/name="receipt"|تأیید فیش و فعال‌سازی|فعال‌سازی بدون فیش/);
   assert.doesNotMatch(body,/receipt_confirmation|manual_confirmation|فعال‌سازی دستی بدون فیش|اختصاص مشاور و فعال‌سازی حساب/);
   const confirm=fs.readFileSync('components/dashboard/activation-submit-button.tsx','utf8');

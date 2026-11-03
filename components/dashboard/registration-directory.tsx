@@ -13,6 +13,7 @@ import {
   changeStudentCounselor,
 } from "@/app/dashboard/admin/registrations/actions";
 import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
+import { AdminFinalCoursePicker } from "@/components/dashboard/admin-final-course-picker";
 import { RequiredFieldsForm } from "@/components/dashboard/required-fields-form";
 import { RegistrationManagementButton } from "@/components/dashboard/registration-management-button";
 import "@/app/registration.css";
@@ -112,10 +113,14 @@ export async function RegistrationDirectory({
                       <small>{row.city || "—"}</small>
                     </div></td>
                     <td className="registration-course-details" data-label="دوره و توضیحات"><div className="registration-cell-content">
+                      <small>درخواست دانش‌آموز (نه دورهٔ فعال)</small>
                       <strong>{courseTypeLabel(row.course_type) || "دوره انتخاب نشده"}</strong>
                       {row.course_duration_months && (
                         <small>{courseDurationLabel(row.course_duration_months)}</small>
                       )}
+                      <small>دورهٔ اختصاص‌یافته توسط مدیر</small>
+                      <strong>{courseTypeLabel(row.service_course_type) || "بدون دورهٔ اختصاص‌یافته"}</strong>
+                      {row.service_course_duration_months && <small>{courseDurationLabel(row.service_course_duration_months)}</small>}
                       {row.additional_notes && <p>{row.additional_notes}</p>}
                     </div></td>
                     <td data-label="وضعیت و فیش"><div className="registration-cell-content">
@@ -177,6 +182,8 @@ export async function RegistrationDirectory({
                           </label>}
 
                           {!row.counselor_id && !counselors.length && <small role="status">مشاور تأییدشده‌ای برای تخصیص موجود نیست.</small>}
+
+                          {canActivate && <AdminFinalCoursePicker />}
 
                           {canActivate && (
                             <small className="registration-activation-path" role="status">
@@ -248,7 +255,8 @@ export async function RegistrationDirectory({
                               {counselors.map(c => <option key={c.id} value={c.id}>{c.full_name || "مشاور نووا"}</option>)}
                             </select>
                           </label>
-                          <small>سوابق قبلی بدون تغییر، دوباره قابل مشاهده می‌شوند.</small>
+                          <AdminFinalCoursePicker initialCourse={row.service_course_type} initialMonths={row.service_course_duration_months} />
+                          <small>سوابق قبلی بدون تغییر، دوباره قابل مشاهده می‌شوند. دورهٔ قبلی در فرم انتخاب شده و می‌توانی آن را تغییر دهی یا حذف کنی.</small>
                           <RegistrationManagementButton label="فعال‌سازی دوباره و اختصاص مشاور"
                             message="خدمات دانش‌آموز دوباره فعال شود و سوابق برنامه‌ها و آزمون‌ها نمایش داده شوند؟"
                             disabled={!counselors.length} />

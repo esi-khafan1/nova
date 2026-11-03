@@ -12,7 +12,7 @@ export function LandingHero() {
       <h1 id="nova-hero-title">آینده‌ات رو بساز؛<br /><em>قدم‌به‌قدم تا کنکور</em></h1>
       <p className="nova-hero-lead">با برنامه‌ریزی اصولی، آموزش هدفمند و همراهی مشاوران نوآ،<br />مسیر رسیدن به هدفت رو با اطمینان بیشتری طی کن.</p>
       <div className="nova-hero-actions">
-        <Link className="nova-primary" href="/auth?mode=signup">شروع مشاوره رایگان <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg></Link>
+        <Link className="nova-primary" href="/auth?mode=signup">شروع مشاوره <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg></Link>
         <Link className="nova-secondary" href="/#find-path">دوره‌های آموزشی</Link>
       </div>
     </div></div>

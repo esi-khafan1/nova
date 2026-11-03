@@ -85,3 +85,7 @@
   .registration-summary{gap:12px 18px}
   .registration-directory .registration-counselor-picker select,.registration-directory .registration-action-buttons .button{min-height:46px;font-size:14px}
 }
+
+.registration-directory .registration-final-course{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #ded7ee;border-radius:12px;background:#faf8ff}
+.registration-directory .registration-final-course small{line-height:1.7}
+.registration-directory .registration-final-course select{width:100%;min-height:44px;background:#fff;padding:9px 10px}

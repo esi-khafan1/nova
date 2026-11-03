@@ -6,12 +6,14 @@ export async function loadRegistrationDirectory(supabase:Awaited<ReturnType<type
  // Keep the established directory RPC signature and its admin-only authorization.
  for(let offset=0;offset<rows.length;offset+=200){
   const ids=rows.slice(offset,offset+200).map(row=>row.student_id);
-  const [enrollments,accounts,assignments]=await Promise.all([
+  const [enrollments,accounts,assignments,finalCourses]=await Promise.all([
    supabase.from("student_registrations").select("student_id,course_type,course_duration_months,additional_notes").in("student_id",ids),
    supabase.from("student_account_details").select("student_id,telegram_id,province,city,additional_notes").in("student_id",ids),
    supabase.from("counselor_students").select("student_id,counselor_id,created_at").in("student_id",ids).order("created_at",{ascending:false}),
+   supabase.from("profiles").select("id,service_course_type,service_course_duration_months").in("id",ids),
   ]);
-  if(enrollments.error||accounts.error||assignments.error)throw new Error("Registration details unavailable");
+  if(enrollments.error||accounts.error||assignments.error||finalCourses.error)throw new Error("Registration details unavailable");
+  const finalCourseMap=new Map((finalCourses.data??[]).map(row=>[row.id,row]));
   const enrollmentMap=new Map((enrollments.data??[]).map(row=>[row.student_id,row]));
   const accountMap=new Map((accounts.data??[]).map(row=>[row.student_id,row]));
   const assignmentMap=new Map<string,string>();
@@ -19,6 +21,9 @@ export async function loadRegistrationDirectory(supabase:Awaited<ReturnType<type
   for(const row of rows.slice(offset,offset+200)){
    const enrollment=enrollmentMap.get(row.student_id),account=accountMap.get(row.student_id);
    row.counselor_id=assignmentMap.get(row.student_id)??null;
+   const finalCourse=finalCourseMap.get(row.student_id);
+   row.service_course_type=finalCourse?.service_course_type??null;
+   row.service_course_duration_months=finalCourse?.service_course_duration_months??null;
    row.has_account_details=Boolean(enrollment||account);
    Object.assign(row,enrollment??{});
    if(!enrollment&&account)Object.assign(row,account);

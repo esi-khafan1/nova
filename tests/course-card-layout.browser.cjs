@@ -12,7 +12,7 @@ const baseline=require('./fixtures/course-card-dimensions.json');
   assert.equal(await cards.count(),8);
   for(const card of await cards.all()){
    const r=await card.boundingBox();assert.ok(Math.abs(r.width-row.width)<0.5);assert.ok(Math.abs(r.height-row.height)<0.5);
-   const label=await card.locator('h2').textContent();assert.ok(['پلن پایه','پلن پیشرفت'].includes(label));
+   const label=await card.locator('h2').textContent();assert.ok(['پلن پایه','پلن پریمیوم'].includes(label));
    const price=await card.locator('.course-plan-footer .course-price').boundingBox();
    const details=await card.getByRole('link',{name:'جزئیات بیشتر'}).boundingBox();
    assert.ok(price.x>=details.x+details.width,'price must be right of details link');

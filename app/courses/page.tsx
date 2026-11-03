@@ -57,7 +57,7 @@ export default async function CourseCatalogPage({
             </Link>
           </div>
           <h1>دوره‌های مناسب تو</h1>
-          <p>برای پایهٔ {gradeLabel} و رشتهٔ {fieldLabel}، دو پلن پایه و پیشرفت را در چهار بازهٔ زمانی آماده کردیم. جزئیات هر پلن را ببین و انتخابی متناسب با نیازت داشته باش.</p>
+          <p>برای پایهٔ {gradeLabel} و رشتهٔ {fieldLabel}، دو پلن پایه و پریمیوم را در چهار بازهٔ زمانی آماده کردیم. جزئیات هر پلن را ببین و انتخابی متناسب با نیازت داشته باش.</p>
           <div className="course-context-chips" aria-label="انتخاب‌های تو">
             <span>پایهٔ {gradeLabel}</span>
             <span>{fieldLabel}</span>
@@ -67,7 +67,7 @@ export default async function CourseCatalogPage({
 
       <section className="container mag-content course-catalog-content" aria-labelledby="course-catalog-title">
         <div className="mag-list-heading">
-          <h2 id="course-catalog-title">پلن‌های پایه و پیشرفت نووا</h2>
+          <h2 id="course-catalog-title">پلن‌های پایه و پریمیوم نووا</h2>
           <span>{courseCount.toLocaleString("fa-IR")} انتخاب · {courseDurations.length.toLocaleString("fa-IR")} بازهٔ زمانی</span>
         </div>
         <CourseCards grade={context.grade} field={context.field} />

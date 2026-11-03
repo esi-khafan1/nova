@@ -32,17 +32,17 @@ const complete = {
   full_name: 'نیما حسینی', phone: '09121234567', telegram_id: 'nima_123',
   grade: 10, study_field: 'mathematics', province: 'تهران', city: 'تهران',
 };
-function setup({ status = 'active', details = null, registrationRow = null, readError = false, authPhone = null, profilePhone = complete.phone, profileGrade = complete.grade, profileName = complete.full_name } = {}) {
+function setup({ status = 'active', details = null, registrationRow = null, serviceCourse = null, readError = false, authPhone = null, profilePhone = complete.phone, profileGrade = complete.grade, profileName = complete.full_name } = {}) {
   const profile = {
     id: 'student-id', full_name: profileName, phone: profilePhone,
     grade: profileGrade, study_field: complete.study_field, registration_status: status,
   };
   const user = authPhone ? { phone: authPhone, phone_confirmed_at: '2026-10-30T00:00:00Z' } : {};
   const supabase = { from(table) {
-    assert.ok(['student_account_details', 'student_registrations'].includes(table));
+    assert.ok(['student_account_details', 'student_registrations', 'profiles'].includes(table));
     return { select() { return this; }, eq() { return this; }, async maybeSingle() {
-      return { data: table === 'student_account_details' ? details : registrationRow, error: readError ? new Error('temporary read failure') : null };
-    } };
+      return { data: table === 'student_account_details' ? details : table === 'profiles' ? serviceCourse ?? { service_course_type: null, service_course_duration_months: null } : registrationRow, error: readError ? new Error('temporary read failure') : null };
+    }, async single() { return this.maybeSingle(); } };
   } };
   const deps = {
     'react/jsx-runtime': require('react/jsx-runtime'),
@@ -52,6 +52,7 @@ function setup({ status = 'active', details = null, registrationRow = null, read
     '@/lib/auth': { requireProfile: async () => ({ supabase, profile, user }) },
     '@/lib/phone-auth': phoneAuth,
     '@/lib/load-student-account': { loadStudentAccount: accountLoader.loadStudentAccount },
+    '@/lib/courses': { courseTypeLabel: value => ({base:'پلن پایه',progress:'پلن پریمیوم'})[value] || '', courseDurationLabel: value => `${value} ماهه` },
     '@/lib/registration': registration,
   };
   return { profile, supabase, deps };
@@ -144,4 +145,13 @@ test('temporary read errors are not presented as missing student details', async
   const edit = await account({ readError: true });
   assert.doesNotMatch(edit, /اطلاعات حسابت را تکمیل کن/);
   assert.match(edit, /اطلاعات فعلاً دریافت نشد/);
+});
+
+test('student sees administrator-assigned service separately from the original paid request', async () => {
+  const html = await account({ details: complete,
+    registrationRow: { ...complete, course_type: 'base', course_duration_months: 3 },
+    serviceCourse: { service_course_type: 'progress', service_course_duration_months: 6 } });
+  assert.match(html, /دورهٔ اختصاص‌یافته توسط مدیر:[\s\S]*پلن پریمیوم[\s\S]*6 ماهه/);
+  assert.match(html, /درخواست ثبت‌شدهٔ شما:[\s\S]*پلن پایه[\s\S]*3 ماهه/);
+  assert.match(await account({ details: complete, registrationRow: { ...complete, course_type: 'base', course_duration_months: 3 } }), /بدون دورهٔ اختصاص‌یافته/);
 });

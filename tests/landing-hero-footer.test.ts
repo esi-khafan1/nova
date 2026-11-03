@@ -22,7 +22,7 @@ assert.match(readFileSync("app/path-finder.css", "utf8"), /approved-star-cluster
 assert.match(hero, /<p className="nova-eyebrow">نوآ آکادمی \| همراه مسیر موفقیت<\/p>/);
 assert.match(hero, /<h1 id="nova-hero-title">آینده‌ات رو بساز؛<br \/><em>قدم‌به‌قدم تا کنکور<\/em><\/h1>/);
 assert.match(hero, /با برنامه‌ریزی اصولی، آموزش هدفمند و همراهی مشاوران نوآ،<br \/>مسیر رسیدن به هدفت رو با اطمینان بیشتری طی کن\./);
-assert.match(hero, /className="nova-primary" href="\/auth\?mode=signup">شروع مشاوره رایگان/);
+assert.match(hero, /className="nova-primary" href="\/auth\?mode=signup">شروع مشاوره/);
 assert.match(hero, /className="nova-secondary" href="\/#find-path">دوره‌های آموزشی/);
 assert.doesNotMatch(hero, /یک شروع تازه، با نوا|بهترین نسخهٔ|هدف تو، مسیر تو، برنامهٔ تو/);
 

@@ -12,7 +12,7 @@ export type CoursePlan = {
 
 /**
  * Order and artwork follow the requested course-card mapping:
- * base uses the former exam artwork; VIP and Progress share the former support artwork;
+ * base uses the former exam artwork; VIP and Premium share the former support artwork;
  * CIP uses the former simple-consultation artwork.
  */
 export const coursePlans = [
@@ -60,13 +60,13 @@ export const coursePlans = [
   },
   {
     value: "progress",
-    label: "پلن پیشرفت",
+    label: "پلن پریمیوم",
     imageType: "with_support",
     tagline: "هدفمند درس بخون، دقیق پیشرفت کن!",
     summary: "آزمون‌های هفتگی و کارنامهٔ تحلیلی کمک می‌کنن میزان یادگیری و مباحث نیازمند تمرین رو دقیق‌تر بشناسی.",
     paragraphs: [
       "درس خوندن بدون بررسی نتیجه، مثل حرکت کردن بدون دونستن مسیر درست می‌مونه!",
-      "در پلن پیشرفت نووا، علاوه بر دریافت برنامه مطالعاتی شخصی‌سازی‌شده و مشاوره تخصصی، با آزمون‌های اختصاصی میزان یادگیری خودت رو می‌سنجی.",
+      "در پلن پریمیوم نووا، علاوه بر دریافت برنامه مطالعاتی شخصی‌سازی‌شده و مشاوره تخصصی، با آزمون‌های اختصاصی میزان یادگیری خودت رو می‌سنجی.",
       "این آزمون‌ها متناسب با برنامه و مباحث مطالعاتی تو طراحی می‌شن تا بتونی نقاط قوت و ضعفت رو بشناسی و به‌جای مطالعه بی‌هدف، روی مباحثی تمرکز کنی که بیشترین نیاز رو به تمرین و مرور دارن.",
     ],
     services: [

@@ -16,16 +16,19 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/dashboard/admin/regis
     if(name==='next/navigation')return {redirect:url=>{throw new Error(url)}};
     if(name==='@/lib/auth')return {requireProfile:async roles=>{assert.deepEqual(Array.from(roles),['admin']);return {supabase}}};
     if(name==='@/lib/registration')return {receiptImageType:()=>null};
+    if(name==='@/lib/admin-final-course')return {parseAdminFinalCourse:fd=>({course:fd.get('service_course_type')||null,months:fd.get('service_course_duration_months')?Number(fd.get('service_course_duration_months')):null})};
     throw Error(name);
   },FormData,String,
 });
 const form=(receipt,extras={})=>{const fd=new FormData();for(const [k,v] of Object.entries({student_id:student,counselor_id:counselor,expected_receipt_path:receipt,...extras}))fd.set(k,v);return fd;};
 (async()=>{
   await assert.rejects(mod.exports.activateStudent(form('student/receipt.jpg',{activation_mode:'manual',manual_confirmation:'on'})),/saved=1/);
-  assert.equal(calls[0].name,'admin_activate_student_auto');
+  assert.equal(calls[0].name,'admin_activate_student_with_course');
   assert.equal(calls[0].args.expected_receipt_path,'student/receipt.jpg');
-  assert.deepEqual(Object.keys(calls[0].args).sort(),['expected_receipt_path','target_counselor_id','target_student_id']);
-  await assert.rejects(mod.exports.activateStudent(form('')),/saved=1/);
+  assert.deepEqual(Object.keys(calls[0].args).sort(),['expected_receipt_path','target_counselor_id','target_course_duration_months','target_course_type','target_student_id']);
+  await assert.rejects(mod.exports.activateStudent(form('',{service_course_type:'progress',service_course_duration_months:'6'})),/saved=1/);
+  assert.equal(calls[1].args.target_course_type,'progress');
+  assert.equal(calls[1].args.target_course_duration_months,6);
   assert.equal(calls[1].args.expected_receipt_path,null);
   await assert.rejects(mod.exports.activateStudent(form('',{student_id:'invalid'})),/error=1/);
   assert.equal(calls.length,2,'invalid identifiers must never reach the database');
