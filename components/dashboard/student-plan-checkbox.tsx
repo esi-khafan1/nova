@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { togglePlanItemCompletion } from "@/app/dashboard/actions";
 import { formatStudyDuration, parseStudyDuration } from "@/lib/study-duration";
 
@@ -15,6 +14,7 @@ export function StudentPlanCheckbox({
   targetTestCount,
   defaultCompletedTestCount,
   defaultCompletedMinutes,
+  onSaved,
 }: {
   itemId: string;
   defaultChecked: boolean;
@@ -23,8 +23,8 @@ export function StudentPlanCheckbox({
   targetTestCount: number | null;
   defaultCompletedTestCount: number | null;
   defaultCompletedMinutes: number | null;
+  onSaved?: (itemId: string, completed: boolean, count: number | null, minutes: number | null) => void;
 }) {
-  const router = useRouter();
   const isTestActivity = activityType === "practice_tests";
   const isExamActivity = activityType === "exam" || activityType === "simulation_exam";
   const savedEntry = isTestActivity ? defaultCompletedTestCount?.toString() ?? "" : formatStudyDuration(defaultCompletedMinutes);
@@ -34,6 +34,11 @@ export function StudentPlanCheckbox({
   const [recordedValue, setRecordedValue] = useState<number | null>(isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes);
   const [hasError, setHasError] = useState(false);
   const [isPending, startTransition] = useTransition();
+  useEffect(() => {
+    setChecked(defaultChecked);
+    setRecordedValue(isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes);
+    setEntry(savedEntry);
+  }, [itemId, defaultChecked, defaultCompletedTestCount, defaultCompletedMinutes, isTestActivity, savedEntry]);
   const completedValue = isTestActivity
     ? /^[0-9]+$/.test(entry) && Number(entry) >= 1 && Number(entry) <= 5000 ? Number(entry) : null
     : parseStudyDuration(entry);
@@ -49,19 +54,22 @@ export function StudentPlanCheckbox({
     if (nextChecked && !isTestActivity && completedValue !== null) setEntry(formatStudyDuration(completedValue));
     setChecked(nextChecked);
     startTransition(async () => {
-      const result = await togglePlanItemCompletion(
-        itemId,
-        nextChecked,
-        nextChecked && isTestActivity ? completedValue : null,
-        nextChecked && !isTestActivity ? completedValue : null,
-      );
-      if (!result.ok) {
+      try {
+        const result = await togglePlanItemCompletion(
+          itemId,
+          nextChecked,
+          nextChecked && isTestActivity ? completedValue : null,
+          nextChecked && !isTestActivity ? completedValue : null,
+        );
+        if (!result.ok) throw new Error("Progress not saved");
+        setRecordedValue(nextChecked ? completedValue : null);
+        onSaved?.(itemId, nextChecked,
+          nextChecked && isTestActivity ? completedValue : null,
+          nextChecked && !isTestActivity ? completedValue : null);
+      } catch {
         setChecked(!nextChecked);
         setHasError(true);
-        return;
       }
-      setRecordedValue(nextChecked ? completedValue : null);
-      router.refresh();
     });
   };
 

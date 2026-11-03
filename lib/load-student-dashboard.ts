@@ -1,3 +1,4 @@
+import { loadDailyNotes } from "@/lib/load-daily-notes";
 import {getRequestClient} from "@/lib/supabase/request-auth";
 import type {StudyPlan,StudyCompletion} from "@/lib/student-planning";
 type Page={student_id:string;active:boolean;plans:StudyPlan[];completions:StudyCompletion[];has_more:boolean};
@@ -15,9 +16,10 @@ export async function loadStudentDashboard(){
    plans.push(...page.plans);completions.push(...page.completions);
    if(!page.has_more)break;
   }
-  return {studentId,active,plans,completions,failed:false};
+  const dailyNotes=active&&studentId ? await loadDailyNotes(supabase,studentId) : [];
+  return {studentId,active,plans,completions,dailyNotes,failed:false};
  }catch{
   // Never expose a partially loaded history as a complete report.
-  return {studentId:null,active:false,plans:[],completions:[],failed:true};
+  return {studentId:null,active:false,plans:[],completions:[],dailyNotes:[],failed:true};
  }
 }

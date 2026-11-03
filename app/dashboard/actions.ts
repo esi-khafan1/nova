@@ -244,9 +244,8 @@ export async function togglePlanItemCompletion(
   completedTestCount: number | null = null,
   completedMinutes: number | null = null,
 ) {
+  // requireProfile already verifies the fresh user and active service.
   const {supabase:s} = await requireProfile(["student"]);
-  const {data:{user}}=await s.auth.getUser();
-  if(!user)redirect("/auth/sign-in");
   if (!uuidPattern.test(itemId)) return { ok: false };
 
   if (
@@ -270,8 +269,16 @@ export async function togglePlanItemCompletion(
   });
 
   if (error) return { ok: false };
-  revalidatePath("/dashboard/student");
+  // The checkbox updates its local report immediately. Avoid invalidating and
+  // refetching the entire dashboard (plans, account and exams) for one tick.
   return { ok: true };
+}
+
+export async function saveStudentDailyNote(day: string, note: string) {
+  const { supabase } = await requireProfile(["student"]);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || typeof note !== "string" || note.length > 2000) return { ok: false };
+  const { error } = await supabase.rpc("save_student_daily_note", { target_day: day, target_note: note });
+  return { ok: !error };
 }
 export async function changeUserRole(fd: FormData) {
   const s = await createClient();

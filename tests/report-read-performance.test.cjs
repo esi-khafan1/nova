@@ -3,7 +3,8 @@ function load(path, deps) { const m = { exports: {} }; vm.runInNewContext(ts.tra
         throw Error(name); return deps[name]; } }); return m.exports; }
 const pagination = load('lib/collect-query-pages.ts', {});
 const counselor = load('lib/load-counselor-plans.ts', { '@/lib/collect-query-pages': pagination });
-const reports = load('lib/load-study-report.ts', { '@/lib/collect-query-pages': pagination });
+const notes = load('lib/load-daily-notes.ts', { '@/lib/collect-query-pages': pagination });
+const reports = load('lib/load-study-report.ts', { '@/lib/collect-query-pages': pagination, '@/lib/load-daily-notes': notes });
 (async () => {
     let release;
     const started = new Set();
@@ -28,12 +29,16 @@ const reports = load('lib/load-study-report.ts', { '@/lib/collect-query-pages': 
         const data = await Promise.race([reports.loadStudyReport(client, 'own-student'), new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Plan and completion reads must overlap')), 1000); })]);
         assert.equal(data.plans.length, 201);
         assert.equal(data.completions.length, 501);
+        assert.equal(data.dailyNotes.length, 501);
     }
     finally {
         clearTimeout(timer);
     }
     fail = true;
     await assert.rejects(() => reports.loadStudyReport(client, 'own-student'), /Study reports unavailable/);
+    fail = false;
+    const brokenNotes = { from(table) { const query = client.from(table); if (table === 'student_daily_notes') query.range = async()=>({data:null,error:{message:'unavailable'}}); return query; } };
+    await assert.rejects(() => reports.loadStudyReport(brokenNotes,'own-student'),/Daily notes unavailable/);
     const invalid = await pagination.collectQueryPages(200, async () => ({ data: [], error: null }), 'unavailable');
     assert.equal(invalid.length, 0);
     let failCounselor = false;

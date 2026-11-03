@@ -60,14 +60,15 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  // Exercise pagination and all-or-nothing loader behavior without a network.
  let pages=[],calls=[];const moduleStub={exports:{}};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/load-student-dashboard.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module:moduleStub,exports:moduleStub.exports,require(name){
+  if(name==='@/lib/load-daily-notes')return {loadDailyNotes:async()=>[{day:'2026-11-04',note:'یک نکته'}]};
   assert.equal(name,'@/lib/supabase/request-auth');return {getRequestClient:async()=>({rpc:async(name,args)=>{assert.equal(name,'student_dashboard_page');calls.push(args.page_offset);return pages.shift();}})};
  }});
  const load=moduleStub.exports.loadStudentDashboard;
- pages=[{data:first,error:null},{data:last,error:null}];let loaded=await load();assert.equal(loaded.failed,false);assert.equal(loaded.plans.length,201);assert.deepEqual(calls,[0,200]);
+ pages=[{data:first,error:null},{data:last,error:null}];let loaded=await load();assert.equal(loaded.failed,false);assert.equal(loaded.plans.length,201);assert.equal(loaded.dailyNotes.length,1);assert.deepEqual(calls,[0,200]);
  pages=[{data:first,error:null},{data:null,error:{message:'unavailable'}}];loaded=await load();assert.equal(loaded.failed,true);assert.equal(loaded.plans.length,0);assert.equal(loaded.completions.length,0);
  pages=[{data:empty,error:null}];loaded=await load();assert.equal(loaded.failed,false);assert.equal(loaded.active,false);
  pages=[{data:{...first,plans:[]},error:null}];assert.equal((await load()).failed,true);
  pages=[{data:first,error:null},{data:{...last,student_id:other},error:null}];assert.equal((await load()).failed,true);
- const source=fs.readFileSync('app/dashboard/student/page.tsx','utf8');assert.match(source,/Promise.all/);assert.match(source,/loaded.studentId!==profile.id/);assert.match(source,/requireProfile\(\["student"\],true\)/);
+ const source=fs.readFileSync('app/dashboard/student/page.tsx','utf8');assert.match(source,/Promise.all/);assert.match(source,/loaded.studentId\s*!==\s*profile.id/);assert.match(source,/requireProfile\(\["student"\],\s*true\)/);
  console.log('Student dashboard: 201-plan history, scoped progress, own-account and RLS isolation, inactive/anonymous/admin guards, failed-page discard and concurrent auth/data wiring passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

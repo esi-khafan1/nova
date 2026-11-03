@@ -4,7 +4,7 @@ const {JSDOM}=require('jsdom'),React=require('react'),{act}=React;
 const dom=new JSDOM('<div id="root"></div>',{url:'https://nova.test/dashboard/student',pretendToBeVisual:true});
 global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;global.IS_REACT_ACT_ENVIRONMENT=true;
 const {createRoot}=require('react-dom/client');
-const calls=[];
+const calls=[],saved=[];let failNext=false;let refreshes=0;
 const durationStub={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/study-duration.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:durationStub,exports:durationStub.exports});
 const stub={exports:{}};
@@ -12,15 +12,15 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/stud
  module:stub,exports:stub.exports,require(name){
   if(name==='react')return React;
   if(name==='react/jsx-runtime')return require('react/jsx-runtime');
-  if(name==='next/navigation')return {useRouter:()=>({refresh(){}})};
+  if(name==='next/navigation')return {useRouter:()=>({refresh(){refreshes++;}})};
   if(name==='@/lib/study-duration')return durationStub.exports;
-  if(name==='@/app/dashboard/actions')return {togglePlanItemCompletion:async(...args)=>{calls.push(args);return {ok:true};}};
+  if(name==='@/app/dashboard/actions')return {togglePlanItemCompletion:async(...args)=>{calls.push(args);const ok=!failNext;failNext=false;return {ok};}};
   throw Error(`Unexpected import ${name}`);
  },
 });
 const {StudentPlanCheckbox}=stub.exports;
 const root=createRoot(document.getElementById('root'));
-const render=async (props={})=>act(async()=>root.render(React.createElement(StudentPlanCheckbox,{key:props.itemId??'fake-item',itemId:'fake-item',defaultChecked:false,canToggle:true,activityType:'lesson',targetTestCount:null,defaultCompletedTestCount:null,defaultCompletedMinutes:null,...props})));
+const render=async (props={})=>act(async()=>root.render(React.createElement(StudentPlanCheckbox,{key:props.itemId??'fake-item',itemId:'fake-item',defaultChecked:false,canToggle:true,activityType:'lesson',targetTestCount:null,defaultCompletedTestCount:null,defaultCompletedMinutes:null,onSaved:(...args)=>saved.push(args),...props})));
 const change=async(el,value)=>act(async()=>{Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
 const click=async el=>act(async()=>el.click());
 (async()=>{
@@ -31,6 +31,8 @@ const click=async el=>act(async()=>el.click());
  assert.equal(number().placeholder,'01:30');
  await click(checkbox());
  assert.deepEqual(calls.at(-1),['fake-item',true,null,null],'Empty time means full planned duration');
+ assert.deepEqual(saved.at(-1),['fake-item',true,null,null]);
+ assert.equal(refreshes,0,'Saving one checkbox must not refetch the entire dashboard');
  assert.equal(number().value,'','Do not present inferred time as entered actual time');
  await click(checkbox());assert.deepEqual(calls.at(-1),['fake-item',false,null,null]);
  const beforeInvalid=calls.length;
@@ -49,6 +51,10 @@ const click=async el=>act(async()=>el.click());
  await change(number(),'');await act(async()=>number().dispatchEvent(new dom.window.FocusEvent('focusout',{bubbles:true})));
  assert.deepEqual(calls.at(-1),['fake-item',true,null,null],'Clearing a saved value falls back to full planned time');
  await click(checkbox());assert.deepEqual(calls.at(-1),['fake-item',false,null,null]);
+ await render({itemId:'failed-item',defaultChecked:false});
+ failNext=true;await click(checkbox());
+ assert.equal(checkbox().checked,false,'failed write rolls the optimistic tick back');
+ assert.equal(saved.at(-1)[0],'fake-item','failed write must not update the report summary');
  await render({itemId:'legacy-item',defaultChecked:true,defaultCompletedMinutes:null});
  assert.equal(number().value,'','A legacy tick must not claim a recorded duration');
  await render({itemId:'test-item',activityType:'practice_tests',targetTestCount:40,defaultCompletedTestCount:null});

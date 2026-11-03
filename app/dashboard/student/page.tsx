@@ -39,10 +39,11 @@ export default async function StudentDashboard() {
   const failed = active && (loaded.failed || loaded.studentId !== profile.id || !loaded.active || assignedExams.failed);
   const plans = active && !failed ? loaded.plans : [];
   const completions = active && !failed ? loaded.completions : [];
+  const dailyNotes = active && !failed ? loaded.dailyNotes : [];
   return <DashboardShell role="student" name={profile.full_name}>
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>
     {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={active}/>}
     <StudentDashboardRefresh currentDate={tehranToday()}/>
-    {failed ? <section className="portal-card portal-alert error" role="alert"><h1>برنامه‌ها و آزمون‌ها فعلاً کامل دریافت نشدند</h1><p>دوباره صفحه را باز کن. این پیام به معنی نداشتن برنامه، آزمون یا گزارش نیست.</p><a href="/dashboard/student">تلاش دوباره</a></section> : <StudentPlanningPanel audience="student" plans={plans} completions={completions} exams={assignedExams.exams} submittedExamIds={assignedExams.attemptIds} today={tehranToday()} profile={{ full_name: profile.full_name, grade: profile.grade, study_field: profile.study_field }}/>}
+    {failed ? <section className="portal-card portal-alert error" role="alert"><h1>برنامه‌ها و آزمون‌ها فعلاً کامل دریافت نشدند</h1><p>دوباره صفحه را باز کن. این پیام به معنی نداشتن برنامه، آزمون یا گزارش نیست.</p><a href="/dashboard/student">تلاش دوباره</a></section> : <StudentPlanningPanel audience="student" plans={plans} completions={completions} dailyNotes={dailyNotes} exams={assignedExams.exams} submittedExamIds={assignedExams.attemptIds} today={tehranToday()} profile={{ full_name: profile.full_name, grade: profile.grade, study_field: profile.study_field }}/>}
   </DashboardShell>;
 }

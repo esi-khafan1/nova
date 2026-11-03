@@ -86,3 +86,6 @@
 .student-portal .sp-task--designer-exam{border-inline-start:4px solid var(--sp-blue)}
 .student-portal .sp-exam-description{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-size:14px;background:var(--sp-ice);border-radius:8px;padding:12px 16px;margin:16px 0;color:var(--sp-ink)}
 .student-portal .sp-task--designer-exam .sp-exam-link{margin-top:8px}
+.sp-daily-note{margin-top:20px;border:1px solid var(--sp-line);border-radius:16px;padding:20px;background:#fff;display:flex;flex-direction:column;gap:10px}
+.sp-daily-note h3,.sp-daily-note p{margin:0}.sp-daily-note p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9}.sp-daily-note label{font-weight:600}.sp-daily-note textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--sp-line);border-radius:10px;padding:12px;font:inherit;background:#fff;color:var(--sp-ink)}
+.sp-daily-note-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.sp-daily-note-actions small[role=alert]{color:#a92727}
