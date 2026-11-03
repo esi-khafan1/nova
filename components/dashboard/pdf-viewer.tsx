@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { toPersianDigits } from "@/lib/persian-date";
+import { boundedPdfPixelRatio, fitPdfScale } from "@/lib/pdf-canvas";
 
 interface PdfViewport {
   width: number;
@@ -61,15 +62,18 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
   // References to keep track of active pdf instance and rendering tasks
   const pdfDocRef = useRef<PdfDocument | null>(null);
   const renderTasksRef = useRef<Map<number, PdfRenderTask>>(new Map());
+  const pageObserverRef = useRef<IntersectionObserver | null>(null);
+  const renderGenerationRef = useRef(0);
+  const loadGenerationRef = useRef(0);
   const pageNodesRef = useRef<Map<number, HTMLDivElement>>(new Map());
   const blobUrlRef = useRef<string | null>(null);
 
-  // Default to native view on desktop, canvas on Android
-  const [viewMode, setViewMode] = useState<"native" | "canvas">(() => {
-    if (typeof window === "undefined") return "native";
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    return isAndroid ? "canvas" : "native";
-  });
+  // Keep server and client hydration identical. Embedded native PDF is not
+  // reliable on mobile browsers (especially iOS and Android WebViews).
+  const [viewMode, setViewMode] = useState<"native" | "canvas">("native");
+  useEffect(() => {
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) setViewMode("canvas");
+  }, []);
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,12 +105,14 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
             win.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.js";
             resolve(win.pdfjsLib);
           } else {
-            resolve(null);
+            existingScript.remove();
+            reject(new Error("موتور PDF در دسترس نیست"));
           }
-        });
-        existingScript.addEventListener("error", () =>
-          reject(new Error("خطا در بارگذاری موتور نمایش PDF")),
-        );
+        }, { once: true });
+        existingScript.addEventListener("error", () => {
+          existingScript.remove();
+          reject(new Error("خطا در بارگذاری موتور نمایش PDF"));
+        }, { once: true });
         return;
       }
 
@@ -119,16 +125,20 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
           win.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.js";
           resolve(win.pdfjsLib);
         } else {
+          script.remove();
           reject(new Error("موتور PDF در دسترس نیست"));
         }
       };
-      script.onerror = () => reject(new Error("عدم امکان بارگذاری کتابخانه PDF"));
+      script.onerror = () => { script.remove(); reject(new Error("عدم امکان بارگذاری کتابخانه PDF")); };
       document.head.appendChild(script);
     });
   }, []);
 
   // Cancel all ongoing render tasks
   const cancelAllRenderTasks = useCallback(() => {
+    renderGenerationRef.current += 1;
+    pageObserverRef.current?.disconnect();
+    pageObserverRef.current = null;
     renderTasksRef.current.forEach((task) => {
       try {
         task.cancel();
@@ -137,76 +147,93 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
     renderTasksRef.current.clear();
   }, []);
 
-  // Render all pages for the current document & scale (Canvas mode)
-  const renderAllPages = useCallback(
-    async (pdf: PdfDocument, currentScale: number) => {
-      cancelAllRenderTasks();
-      const container = pagesContainerRef.current;
-      if (!container) return;
+  // PDF pages have different sizes. Observe their placeholders and rasterize
+  // near the viewport, not every page at once (mobile memory exhaustion used
+  // to leave later pages blank or apparently scrambled).
+  const renderAllPages = useCallback(async (pdf: PdfDocument, currentScale: number) => {
+    cancelAllRenderTasks();
+    const generation = renderGenerationRef.current;
+    const container = pagesContainerRef.current;
+    if (!container) return;
+    container.replaceChildren();
+    pageNodesRef.current.clear();
+    const visiblePages = new Map<Element, { draw: () => void; clear: () => void }>();
+    const observer = typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver(entries => {
+          for (const entry of entries) {
+            const view = visiblePages.get(entry.target);
+            if (entry.isIntersecting) view?.draw();
+            else view?.clear();
+          }
+        }, { root: scrollRef.current, rootMargin: "600px 0px", threshold: 0 })
+      : null;
+    pageObserverRef.current = observer;
 
-      container.innerHTML = "";
-      pageNodesRef.current.clear();
-
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        // Page wrapper
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      if (generation !== renderGenerationRef.current) return;
+      try {
+        const page = await pdf.getPage(pageNum);
+        if (generation !== renderGenerationRef.current) return;
+        const viewport = page.getViewport({ scale: currentScale });
         const pageWrapper = document.createElement("div");
         pageWrapper.id = `pdf-page-${pageNum}`;
         pageWrapper.className = "exam-pdf-page-wrapper";
         pageWrapper.setAttribute("data-page-num", String(pageNum));
-
-        // Page header badge (e.g. صفحه ۱)
+        pageWrapper.style.width = `${viewport.width}px`;
+        pageWrapper.style.height = `${viewport.height}px`;
         const pageBadge = document.createElement("div");
         pageBadge.className = "exam-pdf-page-badge";
         pageBadge.textContent = `صفحه ${toPersianDigits(pageNum)}`;
         pageWrapper.appendChild(pageBadge);
-
-        // Canvas for page
         const canvas = document.createElement("canvas");
         canvas.className = "exam-pdf-page-canvas";
+        canvas.width = 0;
+        canvas.height = 0;
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
         pageWrapper.appendChild(canvas);
-
         container.appendChild(pageWrapper);
         pageNodesRef.current.set(pageNum, pageWrapper);
-
-        try {
-          const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: currentScale });
-
-          canvas.width = Math.floor(viewport.width * dpr);
-          canvas.height = Math.floor(viewport.height * dpr);
-          canvas.style.width = `${Math.floor(viewport.width)}px`;
-          canvas.style.height = `${Math.floor(viewport.height)}px`;
-
+        const draw = async () => {
+          if (generation !== renderGenerationRef.current || canvas.width || renderTasksRef.current.has(pageNum)) return;
+          // Bound each bitmap to ~3 megapixels and at most 2x device pixels.
+          const dpr = boundedPdfPixelRatio(viewport.width, viewport.height, window.devicePixelRatio);
+          canvas.width = Math.max(1, Math.round(viewport.width * dpr));
+          canvas.height = Math.max(1, Math.round(viewport.height * dpr));
           const ctx = canvas.getContext("2d");
-          if (!ctx) continue;
-
-          const renderContext = {
-            canvasContext: ctx,
-            viewport,
-            transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined,
-          };
-
-          const renderTask = page.render(renderContext);
-          renderTasksRef.current.set(pageNum, renderTask);
-
-          await renderTask.promise.catch((err: unknown) => {
-            const errorObj = err as { name?: string };
-            if (errorObj?.name !== "RenderingCancelledException") {
+          if (generation !== renderGenerationRef.current) return;
+          if (!ctx) { setError("نمایش PDF در این مرورگر امکان‌پذیر نیست. نمای مرورگر یا دریافت فایل را امتحان کن."); return; }
+          let task: PdfRenderTask | null = null;
+          try {
+            task = page.render({ canvasContext: ctx, viewport,
+              transform: [canvas.width / viewport.width, 0, 0, canvas.height / viewport.height, 0, 0] });
+            renderTasksRef.current.set(pageNum, task);
+            await task.promise;
+          } catch (err: unknown) {
+            if (generation === renderGenerationRef.current && (err as { name?: string })?.name !== "RenderingCancelledException") {
               console.error("PDF page render error:", err);
+              setError(`نمایش صفحهٔ ${toPersianDigits(pageNum)} انجام نشد. نمای مرورگر یا دریافت فایل را امتحان کن.`);
             }
-          });
-        } catch (err: unknown) {
-          const errorObj = err as { name?: string };
-          if (errorObj?.name !== "RenderingCancelledException") {
-            console.error(`Error loading page ${pageNum}:`, err);
+          } finally {
+            if (task && renderTasksRef.current.get(pageNum) === task) renderTasksRef.current.delete(pageNum);
           }
+        };
+        const clear = () => {
+          renderTasksRef.current.get(pageNum)?.cancel();
+          renderTasksRef.current.delete(pageNum);
+          canvas.width = 0;
+          canvas.height = 0;
+        };
+        if (observer) { visiblePages.set(pageWrapper, { draw, clear }); observer.observe(pageWrapper); }
+        else void draw();
+      } catch (err) {
+        if (generation === renderGenerationRef.current) {
+          console.error(`Error loading PDF page ${pageNum}:`, err);
+          setError(`بارگذاری صفحهٔ ${toPersianDigits(pageNum)} انجام نشد.`);
         }
       }
-    },
-    [cancelAllRenderTasks],
-  );
+    }
+  }, [cancelAllRenderTasks]);
 
   // Load PDF Document when URL changes
   const loadPdf = useCallback(async () => {
@@ -216,6 +243,7 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
       return;
     }
 
+    const generation = ++loadGenerationRef.current;
     setLoading(true);
     setError(null);
     cancelAllRenderTasks();
@@ -228,6 +256,7 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
       const res = await fetch(safeUrl);
       if (!res.ok) throw new Error(`عدم موفقیت در دریافت فایل (${res.status})`);
       const buffer = await res.arrayBuffer();
+      if (generation !== loadGenerationRef.current) return;
 
       // Revoke old blob URL if existing
       if (blobUrlRef.current) {
@@ -240,6 +269,7 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
 
       // Load PDF.js with local CMaps and standard fonts for accurate glyph metrics
       const lib = await ensurePdfJsLoaded();
+      if (generation !== loadGenerationRef.current) return;
       if (lib) {
         try {
           const loadingTask = lib.getDocument({
@@ -250,41 +280,41 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
             standardFontDataUrl: "/pdfjs/standard_fonts/",
           });
           const pdf = await loadingTask.promise;
+          if (generation !== loadGenerationRef.current) { void pdf.destroy(); return; }
 
           pdfDocRef.current = pdf;
           setNumPages(pdf.numPages);
           setCurrentPage(1);
 
-          // Determine initial scale based on container width
-          let initialScale = 1.0;
-          if (scrollRef.current) {
-            const containerWidth = scrollRef.current.clientWidth - 40;
-            if (containerWidth > 0) {
-              const autoFit = containerWidth / 595;
-              initialScale = Math.max(0.6, Math.min(1.8, +autoFit.toFixed(2)));
-            }
-          }
+          // Use this PDF's real page width, not a hard-coded A4 width.
+          const firstPage = await pdf.getPage(1);
+          const pageWidth = firstPage.getViewport({ scale: 1 }).width;
+          const initialScale = fitPdfScale(pageWidth, containerRef.current?.clientWidth ?? 0);
           setScale(initialScale);
-
-          await renderAllPages(pdf, initialScale);
         } catch (pdfErr) {
+          if (generation !== loadGenerationRef.current) return;
           console.warn("PDF.js parse warning:", pdfErr);
+          setError("نمایش این فایل در مرورگر انجام نشد. فایل اصلی را مستقیماً باز یا دریافت کن.");
         }
+      } else {
+        setError("موتور نمایش PDF در دسترس نیست. فایل اصلی را مستقیماً باز یا دریافت کن.");
       }
 
       setLoading(false);
     } catch (err: unknown) {
+      if (generation !== loadGenerationRef.current) return;
       console.error("PDF Load Error:", err);
       const message =
         err instanceof Error ? err.message : "خطا در بارگذاری دفترچه سؤالات.";
       setError(message);
       setLoading(false);
     }
-  }, [url, ensurePdfJsLoaded, cancelAllRenderTasks, renderAllPages]);
+  }, [url, ensurePdfJsLoaded, cancelAllRenderTasks]);
 
   useEffect(() => {
     loadPdf();
     return () => {
+      loadGenerationRef.current += 1;
       cancelAllRenderTasks();
       if (pdfDocRef.current) {
         try {
@@ -299,16 +329,13 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
   }, [loadPdf, cancelAllRenderTasks]);
 
   // Handle re-rendering when scale changes in canvas mode
-  const isInitialMount = useRef(true);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
     if (viewMode === "canvas" && pdfDocRef.current && !loading) {
       renderAllPages(pdfDocRef.current, scale);
+    } else if (viewMode === "native") {
+      cancelAllRenderTasks();
     }
-  }, [scale, loading, viewMode, renderAllPages]);
+  }, [scale, loading, viewMode, renderAllPages, cancelAllRenderTasks]);
 
   // Track active page while scrolling in canvas mode
   useEffect(() => {
@@ -354,14 +381,11 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
     setScale((s) => Math.max(0.5, +(s - 0.15).toFixed(2)));
   };
 
-  const handleFitWidth = () => {
-    if (scrollRef.current) {
-      const containerWidth = scrollRef.current.clientWidth - 40;
-      if (containerWidth > 0) {
-        const autoFit = containerWidth / 595;
-        setScale(Math.max(0.6, Math.min(2.2, +autoFit.toFixed(2))));
-      }
-    }
+  const handleFitWidth = async () => {
+    if (!pdfDocRef.current) return;
+    const page = await pdfDocRef.current.getPage(currentPage);
+    const pageWidth = page.getViewport({ scale: 1 }).width;
+    setScale(fitPdfScale(pageWidth, containerRef.current?.clientWidth ?? 0));
   };
 
   // Fullscreen toggle
@@ -409,9 +433,7 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
               className={`exam-pdf-view-switch-btn ${viewMode === "canvas" ? "is-active" : ""}`}
               onClick={() => {
                 setViewMode("canvas");
-                if (pdfDocRef.current) {
-                  renderAllPages(pdfDocRef.current, scale);
-                }
+
               }}
               title="نمایش اسکرول متوالی وب"
             >
@@ -539,7 +561,7 @@ export function PdfViewer({ url, title, className = "" }: PdfViewerProps) {
         </div>
       )}
 
-      {/* Mode 1: Native Browser PDF Viewer (100% Quality, Zero Glitches, IDM Safe) */}
+      {/* Native PDF is an optional fallback: some browsers have no inline PDF viewer. */}
       {!loading && !error && viewMode === "native" && blobUrl && (
         <div className="exam-pdf-native-wrapper">
           <iframe

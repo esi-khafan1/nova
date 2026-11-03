@@ -44,10 +44,21 @@ do $$ declare result record;ans jsonb;denied boolean;begin
  if (select count(*) from public.exam_booklets_for_student_report(current_setting('qa.exam')::uuid))<>2 then raise exception 'Submitted student report missing';end if;
  if not exists(select 1 from public.student_exam_subject_history(current_setting('qa.student')::uuid,12) where exam_id::text=current_setting('qa.exam')) then raise exception 'Submitted student history missing';end if;
 end $$;
+select set_config('request.jwt.claim.sub',current_setting('qa.designer'),true);
+do $$ declare aid uuid;denied boolean:=false;begin
+ if (select count(*) from public.designer_exam_attempts(current_setting('qa.exam')::uuid))<>1 then raise exception 'Designer cannot list own submitted students';end if;
+ select attempt_id into aid from public.designer_exam_attempts(current_setting('qa.exam')::uuid);
+ if (select count(*) from public.designer_exam_attempt_review(current_setting('qa.exam')::uuid,aid))<>105 then raise exception 'Designer answer sheet incomplete';end if;
+ begin perform * from public.designer_exam_attempt_review(current_setting('qa.exam')::uuid,gen_random_uuid());exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Designer can review a foreign attempt';end if;
+end $$;
 select set_config('request.jwt.claim.sub',current_setting('qa.other'),true);
 do $$ declare denied boolean:=false;begin
  begin perform public.student_exam_review(current_setting('qa.exam')::uuid);exception when insufficient_privilege then denied:=true;end;
  if not denied then raise exception 'Unsubmitted student saw answer key';end if;
+ denied:=false;
+ begin perform * from public.designer_exam_attempts(current_setting('qa.exam')::uuid);exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Student saw designer participant list';end if;
 end $$;
 reset role;
 update public.exams set starts_at=now()-interval '146 minutes' where id::text=current_setting('qa.exam');

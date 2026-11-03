@@ -8707,3 +8707,9 @@ main .feature-card:before {
     min-height: 0;
   }
 }
+
+/* PDF.js canvases are sized to their actual page viewport. Never scale the
+   bitmap again with max-width:100%, which blurs/distorts mobile and zoomed PDFs. */
+.exam-pdf-scroll-viewport{direction:ltr}
+.exam-pdf-page-wrapper{max-width:none;flex-shrink:0}
+.exam-pdf-page-canvas{max-width:none}

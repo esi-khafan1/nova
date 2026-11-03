@@ -148,8 +148,10 @@ export async function submitExam(formData: FormData) {
     : await supabase.rpc("submit_booklet_exam", {target_exam_id:examId,target_answers:answers});
   if (error) redirect(`/dashboard/student/exams/${examId}?error=submit`);
   revalidatePath("/dashboard/student/exams");
+  revalidatePath("/dashboard/student");
   revalidatePath(`/dashboard/student/exams/${examId}`);
   revalidatePath(`/dashboard/counselor/exams/${examId}`);
+  revalidatePath(`/dashboard/exam_designer/${examId}`);
   revalidatePath(`/dashboard/student/exams/${examId}/review`);
   redirect(`/dashboard/student/exams/${examId}/review`);
 }
@@ -178,7 +180,9 @@ export async function submitSavedFloatingExam(formData: FormData) {
   const {error}=await supabase.rpc("submit_floating_booklet_exam",{target_exam_id:examId,expected_booklet_index:null,target_answers:{},use_saved_answers:true});
   if(error) redirect(`/dashboard/student/exams/${examId}?error=submit`);
   revalidatePath("/dashboard/student/exams");
+  revalidatePath("/dashboard/student");
   revalidatePath(`/dashboard/student/exams/${examId}/review`);
+  revalidatePath(`/dashboard/exam_designer/${examId}`);
   redirect(`/dashboard/student/exams/${examId}/review`);
 }
 

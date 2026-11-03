@@ -9,28 +9,40 @@ import { verifiedMobileForAccount } from "@/lib/phone-auth";
 import { loadStudentDashboard } from "@/lib/load-student-dashboard";
 import { requiredStudentFieldsIssue } from "@/lib/registration";
 import { tehranToday } from "@/lib/student-planning";
+import type { StudentPlanExam } from "@/lib/student-plan-exams";
 
 export default async function StudentDashboard() {
   // The zero-identity-argument RPC enforces student role/activation/RLS itself.
   // Never render its data until fresh getUser + profile checks also succeed.
   const authPromise = requireProfile(["student"], true);
-  const [auth, loaded, account] = await Promise.all([
+  const [auth, loaded, account, assignedExams] = await Promise.all([
     authPromise,
     loadStudentDashboard(),
     authPromise.then(({ supabase, profile, user }) =>
       loadStudentAccount(supabase, profile, verifiedMobileForAccount(user)).catch(() => null)),
+    authPromise.then(async ({ supabase, profile }) => {
+      if (profile.registration_status !== "active") return { exams: [] as StudentPlanExam[], attemptIds: [] as string[], failed: false };
+      // The student's RLS-filtered exam list includes both picker assignments
+      // and linked exam boxes; no service-role client or elevated read is used.
+      const [{ data: exams, error: examsError }, { data: attempts, error: attemptsError }] = await Promise.all([
+        supabase.from("exams").select("id,title,description,starts_at,start_window_ends_at,duration_minutes")
+          .eq("status", "published").order("starts_at", { ascending: false }),
+        supabase.from("exam_attempts").select("exam_id").eq("student_id", profile.id).not("submitted_at", "is", null),
+      ]);
+      return { exams: (exams ?? []) as StudentPlanExam[], attemptIds: (attempts ?? []).map(attempt => attempt.exam_id), failed: Boolean(examsError || attemptsError) };
+    }).catch(() => ({ exams: [] as StudentPlanExam[], attemptIds: [] as string[], failed: true })),
   ]);
   const { profile } = auth;
   const active = profile.registration_status === "active";
   // A failed account read is not proof of missing information.
   const completionIssue = account && !account.error ? requiredStudentFieldsIssue(account.values, true) : null;
-  const failed = active && (loaded.failed || loaded.studentId !== profile.id || !loaded.active);
+  const failed = active && (loaded.failed || loaded.studentId !== profile.id || !loaded.active || assignedExams.failed);
   const plans = active && !failed ? loaded.plans : [];
   const completions = active && !failed ? loaded.completions : [];
   return <DashboardShell role="student" name={profile.full_name}>
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>
     {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={active}/>}
     <StudentDashboardRefresh currentDate={tehranToday()}/>
-    {failed ? <section className="portal-card portal-alert error" role="alert"><h1>برنامه‌ها فعلاً دریافت نشدند</h1><p>دوباره صفحه را باز کن. این پیام به معنی نداشتن برنامه یا گزارش نیست.</p><a href="/dashboard/student">تلاش دوباره</a></section> : <StudentPlanningPanel audience="student" plans={plans} completions={completions} today={tehranToday()} profile={{ full_name: profile.full_name, grade: profile.grade, study_field: profile.study_field }}/>}
+    {failed ? <section className="portal-card portal-alert error" role="alert"><h1>برنامه‌ها و آزمون‌ها فعلاً کامل دریافت نشدند</h1><p>دوباره صفحه را باز کن. این پیام به معنی نداشتن برنامه، آزمون یا گزارش نیست.</p><a href="/dashboard/student">تلاش دوباره</a></section> : <StudentPlanningPanel audience="student" plans={plans} completions={completions} exams={assignedExams.exams} submittedExamIds={assignedExams.attemptIds} today={tehranToday()} profile={{ full_name: profile.full_name, grade: profile.grade, study_field: profile.study_field }}/>}
   </DashboardShell>;
 }

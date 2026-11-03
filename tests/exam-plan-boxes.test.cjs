@@ -95,11 +95,11 @@ const uuid=v=>`'${v}'::uuid`;
   (${uuid(ids.counselor)},'counselor','مشاور'),(${uuid(ids.studentA)},'student','شیما'),(${uuid(ids.studentB)},'student','علی'),
   (${uuid(ids.studentC)},'student','آرمان بدون مشاور')`);
  await db.query(`insert into public.counselor_students values(${uuid(ids.counselor)},${uuid(ids.studentA)}),(${uuid(ids.counselor)},${uuid(ids.studentB)})`);
- const start=`(current_date - 1)`;
+ const start=`(timezone('Asia/Tehran',now())::date - 1)`;
  await db.query(`insert into public.weekly_plans(id,counselor_id,student_id,week_start,status) values
   (${uuid(ids.planA)},${uuid(ids.counselor)},${uuid(ids.studentA)},${start},'published'),
   (${uuid(ids.planB)},${uuid(ids.counselor)},${uuid(ids.studentB)},${start},'draft'),
-  (${uuid(ids.planC)},${uuid(ids.counselor)},${uuid(ids.studentB)},current_date + 1,'published')`);
+  (${uuid(ids.planC)},${uuid(ids.counselor)},${uuid(ids.studentB)},timezone('Asia/Tehran',now())::date + 1,'published')`);
  await db.query(`insert into public.weekly_plan_items(id,plan_id,day_of_week,subject,chapter,activity_type,sort_order) values
   (${uuid(ids.boxA)},${uuid(ids.planA)},1,'زیستشناسی','فصل ۲','exam',0),
   (${uuid(ids.boxSim)},${uuid(ids.planA)},2,'فیزیک','فصل ۱','simulation_exam',1),
