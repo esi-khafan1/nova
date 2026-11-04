@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { courseCatalogPath, courseDurationLabel, courseLandingPath, courseRegistrationPath, parseCourseSelection } from "@/lib/courses";
+import { parseCourseContext, courseCatalogPath, courseDurationLabel, courseLandingPath, courseRegistrationPath, parseCourseSelection } from "@/lib/courses";
 import { getCoursePlan } from "@/lib/course-plans";
 import { studyFieldLabels } from "@/lib/study-catalog";
 
@@ -37,8 +37,8 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
   const { selection, plan } = course;
   const query = await searchParams;
   const gradeLabel = selection.grade.toLocaleString("fa-IR");
-  const fieldLabel = studyFieldLabels[selection.field];
-  const context = { grade: selection.grade, field: selection.field };
+  const fieldLabel = selection.field ? studyFieldLabels[selection.field] : null;
+  const context = parseCourseContext(selection)!;
   const backHref = query.return === "landing" ? courseLandingPath(context) : courseCatalogPath(context);
   const registrationHref = courseRegistrationPath(selection);
 
@@ -50,7 +50,7 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
             <div className="article-meta">
               <span>{plan.label}</span>
               <span>پایهٔ {gradeLabel}</span>
-              <span>{fieldLabel}</span>
+              {fieldLabel && <span>{fieldLabel}</span>}
               <span>{courseDurationLabel(selection.months)}</span>
             </div>
             <Link className="article-back" href={backHref}>
@@ -65,7 +65,7 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
             <Image
               className="course-detail-cover"
               unoptimized
-              src={`/courses/${plan.imageType}-${selection.field}.svg`}
+              src={selection.field ? `/courses/${plan.imageType}-${selection.field}.svg` : "/nova/mark.svg"}
               alt=""
               width={640}
               height={640}
@@ -85,7 +85,7 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
         <section className="course-detail-cta" aria-labelledby="course-detail-cta-title">
           <div>
             <h2 id="course-detail-cta-title">آماده‌ای مسیرت رو شروع کنی؟</h2>
-            <p>پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel} و رشتهٔ {fieldLabel} ثبت می‌شود.</p>
+            <p>پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel}{fieldLabel && ` و رشتهٔ ${fieldLabel}`} ثبت می‌شود.</p>
           </div>
           <CoursePrice selection={selection}/>
           <Link className="course-cta-button" href={registrationHref}>

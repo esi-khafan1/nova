@@ -10,8 +10,9 @@ export const courseDurations = [
 export const courseFields = ["mathematics", "experimental_sciences", "humanities"] as const;
 export type CourseField = (typeof courseFields)[number];
 export type CourseType = CoursePlanId | LegacyCourseType;
-export type CourseSelection = { grade: 10 | 11 | 12; field: CourseField; course: CourseType; months: 1 | 3 | 6 | 12 };
-export type CourseContext = Pick<CourseSelection, "grade" | "field">;
+// Ninth grade has no high-school study field. Never persist a synthetic field.
+export type CourseContext = { grade: 9; field: null } | { grade: 10 | 11 | 12; field: CourseField };
+export type CourseSelection = CourseContext & { course: CourseType; months: 1 | 3 | 6 | 12 };
 
 const grades = ["10", "11", "12"] as const;
 const durations = ["1", "3", "6", "12"] as const;
@@ -20,40 +21,45 @@ const isCourseType = (value: unknown): value is CourseType =>
 
 export function parseCourseContext(params: Record<string, unknown>): CourseContext | null {
   const { grade, field } = params;
-  if ((typeof grade !== "string" && typeof grade !== "number") || typeof field !== "string") return null;
-  if (!grades.includes(String(grade) as (typeof grades)[number]) || !courseFields.some((candidate) => candidate === field)) return null;
-  return { grade: Number(grade) as CourseContext["grade"], field: field as CourseField };
+  if (typeof grade !== "string" && typeof grade !== "number") return null;
+  if (String(grade) === "9") return field === null || field === undefined || field === "" || field === "none" ? {grade: 9, field: null} : null;
+  if (!grades.includes(String(grade) as (typeof grades)[number]) || typeof field !== "string" || !courseFields.some(candidate => candidate === field)) return null;
+  return { grade: Number(grade) as 10 | 11 | 12, field: field as CourseField };
 }
 
 export function parseCourseSelection(params: Record<string, unknown>): CourseSelection | null {
-  const { grade, field, course, months } = params;
-  if ((typeof grade !== "string" && typeof grade !== "number") || (typeof months !== "string" && typeof months !== "number")) return null;
-  if (!grades.includes(String(grade) as (typeof grades)[number]) || typeof field !== "string" || !courseFields.some((candidate) => candidate === field) || !isCourseType(course) || !durations.includes(String(months) as (typeof durations)[number])) return null;
-  return { grade: Number(grade) as CourseSelection["grade"], field: field as CourseField, course, months: Number(months) as CourseSelection["months"] };
+  const context = parseCourseContext(params);
+  const { course, months } = params;
+  if (!context || (typeof months !== "string" && typeof months !== "number") || !isCourseType(course) || !durations.includes(String(months) as (typeof durations)[number]) || (context.grade === 9 && !availableCoursePlans.some(plan => plan.value === course))) return null;
+  return { ...context, course, months: Number(months) as CourseSelection["months"] };
 }
 
 export function courseCatalogPath(context: CourseContext): string {
-  return `/courses?${new URLSearchParams({ grade: String(context.grade), field: context.field })}`;
+  const params: Record<string,string> = {grade: String(context.grade)};
+  if (context.field) params.field = context.field;
+  return `/courses?${new URLSearchParams(params)}`;
 }
 
-// Student dashboard links should open the course catalog directly when the
-// profile already has a supported grade/field; otherwise use its selector.
 export function studentCourseCatalogPath(grade: number | null | undefined, field: string | null | undefined): string {
   const context = parseCourseContext({ grade, field });
   return context ? courseCatalogPath(context) : "/courses";
 }
 
 export function courseLandingPath(context: CourseContext): string {
-  return `/?${new URLSearchParams({ grade: String(context.grade), field: context.field })}#find-path`;
+  const params: Record<string,string> = {grade: String(context.grade)};
+  if (context.field) params.field = context.field;
+  return `/?${new URLSearchParams(params)}#find-path`;
 }
 
 export function courseDetailsPath(selection: CourseSelection, returnTo?: "landing"): string {
-  const path = `/courses/${selection.grade}/${selection.field}/${selection.course}/${selection.months}`;
+  const path = `/courses/${selection.grade}/${selection.field ?? "none"}/${selection.course}/${selection.months}`;
   return returnTo === "landing" ? `${path}?return=landing` : path;
 }
 
 export function courseRegistrationPath(selection: CourseSelection): string {
-  return `/dashboard/registration?${new URLSearchParams({grade: String(selection.grade), field: selection.field, course: selection.course, months: String(selection.months)})}`;
+  const params: Record<string,string> = {grade: String(selection.grade), course: selection.course, months: String(selection.months)};
+  if (selection.field) params.field = selection.field;
+  return `/dashboard/registration?${new URLSearchParams(params)}`;
 }
 
 export function courseTypeLabel(value: unknown): string {
@@ -64,17 +70,15 @@ export function courseDurationLabel(value: unknown): string {
   return courseDurations.find((duration) => duration.value === value)?.label ?? "";
 }
 
-export function coursesFor(grade: number, field: string): CourseSelection[] {
+export function coursesFor(grade: number, field: string | null): CourseSelection[] {
   const context = parseCourseContext({ grade, field });
   if (!context) return [];
-  return courseDurations.flatMap((duration) => availableCoursePlans.map((plan) => ({
-    ...context,
-    course: plan.value,
-    months: duration.value,
+  return courseDurations.flatMap(duration => availableCoursePlans.map(plan => ({
+    ...context, course: plan.value, months: duration.value,
   })));
 }
 
-/** Toman amounts; longer durations are exact multiples, with no additional discount. */
+/** Toman amounts; ninth grade uses the tenth/eleventh price band. */
 export function coursePrice(selection: CourseSelection): {original: number; discounted: number} | null {
  if (selection.course !== "base" && selection.course !== "progress") return null;
  const monthly = selection.grade === 12

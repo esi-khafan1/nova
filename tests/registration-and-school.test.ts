@@ -11,8 +11,9 @@ for(const key of ["phone","telegram_id"] as const)assert.equal(validateRegistrat
 assert.notEqual(validateRegistration({...valid,first_name:"",last_name:""}),null);
 assert.equal(validateRegistration({full_name:"نیما حسینی",grade:11,study_field:"humanities",province:"تهران",city:"تهران"},true),null);
 assert.equal(normalizeDigits("۰۹۱۲١٢٣۴۵۶۷"),"09121234567");
-assert.equal(validateRegistration({...valid,grade:9}),"پایه و رشته را انتخاب کن."); // no unpriced grade-9 enrollment
+assert.notEqual(validateRegistration({...valid,grade:9}),null); // field must be absent
 assert.equal(validateRegistration({...valid,grade:9,study_field:null},true),null);
+assert.equal(validateRegistration({...valid,grade:9,study_field:null}),null);
 assert.notEqual(validateRegistration({...valid,grade:9},true),null);
 assert.notEqual(validateRegistration({...valid,grade:10,study_field:null},true),null);
 assert.equal(receiptImageType(new TextEncoder().encode('<svg></svg>')),null);

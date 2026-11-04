@@ -14,7 +14,7 @@ export function CourseCards({
   returnTo = "catalog",
 }: {
   grade: number;
-  field: string;
+  field: string | null;
   returnTo?: "catalog" | "landing";
 }) {
   const track = useRef<HTMLDivElement>(null);
@@ -29,7 +29,7 @@ export function CourseCards({
     ...courses.map(course => ({course, sizing:false})),
     ...coursePlans.filter(plan => plan.value === "vip" || plan.value === "cip").map(plan => ({course:{grade,field,course:plan.value,months:1} as CourseSelection,sizing:true})),
   ];
-  const fieldLabel = studyFieldLabels[field as keyof typeof studyFieldLabels];
+  const fieldLabel = field ? studyFieldLabels[field as keyof typeof studyFieldLabels] : null;
 
   useEffect(() => {
     const element = track.current;
@@ -114,7 +114,7 @@ export function CourseCards({
   }
 
   return (
-    <section className="course-plan-carousel" aria-label={`${courses.length.toLocaleString("fa-IR")} دوره برای پایه ${grade.toLocaleString("fa-IR")} و رشتهٔ ${fieldLabel}`}>
+    <section className="course-plan-carousel" aria-label={`${courses.length.toLocaleString("fa-IR")} دوره برای پایه ${grade.toLocaleString("fa-IR")} ${fieldLabel ? `و رشتهٔ ${fieldLabel}` : "بدون رشته"}`}>
       <div className="course-plan-viewport">
         <div
           ref={track}
@@ -143,7 +143,7 @@ export function CourseCards({
                 {sizing ? <div className="course-plan-cover"/> : <Image
                   className="course-plan-cover"
                   unoptimized
-                  src={`/courses/${plan.imageType}-${course.field}.svg`}
+                  src={course.field ? `/courses/${plan.imageType}-${course.field}.svg` : "/nova/mark.svg"}
                   alt=""
                   width={640}
                   height={640}
@@ -151,7 +151,7 @@ export function CourseCards({
                 />}
                 <div className="mag-card-body">
                   <div className="mag-card-meta">
-                    <span className="course-plan-context">پایهٔ {course.grade.toLocaleString("fa-IR")} · {fieldLabel}</span>
+                    <span className="course-plan-context">پایهٔ {course.grade.toLocaleString("fa-IR")} {fieldLabel && ` · ${fieldLabel}`}</span>
                     <span className="course-plan-duration">{courseDurationLabel(course.months)}</span>
                   </div>
                   <h2>{plan.label}</h2>

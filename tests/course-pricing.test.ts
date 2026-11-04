@@ -13,6 +13,16 @@ for(const grade of [10,11,12])for(const field of ["mathematics","experimental_sc
 }
 assert.equal(studentCourseCatalogPath(12,'experimental_sciences'),'/courses?grade=12&field=experimental_sciences');
 assert.equal(studentCourseCatalogPath(10,'humanities'),'/courses?grade=10&field=humanities');
+assert.equal(studentCourseCatalogPath(9,null),'/courses?grade=9');
+for(const c of coursesFor(9,null)) {
+ assert.deepEqual(coursePrice(c),coursePrice({...c,grade:10,field:'mathematics'}));
+ assert.deepEqual(parseCourseSelection(Object.fromEntries(new URL(courseRegistrationPath(c),'https://example.com').searchParams)),c);
+ assert.equal(parseCourseSelection({grade:9,field:'none',course:c.course,months:c.months})?.field,null);
+ assert.match(courseDetailsPath(c),/^\/courses\/9\/none\//);
+}
+assert.equal(coursesFor(9,null).length,8);
+assert.equal(parseCourseSelection({grade:9,field:'humanities',course:'base',months:3}),null);
+assert.equal(parseCourseSelection({grade:9,field:null,course:'vip',months:3}),null);
 for(const [grade,field] of [[null,null],[12,null],[null,'humanities'],[9,'mathematics'],[12,'arts']]){
  assert.equal(studentCourseCatalogPath(grade as number|null,field as string|null),'/courses');
 }

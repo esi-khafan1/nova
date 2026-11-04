@@ -8,6 +8,7 @@ export type PathFinderDesign = "sky" | "peach" | "horizon";
 type Step = "intro" | "grade" | "field" | "result";
 
 const grades: { value: CourseContext["grade"]; label: string; number: string }[] = [
+  { value: 9, label: "نهم", number: "۹" },
   { value: 10, label: "دهم", number: "۱۰" },
   { value: 11, label: "یازدهم", number: "۱۱" },
   { value: 12, label: "دوازدهم", number: "۱۲" },
@@ -77,7 +78,7 @@ export function PathFinder({
   const [field, setField] = useState<CourseField | null>(initialContext?.field ?? null);
   const heading = useRef<HTMLHeadingElement>(null);
   const hasNavigated = useRef(false);
-  const stepIndex = step === "grade" ? 0 : step === "field" ? 1 : 2;
+  const stepIndex = step === "grade" ? 0 : step === "field" || grade === 9 ? 1 : 2;
 
   useEffect(() => {
     if (hasNavigated.current) heading.current?.focus({ preventScroll: true });
@@ -102,12 +103,14 @@ export function PathFinder({
         ? "انتخاب رشته تحصیلی"
         : "دوره‌های مناسب تو";
   const subtitle = step === "intro"
-    ? "با دو انتخاب ساده، پایه و رشته‌ات رو مشخص کن."
+    ? "پایه‌ات رو انتخاب کن؛ از دهم به بعد رشته‌ات رو هم مشخص کن."
     : step === "grade"
       ? "الان در کدام پایه درس می‌خوانی؟"
       : step === "field"
         ? "رشته‌ات رو انتخاب کن تا ۸ دوره در دو پلن پایه و پریمیوم و چهار بازهٔ زمانی ببینی."
-        : grade && field
+        : grade === 9
+          ? "برای پایهٔ نهم، پلن و بازهٔ زمانی مناسب خودت رو بدون انتخاب رشته ببین."
+          : grade && field
           ? `برای پایهٔ ${grade.toLocaleString("fa-IR")} و رشتهٔ ${fields.find((item) => item.value === field)?.label}، پلن و بازهٔ زمانی مناسب خودت رو انتخاب کن.`
           : "پلن‌های پایه و پریمیوم نووا را در چهار بازهٔ زمانی ببین و جزئیات هر دوره را بررسی کن.";
 
@@ -132,7 +135,7 @@ export function PathFinder({
           {design === "peach" && step === "intro" && (
             <div className="nova-path-identity" aria-hidden="true">
               <div className="nova-path-orbit"><CompassMark /><Sparkle className="nova-path-orbit-star one" /><Sparkle className="nova-path-orbit-star two" /><Sparkle className="nova-path-orbit-star three" /></div>
-              <p>از دهم تا دوازدهم<br /><strong>مسیرت رو روشن کن.</strong></p>
+              <p>از نهم تا دوازدهم<br /><strong>مسیرت رو روشن کن.</strong></p>
             </div>
           )}
           <div className="nova-path-content">
@@ -143,20 +146,20 @@ export function PathFinder({
                 {design === "horizon" && (
                   <div className="nova-path-intro-points">
                     <p><span>۰۱</span>پایهٔ تحصیلی تو</p>
-                    <p><span>۰۲</span>رشتهٔ تحصیلی تو</p>
+                    <p><span>۰۲</span>انتخاب دورهٔ تو</p>
                     <p><Sparkle />یک شروع مشخص</p>
                   </div>
                 )}
                 <button type="button" className="nova-path-primary" onClick={() => navigate("grade")}>
                   شروع کن <span aria-hidden="true">←</span>
                 </button>
-                <p className="nova-path-footnote">فقط برای پایه‌های دهم، یازدهم و دوازدهم</p>
+                <p className="nova-path-footnote">برای پایه‌های نهم تا دوازدهم</p>
               </>
             ) : (
               <>
                 {step !== "result" && (
                   <ol className="nova-path-steps" aria-label="مراحل انتخاب">
-                    {["پایه تحصیلی", "رشته تحصیلی", "انتخاب دوره"].map((label, i) => (
+                    {(grade === 9 ? ["پایه تحصیلی", "انتخاب دوره"] : ["پایه تحصیلی", "رشته تحصیلی", "انتخاب دوره"]).map((label, i) => (
                       <li key={label} aria-current={stepIndex === i ? "step" : undefined} className={stepIndex >= i ? "is-active" : ""}>
                         <span aria-hidden="true">{["۱", "۲", "۳"][i]}</span>{label}
                       </li>
@@ -168,7 +171,7 @@ export function PathFinder({
                     <legend className="nova-path-sr-only">انتخاب پایه تحصیلی</legend>
                     {grades.map((item) => (
                       <label className={`nova-path-choice ${grade === item.value ? "is-selected" : ""}`} key={item.value}>
-                        <input type="radio" name={`grade-${design}`} value={item.value} checked={grade === item.value} aria-label={`پایه ${item.label}`} onChange={() => setGrade(item.value)} />
+                        <input type="radio" name={`grade-${design}`} value={item.value} checked={grade === item.value} aria-label={`پایه ${item.label}`} onChange={() => { setGrade(item.value); setField(null); }} />
                         <span className="nova-path-choice-mark" aria-hidden="true">{item.number}</span>
                         <strong>{item.label}</strong>
                       </label>
@@ -187,21 +190,21 @@ export function PathFinder({
                     ))}
                   </fieldset>
                 )}
-                {step === "result" && grade !== null && field && (
+                {step === "result" && grade !== null && (grade === 9 || field) && (
                   <div className="nova-path-result">
                     <CourseCards grade={grade} field={field} returnTo="landing" />
                   </div>
                 )}
                 {step === "result" ? (
                   <div className="nova-path-actions">
-                    <button type="button" className="nova-path-secondary" onClick={() => navigate("field")}>بازگشت به رشته</button>
+                    <button type="button" className="nova-path-secondary" onClick={() => navigate(grade === 9 ? "grade" : "field")}>بازگشت به {grade === 9 ? "پایه" : "رشته"}</button>
                     <button type="button" className="nova-path-primary" onClick={reset}>انتخاب دوباره</button>
                   </div>
                 ) : (
                   <div className="nova-path-actions">
                     <button type="button" className="nova-path-secondary" onClick={() => navigate(step === "grade" ? "intro" : "grade")}>بازگشت</button>
                     {step === "grade" ? (
-                      <button type="button" className="nova-path-primary" disabled={grade === null} onClick={() => navigate("field")}>
+                      <button type="button" className="nova-path-primary" disabled={grade === null} onClick={() => navigate(grade === 9 ? "result" : "field")}>
                         ادامه <span aria-hidden="true">←</span>
                       </button>
                     ) : (

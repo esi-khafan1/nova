@@ -6,7 +6,7 @@ const fs = require('node:fs');
  try {
   await db.exec(`
   create role authenticated; create role anon;
-  create schema auth; create schema private;
+  create schema auth; create schema private; create schema storage;
   create table auth.users(id uuid primary key,email_confirmed_at timestamptz,phone_confirmed_at timestamptz);
   create type public.study_field as enum ('mathematics','experimental_sciences','humanities','arts','foreign_languages');
   create type public.app_role as enum ('student','counselor');
@@ -14,6 +14,12 @@ const fs = require('node:fs');
   create type public.study_activity_type as enum ('lesson','exam','exam_analysis');
   create table public.profiles(id uuid primary key, role public.app_role, grade smallint check(grade between 10 and 12), study_field public.study_field,full_name text,phone text,registration_status text);
   create table public.student_account_details(student_id uuid primary key,grade smallint not null check(grade in (10,11,12)),study_field public.study_field not null,full_name text,phone text,telegram_id text,province text,city text,additional_notes text,updated_at timestamptz);
+  create table storage.objects(bucket_id text,name text);
+  create table public.student_registrations(student_id uuid primary key,full_name text,first_name text,last_name text,phone text,telegram_id text,
+   grade smallint not null check(grade in (10,11,12)),study_field public.study_field not null
+   constraint student_registrations_study_field_check check(study_field::text in ('mathematics','experimental_sciences','humanities','arts','foreign_languages')),
+   province text,city text,receipt_path text,receipt_name text,course_type text,course_duration_months smallint,
+   additional_notes text,submitted_at timestamptz,approved_at timestamptz,approved_by uuid);
   create table public.school_subjects(study_field public.study_field not null,grade smallint not null check(grade in (10,11,12)),subject text not null,primary key(study_field,grade,subject));
   create function auth.uid() returns uuid language sql stable as $$select '33333333-3333-4333-8333-333333333333'::uuid$$;
   create function private.current_user_role() returns public.app_role language sql stable as $$select 'counselor'::public.app_role$$;
@@ -47,6 +53,19 @@ const fs = require('node:fs');
   await assert.rejects(account({...basics,grade:9,study_field:'humanities'}));
   await assert.rejects(account({...basics,grade:10,study_field:null}));
   await assert.rejects(account({...basics,grade:null,study_field:null}));
+  await db.exec(fs.readFileSync('supabase/migrations/101_grade_nine_paid_enrollment.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/102_require_study_field_for_upper_grades.sql','utf8'));
+  await assert.rejects(db.query('insert into public.student_registrations(student_id,grade,study_field) values($1,10,null)',['77777777-7777-4777-8777-777777777777']));
+  await db.query('update public.profiles set registration_status=$1 where id=$2',['incomplete',accountId]);
+  const receipt=`${accountId}/test.jpg`;
+  await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['registration-receipts',receipt]);
+  const enrollment={...basics,grade:9,study_field:null,receipt_path:receipt,receipt_name:'test.jpg',course_type:'base',course_duration_months:3};
+  await assert.rejects(db.query('select public.submit_student_registration($1::jsonb)',[JSON.stringify({...enrollment,study_field:'humanities'})]));
+  await assert.rejects(db.query('select public.submit_student_registration($1::jsonb)',[JSON.stringify({...enrollment,course_type:null})]));
+  await db.query('select public.submit_student_registration($1::jsonb)',[JSON.stringify(enrollment)]);
+  const registered=(await db.query('select grade,study_field,course_type,course_duration_months from public.student_registrations where student_id=$1',[accountId])).rows[0];
+  assert.deepEqual(registered,{grade:9,study_field:null,course_type:'base',course_duration_months:3});
+  assert.equal((await db.query('select registration_status from public.profiles where id=$1',[accountId])).rows[0].registration_status,'pending');
   await assert.rejects(save(plan(9,'final_exam','هوش و استعداد تحلیلی')));
   await assert.rejects(save(plan(9,'konkur','ریاضی')));
   await assert.rejects(save(plan(9,'konkur','هوش و استعداد تحلیلی','گاج')));

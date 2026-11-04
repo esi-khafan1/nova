@@ -28,7 +28,7 @@ try {
   assert.ok(journeyGroups([],null,9).some(g=>g.subject==='ریاضی'&&g.grade===9));
   const valid = {full_name:'سارا احمدی',grade:9,study_field:null,province:'تهران',city:'تهران'};
   assert.equal(validateRegistration(valid,true),null);
-  assert.notEqual(validateRegistration(valid,false),null); // no fabricated paid product
+  assert.equal(validateRegistration(valid,false),null); // same paid plans as grades 10/11
   assert.notEqual(validateRegistration({...valid,study_field:'humanities'},true),null);
   assert.notEqual(validateRegistration({...valid,grade:10},true),null);
   assert.equal(activityTypes.find(a=>a.value==='exam_troubleshooting')?.label,'رفع اشکال آزمون');

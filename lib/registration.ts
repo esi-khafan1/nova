@@ -36,7 +36,7 @@ function requiredStudentNameIssue(v:RegistrationFormValues){
 }
 export function requiredStudentFieldsIssue(v:RegistrationFormValues, accountOnly = false){
  const nameIssue = requiredStudentNameIssue(v); if(nameIssue)return nameIssue;
- const gradeNineWithoutField = accountOnly && v.grade===9 && !v.study_field;
+ const gradeNineWithoutField = v.grade===9 && !v.study_field;
  const allowedFields = accountOnly
   ? ["mathematics","experimental_sciences","humanities","arts","foreign_languages"]
   : ["mathematics","experimental_sciences","humanities"];
