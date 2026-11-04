@@ -69,6 +69,7 @@ const item = (day, subject, options = {}) => ({
   await db.exec(v5);
   await db.exec(v6);
   await db.exec(completedMigration);
+  await db.exec(fs.readFileSync('supabase/migrations/103_external_simulation_provider_plan_boxes.sql','utf8'));
   await db.exec(counselorFlags);
   const date = (await db.query(`select (timezone('Asia/Tehran',now())::date-1)::text as day`)).rows[0].day;
   const actor = id => db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
@@ -121,6 +122,17 @@ const item = (day, subject, options = {}) => ({
   assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_items where linked_exam_id=$1',[ids.exam])).rows[0].n,0,'removed exam link is not reattached to a same-subject box');
   assert.equal((await db.query('select count(*)::int as n from public.exams where id=$1',[ids.exam])).rows[0].n,1,'deleting a box does not delete its exam');
   assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_item_completions where item_id=$1',[ids.completed])).rows[0].n,1,'completed box remains intact');
+  const providerBox = item(2,'آزمون شبیه‌ساز · ماز',{
+    activityType:'external_simulation_exam',sourceGrade:null,chapter:'',preparationTrack:'konkur',examYear:null,
+  });
+  const saveV9 = list => db.query(`select public.save_weekly_plan_v9($1,$2,$3,'هفتهٔ تازه',null,'published',$4::jsonb,'[]'::jsonb)`,
+    [ids.plan,ids.student,date,JSON.stringify(list)]);
+  await saveV9([...initial.filter(i=>i.id!==ids.linked),providerBox]);
+  assert.equal((await db.query("select count(*)::int as n from public.weekly_plan_items where subject='آزمون شبیه‌ساز · ماز' and activity_type::text='external_simulation_exam' and source_grade is null")).rows[0].n,1,
+    'new provider box persists through v9 → v8 → v7 → v6 → v5 → v4 → v3');
+  assert.equal((await db.query('select completed_test_count from public.weekly_plan_item_completions where item_id=$1',[ids.completed])).rows[0].completed_test_count,12,
+    'new box saves preserve already-completed activities');
+  await assert.rejects(saveV9([...initial.filter(i=>i.id!==ids.linked),{...providerBox,chapter:'فصل ۱'}]),/Invalid external simulation provider/);
   await actor(ids.other);
   await assert.rejects(save(initial),/Only counselors can save plans|Student not assigned/);
   console.log('PASS: completed boxes immutable; linked boxes removable without deleting exams; past and progress stay protected');

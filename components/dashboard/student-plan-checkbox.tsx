@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { togglePlanItemCompletion } from "@/app/dashboard/actions";
 import { formatStudyDuration, parseStudyDuration } from "@/lib/study-duration";
+import { externalSimulationActivity } from "@/lib/external-simulation";
 
 const faNumber = (value: number) => value.toLocaleString("fa-IR");
 
@@ -26,7 +27,7 @@ export function StudentPlanCheckbox({
   onSaved?: (itemId: string, completed: boolean, count: number | null, minutes: number | null) => void;
 }) {
   const isTestActivity = activityType === "practice_tests";
-  const isExamActivity = activityType === "exam" || activityType === "simulation_exam";
+  const isExamActivity = activityType === "exam" || activityType === "simulation_exam" || activityType === externalSimulationActivity;
   const savedEntry = isTestActivity ? defaultCompletedTestCount?.toString() ?? "" : formatStudyDuration(defaultCompletedMinutes);
   const [checked, setChecked] = useState(defaultChecked);
   const [entry, setEntry] = useState(savedEntry);

@@ -15,6 +15,7 @@ import {
 
 import { planningGrades, curriculumBooks, inferItemGrade, routineSubjectOptions, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
 import { canRecommendPublisher, recommendedPublishers } from "@/lib/recommended-publishers";
+import { externalSimulationActivity, externalSimulationPrefix, externalSimulationTitle, simulationProvider, simulationProviderDraft, simulationProviders, simulationSubject } from "@/lib/external-simulation";
 
 type Student = {
   student_id: string;
@@ -30,13 +31,14 @@ type PlanItem = {
   durationMinutes: number;
   subject: string;
   chapter: string;
-  activityType: (typeof activityTypes)[number]["value"];
+  activityType: (typeof activityTypes)[number]["value"] | typeof externalSimulationActivity;
   targetTestCount: number | null;
   details: string;
   sourceGrade: Grade|null;
   preparationTrack: PreparationTrack;
   recommendedPublisher: string | null;
   otherPublisher: boolean;
+  otherSimulationProvider?: boolean;
   linkedExamId?: string|null;
   completed?: boolean;
 };
@@ -133,6 +135,7 @@ function planItems(plan: CounselorWeeklyPlan, completedItemIds: ReadonlySet<stri
       preparationTrack:item.preparation_track??"konkur",
       recommendedPublisher:item.recommended_publisher??null,
       otherPublisher:Boolean(item.recommended_publisher && !(recommendedPublishers as readonly string[]).includes(item.recommended_publisher)),
+      otherSimulationProvider:item.activity_type === externalSimulationActivity && Boolean(simulationProvider(item.subject) && !(simulationProviders as readonly string[]).includes(simulationProvider(item.subject)!)),
       linkedExamId:item.linked_exam_id??null,
       completed:completedItemIds.has(item.id),
     }));
@@ -180,6 +183,14 @@ export function WeeklyPlanBuilder({
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
   const routineSubjects=routineSubjectOptions(student?.study_field??null,student?.grade??null);
+  const chooseExternalSimulation=(key:string)=>setItems(current=>current.map(item=>item.key===key?{
+    ...item,activityType:externalSimulationActivity,subject:externalSimulationTitle,chapter:"",targetTestCount:null,
+    sourceGrade:null,preparationTrack:"konkur",recommendedPublisher:null,otherPublisher:false,otherSimulationProvider:false,
+  }:item));
+  const leaveExternalSimulation=(key:string)=>setItems(current=>current.map(item=>item.key===key?{
+    ...item,activityType:"lesson",subject:"",chapter:"",sourceGrade:null,
+    preparationTrack:student?.grade===9?"final_exam":"konkur",otherSimulationProvider:false,
+  }:item));
   const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:"",recommendedPublisher:track==='konkur'?item.recommendedPublisher:null,otherPublisher:track==='konkur'&&item.otherPublisher}:item));
 
   const loadPlan = (studentId: string, nextWeek: string) => {
@@ -380,7 +391,7 @@ export function WeeklyPlanBuilder({
                     <article className="plan-item-readonly" key={item.key}>
                       <strong>{item.subject}</strong>
                       <span>
-                        {item.chapter || "بدون مبحث"} ·{" "}
+                        {item.activityType === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "ثبت نشده"}` : item.chapter || "بدون مبحث"} ·{" "}
                         {faNumber(item.durationMinutes)} دقیقه
                         {item.activityType === "practice_tests" &&
                           item.targetTestCount &&
@@ -405,8 +416,8 @@ export function WeeklyPlanBuilder({
                 <div className="plan-item-list">
                   {dayItems.map((item, index) => item.completed ? (
                     <article className="plan-item-readonly" key={item.key}>
-                      <strong>{item.subject}</strong>
-                      <span>{item.chapter || "بدون مبحث"} · {faNumber(item.durationMinutes)} دقیقه
+                      <strong>{item.activityType === externalSimulationActivity ? externalSimulationTitle : item.subject}</strong>
+                      <span>{item.activityType === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "ثبت نشده"}` : item.chapter || "بدون مبحث"} · {faNumber(item.durationMinutes)} دقیقه
                         {item.activityType === "practice_tests" && item.targetTestCount && ` · هدف ${faNumber(item.targetTestCount)} تست`}
                       </span>
                       {item.recommendedPublisher && <small>منبع پیشنهادی کنکور: {item.recommendedPublisher}</small>}
@@ -424,8 +435,6 @@ export function WeeklyPlanBuilder({
                             این باکس به آزمون متصل است؛ با تأیید هشدار می‌توانی آن را حذف کنی، اما اتصال دانش‌آموز از این باکس به آزمون از بین می‌رود.
                           </p>
                         )}
-                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
-                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         <label>
                           مدت (دقیقه)
                           <select
@@ -447,6 +456,25 @@ export function WeeklyPlanBuilder({
                             )}
                           </select>
                         </label>
+                        {item.activityType === externalSimulationActivity ? <>
+                          <strong>{externalSimulationTitle}</strong>
+                          <label>برگزارکنندهٔ آزمون<select
+                            value={item.otherSimulationProvider || (simulationProvider(item.subject) && !(simulationProviders as readonly string[]).includes(simulationProvider(item.subject)!)) ? "other" : simulationProvider(item.subject) ?? ""}
+                            onChange={event=>setItems(current=>current.map(currentItem=>currentItem.key===item.key?{
+                              ...currentItem,otherSimulationProvider:event.target.value==="other",
+                              subject:simulationSubject(event.target.value==="other"?"":event.target.value),
+                            }:currentItem))}
+                            required
+                          ><option value="">انتخاب برگزارکننده</option>{simulationProviders.map(name=><option key={name} value={name}>{name}</option>)}<option value="other">سایر</option></select></label>
+                          {item.otherSimulationProvider && <label>نام برگزارکنندهٔ دیگر<input
+                            value={simulationProviderDraft(item.subject)} maxLength={60} minLength={2} required
+                            onChange={event=>updateItem(item.key,"subject",`${externalSimulationPrefix}${event.target.value}`)}
+                            placeholder="نام برگزارکننده را بنویس"
+                          /></label>}
+                          <button type="button" className="button button-secondary" onClick={()=>leaveExternalSimulation(item.key)}>بازگشت به انتخاب درس</button>
+                        </> : <>
+                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         <label>
                           درس
                           {itemBooks(item).length ? (
@@ -454,6 +482,7 @@ export function WeeklyPlanBuilder({
                               value={item.subject}
                               disabled={Boolean(item.linkedExamId)}
                               onChange={(event) => {
+                                if(event.target.value === "__external_simulation__") {chooseExternalSimulation(item.key);return;}
                                 updateItem(
                                   item.key,
                                   "subject",
@@ -464,6 +493,7 @@ export function WeeklyPlanBuilder({
                               required
                             >
                               <option value="">انتخاب درس</option>
+                              <option value="__external_simulation__">{externalSimulationTitle}</option>
                               {item.subject&&!itemBooks(item).some(b=>b.subject===item.subject)&&<option value={item.subject}>{item.subject} (ثبت قبلی)</option>}
                               {itemBooks(item).map((book) => (
                                 <option key={book.subject} value={book.subject}>
@@ -475,18 +505,16 @@ export function WeeklyPlanBuilder({
                             <input
                               value={item.subject}
                               disabled={Boolean(item.linkedExamId)}
-                              onChange={(event) =>
-                                updateItem(
-                                  item.key,
-                                  "subject",
-                                  event.target.value,
-                                )
-                              }
-                              placeholder="نام درس را وارد کن"
+                              onChange={(event) => event.target.value===externalSimulationTitle
+                                ? chooseExternalSimulation(item.key)
+                                : updateItem(item.key,"subject",event.target.value)}
+                              placeholder="نام درس را وارد کن یا آزمون شبیه‌ساز را انتخاب کن"
+                              list={`subjects-${item.key}`}
                               maxLength={100}
                               required
                             />
                           )}
+                          {!itemBooks(item).length && <datalist id={`subjects-${item.key}`}><option value={externalSimulationTitle}/></datalist>}
                         </label>
                         <label>
                           فصل یا مبحث
@@ -618,6 +646,7 @@ export function WeeklyPlanBuilder({
                             />
                           </label>
                         )}
+                        </>}
                         <label className="plan-details">
                           توضیح تکمیلی
                           <input
@@ -697,7 +726,7 @@ export function WeeklyPlanBuilder({
               activityType: item.activityType,
               targetTestCount: item.targetTestCount,
               details: item.details,
-              sourceGrade:item.completed ? item.sourceGrade : itemGrade(item),
+              sourceGrade:item.activityType===externalSimulationActivity?null:item.completed ? item.sourceGrade : itemGrade(item),
               preparationTrack:item.preparationTrack,
               recommendedPublisher:itemGrade(item)!==9&&canRecommendPublisher(item.preparationTrack,item.activityType)?item.recommendedPublisher?.trim()||null:null,
               examYear:null,

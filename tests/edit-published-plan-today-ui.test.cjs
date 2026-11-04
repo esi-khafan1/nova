@@ -17,7 +17,7 @@ assert.match(page,/key=\{\[params\.student, params\.plan, params\.week_start, pa
 assert.doesNotMatch(loader,/weekly_plan_item_completions\(item_id\)/);
 assert.match(action,/id: item.id == null \? null : String\(item.id\)/);
 assert.match(action,/error.code === "PZ001" \? "protected"/);
-assert.match(action,/s\.rpc\("save_weekly_plan_v8"/);
+assert.match(action,/s\.rpc\("save_weekly_plan_v9"/);
 assert.match(action,/params\.set\("student", studentId\)/);
 assert.match(action,/params\.set\("plan", savedId\)/);
 assert.doesNotMatch(builder,/برنامه امروز منتشر شده و دیگر قابل تغییر نیست/);

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
 import { activityTypes } from "@/lib/study-catalog";
+import { externalSimulationActivity, simulationProvider } from "@/lib/external-simulation";
 import { canRecommendPublisher, cleanRecommendedPublisher } from "@/lib/recommended-publishers";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
   String(v ?? "")
@@ -154,6 +155,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   const allowedActivityTypes = new Set<string>(
     activityTypes.map((activity) => activity.value),
   );
+  allowedActivityTypes.add(externalSimulationActivity);
 
   const safeItems = items
     .slice(0, 100)
@@ -208,7 +210,11 @@ export async function saveWeeklyPlan(fd: FormData) {
   const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
   if(directoryError||!student)planError("items");
-  if(safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![9,10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&(item.examYear!==null || (item.sourceGrade===9 && (item.subject!=="هوش و استعداد تحلیلی" || item.recommendedPublisher!==null))))))planError("items");
+  if(safeItems.some(item=>item.activityType===externalSimulationActivity && (
+    !simulationProvider(item.subject) || item.chapter!=="" || item.sourceGrade!==null ||
+    item.preparationTrack!=="konkur" || item.recommendedPublisher!==null || item.examYear!==null || item.targetTestCount!==null
+  )))planError("items");
+  if(safeItems.some(item=>item.activityType===externalSimulationActivity ? false : !['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![9,10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&(item.examYear!==null || (item.sourceGrade===9 && (item.subject!=="هوش و استعداد تحلیلی" || item.recommendedPublisher!==null))))))planError("items");
   let savedRoutineSubjects:string[]=[];
   if(planId){
     const {data:existingPlan,error:existingPlanError}=await s.from("weekly_plans").select("routines").eq("id",planId).eq("counselor_id",user.id).maybeSingle();
@@ -220,7 +226,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   }
   const allowedRoutineSubjects=new Set([...routineSubjectOptions(student.study_field,student.grade),...savedRoutineSubjects]);
   if(safeRoutines.some(routine=>routine.subject&&!allowedRoutineSubjects.has(routine.subject)))planError("routines");
-  const { data: savedId, error } = await s.rpc("save_weekly_plan_v8", {
+  const { data: savedId, error } = await s.rpc("save_weekly_plan_v9", {
     target_plan_id: planId || null,
     target_student_id: studentId,
     target_week_start: weekStart,

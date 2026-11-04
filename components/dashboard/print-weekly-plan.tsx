@@ -1,3 +1,4 @@
+import { externalSimulationActivity, externalSimulationTitle, simulationProvider } from "@/lib/external-simulation";
 import Link from "next/link";
 import { PrintPlanButton } from "@/components/dashboard/print-plan-button";
 import { FitText } from "@/components/dashboard/print-fit-text";
@@ -151,7 +152,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                 <div className="print-day-items">
                   {dayItems.map((item) => {
                     const activityLabel =
-                      activityLabels.get(item.activity_type) || "فعالیت درسی";
+                      item.activity_type === externalSimulationActivity ? externalSimulationTitle : activityLabels.get(item.activity_type) || "فعالیت درسی";
                     const isTest = item.activity_type === "practice_tests";
                     const testTarget = item.target_test_count ?? 0;
                     const durationText = `${item.duration_minutes.toLocaleString(
@@ -165,14 +166,14 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                         <div className="print-activity-title">
                           <span aria-hidden="true">□</span>
                           <FitText basePt={10.5} className="print-activity-subject">
-                            {item.subject}
+                            {item.activity_type === externalSimulationActivity ? externalSimulationTitle : item.subject}
                           </FitText>
                         </div>
                         <FitText basePt={8.5} className="print-activity-chapter">
-                          {item.chapter || "مبحث آزاد"}
+                          {item.activity_type === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "نامشخص"}` : item.chapter || "مبحث آزاد"}
                         </FitText>
                         <FitText basePt={8.5} className="print-activity-summary">
-                          {durationText}
+                          {item.activity_type === externalSimulationActivity ? `${item.duration_minutes.toLocaleString("fa-IR")} دقیقه` : durationText}
                         </FitText>
                         <FitText
                           basePt={7.5}

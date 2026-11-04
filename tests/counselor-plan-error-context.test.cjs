@@ -10,7 +10,7 @@ const client = {
   auth: {getUser: async () => ({data:{user:{id:'33333333-3333-4333-8333-333333333333'}}})},
   rpc: async (name,args) => {
     if (name === 'counselor_student_directory') return {data:[{student_id:student,is_selected:true,grade:10,study_field:'experimental_sciences'}],error:null};
-    assert.equal(name,'save_weekly_plan_v8');
+    assert.equal(name,'save_weekly_plan_v9');
     assert.equal(args.target_plan_id,plan);
     planCalls++;
     return rpcFailure ? {error:{code:'PZ001'}} : {data:plan,error:null};
@@ -28,6 +28,7 @@ vm.runInNewContext(script,{
     if(name==='@/lib/auth')return {requireProfile:()=>{throw Error('not needed')}};
     if(name==='@/lib/study-catalog')return {activityTypes:[{value:'lesson'}]};
     if(name==='@/lib/planning-curriculum')return {curriculumBooks:()=>[],routineSubjectOptions:()=>[]};
+    if(name==='@/lib/external-simulation')return {externalSimulationActivity:'external_simulation_exam',simulationProvider:()=>null};
     if(name==='@/lib/recommended-publishers')return {canRecommendPublisher:()=>false,cleanRecommendedPublisher:()=>null};
     throw Error(name);
   },

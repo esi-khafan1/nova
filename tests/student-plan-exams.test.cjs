@@ -18,6 +18,8 @@ const linked = [{ id: 'plan', week_start: '2026-11-04', weekly_plan_items: [{ id
 assert.deepEqual(standalonePlanExams([a, b], linked), [a], 'A linked exam is already a study box, never a duplicate.');
 const simulated = [{ ...linked[0], weekly_plan_items: [{ ...linked[0].weekly_plan_items[0], activity_type: 'simulation_exam' }] }];
 assert.deepEqual(standalonePlanExams([a, b], simulated), [a, b], 'Simulation boxes must not be sent to the designer.');
+const external = [{ ...linked[0], weekly_plan_items: [{ ...linked[0].weekly_plan_items[0], activity_type: 'external_simulation_exam', subject: 'آزمون شبیه‌ساز · ماز' }] }];
+assert.deepEqual(standalonePlanExams([a, b], external), [a, b], 'Provider exams must not be sent to the designer.');
 const panel = fs.readFileSync('components/dashboard/student-planning-panel.tsx', 'utf8');
 assert.match(panel, /sp-task--designer-exam/);
 assert.doesNotMatch(panel, /sp-exam-assignments|exams\.map\(exam=><DesignerExamBox/, 'No duplicated full exam grid above the study report.');
