@@ -4428,6 +4428,30 @@ main .eyebrow span {
 .plan-item-fields {
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
+/* The provider exam remains a subject choice: three aligned fields above one
+   full-width note, rather than an orphaned heading and return button. */
+.plan-item-fields.plan-item-fields--external {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(130px, 0.8fr);
+  align-items: start;
+  gap: 12px;
+}
+.plan-item-fields--external > label {
+  min-width: 0;
+}
+.plan-item-fields--external .plan-simulation-other,
+.plan-item-fields--external .plan-details {
+  grid-column: 1 / -1;
+}
+@media (max-width: 760px) {
+  .plan-item-fields.plan-item-fields--external {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 490px) {
+  .plan-item-fields.plan-item-fields--external {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .student-progress-control {
   grid-column: 2;
   grid-row: 1/5;

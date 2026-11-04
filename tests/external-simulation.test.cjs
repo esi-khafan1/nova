@@ -26,8 +26,13 @@ const print = fs.readFileSync('components/dashboard/print-weekly-plan.tsx','utf8
 const designer = fs.readFileSync('lib/student-plan-exams.ts','utf8');
 assert.match(catalog, /value: "simulation_exam"/, 'original activity option stays available');
 assert.match(builder, /<option value="__external_simulation__">\{externalSimulationTitle\}<\/option>/, 'new entry belongs inside subject select');
-assert.match(builder, /item\.activityType === externalSimulationActivity \? <>/, 'ordinary fields are replaced by provider UI');
+assert.match(builder, /item\.activityType === externalSimulationActivity \? <>\s*<label className="plan-simulation-subject">درس/, 'the subject selector remains visible in the provider exam');
+assert.match(builder, /value="__external_simulation__"\s*onChange=\{event=>leaveExternalSimulation\(item\.key,event\.target\.value\)\}/, 'changing the subject exits the exam without an extra button');
+assert.doesNotMatch(builder, /بازگشت به انتخاب درس|<strong>\{externalSimulationTitle\}<\/strong>/, 'no orphaned heading or return button');
 assert.match(builder, /simulationProviderDraft\(item\.subject\)/);
+const css = fs.readFileSync('app/globals.css', 'utf8');
+assert.match(css, /\.plan-item-fields\.plan-item-fields--external\s*\{\s*grid-template-columns:/);
+assert.match(css, /\.plan-item-fields--external \.plan-details\s*\{\s*grid-column: 1 \/ -1;/, 'exam notes span the card width');
 assert.match(actions, /allowedActivityTypes\.add\(externalSimulationActivity\)/);
 assert.match(actions, /!simulationProvider\(item\.subject\)/);
 assert.match(actions, /save_weekly_plan_v9/);

@@ -39,6 +39,8 @@ type PlanItem = {
   recommendedPublisher: string | null;
   otherPublisher: boolean;
   otherSimulationProvider?: boolean;
+  previousSourceGrade?: Grade | null;
+  previousPreparationTrack?: PreparationTrack;
   linkedExamId?: string|null;
   completed?: boolean;
 };
@@ -184,14 +186,40 @@ export function WeeklyPlanBuilder({
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
   const routineSubjects=routineSubjectOptions(student?.study_field??null,student?.grade??null);
   const chooseExternalSimulation=(key:string)=>setItems(current=>current.map(item=>item.key===key?{
-    ...item,activityType:externalSimulationActivity,subject:externalSimulationTitle,chapter:"",targetTestCount:null,
+    ...item,previousSourceGrade:itemGrade(item),previousPreparationTrack:item.preparationTrack,
+    activityType:externalSimulationActivity,subject:externalSimulationTitle,chapter:"",targetTestCount:null,
     sourceGrade:null,preparationTrack:"konkur",recommendedPublisher:null,otherPublisher:false,otherSimulationProvider:false,
   }:item));
-  const leaveExternalSimulation=(key:string)=>setItems(current=>current.map(item=>item.key===key?{
-    ...item,activityType:"lesson",subject:"",chapter:"",sourceGrade:null,
-    preparationTrack:student?.grade===9?"final_exam":"konkur",otherSimulationProvider:false,
+  const leaveExternalSimulation=(key:string,subject="")=>setItems(current=>current.map(item=>item.key===key?{
+    ...item,activityType:"lesson",subject,chapter:"",sourceGrade:item.previousSourceGrade??null,
+    preparationTrack:item.previousPreparationTrack??(student?.grade===9?"final_exam":"konkur"),
+    previousSourceGrade:undefined,previousPreparationTrack:undefined,otherSimulationProvider:false,
   }:item));
   const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:"",recommendedPublisher:track==='konkur'?item.recommendedPublisher:null,otherPublisher:track==='konkur'&&item.otherPublisher}:item));
+
+  const durationField=(item:PlanItem)=>(
+      <label>
+        مدت (دقیقه)
+        <select
+          value={item.durationMinutes}
+          onChange={(event) =>
+            updateItem(
+              item.key,
+              "durationMinutes",
+              Number(event.target.value),
+            )
+          }
+        >
+          {[30, 45, 60, 75, 90, 120, 150, 180].map(
+            (duration) => (
+              <option key={duration} value={duration}>
+                {faNumber(duration)} دقیقه
+              </option>
+            ),
+          )}
+        </select>
+      </label>
+  );
 
   const loadPlan = (studentId: string, nextWeek: string) => {
     const plan = plans.find(
@@ -429,52 +457,55 @@ export function WeeklyPlanBuilder({
                       <div className="plan-item-number">
                         {faNumber(index + 1)}
                       </div>
-                      <div className="plan-item-fields">
+                      <div className={`plan-item-fields${item.activityType===externalSimulationActivity?" plan-item-fields--external":""}`}>
                         {item.linkedExamId && (
                           <p className="plan-exam-box-status">
                             این باکس به آزمون متصل است؛ با تأیید هشدار می‌توانی آن را حذف کنی، اما اتصال دانش‌آموز از این باکس به آزمون از بین می‌رود.
                           </p>
                         )}
-                        <label>
-                          مدت (دقیقه)
-                          <select
-                            value={item.durationMinutes}
-                            onChange={(event) =>
-                              updateItem(
-                                item.key,
-                                "durationMinutes",
-                                Number(event.target.value),
-                              )
-                            }
-                          >
-                            {[30, 45, 60, 75, 90, 120, 150, 180].map(
-                              (duration) => (
-                                <option key={duration} value={duration}>
-                                  {faNumber(duration)} دقیقه
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        </label>
                         {item.activityType === externalSimulationActivity ? <>
-                          <strong>{externalSimulationTitle}</strong>
-                          <label>برگزارکنندهٔ آزمون<select
-                            value={item.otherSimulationProvider || (simulationProvider(item.subject) && !(simulationProviders as readonly string[]).includes(simulationProvider(item.subject)!)) ? "other" : simulationProvider(item.subject) ?? ""}
-                            onChange={event=>setItems(current=>current.map(currentItem=>currentItem.key===item.key?{
-                              ...currentItem,otherSimulationProvider:event.target.value==="other",
-                              subject:simulationSubject(event.target.value==="other"?"":event.target.value),
-                            }:currentItem))}
-                            required
-                          ><option value="">انتخاب برگزارکننده</option>{simulationProviders.map(name=><option key={name} value={name}>{name}</option>)}<option value="other">سایر</option></select></label>
-                          {item.otherSimulationProvider && <label>نام برگزارکنندهٔ دیگر<input
-                            value={simulationProviderDraft(item.subject)} maxLength={60} minLength={2} required
-                            onChange={event=>updateItem(item.key,"subject",`${externalSimulationPrefix}${event.target.value}`)}
-                            placeholder="نام برگزارکننده را بنویس"
-                          /></label>}
-                          <button type="button" className="button button-secondary" onClick={()=>leaveExternalSimulation(item.key)}>بازگشت به انتخاب درس</button>
+                          <label className="plan-simulation-subject">درس
+                            <select
+                              aria-label="درس"
+                              value="__external_simulation__"
+                              onChange={event=>leaveExternalSimulation(item.key,event.target.value)}
+                              required
+                            >
+                              <option value="">انتخاب درس</option>
+                              <option value="__external_simulation__">{externalSimulationTitle}</option>
+                              {curriculumBooks(
+                                student?.study_field??null,
+                                item.previousSourceGrade??itemGrade(item),
+                                item.previousPreparationTrack??(student?.grade===9?"final_exam":"konkur"),
+                              ).map(book=><option key={book.subject} value={book.subject}>{book.subject}</option>)}
+                            </select>
+                          </label>
+                          <label className="plan-simulation-provider">برگزارکنندهٔ آزمون
+                            <select
+                              value={item.otherSimulationProvider || (simulationProvider(item.subject) && !(simulationProviders as readonly string[]).includes(simulationProvider(item.subject)!)) ? "other" : simulationProvider(item.subject) ?? ""}
+                              onChange={event=>setItems(current=>current.map(currentItem=>currentItem.key===item.key?{
+                                ...currentItem,otherSimulationProvider:event.target.value==="other",
+                                subject:simulationSubject(event.target.value==="other"?"":event.target.value),
+                              }:currentItem))}
+                              required
+                            >
+                              <option value="">انتخاب برگزارکننده</option>
+                              {simulationProviders.map(name=><option key={name} value={name}>{name}</option>)}
+                              <option value="other">سایر</option>
+                            </select>
+                          </label>
+                          {durationField(item)}
+                          {item.otherSimulationProvider && <label className="plan-simulation-other">نام برگزارکنندهٔ دیگر
+                            <input
+                              value={simulationProviderDraft(item.subject)} maxLength={60} minLength={2} required
+                              onChange={event=>updateItem(item.key,"subject",`${externalSimulationPrefix}${event.target.value}`)}
+                              placeholder="نام برگزارکننده را بنویس"
+                            />
+                          </label>}
                         </> : <>
                         <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
                         <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
+                        {durationField(item)}
                         <label>
                           درس
                           {itemBooks(item).length ? (
@@ -658,7 +689,7 @@ export function WeeklyPlanBuilder({
                                 event.target.value,
                               )
                             }
-                            placeholder="مثلاً ۳۰ تست زمان‌دار و تحلیل پاسخ‌ها"
+                            placeholder={item.activityType===externalSimulationActivity?"مثلاً ساعت شروع یا توضیح آزمون":"مثلاً ۳۰ تست زمان‌دار و تحلیل پاسخ‌ها"}
                             maxLength={500}
                           />
                         </label>
