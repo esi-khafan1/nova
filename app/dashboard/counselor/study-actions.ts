@@ -10,11 +10,11 @@ export async function updateCounselorStudentStudy(data: FormData) {
   const grade = Number(data.get("grade"));
   const field = String(data.get("study_field") ?? "");
   if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(studentId) ||
-      ![10, 11, 12].includes(grade) || !Object.hasOwn(studyFieldLabels, field)) {
+      ![9, 10, 11, 12].includes(grade) || (grade === 9 ? field !== "" : !Object.hasOwn(studyFieldLabels, field))) {
     return { error: "پایه و رشتهٔ معتبر انتخاب کن." };
   }
   const { error } = await supabase.rpc("counselor_update_student_study", {
-    target_student_id: studentId, target_grade: grade, target_study_field: field,
+    target_student_id: studentId, target_grade: grade, target_study_field: grade === 9 ? null : field,
   });
   if (error) return { error: "ذخیره انجام نشد؛ دسترسی به دانش‌آموز و اطلاعات انتخاب‌شده را بررسی و دوباره تلاش کن." };
   revalidatePath("/dashboard", "layout");

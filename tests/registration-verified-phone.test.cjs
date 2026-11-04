@@ -31,7 +31,7 @@ test('only a confirmed auth phone becomes the registration 09 number', () => {
 function form(verifiedPhone, mode = 'profile') {
   const jsx = (type, props) => ({ type, props });
   const { RegistrationForm } = load('components/registration/registration-form.tsx', {
-    react: { useActionState: () => [{}, () => {}, false], startTransition: () => {} },
+    react: { useState: value => [value, () => {}], useActionState: () => [{}, () => {}, false], startTransition: () => {} },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     './course-price': { CoursePrice: () => null },
     '@/app/dashboard/registration/actions': { submitRegistration: () => {} },

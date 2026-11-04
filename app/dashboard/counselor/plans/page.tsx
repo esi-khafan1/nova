@@ -107,7 +107,7 @@ export default async function CounselorPlansPage({
                     {" · "}
                     {student.study_field
                       ? studyFieldLabels[student.study_field]
-                      : "رشته نامشخص"}
+                      : student.grade === 9 ? "بدون رشته" : "رشته نامشخص"}
                   </small>
                 </div>
               </article>

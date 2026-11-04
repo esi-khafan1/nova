@@ -8,5 +8,5 @@ export async function loadStudentAccount(supabase: Awaited<ReturnType<typeof cre
     supabase.from("profiles").select("service_course_type,service_course_duration_months").eq("id",profile.id).single(),
   ]);
   const source = (details.data ?? registration.data ?? {}) as RegistrationFormValues;
-  return { values: { ...source, full_name: source.full_name || profile.full_name, grade: source.grade ?? profile.grade ?? undefined, study_field: source.study_field ?? profile.study_field ?? undefined, phone: verifiedPhone ?? source.phone ?? profile.phone ?? undefined } as RegistrationFormValues, registration: registration.data, service: service.data, error: Boolean(details.error || registration.error || service.error) };
+  return { values: { ...source, full_name: source.full_name || profile.full_name, grade: profile.grade ?? source.grade ?? undefined, study_field: profile.grade === 9 ? null : profile.study_field ?? source.study_field ?? undefined, phone: verifiedPhone ?? source.phone ?? profile.phone ?? undefined } as RegistrationFormValues, registration: registration.data, service: service.data, error: Boolean(details.error || registration.error || service.error) };
 }

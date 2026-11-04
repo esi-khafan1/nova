@@ -24,7 +24,7 @@ for (const mode of ['profile', 'enrollment']) {
     const jsx = (type, props) => ({ type, props });
     const deps = {
       react: {
-        useActionState: () => [{ error: 'فیلد نامعتبر است.' }, fd => dispatched.push(fd), false],
+        useState: value => [value, () => {}], useActionState: () => [{ error: 'فیلد نامعتبر است.' }, fd => dispatched.push(fd), false],
         startTransition: callback => { transitions++; callback(); },
       },
       'react/jsx-runtime': { jsx, jsxs: jsx },

@@ -1,6 +1,6 @@
 "use client";
 import { CoursePrice } from "./course-price";
-import { startTransition, useActionState, type FormEvent } from "react";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { submitRegistration } from "@/app/dashboard/registration/actions";
 import { type RegistrationFormValues } from "@/lib/registration";
 import { courseTypeLabel, courseDurationLabel, type CourseSelection } from "@/lib/courses";
@@ -9,6 +9,7 @@ import { studyFieldLabels } from "@/lib/study-catalog";
 export function RegistrationForm({ values, mode = "enrollment", selection, verifiedPhone }: { values: RegistrationFormValues; mode?: "profile" | "enrollment"; selection?: CourseSelection | null; verifiedPhone?: string | null }) {
   const [state, action, pending] = useActionState(submitRegistration, {});
   const enrollment = mode === "enrollment";
+  const [grade, setGrade] = useState(String(selection?.grade ?? values.grade ?? ""));
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     // React resets uncontrolled fields (including the receipt file) after a
     // form action resolves, even when the server returns a validation error.
@@ -27,7 +28,7 @@ export function RegistrationForm({ values, mode = "enrollment", selection, verif
       <label className="registration-full-name">نام و نام خانوادگی<input name="full_name" autoComplete="name" required minLength={3} maxLength={121} defaultValue={values.full_name ?? [values.first_name,values.last_name].filter(Boolean).join(" ")}/></label>
       {verifiedPhone ? <div className="registration-verified-phone"><span>شمارهٔ همراه تأییدشده</span><strong dir="ltr">{verifiedPhone}</strong><small>شماره از حساب کاربری‌ات دریافت شد؛ نیازی به واردکردن دوباره نیست.</small></div> : <label><span>شمارهٔ تلفن همراه <small>(اختیاری)</small></span><input name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={16} defaultValue={values.phone ?? ""} placeholder="۰۹۱۲۱۲۳۴۵۶۷" dir="ltr"/></label>}
       <label><span>آیدی تلگرام <small>(اختیاری)</small></span><input name="telegram_id" minLength={5} maxLength={33} defaultValue={values.telegram_id ?? ""} placeholder="@username" dir="ltr"/></label>
-      {!selection && <><label>پایهٔ تحصیلی<select name="grade" required defaultValue={values.grade ?? ""}><option value="" disabled>انتخاب پایه</option><option value="10">دهم</option><option value="11">یازدهم</option><option value="12">دوازدهم</option></select></label><label>رشته<select name="study_field" required defaultValue={values.study_field ?? ""}><option value="" disabled>انتخاب رشته</option><option value="mathematics">ریاضی و فیزیک</option><option value="experimental_sciences">علوم تجربی</option><option value="humanities">علوم انسانی</option>{!enrollment && <><option value="arts">هنر</option><option value="foreign_languages">زبان‌های خارجی</option></>}</select></label></>}
+      {!selection && <><label>پایهٔ تحصیلی<select name="grade" required value={grade} onChange={e => setGrade(e.target.value)}><option value="" disabled>انتخاب پایه</option><option value="9">نهم</option><option value="10">دهم</option><option value="11">یازدهم</option><option value="12">دوازدهم</option></select></label>{grade === "9" ? <input type="hidden" name="study_field" value=""/> : <label>رشته<select key={grade} name="study_field" required defaultValue={values.study_field ?? ""}><option value="" disabled>انتخاب رشته</option><option value="mathematics">ریاضی و فیزیک</option><option value="experimental_sciences">علوم تجربی</option><option value="humanities">علوم انسانی</option>{!enrollment && <><option value="arts">هنر</option><option value="foreign_languages">زبان‌های خارجی</option></>}</select></label>}</>}
       <ProvinceCityFields values={values}/>
     </div>
     <label className="registration-notes"><span>توضیحات تکمیلی <small>(اختیاری)</small></span><textarea name="additional_notes" maxLength={2000} rows={4} defaultValue={values.additional_notes ?? ""} placeholder="اگر نکته‌ای دربارهٔ شرایط یا درخواستت داری، اینجا بنویس."/></label>

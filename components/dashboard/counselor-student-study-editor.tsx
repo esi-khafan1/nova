@@ -25,16 +25,16 @@ export function CounselorStudentStudyEditor({ student }: { student: Student }) {
   }
   return <section className="portal-card plan-basics portal-form">
     <div className="portal-card-title"><div><span>اطلاعات تحصیلی</span><h2>پایه و رشتهٔ {student.full_name || "دانش‌آموز"}</h2></div></div>
-    <p>پایه و رشته را ثبت یا اصلاح کن تا انتخاب درس‌ها برای برنامه‌ریزی آسان‌تر شود. برنامه‌ها و گزارش‌های قبلی تغییر نمی‌کنند.</p>
+    <p>پایه و (از دهم به بعد) رشته را ثبت یا اصلاح کن تا انتخاب درس‌ها برای برنامه‌ریزی آسان‌تر شود. برنامه‌ها و گزارش‌های قبلی تغییر نمی‌کنند.</p>
     <div className="plan-basics-grid">
-      <label htmlFor={`${id}-grade`}>پایه<select id={`${id}-grade`} value={grade} disabled={pending} onChange={e => { setGrade(e.target.value); setMessage({}); }}>
-        <option value="">انتخاب پایه</option>{[10,11,12].map(g => <option key={g} value={g}>{({10:"دهم",11:"یازدهم",12:"دوازدهم"})[g as 10|11|12]}</option>)}
+      <label htmlFor={`${id}-grade`}>پایه<select id={`${id}-grade`} value={grade} disabled={pending} onChange={e => { setGrade(e.target.value); if(e.target.value === "9") setField(""); setMessage({}); }}>
+        <option value="">انتخاب پایه</option>{[9,10,11,12].map(g => <option key={g} value={g}>{({9:"نهم",10:"دهم",11:"یازدهم",12:"دوازدهم"})[g as 9|10|11|12]}</option>)}
       </select></label>
-      <label htmlFor={`${id}-field`}>رشته<select id={`${id}-field`} value={field} disabled={pending} onChange={e => { setField(e.target.value as StudyField); setMessage({}); }}>
+      {grade !== "9" && <label htmlFor={`${id}-field`}>رشته<select id={`${id}-field`} value={field} disabled={pending} onChange={e => { setField(e.target.value as StudyField); setMessage({}); }}>
         <option value="">انتخاب رشته</option>{Object.entries(studyFieldLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
-      </select></label>
+      </select></label>}
     </div>
-    <button type="button" className="button" disabled={pending || !grade || !field} onClick={save}>{pending ? "در حال ذخیره…" : "ثبت پایه و رشته"}</button>
-    <div aria-live="polite">{message.error && <p className="portal-alert error" role="alert">{message.error}</p>}{message.success && <p className="portal-alert success">پایه و رشته ثبت شد.</p>}</div>
+    <button type="button" className="button" disabled={pending || !grade || (grade !== "9" && !field)} onClick={save}>{pending ? "در حال ذخیره…" : "ثبت اطلاعات تحصیلی"}</button>
+    <div aria-live="polite">{message.error && <p className="portal-alert error" role="alert">{message.error}</p>}{message.success && <p className="portal-alert success">اطلاعات تحصیلی ثبت شد.</p>}</div>
   </section>;
 }

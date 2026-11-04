@@ -36,7 +36,11 @@ function requiredStudentNameIssue(v:RegistrationFormValues){
 }
 export function requiredStudentFieldsIssue(v:RegistrationFormValues, accountOnly = false){
  const nameIssue = requiredStudentNameIssue(v); if(nameIssue)return nameIssue;
- if(![10,11,12].includes(v.grade??0)||!(accountOnly ? ["mathematics","experimental_sciences","humanities","arts","foreign_languages"] : ["mathematics","experimental_sciences","humanities"]).includes(v.study_field??""))return "پایه و رشته را انتخاب کن.";
+ const gradeNineWithoutField = accountOnly && v.grade===9 && !v.study_field;
+ const allowedFields = accountOnly
+  ? ["mathematics","experimental_sciences","humanities","arts","foreign_languages"]
+  : ["mathematics","experimental_sciences","humanities"];
+ if(!gradeNineWithoutField && (![10,11,12].includes(v.grade??0) || !allowedFields.includes(v.study_field??"")))return "پایه و رشته را انتخاب کن.";
  if(!provinces.includes(v.province??"")||!v.city||v.city.trim().length<2||v.city.length>60)return "استان و شهر محل سکونت را وارد کن.";
  return null;
 }

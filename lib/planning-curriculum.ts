@@ -1,24 +1,25 @@
 import { studyCatalog, type StudyField, type StudyBook } from "@/lib/study-catalog";
 import { schoolBooks } from "./school-catalog";
 import { type StudyItem } from "@/lib/student-planning";
-export type Grade = 10|11|12;
+export type Grade = 9|10|11|12;
 // Planning is independent of the student’s enrolled grade.
-export const planningGrades:readonly Grade[]=[10,11,12];
+export const planningGrades:readonly Grade[]=[9,10,11,12];
 export type PreparationTrack = "konkur"|"final_exam";
-export function availableGrades(grade:number|null):Grade[]{return [10,11,12].filter(g=>grade!==null&&g<=grade) as Grade[];}
+export function availableGrades(grade:number|null):Grade[]{return planningGrades.filter(g=>grade!==null&&g<=grade&&(grade===9||g>=10)) as Grade[];}
 export function curriculumBooks(field:StudyField|null,grade:Grade,track:PreparationTrack):StudyBook[]{
+ if(grade===9)return track==='konkur'?[{subject:"هوش و استعداد تحلیلی",chapters:[]}]:schoolBooks(null,9);
  if(!field)return [];
  if(track==='konkur')return studyCatalog[field][grade]??[];
  return schoolBooks(field,grade);
 }
 
 /** Routine subjects come from the student's own field (specialist and school
- *  tracks). If no field is registered, all fields are offered. Field-specific
+ *  tracks). In ninth grade the curriculum is shared and field-free. Field-specific
  *  extras such as the experimental-sciences lab stay with their own field. */
 export function routineSubjectOptions(field:StudyField|null,grade:number|null):string[]{
  const validField=field&&Object.prototype.hasOwnProperty.call(studyCatalog,field)?field:null;
  const fields:StudyField[]=validField?[validField]:Object.keys(studyCatalog) as StudyField[];
- const levels=validField&&grade?availableGrades(grade):planningGrades;
+ const levels=grade?availableGrades(grade):planningGrades;
  return Array.from(new Set(fields.flatMap(currentField=>
   levels.flatMap(level=>[
    ...curriculumBooks(currentField,level,'konkur').map(book=>book.subject),

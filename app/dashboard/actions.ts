@@ -24,7 +24,7 @@ export async function updateStudentProfile(fd: FormData) {
   if (!user) redirect("/auth/sign-in");
   const full_name = clean(fd.get("full_name"), 100),
     n = Number(fd.get("grade")),
-    grade = [10, 11, 12].includes(n) ? n : null,
+    grade = [9, 10, 11, 12].includes(n) ? n : null,
     field = clean(fd.get("study_field"), 40),
     study_field = [
       "mathematics",
@@ -32,7 +32,7 @@ export async function updateStudentProfile(fd: FormData) {
       "humanities",
       "arts",
       "foreign_languages",
-    ].includes(field)
+    ].includes(field) && grade !== 9
       ? field
       : null;
   if (full_name.length < 2) redirect("/dashboard/student?error=profile");
@@ -208,7 +208,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
   if(directoryError||!student)planError("items");
-  if(safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&item.examYear!==null)))planError("items");
+  if(safeItems.some(item=>!['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![9,10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&(item.examYear!==null || (item.sourceGrade===9 && (item.subject!=="هوش و استعداد تحلیلی" || item.recommendedPublisher!==null))))))planError("items");
   let savedRoutineSubjects:string[]=[];
   if(planId){
     const {data:existingPlan,error:existingPlanError}=await s.from("weekly_plans").select("routines").eq("id",planId).eq("counselor_id",user.id).maybeSingle();

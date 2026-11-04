@@ -315,6 +315,7 @@ export const activityTypes = [
   { value: "offline_class", label: "آفلاین کلاس" },
   { value: "exam", label: "آزمون" },
   { value: "exam_analysis", label: "تحلیل آزمون" },
+  { value: "exam_troubleshooting", label: "رفع اشکال آزمون" },
   { value: "simulation_exam", label: "آزمون شبیه ساز" },
   { value: "review", label: "مرور" },
   { value: "homework", label: "تمرین و تکلیف" },

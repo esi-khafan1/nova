@@ -1,6 +1,13 @@
 import { studyCatalog, type StudyBook, type StudyField } from "./study-catalog";
 // School subjects, independent of any particular entrance-exam year.
 // Reuse chapter lists already in the specialist catalog; do not invent missing chapters.
+// Grade nine has no high-school study field. Keep its school textbooks separate
+// from analytical aptitude, which is entrance-exam preparation, not a textbook.
+export const gradeNineSchoolSubjects = [
+ "ریاضی", "علوم تجربی", "فارسی", "نگارش", "مطالعات اجتماعی", "عربی",
+ "زبان انگلیسی", "کتاب کار زبان انگلیسی", "آموزش قرآن", "پیام‌های آسمان",
+ "کار و فناوری", "فرهنگ و هنر", "تفکر و سبک زندگی", "آمادگی دفاعی",
+] as const;
 const common: Record<10|11|12,string[]> = {
  10:["فارسی ۱","نگارش ۱","تعلیمات دینی ۱","زبان خارجی ۱","عربی زبان قرآن ۱","جغرافیای ایران","تفکر و سواد رسانه‌ای","آمادگی دفاعی","کارگاه کارآفرینی و تولید","تربیت بدنی ۱"],
  11:["فارسی ۲","نگارش ۲","تعلیمات دینی ۲","زبان خارجی ۲","عربی زبان قرآن ۲","انسان و محیط زیست","تربیت بدنی ۲"],
@@ -12,7 +19,8 @@ export function sharedSchoolSubjects(field:StudyField|null,grade:10|11|12):strin
  return common[grade].filter(subject=>field!=="humanities"||!subject.startsWith("عربی زبان قرآن"));
 }
 
-export function schoolBooks(field:StudyField|null,grade:10|11|12):StudyBook[]{
+export function schoolBooks(field:StudyField|null,grade:9|10|11|12):StudyBook[]{
+ if(grade===9)return gradeNineSchoolSubjects.map(subject=>({subject,chapters:[]}));
  if(!field||!["mathematics","experimental_sciences","humanities"].includes(field))return [];
  const specialist=studyCatalog[field][grade]??[];
  const shared=sharedSchoolSubjects(field,grade);

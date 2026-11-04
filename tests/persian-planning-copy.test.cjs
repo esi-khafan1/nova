@@ -18,7 +18,7 @@ test('student planning keeps the original Persian half-spaces in the welcome and
   assert.match(student, /به معنی انجام‌نشدن برنامه نیست/);
   assert.match(student, /برنامه‌های منتشرشده/);
   assert.match(student, /برنامه و گزارش روز انتخاب‌شده/);
-  assert.match(student, /تست زنی، تعداد تست زده شده/);
+  assert.match(student, /برای تست زنی، زمان از نسبت تعداد تست زده شده/);
 });
 
 test('exam box, counselor, and routine copy do not join Persian prefixes and suffixes', () => {

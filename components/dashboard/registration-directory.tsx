@@ -107,7 +107,7 @@ export async function RegistrationDirectory({
                       <small>
                         {row.study_field
                           ? studyFieldLabels[row.study_field]
-                          : "رشته ثبت نشده"}
+                          : row.grade === 9 ? "بدون رشته" : "رشته ثبت نشده"}
                       </small>
                     </div></td>
                     <td data-label="محل سکونت"><div className="registration-cell-content">

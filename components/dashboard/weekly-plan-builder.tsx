@@ -90,6 +90,7 @@ const newItem = (
   recommendedPublisher:null,
   otherPublisher:false,
 });
+const newStudentItem=(day:number,key:string|undefined,grade:number|null|undefined):PlanItem=>({...newItem(day,key),preparationTrack:grade===9?"final_exam":"konkur"});
 
 const defaultRoutines = (): PlanRoutine[] =>
   weekDays.map((_, dayOfWeek) => ({ dayOfWeek, subject: "", details: "" }));
@@ -171,11 +172,11 @@ export function WeeklyPlanBuilder({
   const [items, setItems] = useState<PlanItem[]>(() => [
     ...(initialPlan
       ? planItems(initialPlan, completedIdSet)
-      : [newItem(firstAvailableDay(initialStart), "initial-item")]),
+      : [newStudentItem(firstAvailableDay(initialStart), "initial-item", students[selectedStudentIndex]?.grade)]),
   ]);
 
   const student = students[studentIndex] ?? students[0];
-  const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
+  const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([9,10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
   const routineSubjects=routineSubjectOptions(student?.study_field??null,student?.grade??null);
@@ -193,7 +194,7 @@ export function WeeklyPlanBuilder({
     setItems(
       plan
         ? planItems(plan, completedIdSet)
-        : [newItem(firstAvailableDay(nextWeek), `week-${nextWeek}`)],
+        : [newStudentItem(firstAvailableDay(nextWeek), `week-${nextWeek}`, students.find(s=>s.student_id===studentId)?.grade)],
     );
   };
 
@@ -362,7 +363,7 @@ export function WeeklyPlanBuilder({
                     type="button"
                     className="plan-add"
                     onClick={() =>
-                      setItems((current) => [...current, newItem(dayIndex)])
+                      setItems((current) => [...current, newStudentItem(dayIndex, undefined, student?.grade)])
                     }
                   >
                     + افزودن فعالیت
@@ -423,8 +424,8 @@ export function WeeklyPlanBuilder({
                             این باکس به آزمون متصل است؛ با تأیید هشدار می‌توانی آن را حذف کنی، اما اتصال دانش‌آموز از این باکس به آزمون از بین می‌رود.
                           </p>
                         )}
-                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
-                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">کنکور</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
+                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         <label>
                           مدت (دقیقه)
                           <select
@@ -559,7 +560,7 @@ export function WeeklyPlanBuilder({
                             ))}
                           </select>
                         </label>
-                        {canRecommendPublisher(item.preparationTrack, item.activityType) && (
+                        {itemGrade(item)!==9 && canRecommendPublisher(item.preparationTrack, item.activityType) && (
                           <>
                             <label>منبع پیشنهادی کنکور (اختیاری)
                               <select
@@ -698,7 +699,7 @@ export function WeeklyPlanBuilder({
               details: item.details,
               sourceGrade:item.completed ? item.sourceGrade : itemGrade(item),
               preparationTrack:item.preparationTrack,
-              recommendedPublisher:canRecommendPublisher(item.preparationTrack,item.activityType)?item.recommendedPublisher?.trim()||null:null,
+              recommendedPublisher:itemGrade(item)!==9&&canRecommendPublisher(item.preparationTrack,item.activityType)?item.recommendedPublisher?.trim()||null:null,
               examYear:null,
             })),
           )}
