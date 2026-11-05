@@ -44,6 +44,15 @@ assert.match(extensionForm, /روز تمدید/);
 assert.match(extensionForm, /پایان مهلت شروع/);
 assert.match(extensionForm, /پس از شروع، کل مدت آزمون را دارد/);
 assert.match(extensionForm, /لغو تمدید/);
+// Extension scheduling mirrors the exam-designer controls: a live Tehran
+// clock, a five-minute lead, and no selectable past time on the current day.
+assert.match(extensionForm, /earliestExamSchedule/);
+assert.match(extensionForm, /scheduleBounds\.date/);
+assert.match(extensionForm, /todayDate=\{today\}/);
+assert.match(extensionForm, /date === scheduleBounds\.date \? scheduleBounds\.time/);
+assert.match(extensionForm, /date === today && !todayHasTime/);
+assert.match(extensionForm, /اولین زمان مجاز امروز/);
+assert.match(extensionForm, /setInterval\(refresh, 15000\)/);
 
 // Student entry and lists use the personal window.
 assert.match(studentExam, /student_exam_extensions/);

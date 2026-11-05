@@ -1,26 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cancelExamExtension, setExamExtension } from "@/app/dashboard/counselor/exams/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import { PersianTimePicker } from "@/components/dashboard/persian-time-picker";
 import { formatExamSchedule } from "@/lib/exams";
-import { tehranDateTime, timeAfter, validWindowEnd } from "@/lib/exam-schedule";
-import { tehranToday } from "@/lib/student-planning";
+import { earliestExamSchedule, tehranDateTime, timeAfter, validWindowEnd } from "@/lib/exam-schedule";
+import { toPersianDigits } from "@/lib/persian-date";
 
 type Extension = {
   starts_at: string;
   ends_at: string;
 } | null;
 
-function initialSchedule(extension: Extension) {
-  if (!extension) {
-    const tomorrow = tehranDateTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
-    return { date: tomorrow.date, start: "14:00", end: "18:00" };
+function initialSchedule(extension: Extension, bounds: ReturnType<typeof earliestExamSchedule>, now: number) {
+  if (extension) {
+    const start = tehranDateTime(new Date(extension.starts_at));
+    const end = tehranDateTime(new Date(extension.ends_at));
+    // A past extension can be replaced, but the editor must never reopen on a
+    // day/time that can no longer be selected.
+    if (start.date >= bounds.date) {
+      return {
+        date: start.date,
+        start: start.date === bounds.date && start.time < bounds.time ? bounds.time : start.time,
+        end: end.time,
+      };
+    }
   }
-  const start = tehranDateTime(new Date(extension.starts_at));
-  const end = tehranDateTime(new Date(extension.ends_at));
-  return { date: start.date, start: start.time, end: end.time };
+  const tomorrow = tehranDateTime(new Date(now + 24 * 60 * 60 * 1000));
+  return { date: tomorrow.date, start: "14:00", end: "18:00" };
 }
 
 export function ExamExtensionForm({
@@ -34,16 +42,59 @@ export function ExamExtensionForm({
   page: number;
   extension: Extension;
 }) {
-  const initial = initialSchedule(extension);
+  const [clock, setClock] = useState(() => Date.now());
+  const scheduleBounds = earliestExamSchedule(new Date(clock));
+  const today = scheduleBounds.today;
+  const [initial] = useState(() => initialSchedule(extension, scheduleBounds, clock));
   const [open, setOpen] = useState(Boolean(extension));
   const [date, setDate] = useState(initial.date);
   const [startTime, setStartTime] = useState(initial.start);
   const [endTime, setEndTime] = useState(initial.end);
 
+  // Keep an open counselor form aligned with Tehran time, just like the
+  // exam-designer schedule controls.
+  useEffect(() => {
+    const refresh = () => setClock(Date.now());
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+
+  const todayHasTime = scheduleBounds.date === today;
+
+  useEffect(() => {
+    if (date === scheduleBounds.date && startTime < scheduleBounds.time) {
+      setStartTime(scheduleBounds.time);
+    }
+  }, [date, startTime, scheduleBounds.date, scheduleBounds.time]);
+
+  useEffect(() => {
+    setEndTime(current => validWindowEnd(startTime, current));
+  }, [startTime]);
+
+  const changeDate = (nextDate: string) => {
+    const bounds = earliestExamSchedule(new Date());
+    setClock(Date.now());
+    setDate(nextDate);
+    if (nextDate === bounds.today && bounds.date === bounds.today) {
+      setStartTime(bounds.time);
+      setEndTime(current => validWindowEnd(bounds.time, current));
+    }
+  };
+
   const changeStart = (value: string) => {
     setStartTime(value);
     setEndTime(current => validWindowEnd(value, current));
   };
+
+  const scheduleValid = date >= scheduleBounds.date
+    && (date !== scheduleBounds.date || startTime >= scheduleBounds.time)
+    && endTime > startTime;
 
   return (
     <div className="exam-extension">
@@ -72,14 +123,21 @@ export function ExamExtensionForm({
               <PersianDatePicker
                 name="extension_date"
                 value={date}
-                onChange={setDate}
+                onChange={changeDate}
                 selectionMode="day"
-                minDate={tehranToday()}
+                minDate={scheduleBounds.date}
+                todayDate={today}
               />
             </label>
             <label>
               <span>شروع بازه از ساعت</span>
-              <PersianTimePicker name="extension_start_time" value={startTime} onChange={changeStart} />
+              <PersianTimePicker
+                name="extension_start_time"
+                value={startTime}
+                onChange={changeStart}
+                minTime={date === scheduleBounds.date ? scheduleBounds.time : undefined}
+                disabled={date === today && !todayHasTime}
+              />
             </label>
             <label>
               <span>پایان مهلت شروع</span>
@@ -91,8 +149,15 @@ export function ExamExtensionForm({
                 disabled={!timeAfter(startTime, 1)}
               />
             </label>
+            {date === today && (
+              <p className="exam-schedule-hint" role="status">
+                {todayHasTime
+                  ? `ساعت‌ها به وقت تهران هستند؛ اولین زمان مجاز امروز ${toPersianDigits(scheduleBounds.time)} است (حداقل ۵ دقیقه پس از زمان فعلی).`
+                  : "برای امروز زمان مجازی باقی نمانده است؛ روز بعد را انتخاب کن."}
+              </p>
+            )}
             <p>دانش‌آموز فقط در این بازه می‌تواند آزمون را شروع کند؛ پس از شروع، کل مدت آزمون را دارد.</p>
-            <button type="submit" className="button">
+            <button type="submit" className="button" disabled={!scheduleValid}>
               {extension ? "ثبت بازهٔ جدید تمدید" : "ثبت تمدید آزمون"}
             </button>
           </form>
