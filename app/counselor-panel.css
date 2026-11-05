@@ -41,7 +41,6 @@
 .counselor-exam-history-item{display:block!important}
 .counselor-exam-history-main{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .counselor-portal .exam-extension{margin-top:16px;padding:16px;border:1px solid #ccddf3;border-radius:16px;background:#f5f9ff;color:#123b63}
-.counselor-portal .exam-extension-current{margin:0 0 12px!important;color:#145bab!important;font-weight:700}
 .counselor-portal .exam-extension .button{min-height:48px;padding:12px 20px;line-height:1.8;background:#ff7a1a;border-color:#ff7a1a;color:#0e3154;font-size:14px;font-weight:750;box-shadow:none}
 .counselor-portal .exam-extension .button:hover:not(:disabled){background:#ff8e3b}
 .counselor-portal .exam-extension .button.secondary{background:#fff;border-color:#bfd8f2;color:#145bab}

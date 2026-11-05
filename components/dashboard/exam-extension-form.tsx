@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { cancelExamExtension, setExamExtension } from "@/app/dashboard/counselor/exams/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import { PersianTimePicker } from "@/components/dashboard/persian-time-picker";
-import { formatExamSchedule } from "@/lib/exams";
 import { earliestExamSchedule, tehranDateTime, timeAfter, validWindowEnd } from "@/lib/exam-schedule";
 
 type Extension = {
@@ -45,7 +44,7 @@ export function ExamExtensionForm({
   const scheduleBounds = earliestExamSchedule(new Date(clock));
   const today = scheduleBounds.today;
   const [initial] = useState(() => initialSchedule(extension, scheduleBounds, clock));
-  const [open, setOpen] = useState(Boolean(extension));
+  const [open, setOpen] = useState(false);
   const [date, setDate] = useState(initial.date);
   const [startTime, setStartTime] = useState(initial.start);
   const [endTime, setEndTime] = useState(initial.end);
@@ -93,11 +92,6 @@ export function ExamExtensionForm({
 
   return (
     <div className="exam-extension">
-      {extension && (
-        <p className="exam-extension-current">
-          تمدید فعلی: شروع از {formatExamSchedule(extension.starts_at)} تا {formatExamSchedule(extension.ends_at)}
-        </p>
-      )}
       {!open && (
         <button
           type="button"

@@ -62,9 +62,6 @@ export default async function CounselorExamsPage({
               <div className="counselor-exam-history-main">
                 <div><h3>{exam.title}</h3><p className="exam-schedule">شروع: {formatExamSchedule(exam.starts_at)}</p>
                   <p>{exam.attempt_id ? "در این آزمون شرکت کرده است" : "در این آزمون شرکت نکرده است"}</p>
-                  {!exam.attempt_id && exam.extension_id && exam.extension_starts_at && exam.extension_ends_at && !exam.can_extend && (
-                    <p className="exam-extension-current">تمدید ثبت‌شده: شروع از {formatExamSchedule(exam.extension_starts_at)} تا {formatExamSchedule(exam.extension_ends_at)}</p>
-                  )}
                 </div>
                 <div className="exam-list-actions">
                   {exam.attempt_id ? <><span>{exam.score === null ? "نمره در دسترس نیست" : `درصد: ${toPersianDigits(exam.score)}٪`}</span>

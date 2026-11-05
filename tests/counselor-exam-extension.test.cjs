@@ -52,6 +52,9 @@ assert.match(extensionForm, /todayDate=\{today\}/);
 assert.match(extensionForm, /date === scheduleBounds\.date \? scheduleBounds\.time/);
 assert.doesNotMatch(extensionForm, /اولین زمان مجاز امروز/);
 assert.match(extensionForm, /\{!open && \(/);
+assert.match(extensionForm, /useState\(false\)/);
+assert.doesNotMatch(extensionForm, /تمدید فعلی/);
+assert.doesNotMatch(counselorPage, /تمدید ثبت‌شده/);
 assert.match(extensionForm, /date === today && !todayHasTime/);
 assert.match(extensionForm, /setInterval\(refresh, 15000\)/);
 
