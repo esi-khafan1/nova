@@ -48,8 +48,7 @@
 .exam-extension-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:0;align-items:end}
 .exam-extension-form label{display:grid;gap:10px;font-size:14px;font-weight:700;color:#123b63;min-width:0}
 .exam-extension-form p{grid-column:1/-1;margin:0;color:#496582;line-height:1.9}
-.exam-extension-form>button{justify-self:start}
-.exam-extension-cancel{margin-top:10px}
+.exam-extension-actions{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger){background:#fff;border-color:#bfd8f2;color:#123b63;min-height:48px;font-size:14px;box-shadow:none}
 .counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger):hover{border-color:#176bce}
 .counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger):focus-visible,.counselor-portal .exam-extension .persian-time-trigger[aria-expanded="true"]{border-color:#176bce;box-shadow:0 0 0 3px #176bce14}
@@ -62,7 +61,7 @@
 .counselor-portal .exam-extension .persian-time-confirm{min-height:44px;font-size:14px}
 .counselor-portal .exam-extension .persian-time-preset-btn{background:#fff;border-color:#bfd8f2;color:#145bab;min-height:44px;font-size:14px}
 .counselor-portal .exam-extension :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #176bce;outline-offset:3px}
-@media(max-width:800px){.counselor-exam-history-main{align-items:flex-start;flex-direction:column}.exam-extension-form{grid-template-columns:1fr}.exam-extension-form>button{width:100%}}
+@media(max-width:800px){.counselor-exam-history-main{align-items:flex-start;flex-direction:column}.exam-extension-form{grid-template-columns:1fr}.exam-extension-actions .button{flex:1 1 0}}
 .counselor-portal .exam-extension .persian-calendar header button{background:#eef6ff;border-color:#bfd8f2;color:#145bab}
 .counselor-portal .exam-extension .persian-calendar header button:hover{background:#e2efff}
 .counselor-portal .exam-extension .persian-calendar-weekdays span{color:#496582}

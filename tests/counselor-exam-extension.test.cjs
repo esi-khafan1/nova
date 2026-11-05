@@ -44,6 +44,8 @@ assert.match(extensionForm, /روز تمدید/);
 assert.match(extensionForm, /پایان مهلت شروع/);
 assert.match(extensionForm, /پس از شروع، کل مدت آزمون را دارد/);
 assert.match(extensionForm, /لغو تمدید/);
+assert.match(extensionForm, /exam-extension-actions/);
+assert.match(extensionForm, /formAction=\{cancelExamExtension\}/);
 // Extension scheduling mirrors the exam-designer controls: a live Tehran
 // clock, a five-minute lead, and no selectable past time on the current day.
 assert.match(extensionForm, /earliestExamSchedule/);

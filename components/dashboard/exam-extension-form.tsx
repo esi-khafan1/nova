@@ -141,19 +141,17 @@ export function ExamExtensionForm({
               />
             </label>
             <p>دانش‌آموز فقط در این بازه می‌تواند آزمون را شروع کند؛ پس از شروع، کل مدت آزمون را دارد.</p>
-            <button type="submit" className="button">
-              {extension ? "ثبت بازهٔ جدید تمدید" : "ثبت تمدید آزمون"}
-            </button>
+            <div className="exam-extension-actions">
+              <button type="submit" className="button">
+                {extension ? "ثبت بازهٔ جدید تمدید" : "ثبت تمدید آزمون"}
+              </button>
+              {extension && (
+                <button type="submit" formAction={cancelExamExtension} className="button secondary">
+                  لغو تمدید
+                </button>
+              )}
+            </div>
           </form>
-
-          {extension && (
-            <form action={cancelExamExtension} className="exam-extension-cancel">
-              <input type="hidden" name="exam_id" value={examId} />
-              <input type="hidden" name="student_id" value={studentId} />
-              <input type="hidden" name="page" value={page} />
-              <button type="submit" className="button secondary">لغو تمدید</button>
-            </form>
-          )}
         </>
       )}
     </div>
