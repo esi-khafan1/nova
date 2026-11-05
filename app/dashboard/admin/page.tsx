@@ -36,15 +36,14 @@ export default async function AdminDashboard() {
 
       <section className="portal-card admin-role-card">
         <div>
-          <span>مدیریت نقش‌ها</span>
+          <span>نقش‌ها و پنل‌ها</span>
           <h2>انتخاب مشاوران با مدیر نوواست</h2>
           <p>
-            در صفحه مدیریت کاربران می‌توانی هر حساب را مستقیماً به مشاور یا
-            دانش‌آموز تبدیل کنی.
+            در بخش نقش‌ها و پنل‌ها می‌توانی نقش هر حساب را تغییر بدهی و پنل متناسب با آن را تعیین کنی.
           </p>
         </div>
         <Link className="button button-small" href="/dashboard/admin/users">
-          مدیریت کاربران
+          نقش‌ها و پنل‌ها
         </Link>
       </section>
     </DashboardShell>

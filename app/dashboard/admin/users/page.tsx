@@ -38,7 +38,7 @@ export default async function AdminUsersPage({
       <section className="portal-heading">
         <div>
           <span>مدیریت نووا</span>
-          <h1>مدیریت کاربران</h1>
+          <h1>نقش‌ها و پنل‌ها</h1>
           <p>{canGrantAdmin ? "دسترسی سوپرادمین: تغییر نقش مدیرها و تعیین مدیر یا مدیر محتوا." : "نقش هر حساب را مستقیماً بین دانش‌آموز، مشاور و طراح آزمون تغییر بده."}</p>
         </div>
       </section>

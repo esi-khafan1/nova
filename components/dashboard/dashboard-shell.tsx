@@ -145,7 +145,7 @@ export function DashboardShell({
           },
           {
             href: "/dashboard/admin/users",
-            label: "مدیریت کاربران",
+            label: "نقش‌ها و پنل‌ها",
             icon: "admin" as const,
           },
         ]
