@@ -25,7 +25,7 @@ export default async function StudentExamPage({
   const { supabase, profile } = await requireProfile(["student"], true);
   if (profile.registration_status !== "active") redirect("/dashboard/student/exams");
 
-  const [{ data: exam }, { data: attempt }] = await Promise.all([
+  const [{ data: exam }, { data: attempt }, { data: extensionsData }] = await Promise.all([
     supabase
       .from("exams")
       .select(
@@ -42,6 +42,7 @@ export default async function StudentExamPage({
       .eq("exam_id", id)
       .eq("student_id", profile.id)
       .maybeSingle(),
+    supabase.rpc("student_exam_extensions"),
   ]);
 
   if (!exam) notFound();
@@ -51,10 +52,17 @@ export default async function StudentExamPage({
   const booklets = ((exam.exam_booklets ?? []) as ExamBooklet[]).sort(
     (a, b) => a.sort_order - b.sort_order,
   );
+  const extension = ((extensionsData ?? []) as { exam_id: string; starts_at: string; ends_at: string }[])
+    .find(row => row.exam_id === id) ?? null;
+  const sessionMode = Boolean(exam.start_window_ends_at || extension);
   const timeState = getExamTimeState(exam.starts_at, exam.duration_minutes,new Date(),exam.start_window_ends_at);
-  const {data:sessionData}=exam.start_window_ends_at && !attempt ? await supabase.rpc("get_floating_exam_session",{target_exam_id:id}) : {data:null};
+  const {data:sessionData}=sessionMode && !attempt ? await supabase.rpc("get_floating_exam_session",{target_exam_id:id}) : {data:null};
   const session=(sessionData?.[0] ?? undefined) as FloatingExamSession | undefined;
-  const floatingEntry=exam.start_window_ends_at ? getFloatingExamEntryState(exam.starts_at,exam.start_window_ends_at,session ? {expires_at:new Date(floatingSessionDeadline(session,booklets)).toISOString()}:null):null;
+  const floatingEntry=sessionMode ? getFloatingExamEntryState(
+    extension?.starts_at ?? exam.starts_at,
+    extension?.ends_at ?? exam.start_window_ends_at!,
+    session ? {expires_at:new Date(floatingSessionDeadline(session,booklets)).toISOString()}:null,
+  ):null;
 
   return (
     <DashboardShell role="student" name={profile.full_name}>
@@ -66,6 +74,7 @@ export default async function StudentExamPage({
           <p className="exam-schedule">
             شروع: {formatExamSchedule(exam.starts_at)} · مدت کل: {formatExamDuration(exam.duration_minutes)}
             {exam.start_window_ends_at && <><br/>مهلت شروع تا: {formatExamSchedule(exam.start_window_ends_at)}؛ پس از شروع، مدت کامل آزمون را داری.</>}
+            {extension && <><br/>تمدید مشاور: شروع از {formatExamSchedule(extension.starts_at)} تا {formatExamSchedule(extension.ends_at)}؛ پس از شروع، مدت کامل آزمون را داری.</>}
             {booklets.length > 0 && ` (${toPersianDigits(booklets.length)} دفترچه)`}
           </p>
         </div>
@@ -114,7 +123,7 @@ export default async function StudentExamPage({
         </section>
         {exam.mode === "booklet" && <section className="portal-card"><h2>پاسخنامهٔ آزمون</h2><p>گزینه‌های ثبت‌شده، پاسخ‌های صحیح و پاسخنامهٔ تشریحی هر دفترچه را ببین. این صفحه بعداً هم از «آزمون‌های من» در دسترس است.</p><Link className="button" href={`/dashboard/student/exams/${id}/review`}>مشاهدهٔ پاسخنامه</Link> <Link className="button secondary" href={`/dashboard/student/exams/${id}/report`}>مشاهده و چاپ کارنامه</Link></section>}
         </>
-      ) : exam.start_window_ends_at ? (
+      ) : sessionMode ? (
         floatingEntry === "expired" ? <section className="portal-card exam-gate"><h2>زمان پاسخ‌گویی شما تمام شده است</h2><p>زمان شروع قبلی تغییر نمی‌کند. پاسخ‌هایی که روی سرور ذخیره شده‌اند را ثبت کن؛ پاسخ جدید پس از پایان زمان پذیرفته نمی‌شود.</p><form action={submitSavedFloatingExam}><input type="hidden" name="exam_id" value={id}/><button className="button" type="submit">ثبت پاسخ‌های ذخیره‌شده</button></form></section>
         : session ? <StudentExamForm examId={exam.id} examTitle={exam.title} booklets={booklets} studentName={profile.full_name} floatingSession={session}/>
         : floatingEntry === "startable" ? <section className="portal-card exam-gate"><h2>آمادهٔ شروع آزمون هستی؟</h2><p>با زدن شروع، زمان اختصاصی تو ثبت می‌شود و تایمر شروع خواهد شد. بازکردن این صفحه به‌تنهایی آزمون را شروع نمی‌کند.</p><form action={beginFloatingExam}><input type="hidden" name="exam_id" value={id}/><button className="button" type="submit">شروع آزمون</button></form></section>

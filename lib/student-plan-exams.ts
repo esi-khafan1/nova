@@ -7,6 +7,9 @@ export type StudentPlanExam = {
   starts_at: string;
   start_window_ends_at: string | null;
   duration_minutes: number;
+  extended?: boolean;
+  extension_starts_at?: string | null;
+  extension_ends_at?: string | null;
 };
 
 const tehranDate = new Intl.DateTimeFormat("en-US", {
@@ -21,11 +24,12 @@ export function examPlanDay(startsAt: string) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-/** A linked counselor box already represents this exam. Only picker-only
- * assignments need their own (read-only) study box; never duplicate a link. */
+/** A linked counselor box already represents this exam on its original day.
+ * An extended exam still needs its own box on the extension day, even when it
+ * was originally linked to a counselor exam box. */
 export function standalonePlanExams(exams: StudentPlanExam[], plans: StudyPlan[]) {
   const linked = new Set(plans.flatMap(plan => plan.weekly_plan_items
     .filter(item => item.activity_type === "exam" && item.linked_exam_id)
     .map(item => item.linked_exam_id)));
-  return exams.filter(exam => !linked.has(exam.id) && Boolean(examPlanDay(exam.starts_at)));
+  return exams.filter(exam => (!linked.has(exam.id) || exam.extended) && Boolean(examPlanDay(exam.starts_at)));
 }

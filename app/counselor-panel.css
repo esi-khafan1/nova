@@ -37,3 +37,14 @@
 @media(max-width:600px){.plan-routine{padding:14px}.plan-routine label{font-size:12px}}
 
 .counselor-exam-student-picker{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:22px}.counselor-exam-student-picker label{display:grid;gap:7px;min-width:min(100%,260px);font-size:13px;font-weight:700}.counselor-exam-student-picker select{min-height:44px;border:1px solid #c8daff;border-radius:9px;padding:8px;font:inherit}.counselor-exam-student-picker button{min-height:44px;cursor:pointer}.counselor-exam-pages{display:flex;justify-content:center;gap:12px;margin-top:20px}
+
+.counselor-exam-history-item{display:block!important}
+.counselor-exam-history-main{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.exam-extension{margin-top:16px;padding-top:16px;border-top:1px solid #f1d2b9}
+.exam-extension-current{margin:0 0 10px!important;color:#9d3f06!important;font-weight:700}
+.exam-extension-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px;align-items:end}
+.exam-extension-form label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#15324f;min-width:0}
+.exam-extension-form p{grid-column:1/-1;margin:0;line-height:1.9}
+.exam-extension-form>button{justify-self:start}
+.exam-extension-cancel{margin-top:10px}
+@media(max-width:800px){.counselor-exam-history-main{align-items:flex-start;flex-direction:column}.exam-extension-form{grid-template-columns:1fr}.exam-extension-form>button{width:100%}}

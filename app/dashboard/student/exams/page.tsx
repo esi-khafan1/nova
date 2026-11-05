@@ -14,7 +14,7 @@ export default async function StudentExamsPage({
   if (profile.registration_status !== "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-heading"><div><span>آزمون‌های من</span><h1>آزمون‌های کنکوری</h1><p>آزمون‌های اختصاصی پس از فعال‌شدن خدمات و تخصیص طراح آزمون در این بخش نمایش داده می‌شوند.</p></div></section><StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/></DashboardShell>;
 
 
-  const [{ data: examsData }, { data: attemptsData }, {data:sessionsData}] =
+  const [{ data: examsData }, { data: attemptsData }, {data:sessionsData}, {data:extensionsData}] =
     await Promise.all([
       supabase
         .from("exams")
@@ -28,9 +28,11 @@ export default async function StudentExamsPage({
         .select("exam_id,score,correct_answers,total_questions,submitted_at")
         .eq("student_id", profile.id),
       supabase.from("exam_sessions").select("exam_id,expires_at").eq("student_id",profile.id),
+      supabase.rpc("student_exam_extensions"),
     ]);
 
   const sessions = new Map(((sessionsData ?? []) as Pick<FloatingExamSession,"exam_id"|"expires_at">[]).map(session=>[session.exam_id,session]));
+  const extensions = new Map(((extensionsData ?? []) as {exam_id:string;starts_at:string;ends_at:string}[]).map(extension=>[extension.exam_id,extension]));
   const exams = (examsData ?? []) as StudentExam[];
   const attempts = new Map(
     ((attemptsData ?? []) as StudentExamAttempt[]).map((attempt) => [
@@ -42,7 +44,7 @@ export default async function StudentExamsPage({
   return (
     <DashboardShell role="student" name={profile.full_name}>
       {profile.registration_status !== "active" && <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>}
-      <StudentExamsOverview exams={profile.registration_status === "active" ? exams : exams.filter(exam => attempts.has(exam.id))} attempts={attempts} sessions={sessions} error={Boolean(params.error)} />
+      <StudentExamsOverview exams={profile.registration_status === "active" ? exams : exams.filter(exam => attempts.has(exam.id))} attempts={attempts} sessions={sessions} extensions={extensions} error={Boolean(params.error)} />
     </DashboardShell>
   );
 }

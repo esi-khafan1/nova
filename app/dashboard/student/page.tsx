@@ -24,12 +24,22 @@ export default async function StudentDashboard() {
       if (profile.registration_status !== "active") return { exams: [] as StudentPlanExam[], attemptIds: [] as string[], failed: false };
       // The student's RLS-filtered exam list includes both picker assignments
       // and linked exam boxes; no service-role client or elevated read is used.
-      const [{ data: exams, error: examsError }, { data: attempts, error: attemptsError }] = await Promise.all([
+      const [{ data: exams, error: examsError }, { data: attempts, error: attemptsError }, { data: extensions, error: extensionsError }] = await Promise.all([
         supabase.from("exams").select("id,title,description,starts_at,start_window_ends_at,duration_minutes")
           .eq("status", "published").order("starts_at", { ascending: false }),
         supabase.from("exam_attempts").select("exam_id").eq("student_id", profile.id).not("submitted_at", "is", null),
+        supabase.rpc("student_exam_extensions"),
       ]);
-      return { exams: (exams ?? []) as StudentPlanExam[], attemptIds: (attempts ?? []).map(attempt => attempt.exam_id), failed: Boolean(examsError || attemptsError) };
+      const submittedIds = new Set((attempts ?? []).map(attempt => attempt.exam_id));
+      const extensionByExam = new Map(((extensions ?? []) as { exam_id: string; starts_at: string; ends_at: string }[])
+        .map(extension => [extension.exam_id, extension]));
+      const effectiveExams = ((exams ?? []) as StudentPlanExam[]).map(exam => {
+        const extension = extensionByExam.get(exam.id);
+        return extension && !submittedIds.has(exam.id)
+          ? { ...exam, starts_at: extension.starts_at, start_window_ends_at: extension.ends_at, extended: true, extension_starts_at: extension.starts_at, extension_ends_at: extension.ends_at }
+          : exam;
+      });
+      return { exams: effectiveExams, attemptIds: [...submittedIds], failed: Boolean(examsError || attemptsError || extensionsError) };
     }).catch(() => ({ exams: [] as StudentPlanExam[], attemptIds: [] as string[], failed: true })),
   ]);
   const { profile } = auth;

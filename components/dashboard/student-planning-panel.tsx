@@ -36,7 +36,7 @@ function Summary({items,done,label,audience}:{items:StudyItem[];done:Map<string,
 }
 function DesignerExamBox({ exam, submitted }: { exam: StudentPlanExam; submitted: boolean }) {
  return <article className="sp-task sp-task--designer-exam">
-   <div className="sp-task-heading"><div><span className="sp-tag">آزمون طراح</span><h3>{exam.title}</h3><p>شروع: {formatExamSchedule(exam.starts_at)}</p></div><div className="sp-task-result"><strong>{submitted ? "ثبت‌شده" : "آزمون اختصاصی"}</strong><span>{fa(exam.duration_minutes)} دقیقه</span></div></div>
+   <div className="sp-task-heading"><div><span className="sp-tag">{exam.extended ? "آزمون تمدیدشده" : "آزمون طراح"}</span><h3>{exam.title}</h3><p>شروع: {formatExamSchedule(exam.starts_at)}</p>{exam.extended && exam.start_window_ends_at && <p>مهلت شروع تا: {formatExamSchedule(exam.start_window_ends_at)}</p>}</div><div className="sp-task-result"><strong>{submitted ? "ثبت‌شده" : exam.extended ? "تمدیدشده توسط مشاور" : "آزمون اختصاصی"}</strong><span>{fa(exam.duration_minutes)} دقیقه</span></div></div>
    {exam.description && <p className="sp-exam-description">راهنمای طراح آزمون: {exam.description}</p>}
    <Link className="sp-exam-link" href={submitted ? `/dashboard/student/exams/${exam.id}/review` : `/dashboard/student/exams/${exam.id}`}>{submitted ? "مشاهدهٔ پاسخنامه" : "مشاهدهٔ آزمون"} ←</Link>
  </article>;

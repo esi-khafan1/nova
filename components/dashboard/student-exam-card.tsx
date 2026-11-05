@@ -13,13 +13,19 @@ export type StudentExamAttempt = {
   total_questions: number | null; submitted_at: string;
 };
 
-export function StudentExamCard({ exam, attempt, session, now = new Date() }: {
+export type StudentExamExtension = { starts_at: string; ends_at: string };
+
+export function StudentExamCard({ exam, attempt, session, extension, now = new Date() }: {
   exam: StudentExam; attempt?: StudentExamAttempt;
-  session?: Pick<FloatingExamSession, "exam_id" | "expires_at">; now?: Date;
+  session?: Pick<FloatingExamSession, "exam_id" | "expires_at">;
+  extension?: StudentExamExtension; now?: Date;
 }) {
+  const activeExtension = attempt ? undefined : extension;
   const timeState = getExamTimeState(exam.starts_at, exam.duration_minutes, now, exam.start_window_ends_at);
-  const floatingEntry = exam.start_window_ends_at
-    ? getFloatingExamEntryState(exam.starts_at, exam.start_window_ends_at, session, now) : null;
+  const floatingEntry = activeExtension
+    ? getFloatingExamEntryState(activeExtension.starts_at, activeExtension.ends_at, session, now)
+    : exam.start_window_ends_at
+      ? getFloatingExamEntryState(exam.starts_at, exam.start_window_ends_at, session, now) : null;
   const bookletCount = exam.exam_booklets?.length ?? 0;
   const totalQuestions = exam.exam_booklets?.reduce((sum, booklet) => sum + (booklet.question_count || 0), 0) ?? 0;
   const entryAvailable = floatingEntry ? ["startable", "resumable", "expired"].includes(floatingEntry) : timeState === "active";
@@ -41,12 +47,14 @@ export function StudentExamCard({ exam, attempt, session, now = new Date() }: {
           <div><span>شروع:</span><time dateTime={exam.starts_at}>{formatExamSchedule(exam.starts_at)}</time></div>
           <div><span>مدت:</span><strong>{formatExamDuration(exam.duration_minutes)}</strong></div>
           {exam.start_window_ends_at && <div><span>مهلت شروع تا:</span><time dateTime={exam.start_window_ends_at}>{formatExamSchedule(exam.start_window_ends_at)}</time></div>}
+          {activeExtension && <div><span>تمدید:</span><time dateTime={activeExtension.starts_at}>{formatExamSchedule(activeExtension.starts_at)}</time></div>}
+          {activeExtension && <div><span>مهلت شروع تمدید تا:</span><time dateTime={activeExtension.ends_at}>{formatExamSchedule(activeExtension.ends_at)}</time></div>}
         </div>
         <div className="se-card-footer">
           {attempt ? <div className="se-completed"><strong>آزمون داده شد ✅</strong>
             {attempt.score !== null && <span className="se-score">درصد کنکوری: {toPersianDigits(attempt.score)}٪</span>}
             <Link className="se-action se-action--secondary" href={`/dashboard/student/exams/${exam.id}/review`}>بررسی دفترچه و پاسخ‌برگ<span aria-hidden="true">←</span></Link>
-          </div> : exam.start_window_ends_at ? (
+          </div> : activeExtension || exam.start_window_ends_at ? (
             floatingEntry === "startable" || floatingEntry === "resumable" || floatingEntry === "expired"
               ? <Link className="se-action" href={`/dashboard/student/exams/${exam.id}`}>{floatingEntry === "resumable" ? "ادامهٔ آزمون" : floatingEntry === "expired" ? "ثبت پاسخ‌های ذخیره‌شده" : "مشاهده و شروع آزمون"}<span aria-hidden="true">←</span></Link>
               : <div className="se-notice">{floatingEntry === "upcoming" ? "بازهٔ شروع هنوز باز نشده است." : "مهلت شروع آزمون تمام شده است."}</div>
@@ -58,9 +66,10 @@ export function StudentExamCard({ exam, attempt, session, now = new Date() }: {
   );
 }
 
-export function StudentExamsOverview({ exams, attempts, sessions, error = false, now }: {
+export function StudentExamsOverview({ exams, attempts, sessions, extensions, error = false, now }: {
   exams: StudentExam[]; attempts: Map<string, StudentExamAttempt>;
   sessions: Map<string, Pick<FloatingExamSession, "exam_id" | "expires_at">>;
+  extensions?: Map<string, StudentExamExtension>;
   error?: boolean; now?: Date;
 }) {
   return (
@@ -80,7 +89,7 @@ export function StudentExamsOverview({ exams, attempts, sessions, error = false,
 
       <div className="se-exam-grid">
         {exams.length ? exams.map(exam => (
-          <StudentExamCard now={now} key={exam.id} exam={exam} attempt={attempts.get(exam.id)} session={sessions.get(exam.id)} />
+          <StudentExamCard now={now} key={exam.id} exam={exam} attempt={attempts.get(exam.id)} session={sessions.get(exam.id)} extension={extensions?.get(exam.id)} />
         )) : <section className="se-empty" role="status"><span className="se-empty-icon" aria-hidden="true"><svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="7" y="5" width="20" height="24" rx="3"/><path d="M12 5V3H5a2 2 0 0 0-2 2v19h4M12 12h10M12 18h10M12 24h6"/></svg></span><h2>آزمون بعدی، قدم بعدی تو</h2><p>فعلاً آزمونی برای تو منتشر نشده است.</p></section>}
       </div>
       </section>
