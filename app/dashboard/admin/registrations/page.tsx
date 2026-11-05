@@ -16,7 +16,7 @@ export default async function Registrations({
       <section className="portal-heading">
         <div>
           <span>مدیریت نووا</span>
-          <h1>فعال‌سازی دانش‌آموزها</h1>
+          <h1>خدمات دانش‌آموزان</h1>
         </div>
       </section>
 
