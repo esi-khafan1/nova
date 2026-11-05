@@ -50,6 +50,7 @@ assert.match(extensionForm, /earliestExamSchedule/);
 assert.match(extensionForm, /scheduleBounds\.date/);
 assert.match(extensionForm, /todayDate=\{today\}/);
 assert.match(extensionForm, /date === scheduleBounds\.date \? scheduleBounds\.time/);
+assert.match(extensionForm, /اولین زمان مجاز امروز/);
 assert.match(extensionForm, /date === today && !todayHasTime/);
 assert.match(extensionForm, /setInterval\(refresh, 15000\)/);
 

@@ -6,6 +6,7 @@ import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import { PersianTimePicker } from "@/components/dashboard/persian-time-picker";
 import { formatExamSchedule } from "@/lib/exams";
 import { earliestExamSchedule, tehranDateTime, timeAfter, validWindowEnd } from "@/lib/exam-schedule";
+import { toPersianDigits } from "@/lib/persian-date";
 
 type Extension = {
   starts_at: string;
@@ -144,6 +145,13 @@ export function ExamExtensionForm({
                 disabled={!timeAfter(startTime, 1)}
               />
             </label>
+            {date === today && (
+              <p className="exam-schedule-hint" role="status">
+                {todayHasTime
+                  ? `ساعت‌ها به وقت تهران هستند؛ اولین زمان مجاز امروز ${toPersianDigits(scheduleBounds.time)} است (حداقل ۵ دقیقه پس از زمان فعلی).`
+                  : "برای امروز زمان مجازی باقی نمانده است؛ روز بعد را انتخاب کن."}
+              </p>
+            )}
             <p>دانش‌آموز فقط در این بازه می‌تواند آزمون را شروع کند؛ پس از شروع، کل مدت آزمون را دارد.</p>
             <button type="submit" className="button">
               {extension ? "ثبت بازهٔ جدید تمدید" : "ثبت تمدید آزمون"}
