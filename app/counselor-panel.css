@@ -40,12 +40,34 @@
 
 .counselor-exam-history-item{display:block!important}
 .counselor-exam-history-main{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.exam-extension{margin-top:16px;padding-top:16px;border-top:1px solid #f1d2b9}
-.exam-extension-current{margin:0 0 10px!important;color:#9d3f06!important;font-weight:700}
-.exam-extension-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px;align-items:end}
-.exam-extension-form label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#15324f;min-width:0}
-.exam-extension-form p{grid-column:1/-1;margin:0;line-height:1.9}
+.counselor-portal .exam-extension{margin-top:16px;padding:16px;border:1px solid #ccddf3;border-radius:16px;background:#f5f9ff;color:#123b63}
+.counselor-portal .exam-extension-current{margin:0 0 12px!important;color:#145bab!important;font-weight:700}
+.counselor-portal .exam-extension .button{min-height:48px;padding:12px 20px;line-height:1.8;background:#ff7a1a;border-color:#ff7a1a;color:#0e3154;font-size:14px;font-weight:750;box-shadow:none}
+.counselor-portal .exam-extension .button:hover:not(:disabled){background:#ff8e3b}
+.counselor-portal .exam-extension .button.secondary{background:#fff;border-color:#bfd8f2;color:#145bab}
+.counselor-portal .exam-extension .button.secondary:hover:not(:disabled){background:#eef6ff}
+.exam-extension-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:0;align-items:end}
+.exam-extension-form label{display:grid;gap:10px;font-size:14px;font-weight:700;color:#123b63;min-width:0}
+.exam-extension-form p{grid-column:1/-1;margin:0;color:#496582;line-height:1.9}
 .exam-extension-form>button{justify-self:start}
 .exam-extension-cancel{margin-top:10px}
+.counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger){background:#fff;border-color:#bfd8f2;color:#123b63;min-height:48px;font-size:14px;box-shadow:none}
+.counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger):hover{border-color:#176bce}
+.counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger):focus-visible,.counselor-portal .exam-extension .persian-time-trigger[aria-expanded="true"]{border-color:#176bce;box-shadow:0 0 0 3px #176bce14}
+.counselor-portal .exam-extension :is(.persian-date-trigger,.persian-time-trigger)>svg{stroke:#145bab}
+.counselor-portal .exam-extension :is(.persian-calendar,.persian-time-popover){background:#fff;border-color:#bfd8f2;color:#123b63;box-shadow:0 8px 28px #15324f1a;max-width:calc(100vw - 32px)}
+.counselor-portal .exam-extension .persian-time-header,.counselor-portal .exam-extension .persian-time-col-title{color:#123b63;background:#eef6ff;border-color:#ccddf3}
+.counselor-portal .exam-extension .persian-time-preview,.counselor-portal .exam-extension .persian-time-title{color:#145bab}
+.counselor-portal .exam-extension .persian-time-list button{font-size:14px;min-height:44px;color:#123b63}
+.counselor-portal .exam-extension .persian-time-list button.selected,.counselor-portal .exam-extension .persian-time-confirm,.counselor-portal .exam-extension .persian-time-preset-btn.active{background:#176bce;border-color:#176bce;color:#fff}
+.counselor-portal .exam-extension .persian-time-confirm{min-height:44px;font-size:14px}
+.counselor-portal .exam-extension .persian-time-preset-btn{background:#fff;border-color:#bfd8f2;color:#145bab;min-height:44px;font-size:14px}
+.counselor-portal .exam-extension :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #176bce;outline-offset:3px}
 @media(max-width:800px){.counselor-exam-history-main{align-items:flex-start;flex-direction:column}.exam-extension-form{grid-template-columns:1fr}.exam-extension-form>button{width:100%}}
-.counselor-portal .exam-extension-form .exam-schedule-hint{font-size:14px;line-height:2;padding:12px 16px;border:1px solid #ccddf3;border-radius:10px;background:#eef6ff;color:#145bab}
+.counselor-portal .exam-extension .persian-calendar header button{background:#eef6ff;border-color:#bfd8f2;color:#145bab}
+.counselor-portal .exam-extension .persian-calendar header button:hover{background:#e2efff}
+.counselor-portal .exam-extension .persian-calendar-weekdays span{color:#496582}
+.counselor-portal .exam-extension .persian-calendar-days button:hover{color:#145bab;border-color:#bfd8f2;background:#eef6ff}
+.counselor-portal .exam-extension .persian-calendar-days button.today{box-shadow:inset 0 0 0 2px #176bce}
+.counselor-portal .exam-extension .persian-calendar-days button.selected{color:#fff;border-color:#176bce;background:#176bce;box-shadow:0 5px 12px rgba(23,107,206,.2)}
+.counselor-portal .exam-extension .persian-calendar-legend,.counselor-portal .exam-extension .persian-calendar>p{color:#496582}
