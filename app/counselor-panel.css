@@ -48,4 +48,3 @@
 .exam-extension-form>button{justify-self:start}
 .exam-extension-cancel{margin-top:10px}
 @media(max-width:800px){.counselor-exam-history-main{align-items:flex-start;flex-direction:column}.exam-extension-form{grid-template-columns:1fr}.exam-extension-form>button{width:100%}}
-.counselor-portal .exam-extension-form .exam-schedule-hint{font-size:14px;line-height:2;padding:12px 16px;border:1px solid #ccddf3;border-radius:10px;background:#eef6ff;color:#145bab}
