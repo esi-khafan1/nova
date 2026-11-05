@@ -26,7 +26,11 @@ const print = fs.readFileSync('components/dashboard/print-weekly-plan.tsx','utf8
 const designer = fs.readFileSync('lib/student-plan-exams.ts','utf8');
 assert.match(catalog, /value: "simulation_exam"/, 'original activity option stays available');
 assert.match(builder, /<option value="__external_simulation__">\{externalSimulationTitle\}<\/option>/, 'new entry belongs inside subject select');
-assert.match(builder, /item\.activityType === externalSimulationActivity \? <>\s*<label className="plan-simulation-subject">درس/, 'the subject selector remains visible in the provider exam');
+assert.match(builder, /item\.activityType === externalSimulationActivity \? <>\s*\{durationField\(item\)\}\s*<label className="plan-simulation-subject">درس/, 'exam keeps the original right-to-left order: duration then subject');
+const examFields = builder.slice(builder.indexOf('item.activityType === externalSimulationActivity ? <>'), builder.indexOf('</> : <>', builder.indexOf('item.activityType === externalSimulationActivity ? <>')));
+assert.ok(examFields.indexOf('{durationField(item)}') < examFields.indexOf('plan-simulation-subject') && examFields.indexOf('plan-simulation-subject') < examFields.indexOf('plan-simulation-provider'), 'original duration → subject → provider sequence');
+const normalFields = builder.slice(builder.indexOf('</> : <>', builder.indexOf('item.activityType === externalSimulationActivity ? <>')));
+assert.ok(normalFields.indexOf('پایهٔ درس') < normalFields.indexOf('مسیر آمادگی') && normalFields.indexOf('مسیر آمادگی') < normalFields.indexOf('{durationField(item)}') && normalFields.indexOf('{durationField(item)}') < normalFields.indexOf('فصل یا مبحث') && normalFields.indexOf('فصل یا مبحث') < normalFields.indexOf('نوع فعالیت'), 'ordinary box keeps its original field order');
 assert.match(builder, /value="__external_simulation__"\s*onChange=\{event=>leaveExternalSimulation\(item\.key,event\.target\.value\)\}/, 'changing the subject exits the exam without an extra button');
 assert.doesNotMatch(builder, /بازگشت به انتخاب درس|<strong>\{externalSimulationTitle\}<\/strong>/, 'no orphaned heading or return button');
 assert.match(builder, /simulationProviderDraft\(item\.subject\)/);

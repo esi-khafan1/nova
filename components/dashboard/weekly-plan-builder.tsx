@@ -464,6 +464,7 @@ export function WeeklyPlanBuilder({
                           </p>
                         )}
                         {item.activityType === externalSimulationActivity ? <>
+                          {durationField(item)}
                           <label className="plan-simulation-subject">درس
                             <select
                               aria-label="درس"
@@ -494,7 +495,6 @@ export function WeeklyPlanBuilder({
                               <option value="other">سایر</option>
                             </select>
                           </label>
-                          {durationField(item)}
                           {item.otherSimulationProvider && <label className="plan-simulation-other">نام برگزارکنندهٔ دیگر
                             <input
                               value={simulationProviderDraft(item.subject)} maxLength={60} minLength={2} required
