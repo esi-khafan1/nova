@@ -1,0 +1,60 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const {PGlite} = require('@electric-sql/pglite');
+const sql = fs.readFileSync('supabase/migrations/104_designer_exam_box_notes_and_student_exam_history.sql','utf8');
+const counselor = '11111111-1111-4111-8111-111111111111';
+const other = '22222222-2222-4222-8222-222222222222';
+const student = '33333333-3333-4333-8333-333333333333';
+const stranger = '44444444-4444-4444-8444-444444444444';
+const designer = '55555555-5555-4555-8555-555555555555';
+const id = n => `aaaaaaaa-aaaa-4aaa-8aaa-${String(n).padStart(12,'0')}`;
+(async()=>{
+ const db = new PGlite();
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+ create type public.app_role as enum ('student','counselor','exam_designer');
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create table public.profiles(id uuid primary key,role public.app_role);
+ create function private.current_user_role() returns public.app_role language sql stable as $$select role from public.profiles where id=auth.uid()$$;
+ create table public.counselor_students(counselor_id uuid,student_id uuid);
+ create table public.exams(id uuid primary key,title text,starts_at timestamptz,status text,mode text);
+ create table public.exam_attempts(id uuid,exam_id uuid,student_id uuid,submitted_at timestamptz,score numeric);
+ create table public.exam_students(exam_id uuid,student_id uuid);
+ create table public.weekly_plan_items(id uuid,details text,activity_type text);
+ create function private.student_can_access_exam(uuid,uuid) returns boolean language sql stable as $$select exists(select 1 from public.exam_students where exam_id=$1 and student_id=$2)$$;
+ create function public.designer_exam_boxes() returns table(item_id uuid) language plpgsql stable as $$begin
+ if private.current_user_role() <> 'exam_designer' then raise exception 'Designer only';end if;
+ return query select i.id from public.weekly_plan_items i where i.activity_type='exam';end$$;
+ insert into public.profiles values
+ ('${counselor}','counselor'),('${other}','counselor'),('${student}','student'),('${stranger}','student'),('${designer}','exam_designer');
+ insert into public.counselor_students values('${counselor}','${student}'),('${other}','${stranger}');
+ insert into public.weekly_plan_items values('${id(100)}','راهنمای طراح آزمون','exam'),('${id(101)}','نباید نمایش داده شود','simulation_exam');
+ `);
+ for(let i=1;i<=7;i++){
+  await db.query('insert into public.exams values($1,$2,now()-$3::int*interval \'1 day\',\'published\',\'booklet\')',[id(i),`آزمون ${i}`,i]);
+  await db.query('insert into public.exam_students values($1,$2)',[id(i),student]);
+ }
+ await db.query('insert into public.exams values($1,\'آزمون دیگری\',now(),\'published\',\'booklet\')',[id(9)]);
+ await db.query('insert into public.exam_students values($1,$2)',[id(9),stranger]);
+ await db.query('insert into public.exams values($1,\'آینده\',now()+interval \'1 day\',\'published\',\'booklet\')',[id(10)]);
+ await db.query('insert into public.exam_students values($1,$2)',[id(10),student]);
+ await db.query('insert into public.exam_attempts values($1,$2,$3,now(),83.5)',[id(50),id(2),student]);
+ await db.exec(sql);
+ const actor = person => db.query('select set_config(\'request.jwt.claim.sub\',$1,false)',[person]);
+ await actor(designer);
+ assert.deepEqual((await db.query('select note from public.designer_exam_box_notes()')).rows.map(r=>r.note),['راهنمای طراح آزمون']);
+ await actor(student);
+ await assert.rejects(db.query('select * from public.designer_exam_box_notes()'),/Designer only/);
+ await actor(other);
+ await assert.rejects(db.query('select * from public.counselor_student_exam_history($1)',[student]),/Student not assigned/);
+ await actor(counselor);
+ const first=(await db.query('select * from public.counselor_student_exam_history($1,0,6)',[student])).rows;
+ assert.equal(first.length,6,'five visible plus one lookahead');
+ assert.deepEqual(first.slice(0,5).map(r=>r.exam_id),[1,2,3,4,5].map(id));
+ assert.equal(first[1].score,'83.5');
+ assert.equal(first[0].attempt_id,null);
+ const second=(await db.query('select * from public.counselor_student_exam_history($1,5,6)',[student])).rows;
+ assert.equal(second.length,2);
+ await assert.rejects(db.query('select * from public.counselor_student_exam_history($1,-1,6)',[student]),/Invalid page/);
+ assert.ok(!first.some(r=>r.exam_id===id(9)||r.exam_id===id(10)));
+ console.log('Exam notes designer-only RPC, counselor assignment guard, student-scoped participation and pagination passed.');
+})().catch(error=>{console.error(error);process.exitCode=1});

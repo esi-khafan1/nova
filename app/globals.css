@@ -4431,7 +4431,7 @@ main .eyebrow span {
 /* The provider exam remains a subject choice: three aligned fields above one
    full-width note, rather than an orphaned heading and return button. */
 .plan-item-fields.plan-item-fields--external {
-  grid-template-columns: minmax(130px, 0.8fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(130px, 0.8fr);
   align-items: start;
   gap: 12px;
 }

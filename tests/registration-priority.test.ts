@@ -41,6 +41,6 @@ assert.equal(sorted.length, acrossPages.length);
 assert.deepEqual(prioritizePendingUnassignedReceipts([]), []);
 
 const component = readFileSync("components/dashboard/registration-directory.tsx", "utf8");
-assert.match(component, /const orderedRows = prioritizePendingUnassignedReceipts\(rows\)/);
+assert.match(component, /const orderedRows = prioritizePendingUnassignedReceipts\(filteredRows\)/);
 assert.match(component, /\{orderedRows\.map\(\(row\) =>/);
 console.log("Registration activation priority: pending receipt without counselor goes first; other rows stay ordered.");

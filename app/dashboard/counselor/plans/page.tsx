@@ -7,6 +7,7 @@ import {
 } from "@/components/dashboard/weekly-plan-builder";
 import { requireProfile } from "@/lib/auth";
 import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
+import {planNumbers,numberedPlanTitle} from "@/lib/plan-numbering";
 import {
   formatPersianWeekRange,
 } from "@/lib/persian-date";
@@ -40,6 +41,7 @@ export default async function CounselorPlansPage({
   const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
   const recentPlans = [...new Map([...loadedHistory.data,...counselorPlans.filter(plan=>plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
     .sort((a,b)=>b.week_start.localeCompare(a.week_start)||a.id.localeCompare(b.id));
+  const sequenceNumbers = planNumbers(recentPlans);
   const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
   const requestedProgressStudent = params.progress_student;
   const progressStudent =
@@ -144,6 +146,7 @@ export default async function CounselorPlansPage({
         key={[params.student, params.plan, params.week_start, params.error, params.saved, ...completedItemIds].join(":")}
         students={selectedStudents}
         plans={counselorPlans}
+        numberingPlans={recentPlans}
         initialStudentId={params.student}
         initialPlanId={params.plan}
         initialWeekStart={params.week_start}
@@ -166,7 +169,7 @@ export default async function CounselorPlansPage({
                     {studentNames.get(plan.student_id) || "دانش‌آموز نووا"}
                   </strong>
                   <span>
-                    {plan.title} · {formatPersianWeekRange(plan.week_start)}
+                    {numberedPlanTitle(plan.title,sequenceNumbers.get(plan.id)??1)} · {formatPersianWeekRange(plan.week_start)}
                   </span>
                 </div>
                 <div className="recent-plan-actions">

@@ -15,6 +15,7 @@ import {
 
 import { planningGrades, curriculumBooks, inferItemGrade, routineSubjectOptions, type Grade, type PreparationTrack } from "@/lib/planning-curriculum";
 import { canRecommendPublisher, recommendedPublishers } from "@/lib/recommended-publishers";
+import { planNumbers, nextPlanNumber, numberedPlanTitle, type NumberablePlan } from "@/lib/plan-numbering";
 import { externalSimulationActivity, externalSimulationPrefix, externalSimulationTitle, simulationProvider, simulationProviderDraft, simulationProviders, simulationSubject } from "@/lib/external-simulation";
 
 type Student = {
@@ -150,6 +151,7 @@ export function WeeklyPlanBuilder({
   initialPlanId,
   initialWeekStart,
   completedItemIds,
+  numberingPlans = [],
 }: {
   students: Student[];
   plans: CounselorWeeklyPlan[];
@@ -157,6 +159,7 @@ export function WeeklyPlanBuilder({
   initialPlanId?: string;
   initialWeekStart?: string;
   completedItemIds: string[];
+  numberingPlans?: NumberablePlan[];
 }) {
   const completedIdSet = new Set(completedItemIds);
   const selectedStudentIndex = Math.max(0, students.findIndex(s => s.student_id === initialStudentId));
@@ -181,6 +184,8 @@ export function WeeklyPlanBuilder({
   ]);
 
   const student = students[studentIndex] ?? students[0];
+  const numbers = planNumbers(numberingPlans.length ? numberingPlans : plans);
+  const selectedNumber = planId ? numbers.get(planId) ?? 1 : nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart);
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([9,10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
@@ -295,11 +300,11 @@ export function WeeklyPlanBuilder({
       <section className="portal-card plan-basics">
         <div className="portal-card-title">
           <div>
-            <span>تنظیمات برنامه</span>
+            <span>تنظیمات برنامه · برنامهٔ {faNumber(selectedNumber)} این دانش‌آموز</span>
             <h2>برنامهٔ هفت‌روزه از چه روزی شروع شود؟</h2>
           </div>
         </div>
-        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();setWeekStart(start);loadPlan(student.student_id,start);}}><option value="">ساخت برنامهٔ جدید</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{p.title} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
+        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();setWeekStart(start);loadPlan(student.student_id,start);}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
         <div className="plan-basics-grid">
           <label>
             دانش‌آموز
@@ -464,7 +469,6 @@ export function WeeklyPlanBuilder({
                           </p>
                         )}
                         {item.activityType === externalSimulationActivity ? <>
-                          {durationField(item)}
                           <label className="plan-simulation-subject">درس
                             <select
                               aria-label="درس"
@@ -495,6 +499,7 @@ export function WeeklyPlanBuilder({
                               <option value="other">سایر</option>
                             </select>
                           </label>
+                          {durationField(item)}
                           {item.otherSimulationProvider && <label className="plan-simulation-other">نام برگزارکنندهٔ دیگر
                             <input
                               value={simulationProviderDraft(item.subject)} maxLength={60} minLength={2} required
@@ -679,7 +684,7 @@ export function WeeklyPlanBuilder({
                         )}
                         </>}
                         <label className="plan-details">
-                          توضیح تکمیلی
+                          {item.activityType==="exam"?"راهنمای طراح آزمون (فقط برای طراح)":"توضیح تکمیلی"}
                           <input
                             value={item.details}
                             onChange={(event) =>
@@ -689,7 +694,7 @@ export function WeeklyPlanBuilder({
                                 event.target.value,
                               )
                             }
-                            placeholder={item.activityType===externalSimulationActivity?"مثلاً ساعت شروع یا توضیح آزمون":"مثلاً ۳۰ تست زمان‌دار و تحلیل پاسخ‌ها"}
+                            placeholder={item.activityType==="exam"?"راهنمای ساخت آزمون برای طراح را بنویس":item.activityType===externalSimulationActivity?"مثلاً ساعت شروع یا توضیح آزمون":"مثلاً ۳۰ تست زمان‌دار و تحلیل پاسخ‌ها"}
                             maxLength={500}
                           />
                         </label>

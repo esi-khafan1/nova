@@ -1,25 +1,15 @@
 import Link from "next/link";
-import { examSaveErrorMessage } from "@/lib/exam-save-errors";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-
 import { requireProfile } from "@/lib/auth";
-import { formatExamDuration, formatExamSchedule } from "@/lib/exams";
+import { formatExamSchedule } from "@/lib/exams";
 import { toPersianDigits } from "@/lib/persian-date";
 
-type CounselorExam = {
-  id: string;
-  title: string;
-  description: string | null;
-  mode: string;
-  audience: "own_students" | "all_assigned_students";
-  status: "draft" | "published" | "archived";
-  starts_at: string;
-  start_window_ends_at: string | null;
-  duration_minutes: number;
-  created_at: string;
-  exam_booklets: { id: string; question_count: number }[];
-  exam_attempts: { id: string }[];
+type Student = { student_id: string; full_name: string; is_selected: boolean };
+type ExamHistory = {
+  exam_id: string; title: string; starts_at: string;
+  attempt_id: string | null; submitted_at: string | null; score: number | null;
 };
+const pageSize = 5;
 
 export default async function CounselorExamsPage({
   searchParams,
@@ -28,104 +18,55 @@ export default async function CounselorExamsPage({
 }) {
   const { supabase, profile } = await requireProfile(["counselor"]);
   const params = await searchParams;
+  const { data: directoryData, error: directoryError } = await supabase.rpc("counselor_student_directory");
+  if (directoryError) throw new Error("Student directory unavailable");
+  const students = ((directoryData ?? []) as Student[]).filter(student => student.is_selected);
+  const student = students.find(row => row.student_id === params.student) ?? students[0];
+  const requestedPage = Number(params.page);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage >= 1 && requestedPage <= 2000 ? requestedPage : 1;
+  const { data, error } = student
+    ? await supabase.rpc("counselor_student_exam_history", {
+        target_student_id: student.student_id,
+        page_offset: (page - 1) * pageSize,
+        page_size: pageSize + 1,
+      })
+    : { data: [], error: null };
+  const history = ((data ?? []) as ExamHistory[]).slice(0, pageSize);
+  const hasNext = (data?.length ?? 0) > pageSize;
+  const hrefFor = (number: number) => `/dashboard/counselor/exams?student=${encodeURIComponent(student.student_id)}&page=${number}`;
 
-  const { data } = await supabase
-    .from("exams")
-    .select(
-      "id,title,description,mode,audience,status,starts_at,start_window_ends_at,duration_minutes,created_at,exam_booklets(id,question_count),exam_attempts(id)",
-    )
-    .order("created_at", { ascending: false });
-
-  const exams = (data ?? []) as CounselorExam[];
-
-  return (
-    <DashboardShell role="counselor" name={profile.full_name}>
-      <section className="portal-heading">
-        <div>
-          <span>مرکز آزمون</span>
-          <h1>آزمون‌های کنکوری دفترچه‌ای</h1>
-          <p>
-            نتایج و کارنامهٔ دانش‌آموزان خودت را ببین؛ طراحی و تخصیص آزمون در پنل طراح آزمون انجام می‌شود.
-          </p>
-        </div>
-      </section>
-
-      {params.saved && (
-        <div className="portal-alert success">
-          {params.saved === "published"
-            ? "آزمون کنکوری با موفقیت منتشر شد."
-            : "پیش‌نویس آزمون ذخیره شد."}
-        </div>
-      )}
-
-      {params.error && (
-        <div className="portal-alert error">
-          {examSaveErrorMessage(params.error)}
-        </div>
-      )}
-
-
-
-      <section className="portal-card exam-list-section">
-        <div className="portal-card-title">
-          <div>
-            <span>آزمون‌های من</span>
-            <h2>سوابق آزمون‌ها</h2>
-          </div>
-          <strong>{toPersianDigits(exams.length)} آزمون</strong>
-        </div>
-
-        {exams.length ? (
-          <div className="exam-list">
-            {exams.map((exam) => {
-              const bCount = exam.exam_booklets?.length || 0;
-              const qCount =
-                exam.exam_booklets?.reduce(
-                  (acc, b) => acc + (b.question_count || 0),
-                  0,
-                ) || 0;
-
-              return (
-                <article key={exam.id}>
-                  <div>
-                    <span className={`content-status ${exam.status}`}>
-                      {exam.status === "published"
-                        ? "منتشرشده"
-                        : exam.status === "draft"
-                          ? "پیش‌نویس"
-                          : "بایگانی"}
-                    </span>
-                    <h3>{exam.title}</h3>
-                    <p>
-                      {bCount > 0 ? `${toPersianDigits(bCount)} دفترچه` : "کنکوری"}
-                      {qCount > 0 ? ` · ${toPersianDigits(qCount)} سؤال` : ""} ·{" "}
-                      کارنامهٔ دانش‌آموزان من
-                    </p>
-                    <p className="exam-schedule">
-                      شروع: {formatExamSchedule(exam.starts_at)} {exam.start_window_ends_at && `· مهلت شروع تا: ${formatExamSchedule(exam.start_window_ends_at)}`} · مدت:{" "}
-                      {formatExamDuration(exam.duration_minutes)}
-                    </p>
-                  </div>
-                  <div className="exam-list-actions">
-                    <span>
-                      {toPersianDigits(exam.exam_attempts?.length || 0)} شرکت‌کننده
-                    </span>
-                    <Link
-                      className="button secondary"
-                      href={`/dashboard/counselor/exams/${exam.id}`}
-                    >
-                      مشاهده کارنامه‌ها
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="portal-empty">هنوز آزمونی ساخته نشده است.</p>
-        )}
-      </section>
-    </DashboardShell>
-  );
+  return <DashboardShell role="counselor" name={profile.full_name}>
+    <section className="portal-heading"><div><span>گزارش آزمون</span><h1>آزمون‌ها و کارنامهٔ هر دانش‌آموز</h1><p>دانش‌آموز را انتخاب کن تا پنج آزمون اخیر و وضعیت شرکت او را ببینی.</p></div></section>
+    <section className="portal-card exam-list-section">
+      <form className="counselor-exam-student-picker" method="get" action="/dashboard/counselor/exams">
+        <label>گزارش کدام دانش‌آموز؟
+          <select name="student" defaultValue={student?.student_id ?? ""} disabled={!student}>
+            {students.map(row=><option key={row.student_id} value={row.student_id}>{row.full_name || "دانش‌آموز نووا"}</option>)}
+          </select>
+        </label>
+        <button type="submit" className="button secondary" disabled={!student}>نمایش آزمون‌ها</button>
+      </form>
+      {!student ? <p className="portal-empty">هنوز دانش‌آموزی تحت مشاورهٔ شما نیست.</p>
+        : error ? <p className="portal-alert error" role="alert">گزارش آزمون‌های این دانش‌آموز دریافت نشد؛ دوباره تلاش کن.</p>
+        : <>
+          <div className="portal-card-title"><div><span>آزمون‌های برگزارشده</span><h2>پنج آزمون اخیر {student.full_name}</h2></div><span>صفحهٔ {toPersianDigits(page)}</span></div>
+          {history.length ? <div className="exam-list">
+            {history.map(exam=><article key={exam.exam_id}>
+              <div><h3>{exam.title}</h3><p className="exam-schedule">شروع: {formatExamSchedule(exam.starts_at)}</p>
+                <p>{exam.attempt_id ? "در این آزمون شرکت کرده است" : "در این آزمون شرکت نکرده است"}</p>
+              </div>
+              <div className="exam-list-actions">
+                {exam.attempt_id ? <><span>{exam.score === null ? "نمره در دسترس نیست" : `درصد: ${toPersianDigits(exam.score)}٪`}</span>
+                  <Link className="button secondary" href={`/dashboard/counselor/exams/${exam.exam_id}/report/${exam.attempt_id}`}>مشاهده و چاپ کارنامه</Link></>
+                  : <span>کارنامه‌ای ثبت نشده</span>}
+              </div>
+            </article>)}
+          </div> : <p className="portal-empty">آزمون برگزارشده‌ای برای این دانش‌آموز پیدا نشد.</p>}
+          {(page > 1 || hasNext) && <nav className="counselor-exam-pages" aria-label="صفحه‌های آزمون‌ها">
+            {page > 1 && <Link className="button secondary" href={hrefFor(page - 1)}>صفحهٔ قبل</Link>}
+            {hasNext && <Link className="button secondary" href={hrefFor(page + 1)}>صفحهٔ بعد</Link>}
+          </nav>}
+        </>}
+    </section>
+  </DashboardShell>;
 }
-

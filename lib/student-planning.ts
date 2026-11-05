@@ -27,6 +27,22 @@ export function summarizeItems(items:StudyItem[], completions:Map<string,StudyCo
  const plannedMinutes=items.reduce((n,i)=>n+i.duration_minutes,0);
  return {minutes,weightedMinutes,hours:weightedMinutes/60,plannedMinutes,plannedHours:plannedMinutes/60,tests,goal,checked,percent:items.length?Math.round(realized/items.length*100):null,count:items.length};
 }
+export function completedTestBreakdown(items: StudyItem[], completions: Map<string, StudyCompletion>) {
+ const groups = new Map<string, { subject: string; chapter: string | null; count: number }>();
+ for (const item of items) {
+  if (item.activity_type !== "practice_tests") continue;
+  const completion = completions.get(item.id);
+  if (!completion) continue;
+  const count = completion.completed_test_count ?? item.target_test_count ?? 0;
+  if (count <= 0) continue;
+  const chapter = item.chapter?.trim() || null;
+  const key = JSON.stringify([item.subject, chapter]);
+  const previous = groups.get(key);
+  groups.set(key, {subject:item.subject, chapter, count:(previous?.count??0)+count});
+ }
+ return [...groups.values()].sort((a,b)=>a.subject.localeCompare(b.subject,"fa") || (a.chapter??"").localeCompare(b.chapter??"","fa"));
+}
+
 export function overlapsWindow(start:string, plans:{id:string;week_start:string;student_id:string;status:string}[],studentId:string,excludeId='') {
  const end=dayIso(start,6);return plans.some(p=>p.id!==excludeId&&p.student_id===studentId&&['draft','published'].includes(p.status)&&p.week_start<=end&&dayIso(p.week_start,6)>=start);
 }

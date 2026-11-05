@@ -1,6 +1,7 @@
 import { requireProfile } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { RegistrationDirectory } from "@/components/dashboard/registration-directory";
+import { provinces } from "@/lib/registration";
 
 export default async function Registrations({
   searchParams,
@@ -58,7 +59,7 @@ export default async function Registrations({
         </p>
       )}
 
-      <RegistrationDirectory audience="admin" />
+      <RegistrationDirectory audience="admin" province={provinces.includes(params.province??"") ? params.province : undefined} />
     </DashboardShell>
   );
 }

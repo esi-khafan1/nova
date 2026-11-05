@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { loadRegistrationDirectory } from "@/lib/load-registration-directory";
-import { isPendingUnassignedReceipt, prioritizePendingUnassignedReceipts, registrationLabels } from "@/lib/registration";
+import { isPendingUnassignedReceipt, prioritizePendingUnassignedReceipts, provinces, registrationLabels } from "@/lib/registration";
 import { courseTypeLabel, courseDurationLabel } from "@/lib/courses";
 import { studyFieldLabels } from "@/lib/study-catalog";
 import {
@@ -22,8 +22,10 @@ import "@/app/registration.css";
 
 export async function RegistrationDirectory({
   audience,
+  province,
 }: {
   audience: "admin";
+  province?: string;
 }) {
   const { supabase } = await requireProfile(["admin"]);
   let rows: Awaited<ReturnType<typeof loadRegistrationDirectory>>;
@@ -41,8 +43,9 @@ export async function RegistrationDirectory({
     return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;
   }
 
-  const orderedRows = prioritizePendingUnassignedReceipts(rows);
-  const waitingForReview = rows.filter(isPendingUnassignedReceipt).length;
+  const filteredRows = province ? rows.filter(row => row.province === province) : rows;
+  const orderedRows = prioritizePendingUnassignedReceipts(filteredRows);
+  const waitingForReview = filteredRows.filter(isPendingUnassignedReceipt).length;
 
   return (
     <section className="portal-card registration-directory">
@@ -57,17 +60,26 @@ export async function RegistrationDirectory({
           دریافت خروجی CSV
         </a>
       </div>
-      <small className="registration-export-note">خروجی شامل لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
+      <small className="registration-export-note">خروجی شامل همهٔ استان‌ها و لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
 
+      <form className="registration-province-filter" method="get" action="/dashboard/admin/registrations">
+        <label>فیلتر استان
+          <select name="province" defaultValue={province ?? ""}>
+            <option value="">همهٔ استان‌ها</option>
+            {provinces.map(name=><option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+        <button className="button secondary" type="submit">نمایش دانش‌آموزان</button>
+      </form>
       <div className="registration-summary" aria-label="خلاصه دانش‌آموزها">
         <span>فیش‌های منتظر تأیید و بدون مشاور <strong>{waitingForReview.toLocaleString("fa-IR")}</strong></span>
-        <span>کل دانش‌آموزها <strong>{rows.length.toLocaleString("fa-IR")}</strong></span>
-        <span>بدون مشاور <strong>{rows.filter((row) => !row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
-        <span>دارای مشاور <strong>{rows.filter((row) => row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
+        <span>{province?"دانش‌آموزهای این استان":"کل دانش‌آموزها"} <strong>{filteredRows.length.toLocaleString("fa-IR")}</strong></span>
+        <span>بدون مشاور <strong>{filteredRows.filter((row) => !row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
+        <span>دارای مشاور <strong>{filteredRows.filter((row) => row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
       </div>
 
-      {!rows.length ? (
-        <p>هنوز دانش‌آموزی در این فهرست نیست.</p>
+      {!filteredRows.length ? (
+        <p>{province ? `دانش‌آموزی برای استان ${province} پیدا نشد.` : "هنوز دانش‌آموزی در این فهرست نیست."}</p>
       ) : (
         <div className="registration-table-wrap">
           <table>

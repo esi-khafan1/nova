@@ -16,6 +16,7 @@ export type ExamBox = {
   week_start: string;
   subject: string;
   chapter: string | null;
+  note?: string | null;
   duration_minutes: number;
   linked_exam_id: string | null;
   linked_exam_title: string | null;

@@ -160,7 +160,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
                     )} دقیقه ${activityLabel}`;
                     const lastText = isTest
                       ? `ــــــــ زده شده از ${testTarget.toLocaleString("fa-IR")} تست`
-                      : item.details || "";
+                      : item.activity_type === "exam" ? "" : item.details || "";
                     return (
                       <article className="print-activity" key={item.id}>
                         <div className="print-activity-title">

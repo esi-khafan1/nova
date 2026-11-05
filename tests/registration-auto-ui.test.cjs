@@ -30,6 +30,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
     if(name==='@/lib/registration')return {
       isPendingUnassignedReceipt:r=>r.registration_status==='pending'&&Boolean(r.receipt_path)&&!r.counselor_id,
       prioritizePendingUnassignedReceipts:all=>[...all.filter(r=>r.registration_status==='pending'&&r.receipt_path&&!r.counselor_id),...all.filter(r=>!(r.registration_status==='pending'&&r.receipt_path&&!r.counselor_id))],
+      provinces:['تهران','البرز'],
       registrationLabels:{incomplete:'ناقص',pending:'منتظر بررسی',active:'فعال'},
     };
     if(name==='@/lib/courses')return {courseTypeLabel:()=>'',courseDurationLabel:()=>''};

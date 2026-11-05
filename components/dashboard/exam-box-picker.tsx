@@ -88,6 +88,7 @@ export function ExamBoxPicker({
                     {box.chapter ? ` · ${box.chapter}` : ""}
                     {` · ${toPersianDigits(box.duration_minutes)} دقیقه`}
                   </span>
+                  {box.note && <small className="exam-box-counselor-note">راهنمای مشاور برای طراح: {box.note}</small>}
                   {isLocked && (
                     <small>به آزمون «{box.linked_exam_title || "طراح دیگری"}» متصل است.</small>
                   )}
