@@ -12,6 +12,7 @@ import {
   resumeStudent,
   changeStudentCounselor,
   changeStudentCourse,
+  continueStudentPlanServiceReview,
 } from "@/app/dashboard/admin/registrations/actions";
 import { ActivationSubmitButton } from "@/components/dashboard/activation-submit-button";
 import { AdminFinalCoursePicker } from "@/components/dashboard/admin-final-course-picker";
@@ -20,32 +21,50 @@ import { RequiredFieldsForm } from "@/components/dashboard/required-fields-form"
 import { RegistrationManagementButton } from "@/components/dashboard/registration-management-button";
 import "@/app/registration.css";
 
+type PlanServiceReview = {
+  student_id: string;
+  review_plan_count: number;
+};
+
 export async function RegistrationDirectory({
   audience,
   province,
+  reviewOnly = false,
 }: {
   audience: "admin";
   province?: string;
+  reviewOnly?: boolean;
 }) {
   const { supabase } = await requireProfile(["admin"]);
   let rows: Awaited<ReturnType<typeof loadRegistrationDirectory>>;
   let counselors: { id: string; full_name: string }[] = [];
+  let planServiceReviews: PlanServiceReview[] = [];
   try {
-    const [directory,counselorResult]=await Promise.all([
+    const [directory,counselorResult,reviewResult]=await Promise.all([
       loadRegistrationDirectory(supabase),
       supabase.from("profiles").select("id,full_name,counselor_profiles!inner(approval_status)")
         .eq("role","counselor").eq("counselor_profiles.approval_status","approved").order("full_name"),
+      supabase.rpc("admin_student_plan_service_reviews"),
     ]);
     rows=directory;
     if(counselorResult.error)return <p className="portal-alert error" role="alert">فهرست مشاورها دریافت نشد؛ برای جلوگیری از تخصیص ناقص، دوباره تلاش کن.</p>;
+    if(reviewResult.error)return <p className="portal-alert error" role="alert">فهرست بررسی ادامه یا توقف خدمات دریافت نشد؛ دوباره تلاش کن.</p>;
     counselors=(counselorResult.data??[]) as {id:string;full_name:string}[];
+    planServiceReviews=(reviewResult.data??[]) as PlanServiceReview[];
   } catch {
     return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;
   }
 
-  const filteredRows = province ? rows.filter(row => row.province === province) : rows;
+  const provinceRows = province ? rows.filter(row => row.province === province) : rows;
+  const reviewPlanCounts = new Map(planServiceReviews.map(review => [review.student_id, review.review_plan_count]));
+  const reviewRows = provinceRows.filter(row => row.registration_status === "active" && reviewPlanCounts.has(row.student_id));
+  const filteredRows = reviewOnly ? reviewRows : provinceRows;
   const orderedRows = prioritizePendingUnassignedReceipts(filteredRows);
   const waitingForReview = filteredRows.filter(isPendingUnassignedReceipt).length;
+  const reviewParams = new URLSearchParams();
+  if (province) reviewParams.set("province", province);
+  if (!reviewOnly) reviewParams.set("review", "continuation");
+  const reviewHref = `/dashboard/admin/registrations${reviewParams.size ? `?${reviewParams.toString()}` : ""}`;
 
   return (
     <section className="portal-card registration-directory">
@@ -56,9 +75,18 @@ export async function RegistrationDirectory({
             اول فیش‌های ارسال‌شدهٔ منتظر بررسی و بدون مشاور نمایش داده می‌شوند؛ سپس حساب‌های بدون فیش. ارسال فیش به‌تنهایی به معنی تأیید پرداخت نیست.
           </p>
         </div>
-        <a className="button button-secondary" href="/api/registrations/export">
-          دریافت خروجی CSV
-        </a>
+        <div className="registration-directory-actions">
+          <Link
+            className={`button ${reviewOnly || reviewRows.length ? "registration-review-button" : "button-secondary"}`}
+            href={reviewHref}
+            aria-pressed={reviewOnly}
+          >
+            نیازمند بررسی ادامه یا توقف خدمات ({reviewRows.length.toLocaleString("fa-IR")} نفر)
+          </Link>
+          <a className="button button-secondary" href="/api/registrations/export">
+            دریافت خروجی CSV
+          </a>
+        </div>
       </div>
       <small className="registration-export-note">خروجی شامل همهٔ استان‌ها و لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
 
@@ -79,7 +107,7 @@ export async function RegistrationDirectory({
       </div>
 
       {!filteredRows.length ? (
-        <p>{province ? `دانش‌آموزی برای استان ${province} پیدا نشد.` : "هنوز دانش‌آموزی در این فهرست نیست."}</p>
+        <p>{reviewOnly ? "دانش‌آموزی اکنون نیازمند بررسی ادامه یا توقف خدمات نیست." : province ? `دانش‌آموزی برای استان ${province} پیدا نشد.` : "هنوز دانش‌آموزی در این فهرست نیست."}</p>
       ) : (
         <div className="registration-table-wrap">
           <table>
@@ -103,6 +131,7 @@ export async function RegistrationDirectory({
                   : Boolean(row.has_account_details));
                 const canAssign = isActive && !row.counselor_id;
                 const priorityReceipt = isPendingUnassignedReceipt(row);
+                const reviewPlanCount = reviewPlanCounts.get(row.student_id);
 
                 return (
                   <tr key={row.student_id} className={priorityReceipt ? "registration-priority-row" : hasReceipt ? "registration-receipt-row" : "registration-ordinary-row"}>
@@ -257,6 +286,14 @@ export async function RegistrationDirectory({
                           <RegistrationManagementButton label="ثبت تغییر مشاور"
                             message="مشاور فعلی دسترسی خود را به این دانش‌آموز از دست می‌دهد و مشاور جدید سوابق را می‌بیند. تغییر انجام شود؟"
                             disabled={!counselors.some(c => c.id !== row.counselor_id)} />
+                        </RequiredFieldsForm>
+                      )}
+                      {reviewOnly && isActive && reviewPlanCount && (
+                        <RequiredFieldsForm action={continueStudentPlanServiceReview} className="registration-admin-control">
+                          <input name="student_id" type="hidden" value={row.student_id} />
+                          <input name="expected_plan_count" type="hidden" value={reviewPlanCount} />
+                          <RegistrationManagementButton label="ادامهٔ خدمات تأیید شد"
+                            message="ادامهٔ خدمات این دانش‌آموز برای این مرحله تأیید شود؟ دانش‌آموز فعال می‌ماند و در مضرب چهار بعدی دوباره بررسی می‌شود." />
                         </RequiredFieldsForm>
                       )}
                       {isActive && (

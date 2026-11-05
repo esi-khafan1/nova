@@ -20,6 +20,9 @@ export default async function Registrations({
         </div>
       </section>
 
+      {params.error === "plan-review" && (
+        <p className="portal-alert error" role="alert">ثبت ادامهٔ خدمات انجام نشد؛ ممکن است برنامهٔ تازه‌ای منتشر شده یا این بررسی قبلاً ثبت شده باشد. صفحه را تازه کن و دوباره بررسی کن.</p>
+      )}
       {["disable", "resume", "reassign"].includes(params.error ?? "") && (
         <p className="portal-alert error" role="alert">عملیات انجام نشد؛ ممکن است وضعیت دانش‌آموز یا مشاور از زمان بازشدن صفحه تغییر کرده باشد. صفحه را تازه کن و فقط مشاور تأییدشده انتخاب کن.</p>
       )}
@@ -33,12 +36,17 @@ export default async function Registrations({
         <p className="portal-alert error" role="alert">
           تخصیص انجام نشد؛ این دکمه فقط برای دانش‌آموزی است که از قبل فعال و بدون مشاور باشد. مشاور انتخابی هم باید تأییدشده باشد.
         </p>
-      ) : params.error && !["disable", "resume", "reassign", "course", "course-change"].includes(params.error) ? (
+      ) : params.error && !["disable", "resume", "reassign", "course", "course-change", "plan-review"].includes(params.error) ? (
         <p className="portal-alert error" role="alert">
           فعال‌سازی انجام نشد؛ اگر فیشی ارسال شده، باید همان فیش را بررسی کنی و وضعیت ثبت‌نام آمادهٔ تأیید باشد. بدون فیش، اطلاعات حساب و راه تماس تأییدشده لازم است. صفحه را تازه کن و دوباره بررسی کن.
         </p>
       ) : null}
 
+      {params.plan_review_continued && (
+        <p className="portal-alert success" role="status">
+          ادامهٔ خدمات دانش‌آموز برای این مرحله تأیید شد؛ در مضرب چهار بعدی دوباره در صف بررسی قرار می‌گیرد.
+        </p>
+      )}
       {params.assigned && (
         <p className="portal-alert success" role="status">
           مشاور به حسابِ از قبل فعال اختصاص داده شد.
@@ -59,7 +67,7 @@ export default async function Registrations({
         </p>
       )}
 
-      <RegistrationDirectory audience="admin" province={provinces.includes(params.province??"") ? params.province : undefined} />
+      <RegistrationDirectory audience="admin" province={provinces.includes(params.province??"") ? params.province : undefined} reviewOnly={params.review === "continuation"} />
     </DashboardShell>
   );
 }

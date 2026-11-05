@@ -178,6 +178,23 @@ export async function changeStudentCourse(fd: FormData) {
   redirect("/dashboard/admin/registrations?course_changed=1");
 }
 
+export async function continueStudentPlanServiceReview(fd: FormData) {
+  const { supabase } = await requireProfile(["admin"]);
+  const studentId = fd.get("student_id");
+  const planCount = Number(fd.get("expected_plan_count"));
+  if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
+      !Number.isInteger(planCount) || planCount < 4 || planCount % 4 !== 0) {
+    redirect("/dashboard/admin/registrations?review=continuation&error=plan-review");
+  }
+  const { error } = await supabase.rpc("admin_continue_student_plan_service_review", {
+    target_student_id: studentId,
+    expected_plan_count: planCount,
+  });
+  if (error) redirect("/dashboard/admin/registrations?review=continuation&error=plan-review");
+  revalidateRegistrationPaths();
+  redirect("/dashboard/admin/registrations?review=continuation&plan_review_continued=1");
+}
+
 export async function changeStudentCounselor(fd: FormData) {
   const { supabase } = await requireProfile(["admin"]);
   const studentId = fd.get("student_id");

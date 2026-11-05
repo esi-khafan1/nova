@@ -14,6 +14,10 @@
 .registration-directory .portal-card-title h2{margin:0 0 8px;font-size:20px}
 .registration-directory .portal-card-title p{margin:0;line-height:1.9;font-size:13px}
 .registration-directory .portal-card-title>.button{flex-shrink:0;min-height:44px;padding:10px 18px;font-size:13px;white-space:nowrap}
+.registration-directory-actions{display:flex;flex-shrink:0;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.registration-directory-actions .button{min-height:44px;padding:10px 16px;font-size:13px;white-space:normal;text-align:center}
+.registration-review-button{border-color:#e8a16e;background:#fff2e7;color:#923c0d}
+.registration-review-button:hover{background:#ffe7d3}
 .registration-export-note{font-size:11px;line-height:1.8}
 .registration-summary{display:flex;flex-wrap:wrap;gap:12px 28px;padding:18px 0;margin:16px 0;border-block:1px solid #d8e4f5;font-size:12px}
 .registration-summary span{display:flex;align-items:center;gap:10px}
