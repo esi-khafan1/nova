@@ -4,14 +4,14 @@ Only Base and Progress are advertised, in duration-first order for 1, 3, 6 and 1
 
 All amounts are **toman**, not rial:
 
-| Grade | Plan | Monthly original | Monthly discounted |
-| --- | --- | ---: | ---: |
-| 12 | Base | 3,200,000 | 2,290,000 |
-| 12 | Progress | 3,500,000 | 2,590,000 |
-| 10/11 | Base | 3,000,000 | 2,100,000 |
-| 10/11 | Progress | 3,400,000 | 2,390,000 |
+| Grade | Plan | Monthly price |
+| --- | --- | ---: |
+| 12 | Base | 3,200,000 |
+| 12 | Premium | 3,500,000 |
+| 9/10/11 | Base | 3,000,000 |
+| 9/10/11 | Premium | 3,400,000 |
 
-Both original and discounted totals multiply the monthly amount by the selected number of months. No additional long-term discount is invented. A shared price helper/component supplies the card, detail page and enrollment summary. Payments remain the existing private receipt/manual approval flow; this is not a new payment processor or a stored invoice-price feature.
+Totals multiply the monthly amount by the selected number of months, with no discount displayed. A shared price helper/component supplies the card, detail page and enrollment summary. Payments remain the existing private receipt/manual approval flow; this is not a new payment processor or a stored invoice-price feature.
 
 ## Preserve card sizes
 

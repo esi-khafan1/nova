@@ -79,11 +79,10 @@ export function coursesFor(grade: number, field: string | null): CourseSelection
 }
 
 /** Toman amounts; ninth grade uses the tenth/eleventh price band. */
-export function coursePrice(selection: CourseSelection): {original: number; discounted: number} | null {
+export function coursePrice(selection: CourseSelection): number | null {
  if (selection.course !== "base" && selection.course !== "progress") return null;
  const monthly = selection.grade === 12
-  ? {base: {original: 3200000, discounted: 2290000}, progress: {original: 3500000, discounted: 2590000}}
-  : {base: {original: 3000000, discounted: 2100000}, progress: {original: 3400000, discounted: 2390000}};
- const price=monthly[selection.course];
- return {original:price.original*selection.months,discounted:price.discounted*selection.months};
+  ? {base: 3200000, progress: 3500000}
+  : {base: 3000000, progress: 3400000};
+ return monthly[selection.course] * selection.months;
 }

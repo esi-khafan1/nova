@@ -5,12 +5,10 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
 }
-.course-price del { font-size: 12px; color: var(--mag-copy, inherit); }
 .course-price strong { font-size: 17px; white-space: nowrap; }
 .course-price strong span { font-size: 11px; font-weight: 500; }
-/* Compact two-line prices fit inside the original footer/button height. */
+/* Compact pricing fits inside the original footer/button height. */
 .course-plan-footer .course-price { min-width: 0; gap: 2px; line-height: 1.2; }
-.course-plan-footer .course-price del { font-size: 10px; font-size: clamp(10px, 3.8cqi, 12px); white-space: nowrap; }
 .course-plan-footer .course-price strong { font-size: 12px; font-size: clamp(11px, 4.6cqi, 16px); }
 .course-plan-footer .course-price strong span { font-size: 9px; }
 
@@ -19,4 +17,3 @@
 .registration-price-offer { margin-top: 24px; padding-top: 18px; border-top: 1px solid #bbd5f7; }
 .registration-price-offer .course-price { gap: 8px; }
 .registration-price-offer .course-price strong { font-size: 23px; }
-.course-offer-tag { font-weight: 800; color: #a34300; }
