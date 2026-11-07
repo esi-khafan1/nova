@@ -1,3 +1,4 @@
+import { loadCourseOffers } from "@/lib/load-course-offers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,6 +32,7 @@ export default async function CourseCatalogPage({
     </main>
   );
 
+  const offers = await loadCourseOffers();
   const gradeLabel = context.grade.toLocaleString("fa-IR");
   const fieldLabel = context.field ? studyFieldLabels[context.field] : null;
   const courseCount = availableCoursePlans.length * courseDurations.length;
@@ -61,7 +63,7 @@ export default async function CourseCatalogPage({
           <h2 id="course-catalog-title">پلن‌های پایه و پریمیوم نووا</h2>
           <span>{courseCount.toLocaleString("fa-IR")} انتخاب · {courseDurations.length.toLocaleString("fa-IR")} بازهٔ زمانی</span>
         </div>
-        <CourseCards grade={context.grade} field={context.field} />
+        <CourseCards grade={context.grade} field={context.field} offers={offers} />
       </section>
 
       <footer className="mag-footer">

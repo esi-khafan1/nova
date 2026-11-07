@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { defaultCourseOffers, type CourseOffers } from "@/lib/course-offers";
 import { CourseCards } from "@/components/registration/course-cards";
 import type { CourseContext, CourseField } from "@/lib/courses";
 
@@ -69,9 +70,11 @@ function FieldMark({ symbol }: { symbol: string }) {
 export function PathFinder({
   design = "sky",
   initialContext = null,
+  offers = defaultCourseOffers,
 }: {
   design?: PathFinderDesign;
   initialContext?: CourseContext | null;
+  offers?: CourseOffers | null;
 }) {
   const [step, setStep] = useState<Step>(initialContext ? "result" : "intro");
   const [grade, setGrade] = useState<CourseContext["grade"] | null>(initialContext?.grade ?? null);
@@ -192,7 +195,7 @@ export function PathFinder({
                 )}
                 {step === "result" && grade !== null && (grade === 9 || field) && (
                   <div className="nova-path-result">
-                    <CourseCards grade={grade} field={field} returnTo="landing" />
+                    <CourseCards grade={grade} field={field} returnTo="landing" offers={offers} />
                   </div>
                 )}
                 {step === "result" ? (

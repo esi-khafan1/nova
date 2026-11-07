@@ -5,7 +5,7 @@ for(const grade of [10,11,12])for(const field of ["mathematics","experimental_sc
  assert.deepEqual(courses.map(c=>c.course),["base","progress","base","progress","base","progress","base","progress"]);
  assert.deepEqual(courses.map(c=>c.months),[1,1,3,3,6,6,12,12]);
  for(const c of courses){
-  const monthly=grade===12?(c.course==="base"?3200000:3500000):(c.course==="base"?3000000:3400000);
+  const monthly=grade===12?(c.course==="base"?2700000:3000000):(c.course==="base"?2490000:2790000);
   assert.equal(coursePrice(c),monthly*c.months);
   assert.deepEqual(parseCourseSelection(Object.fromEntries(new URL(courseRegistrationPath(c),'https://example.com').searchParams)),c);
   assert.ok(courseDetailsPath(c).endsWith(`/${c.course}/${c.months}`));

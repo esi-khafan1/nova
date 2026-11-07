@@ -26,6 +26,7 @@ import "./landing-mobile.css";
 import "./landing-hero-refresh.css";
 import "./landing-motion.css";
 import { getPublishedNews } from "@/lib/news";
+import { loadCourseOffers } from "@/lib/load-course-offers";
 import { parseCourseContext } from "@/lib/courses";
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -37,7 +38,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const magDesign: MagazineDesign = "warm";
   const supabase = await createClient();
   // Independent reads must not pay four cross-region round trips in series.
-  const [{data}, {news,error:newsUnavailable}, {podcasts,error:podcastsUnavailable}, {user}] = await Promise.all([
+  const [{data}, {news,error:newsUnavailable}, {podcasts,error:podcastsUnavailable}, {user}, offers] = await Promise.all([
     supabase.from("resources")
       .select("id,title,summary,body,resource_type,subject,published_at")
       .eq("status", "published")
@@ -45,6 +46,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     getPublishedNews(3),
     getPublishedPodcasts(3),
     getRequestUser(),
+    loadCourseOffers(),
   ]);
   const latestResources = (data ?? []) as LatestResource[];
 
@@ -81,7 +83,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <WhyNova />
 
-      <PathFinder design={pathDesign} initialContext={initialCourseContext} />
+      <PathFinder design={pathDesign} initialContext={initialCourseContext} offers={offers} />
 
       <MagazineLatest resources={latestResources} design={magDesign} />
 

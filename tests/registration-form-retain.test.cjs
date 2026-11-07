@@ -29,6 +29,7 @@ for (const mode of ['profile', 'enrollment']) {
       },
       'react/jsx-runtime': { jsx, jsxs: jsx },
       './course-price': { CoursePrice: () => null },
+      '@/lib/course-offers': { defaultCourseOffers: [] },
       '@/app/dashboard/registration/actions': { submitRegistration: () => ({ error: 'فیلد نامعتبر است.' }) },
       '@/lib/courses': { courseTypeLabel: () => '', courseDurationLabel: () => '' },
       '@/lib/study-catalog': { studyFieldLabels: {} },

@@ -1,3 +1,4 @@
+import { loadCourseOffers } from "@/lib/load-course-offers";
 import { CoursePrice } from "@/components/registration/course-price";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -35,6 +36,7 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
   if (!course) notFound();
 
   const { selection, plan } = course;
+  const offers = await loadCourseOffers();
   const query = await searchParams;
   const gradeLabel = selection.grade.toLocaleString("fa-IR");
   const fieldLabel = selection.field ? studyFieldLabels[selection.field] : null;
@@ -85,12 +87,12 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
         <section className="course-detail-cta" aria-labelledby="course-detail-cta-title">
           <div>
             <h2 id="course-detail-cta-title">آماده‌ای مسیرت رو شروع کنی؟</h2>
-            <p>پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel}{fieldLabel && ` و رشتهٔ ${fieldLabel}`} ثبت می‌شود.</p>
+            <p>{offers?.[0].reservation ? "این دوره در حالت رزرو است. " : ""}پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel}{fieldLabel && ` و رشتهٔ ${fieldLabel}`} ثبت می‌شود.</p>
           </div>
-          <CoursePrice selection={selection}/>
-          <Link className="course-cta-button" href={registrationHref}>
-            انتخاب و ثبت‌نام در این دوره <span aria-hidden="true">←</span>
-          </Link>
+          {offers ? <CoursePrice selection={selection} offers={offers}/> : <p role="alert">اطلاعات دوره فعلاً در دسترس نیست؛ صفحه را دوباره باز کن.</p>}
+          {offers && <Link className="course-cta-button" href={registrationHref}>
+            {offers[0].reservation ? "رزرو این دوره" : "انتخاب و ثبت‌نام در این دوره"} <span aria-hidden="true">←</span>
+          </Link>}
         </section>
       </article>
     </main>

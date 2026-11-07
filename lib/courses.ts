@@ -1,3 +1,4 @@
+import { defaultCourseOffers, findCourseOffer, type CourseOffers } from "@/lib/course-offers";
 import { availableCoursePlans, getCoursePlan, legacyCourseTypes, type CoursePlanId, type LegacyCourseType } from "@/lib/course-plans";
 
 export const courseDurations = [
@@ -78,11 +79,8 @@ export function coursesFor(grade: number, field: string | null): CourseSelection
   })));
 }
 
-/** Toman amounts; ninth grade uses the tenth/eleventh price band. */
-export function coursePrice(selection: CourseSelection): number | null {
- if (selection.course !== "base" && selection.course !== "progress") return null;
- const monthly = selection.grade === 12
-  ? {base: 3200000, progress: 3500000}
-  : {base: 3000000, progress: 3400000};
- return monthly[selection.course] * selection.months;
+/** Toman amounts; period prices are always the configured monthly amount times the period. */
+export function coursePrice(selection: CourseSelection, offers: CourseOffers = defaultCourseOffers): number | null {
+ const monthly = findCourseOffer(offers,selection.grade,selection.course)?.monthly_price;
+ return monthly === undefined ? null : monthly * selection.months;
 }

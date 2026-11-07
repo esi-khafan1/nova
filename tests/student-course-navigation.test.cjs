@@ -20,6 +20,6 @@ test('student select-course links open the catalog, never the landing page', () 
   assert.match(picker, /<form className="course-context-picker" action="\/courses" method="get">/);
   assert.match(picker, /<select name="grade" value=\{grade\}.* required>/);
   assert.match(picker, /grade !== "9" && <label>.*<select name="field" defaultValue="" required>/);
-  assert.match(catalog, /<CourseCards grade=\{context\.grade\} field=\{context\.field\} \/>/);
+  assert.match(catalog, /<CourseCards grade=\{context\.grade\} field=\{context\.field\} offers=\{offers\} \/>/);
   assert.match(read('app/courses/[grade]/[field]/[plan]/[months]/page.tsx'), /const registrationHref = courseRegistrationPath\(selection\)/);
 });

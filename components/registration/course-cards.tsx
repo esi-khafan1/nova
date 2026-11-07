@@ -1,5 +1,6 @@
 "use client";
 
+import { defaultCourseOffers, type CourseOffers } from "@/lib/course-offers";
 import { CoursePrice } from "./course-price";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,10 +13,12 @@ export function CourseCards({
   grade,
   field,
   returnTo = "catalog",
+  offers = defaultCourseOffers,
 }: {
   grade: number;
   field: string | null;
   returnTo?: "catalog" | "landing";
+  offers?: CourseOffers | null;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const drag = useRef<{ pointerId: number; startX: number; lastX: number; moved: boolean } | null>(null);
@@ -113,6 +116,7 @@ export function CourseCards({
     suppressClick.current = false;
   }
 
+  if (!offers) return <p role="alert">اطلاعات دوره‌ها فعلاً در دسترس نیست؛ صفحه را دوباره باز کن.</p>;
   return (
     <section className="course-plan-carousel" aria-label={`${courses.length.toLocaleString("fa-IR")} دوره برای پایه ${grade.toLocaleString("fa-IR")} ${fieldLabel ? `و رشتهٔ ${fieldLabel}` : "بدون رشته"}`}>
       <div className="course-plan-viewport">
@@ -155,10 +159,11 @@ export function CourseCards({
                     <span className="course-plan-duration">{courseDurationLabel(course.months)}</span>
                   </div>
                   <h2>{plan.label}</h2>
+                  {!sizing && offers[0].reservation && <strong>رزرو دوره</strong>}
                   <p className="course-plan-tagline">{plan.tagline}</p>
                   <p className="mag-card-summary course-plan-summary">{plan.summary}</p>
                   <div className="mag-card-footer course-plan-footer">
-                    {!sizing && <CoursePrice selection={course}/>}
+                    {!sizing && <CoursePrice selection={course} offers={offers}/>}
                     <Link prefetch={sizing ? false : undefined} className="course-plan-details" href={courseDetailsPath(course, returnTo === "landing" ? "landing" : undefined)}>
                       جزئیات بیشتر <span aria-hidden="true">←</span>
                     </Link>
