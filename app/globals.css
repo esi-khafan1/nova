@@ -8758,6 +8758,8 @@ main .feature-card:before {
   gap: 0.3mm;
   min-height: 0;
 }
+/* Retain the approved two-slot height while leaving unused slots blank. */
+.print-routine-entry--empty { visibility: hidden; }
 .print-routine-entry--second {
   border-top: 1px solid #e5c8ad;
   padding-top: 1mm;

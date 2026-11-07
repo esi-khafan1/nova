@@ -43,6 +43,22 @@ const densePlan = {
   })),
 };
 
+// Empty slots stay blank; if only the second stored routine is filled, it
+// prints in the first slot. Include a details-only routine as non-empty.
+const mixedPlan = {
+  ...densePlan,
+  id: "plan-mixed-routines",
+  routines: [
+    {dayOfWeek:0,subject:"ریاضی",details:"تمرین",secondSubject:"فارسی",secondDetails:"مرور"},
+    {dayOfWeek:1,subject:"ریاضی",details:"تمرین",secondSubject:"",secondDetails:""},
+    {dayOfWeek:2,subject:"",details:"",secondSubject:"",secondDetails:""},
+    {dayOfWeek:3,subject:"",details:"",secondSubject:"فارسی",secondDetails:"مرور"},
+    {dayOfWeek:4,subject:"  ",details:"  ",secondSubject:"",secondDetails:"فقط توضیح"},
+    {dayOfWeek:5,subject:"ریاضی",details:"",secondSubject:"",secondDetails:""},
+    {dayOfWeek:6,subject:"",details:"",secondSubject:"",secondDetails:""},
+  ],
+};
+
 const propsFor = (plan) => ({
   plan,
   student: { full_name: "دانش\u200cآموز دهم", grade: 10, study_field: null },
@@ -130,7 +146,7 @@ const globalChrome = `<header class="site-header">سربرگ سایت</header>
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/tmp/chromium", args: ["--no-sandbox", "--disable-dev-shm-usage"] });
   try {
-    for (const [name, plan] of [["sparse", sparsePlan], ["dense", densePlan]]) {
+    for (const [name, plan] of [["sparse", sparsePlan], ["dense", densePlan], ["mixed", mixedPlan]]) {
       const html = await renderPlan(plan);
       const page = await browser.newPage({ viewport: { width: 1123, height: 794 }, deviceScaleFactor: 1 });
       await page.route("**/*", async (route) => {
@@ -199,6 +215,10 @@ const globalChrome = `<header class="site-header">سربرگ سایت</header>
           columns: getComputedStyle(grid).gridTemplateColumns.split(" ").length,
           dayColumns: document.querySelectorAll(".print-day-column").length,
           routines: document.querySelectorAll(".print-routine").length,
+          routineSlots: [...document.querySelectorAll(".print-routine")].map(box => [...box.querySelectorAll(".print-routine-entry")].map(entry => ({
+            visible:getComputedStyle(entry).visibility === "visible",
+            text:entry.textContent.trim(), hidden:entry.getAttribute("aria-hidden"),
+          }))),
           emptyBoxes: document.querySelectorAll(".print-activity-empty").length,
           headings: [...document.querySelectorAll(".print-day-column > header h2")].map((el) => el.textContent.trim()),
           subjectBase: q(".print-activity:not(.print-routine) .print-activity-subject")?.dataset.basePt,
@@ -226,6 +246,16 @@ const globalChrome = `<header class="site-header">سربرگ سایت</header>
       assert.equal(checks.columns, 7, `${name}: seven day columns`);
       assert.equal(checks.dayColumns, 7);
       assert.equal(checks.routines, 7, `${name}: one routine box per day`);
+      if (name === "mixed") {
+        assert.deepEqual(checks.routineSlots.map(day=>day.map(slot=>slot.visible)),[
+          [true,true],[true,false],[false,false],[true,false],[true,false],[true,false],[false,false],
+        ],"blank slots are invisible and a lone second routine is at the top");
+        assert.match(checks.routineSlots[3][0].text,/روتین ۱.*فارسی.*مرور/);
+        assert.match(checks.routineSlots[4][0].text,/روتین ۱.*فقط توضیح/);
+        assert.equal(checks.routineSlots[2][0].hidden,"true");
+        assert.equal(checks.routineSlots[2][1].hidden,"true");
+      }
+
       assert.deepEqual(checks.headings, weekDays);
       assert.equal(checks.subjectBase, "10.5");
       assert.equal(checks.chapterBase, "8.5");

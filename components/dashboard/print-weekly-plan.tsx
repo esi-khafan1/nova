@@ -148,6 +148,12 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
             );
             const dayDate = addDays(weekStart, dayIndex);
             const weekday = formatPersianWeekday(dayDate);
+            // Printing is compacted independently of storage: a lone second
+            // routine is shown in the first slot without changing the plan.
+            const dailyRoutines = [
+              {subject: routines[dayIndex].subject, details: routines[dayIndex].details},
+              {subject: routines[dayIndex].secondSubject, details: routines[dayIndex].secondDetails},
+            ].filter(routine => routine.subject.trim() || routine.details.trim());
             return (
               <section className="print-day-column" key={dayIndex}>
                 <header>
@@ -198,11 +204,9 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                     />
                   ))}
                   <article className="print-activity print-routine" key={`routine-${dayIndex}`} data-weekday={weekday}>
-                    {[
-                      {subject: routines[dayIndex].subject, details: routines[dayIndex].details},
-                      {subject: routines[dayIndex].secondSubject, details: routines[dayIndex].secondDetails},
-                    ].map((routine, index) => (
-                      <div className={`print-routine-entry${index ? " print-routine-entry--second" : ""}`} key={index}>
+                    {Array.from({length: 2}, (_, index) => {
+                      const routine = dailyRoutines[index] ?? {subject: "", details: ""};
+                      return <div className={`print-routine-entry${index ? " print-routine-entry--second" : ""}${dailyRoutines[index] ? "" : " print-routine-entry--empty"}`} key={index} aria-hidden={dailyRoutines[index] ? undefined : true}>
                         <div className="print-routine-heading">
                           <span aria-hidden="true">□</span>
                           <FitText basePt={9} className="print-activity-subject">روتین {index === 0 ? "۱" : "۲"}</FitText>
@@ -213,8 +217,8 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                         <FitText basePt={7} className="print-activity-last">
                           {routine.details || "توضیحی ثبت نشده"}
                         </FitText>
-                      </div>
-                    ))}
+                      </div>;
+                    })}
                   </article>
                 </div>
               </section>
