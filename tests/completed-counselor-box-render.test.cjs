@@ -13,7 +13,7 @@ const {renderToStaticMarkup} = require('react-dom/server');
     plugins:[{name:'mock-only-form-dependencies',setup(build){
       build.onResolve({filter:/^@\/(app\/dashboard\/actions|components\/dashboard\/(persian-date-picker|counselor-student-study-editor))$/},args=>({path:args.path,namespace:'mock'}));
       build.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path.includes('actions')
-        ? 'export const saveWeeklyPlan="/save";'
+        ? 'export const saveWeeklyPlan="/save"; export const saveCurrentWeeklyPlan=async()=>null;'
         : args.path.includes('persian-date-picker')
           ? 'export const PersianDatePicker=()=>null;'
           : 'export const CounselorStudentStudyEditor=()=>null;',loader:'js'}));

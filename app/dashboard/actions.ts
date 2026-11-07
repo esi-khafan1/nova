@@ -71,7 +71,7 @@ type WeeklyPlanItemInput = {
   examYear?:number|null;
 };
 
-export async function saveWeeklyPlan(fd: FormData) {
+async function saveWeeklyPlanCore(fd: FormData) {
   const s = await createClient();
   const studentId = clean(fd.get("student_id"), 50);
   const planId = clean(fd.get("plan_id"), 50);
@@ -254,7 +254,20 @@ export async function saveWeeklyPlan(fd: FormData) {
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student");
-  redirect(planUrl("saved", status === "published" ? "published" : "draft", String(savedId ?? planId)));
+  return {savedId:String(savedId ?? planId),url:planUrl("saved", status === "published" ? "published" : "draft", String(savedId ?? planId))};
+}
+
+// Keep the redirect path for first saves and changed selections.
+export async function saveWeeklyPlan(fd: FormData) {
+  const result = await saveWeeklyPlanCore(fd);
+  redirect(result.url);
+}
+
+// For a repeated save of the currently displayed plan, Next can stream the
+// revalidated page with the action result, avoiding a second navigation GET.
+export async function saveCurrentWeeklyPlan(_previous: {savedId:string;revision:string}|null, fd: FormData) {
+  const result = await saveWeeklyPlanCore(fd);
+  return {savedId:result.savedId,revision:crypto.randomUUID()};
 }
 
 export async function togglePlanItemCompletion(

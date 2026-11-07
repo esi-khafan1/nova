@@ -1,11 +1,11 @@
 "use client";
 
 import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
-import { useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
 import { formatPersianFullDate, formatPersianWeekRange, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
-import { saveWeeklyPlan } from "@/app/dashboard/actions";
+import { saveCurrentWeeklyPlan, saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import {
   activityTypes,
@@ -154,6 +154,7 @@ export function WeeklyPlanBuilder({
   initialStudentId,
   initialPlanId,
   initialWeekStart,
+  initialSaved,
   completedItemIds,
   numberingPlans = [],
   recentPlans = [],
@@ -165,6 +166,7 @@ export function WeeklyPlanBuilder({
   initialStudentId?: string;
   initialPlanId?: string;
   initialWeekStart?: string;
+  initialSaved?: string;
   completedItemIds: string[];
   numberingPlans?: NumberablePlan[];
   recentPlans?: RecentCounselorPlan[];
@@ -194,6 +196,34 @@ export function WeeklyPlanBuilder({
   ]);
 
   const student = students[studentIndex] ?? students[0];
+  const [saveResult, saveCurrentAction, savingCurrent] = useActionState(saveCurrentWeeklyPlan, null);
+  const lastAppliedSave = useRef<string | null>(null);
+  useEffect(() => {
+    if (!saveResult || lastAppliedSave.current === saveResult.revision) return;
+    const saved = plans.find(plan => plan.id === saveResult.savedId);
+    if (!saved) return; // Wait for the freshly revalidated authoritative plan.
+    lastAppliedSave.current = saveResult.revision;
+    // Do not overwrite a different student/week the counselor selected while
+    // the request was in flight.
+    if (saved.student_id !== student?.student_id || saved.week_start !== weekStart) return;
+    setPlanId(saved.id);
+    setPlanStatus(saved.status);
+    setTitle(saved.title);
+    setNotes(saved.notes ?? "");
+    setRoutines(planRoutines(saved));
+    setItems(planItems(saved, new Set(completedItemIds)));
+  }, [saveResult, plans, completedItemIds, student?.student_id, weekStart]);
+  const currentUrlPlan = Boolean(initialSaved === "published" && planStatus === "published" && planId && planId===initialPlanId && student?.student_id===initialStudentId && weekStart===initialWeekStart);
+  function submitCurrentPlan(event: FormEvent<HTMLFormElement>) {
+    if (!currentUrlPlan) return;
+    // React automatically resets a form after a successful action. Avoid that:
+    // the counselor may have switched students or edited a field during save.
+    event.preventDefault();
+    if (savingCurrent || !event.currentTarget.reportValidity()) return;
+    const fd = new FormData(event.currentTarget);
+    fd.set("status", "published"); // This fast path only has the publish button.
+    startTransition(() => saveCurrentAction(fd));
+  }
   const numbers = planNumbers(numberingPlans.length ? numberingPlans : plans);
   const studentRecentPlans = recentPlans.filter(plan => plan.student_id === student?.student_id).slice(0, 8);
   const selectedNumber = planId ? numbers.get(planId) ?? 1 : nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart);
@@ -321,7 +351,7 @@ export function WeeklyPlanBuilder({
   return (
     <>
     <CounselorStudentStudyEditor key={student.student_id} student={student} />
-    <form action={saveWeeklyPlan} className="weekly-builder">
+    <form action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} className="weekly-builder">
       <section className="portal-card plan-basics">
         <div className="portal-card-title">
           <div>
@@ -818,7 +848,7 @@ export function WeeklyPlanBuilder({
               className="button button-secondary"
               name="status"
               value="draft"
-              disabled={periodEnded || hasOverlap || !editableItems.length}
+              disabled={savingCurrent || periodEnded || hasOverlap || !editableItems.length}
             >
               ذخیره پیش‌نویس
             </button>
@@ -827,7 +857,7 @@ export function WeeklyPlanBuilder({
             className="button"
             name="status"
             value="published"
-            disabled={periodEnded || hasOverlap || (!editableItems.length && !planId)}
+            disabled={savingCurrent || periodEnded || hasOverlap || (!editableItems.length && !planId)}
           >
             {planStatus === "published"
               ? "انتشار دوباره تغییرات"

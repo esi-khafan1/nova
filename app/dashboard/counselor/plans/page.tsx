@@ -143,6 +143,7 @@ export default async function CounselorPlansPage({
         initialStudentId={params.student}
         initialPlanId={params.plan}
         initialWeekStart={params.week_start}
+        initialSaved={params.saved}
         completedItemIds={completedItemIds}
       />
     </DashboardShell>

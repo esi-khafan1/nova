@@ -1,0 +1,35 @@
+const assert=require('node:assert/strict'),esbuild=require('esbuild'),Module=require('node:module'),path=require('node:path'),{JSDOM}=require('jsdom'),React=require('react'),{act}=React;
+const dom=new JSDOM('<div id="root"></div>',{url:'https://nova.test/dashboard/counselor/plans?saved=published',pretendToBeVisual:true});global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;global.FormData=dom.window.FormData;global.IS_REACT_ACT_ENVIRONMENT=true;
+const {createRoot}=require('react-dom/client');
+(async()=>{
+ const built=await esbuild.build({entryPoints:['components/dashboard/weekly-plan-builder.tsx'],bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,external:['react','react/jsx-runtime'],plugins:[{name:'mock',setup(b){b.onResolve({filter:/^(next\/link|@\/(app\/dashboard\/actions|components\/dashboard\/(persian-date-picker|counselor-student-study-editor)))$/},a=>({path:a.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},a=>({loader:'js',contents:a.path==='next/link'?'import React from "react";export default function Link({href,children}){return React.createElement("a",{href},children)}':a.path.includes('actions')?'export const saveWeeklyPlan="/redirect";export async function saveCurrentWeeklyPlan(prev,fd){return globalThis.__testPlanSave(fd)}':a.path.includes('persian-date-picker')?'export const PersianDatePicker=()=>null;':'export const CounselorStudentStudyEditor=()=>null;'}));}}]});
+ const filename=path.join(process.cwd(),'virtual-inline-plan.cjs'),mod=new Module(filename,module);mod.filename=filename;mod.paths=Module._nodeModulePaths(process.cwd());mod._compile(built.outputFiles[0].text,filename);const {WeeklyPlanBuilder}=mod.exports;
+ const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),value=t=>parts.find(x=>x.type===t).value;const today=`${value('year')}-${value('month')}-${value('day')}`;
+ const student='student-a',other='student-b',id='plan-1';
+ const item=(itemId,details='')=>({id:itemId,day_of_week:0,duration_minutes:60,subject:'ریاضی',chapter:null,activity_type:'lesson',target_test_count:null,details,sort_order:0,source_grade:10,preparation_track:'konkur',recommended_publisher:null});
+ const plan=(itemId,details='')=>({id,student_id:student,week_start:today,title:'برنامه',notes:null,status:'published',weekly_plan_items:[item(itemId,details)]});
+ const root=createRoot(document.getElementById('root'));let current=plan('item-old'),submitted=[];
+ const common={students:[{student_id:student,full_name:'الف',grade:10,study_field:'humanities'},{student_id:other,full_name:'ب',grade:10,study_field:'humanities'}],initialStudentId:student,initialPlanId:id,initialWeekStart:today,initialSaved:'published',completedItemIds:[],counselorId:'counselor'};
+ const render=()=>root.render(React.createElement(WeeklyPlanBuilder,{...common,plans:[current],numberingPlans:[current],overlapPlans:[current],recentPlans:[]}));
+ global.__testPlanSave=async fd=>{submitted.push({plan:fd.get('plan_id'),status:fd.get('status'),items:JSON.parse(fd.get('items'))});current=plan(`item-new-${submitted.length}`,`saved-${submitted.length}`);render();return {savedId:id,revision:`r-${submitted.length}`}};
+ await act(async()=>render());
+ for(let n=1;n<=2;n++){
+  const button=document.querySelector('button[name="status"][value="published"]');assert.equal(button.disabled,false);
+  await act(async()=>{document.querySelector('.weekly-builder').requestSubmit(button);await new Promise(r=>setTimeout(r,10))});
+  assert.equal(submitted.length,n);assert.equal(submitted[n-1].plan,id);assert.equal(submitted[n-1].status,'published');assert.equal(submitted[n-1].items[0].id,n===1?'item-old':`item-new-${n-1}`);
+  assert.equal(document.querySelector('input[name="plan_id"]').value,id);assert.ok(document.body.textContent.includes('انتشار دوباره تغییرات'));
+  const details=[...document.querySelectorAll('input')].find(el=>el.placeholder==='مثلاً ۳۰ تست زمان‌دار و تحلیل پاسخ‌ها');assert.equal(details.value,`saved-${n}`,'fresh authoritative data replaces previous client data');
+ }
+ let release;
+ global.__testPlanSave=()=>new Promise(resolve=>{release=resolve});
+ await act(async()=>{document.querySelector('.weekly-builder').requestSubmit(document.querySelector('button[name="status"][value="published"]'));});
+ assert.equal(document.querySelector('button[name="status"][value="published"]').disabled,true,'duplicate submission is blocked while the action is pending');
+ const select=document.querySelector('select[name="student_id"]');await act(async()=>{select.value=other;select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ await act(async()=>{current=plan('item-race','new server state');render();release({savedId:id,revision:'race'});await new Promise(r=>setTimeout(r,10));});
+ assert.equal(document.querySelector('select[name="student_id"]').value,other,'a completed save cannot overwrite another student selected while it was in flight');
+ assert.equal(document.querySelector('input[name="plan_id"]').value,'');
+ assert.equal(document.querySelector('.weekly-builder').getAttribute('action'),'/redirect','changed student must use the normal redirect action');
+ await act(async()=>root.render(React.createElement(WeeklyPlanBuilder,{...common,key:'draft',initialSaved:'draft',plans:[{...current,status:'draft'}],numberingPlans:[current],overlapPlans:[current],recentPlans:[]})));
+ assert.equal(document.querySelector('.weekly-builder').getAttribute('action'),'/redirect','draft saves keep the redirect so a later publish updates URL and feedback');
+ await act(async()=>root.unmount());dom.window.close();delete global.__testPlanSave;console.log('PASS: repeated saves use one inline action, refresh authoritative item IDs, and changed student falls back to redirect');
+})().catch(e=>{console.error(e);process.exitCode=1;dom.window.close()});

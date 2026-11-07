@@ -20,7 +20,7 @@ const client = {
 const moduleStub = {exports:{}};
 const script = ts.transpileModule(readFileSync('app/dashboard/actions.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 vm.runInNewContext(script,{
-  module:moduleStub,exports:moduleStub.exports,URLSearchParams,FormData,Intl,Date,Number,String,JSON,Set,RegExp,
+  module:moduleStub,exports:moduleStub.exports,URLSearchParams,FormData,Intl,Date,Number,String,JSON,Set,RegExp,crypto:{randomUUID:()=>"test-revision"},
   require(name){
     if(name==='next/cache')return {revalidatePath:()=>{}};
     if(name==='next/navigation')return {redirect:url=>{throw new Error(url)}};
@@ -61,6 +61,11 @@ const checkUrl=(err,kind)=>{
   assert.equal(planCalls,1);
   await assert.rejects(moduleStub.exports.saveWeeklyPlan(build()),error=>checkUrl(error,'saved'));
   assert.equal(planCalls,2);
+  const result=await moduleStub.exports.saveCurrentWeeklyPlan(null,build());
+  assert.equal(result.savedId,plan);assert.equal(result.revision,'test-revision');assert.equal(planCalls,3);
+  rpcFailure=true;
+  await assert.rejects(moduleStub.exports.saveCurrentWeeklyPlan(null,build()),error=>checkUrl(error,'error'));
+  assert.equal(planCalls,4);
   const page=readFileSync('app/dashboard/counselor/plans/page.tsx','utf8');
   assert.match(page,/initialStudentId=\{params.student\}/);
   assert.match(page,/initialPlanId=\{params.plan\}/);
