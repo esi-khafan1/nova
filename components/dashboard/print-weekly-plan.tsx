@@ -23,6 +23,8 @@ export type PrintablePlanRoutine = {
   dayOfWeek?: number | string | null;
   subject?: string | null;
   details?: string | null;
+  secondSubject?: string | null;
+  secondDetails?: string | null;
 };
 
 export type PrintablePlan = {
@@ -58,6 +60,8 @@ function normalizeRoutines(routines: PrintablePlan["routines"]) {
     return {
       subject: typeof match?.subject === "string" ? match.subject : "",
       details: typeof match?.details === "string" ? match.details : "",
+      secondSubject: typeof match?.secondSubject === "string" ? match.secondSubject : "",
+      secondDetails: typeof match?.secondDetails === "string" ? match.secondDetails : "",
     };
   });
 }
@@ -194,20 +198,23 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                     />
                   ))}
                   <article className="print-activity print-routine" key={`routine-${dayIndex}`} data-weekday={weekday}>
-                    <div className="print-activity-title">
-                      <span aria-hidden="true">□</span>
-                      <FitText basePt={9} className="print-activity-subject">
-                        روتین
-                      </FitText>
-                    </div>
-                    <FitText basePt={7.5} className="print-activity-chapter">
-                      {routines[dayIndex].subject
-                        ? `درس: ${routines[dayIndex].subject}`
-                        : "درس: انتخاب نشده"}
-                    </FitText>
-                    <FitText basePt={7} className="print-activity-last">
-                      {routines[dayIndex].details || "توضیحی ثبت نشده"}
-                    </FitText>
+                    {[
+                      {subject: routines[dayIndex].subject, details: routines[dayIndex].details},
+                      {subject: routines[dayIndex].secondSubject, details: routines[dayIndex].secondDetails},
+                    ].map((routine, index) => (
+                      <div className={`print-routine-entry${index ? " print-routine-entry--second" : ""}`} key={index}>
+                        <div className="print-routine-heading">
+                          <span aria-hidden="true">□</span>
+                          <FitText basePt={9} className="print-activity-subject">روتین {index === 0 ? "۱" : "۲"}</FitText>
+                        </div>
+                        <FitText basePt={7.5} className="print-activity-chapter">
+                          {routine.subject ? `درس: ${routine.subject}` : "درس: انتخاب نشده"}
+                        </FitText>
+                        <FitText basePt={7} className="print-activity-last">
+                          {routine.details || "توضیحی ثبت نشده"}
+                        </FitText>
+                      </div>
+                    ))}
                   </article>
                 </div>
               </section>

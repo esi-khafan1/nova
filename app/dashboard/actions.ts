@@ -54,6 +54,8 @@ type WeeklyPlanRoutineInput = {
   dayOfWeek: number;
   subject: string;
   details: string;
+  secondSubject?: string;
+  secondDetails?: string;
 };
 
 type WeeklyPlanItemInput = {
@@ -148,6 +150,8 @@ async function saveWeeklyPlanCore(fd: FormData) {
       dayOfWeek: Number(value?.dayOfWeek),
       subject: clean(String(value?.subject ?? "") as FormDataEntryValue, 100),
       details: clean(String(value?.details ?? "") as FormDataEntryValue, 500),
+      ...(value && Object.hasOwn(value, "secondSubject") ? {secondSubject: clean(String(value.secondSubject ?? ""), 100)} : {}),
+      ...(value && Object.hasOwn(value, "secondDetails") ? {secondDetails: clean(String(value.secondDetails ?? ""), 500)} : {}),
     };
   });
   const routineDays = new Set(safeRoutines.map((routine) => routine.dayOfWeek));
@@ -234,11 +238,11 @@ async function saveWeeklyPlanCore(fd: FormData) {
     // the owner's own routines are eligible for this existing-plan validation.
     const savedRoutines:unknown=existingPlan?.counselor_id===user.id?existingPlan.routines:null;
     savedRoutineSubjects=(Array.isArray(savedRoutines)?savedRoutines:[])
-      .map((routine)=>typeof routine?.subject==="string"?routine.subject.trim():"")
+      .flatMap((routine)=>[routine?.subject, routine?.secondSubject].map(subject=>typeof subject==="string"?subject.trim():""))
       .filter(Boolean);
   }
   const allowedRoutineSubjects=new Set([...routineSubjectOptions(student.study_field,student.grade),...savedRoutineSubjects]);
-  if(safeRoutines.some(routine=>routine.subject&&!allowedRoutineSubjects.has(routine.subject)))planError("routines");
+  if(safeRoutines.some(routine=>[routine.subject,routine.secondSubject].some(subject=>subject&&!allowedRoutineSubjects.has(subject))))planError("routines");
   const { data: savedId, error } = await s.rpc("save_weekly_plan_v9", {
     target_plan_id: planId || null,
     target_student_id: studentId,

@@ -69,3 +69,7 @@
 .counselor-portal .exam-extension .persian-calendar-days button.today{box-shadow:inset 0 0 0 2px #176bce}
 .counselor-portal .exam-extension .persian-calendar-days button.selected{color:#fff;border-color:#176bce;background:#176bce;box-shadow:0 5px 12px rgba(23,107,206,.2)}
 .counselor-portal .exam-extension .persian-calendar-legend,.counselor-portal .exam-extension .persian-calendar>p{color:#496582}
+/* Two independent daily routines, with related fields aligned on larger screens. */
+.plan-routine-entry + .plan-routine-entry{border-top:1px solid #e9c5a7;margin-top:12px;padding-top:12px}
+.plan-routine-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+@media(max-width:600px){.plan-routine-fields{grid-template-columns:1fr;gap:0}}

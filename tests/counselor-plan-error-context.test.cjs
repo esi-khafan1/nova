@@ -6,6 +6,7 @@ const student = '11111111-1111-4111-8111-111111111111';
 const plan = '22222222-2222-4222-8222-222222222222';
 let rpcFailure = true;
 let planCalls = 0;
+let savedRoutines;
 const client = {
   auth: {getUser: async () => ({data:{user:{id:'33333333-3333-4333-8333-333333333333'}}})},
   rpc: async (name,args) => {
@@ -13,6 +14,7 @@ const client = {
     assert.equal(name,'save_weekly_plan_v9');
     assert.equal(args.target_plan_id,plan);
     planCalls++;
+    savedRoutines=args.target_routines;
     return rpcFailure ? {error:{code:'PZ001'}} : {data:plan,error:null};
   },
   from(name) {assert.equal(name,'weekly_plans');return {select:()=>({eq:()=>({maybeSingle:async()=>({data:{counselor_id:'33333333-3333-4333-8333-333333333333',routines:[]},error:null})})})};},
@@ -27,7 +29,7 @@ vm.runInNewContext(script,{
     if(name==='@/lib/supabase/server')return {createClient:async()=>client};
     if(name==='@/lib/auth')return {requireProfile:()=>{throw Error('not needed')}};
     if(name==='@/lib/study-catalog')return {activityTypes:[{value:'lesson'}]};
-    if(name==='@/lib/planning-curriculum')return {curriculumBooks:()=>[],routineSubjectOptions:()=>[]};
+    if(name==='@/lib/planning-curriculum')return {curriculumBooks:()=>[],routineSubjectOptions:()=>["ریاضی"]};
     if(name==='@/lib/makeup-plan-box')return {makeupActivity:'makeup',makeupTitle:'باکس جبرانی'};
     if(name==='@/lib/external-simulation')return {externalSimulationActivity:'external_simulation_exam',simulationProvider:()=>null};
     if(name==='@/lib/recommended-publishers')return {canRecommendPublisher:()=>false,cleanRecommendedPublisher:()=>null};
@@ -66,6 +68,16 @@ const checkUrl=(err,kind)=>{
   rpcFailure=true;
   await assert.rejects(moduleStub.exports.saveCurrentWeeklyPlan(null,build()),error=>checkUrl(error,'error'));
   assert.equal(planCalls,4);
+  rpcFailure=false;
+  const two=Array.from({length:7},(_,dayOfWeek)=>({dayOfWeek,subject:'',details:'',secondSubject:dayOfWeek===0?'ریاضی':'',secondDetails:dayOfWeek===0?'مرور':''}));
+  await moduleStub.exports.saveCurrentWeeklyPlan(null,build({routines:JSON.stringify(two)}));
+  assert.equal(savedRoutines[0].secondSubject,'ریاضی');assert.equal(savedRoutines[0].secondDetails,'مرور');
+  const before=planCalls;two[0].secondSubject='درس نامعتبر';
+  await assert.rejects(moduleStub.exports.saveCurrentWeeklyPlan(null,build({routines:JSON.stringify(two)})),e=>new URL(e.message,'https://nova.example').searchParams.get('error')==='routines');
+  assert.equal(planCalls,before,'second subject must be validated before the save RPC');
+  const legacy=Array.from({length:7},(_,dayOfWeek)=>({dayOfWeek,subject:'',details:''}));
+  await moduleStub.exports.saveCurrentWeeklyPlan(null,build({routines:JSON.stringify(legacy)}));
+  assert.equal(Object.hasOwn(savedRoutines[0],'secondSubject'),false,'older clients do not overwrite a saved second routine');
   const page=readFileSync('app/dashboard/counselor/plans/page.tsx','utf8');
   assert.match(page,/initialStudentId=\{params.student\}/);
   assert.match(page,/initialPlanId=\{params.plan\}/);

@@ -52,6 +52,8 @@ export type PlanRoutine = {
   dayOfWeek: number;
   subject: string;
   details: string;
+  secondSubject?: string;
+  secondDetails?: string;
 };
 
 export type CounselorWeeklyPlan = {
@@ -102,7 +104,7 @@ const newItem = (
 const newStudentItem=(day:number,key:string|undefined,grade:number|null|undefined):PlanItem=>({...newItem(day,key),preparationTrack:grade===9?"final_exam":"konkur"});
 
 const defaultRoutines = (): PlanRoutine[] =>
-  weekDays.map((_, dayOfWeek) => ({ dayOfWeek, subject: "", details: "" }));
+  weekDays.map((_, dayOfWeek) => ({ dayOfWeek, subject: "", details: "", secondSubject: "", secondDetails: "" }));
 
 const planRoutines = (plan?: CounselorWeeklyPlan | null): PlanRoutine[] => {
   const source = Array.isArray(plan?.routines) ? plan!.routines : [];
@@ -112,6 +114,8 @@ const planRoutines = (plan?: CounselorWeeklyPlan | null): PlanRoutine[] => {
       dayOfWeek: routine.dayOfWeek,
       subject: typeof match?.subject === "string" ? match.subject : "",
       details: typeof match?.details === "string" ? match.details : "",
+      secondSubject: typeof match?.secondSubject === "string" ? match.secondSubject : "",
+      secondDetails: typeof match?.secondDetails === "string" ? match.secondDetails : "",
     };
   });
 };
@@ -492,9 +496,12 @@ export function WeeklyPlanBuilder({
                   {(() => {
                     const routine = routines[dayIndex];
                     return <article className="plan-routine-readonly" key={`routine-${dayIndex}`}>
-                      <strong>روتین</strong>
+                      <strong>روتین ۱</strong>
                       <span>{routine.subject || "درس انتخاب نشده"}</span>
                       {routine.details && <small>{routine.details}</small>}
+                      <strong>روتین ۲</strong>
+                      <span>{routine.secondSubject || "درس انتخاب نشده"}</span>
+                      {routine.secondDetails && <small>{routine.secondDetails}</small>}
                     </article>;
                   })()}
                 </div>
@@ -789,18 +796,24 @@ export function WeeklyPlanBuilder({
               {!dayIsLocked && (() => {
                 const routine = routines[dayIndex];
                 return <section className="plan-routine" aria-label={`روتین ${realWeekday}`}>
-                  <h3>روتین</h3>
-                  <p>برای این روز فقط همین یک روتین ثبت می‌شود.</p>
-                  <label>درس روتین
-                    <select value={routine.subject} onChange={event=>updateRoutine(dayIndex,"subject",event.target.value)}>
-                      <option value="">انتخاب درس</option>
-                      {routine.subject&&!routineSubjects.includes(routine.subject)&&<option value={routine.subject}>{routine.subject} (ثبت قبلی)</option>}
-                      {routineSubjects.map(subject=><option key={subject} value={subject}>{subject}</option>)}
-                    </select>
-                  </label>
-                  <label>توضیح روتین
-                    <textarea value={routine.details} maxLength={500} rows={2} onChange={event=>updateRoutine(dayIndex,"details",event.target.value)} placeholder="مثلاً مرور فرمول‌های پرتکرار" />
-                  </label>
+                  {[{number: 1, subject: routine.subject, details: routine.details, subjectKey: "subject", detailsKey: "details"},
+                    {number: 2, subject: routine.secondSubject ?? "", details: routine.secondDetails ?? "", subjectKey: "secondSubject", detailsKey: "secondDetails"}].map(entry => (
+                    <div className="plan-routine-entry" key={entry.number}>
+                      <h3>روتین {faNumber(entry.number)}</h3>
+                      <div className="plan-routine-fields">
+                        <label>درس روتین {faNumber(entry.number)}
+                          <select value={entry.subject} onChange={event=>updateRoutine(dayIndex,entry.subjectKey as "subject" | "secondSubject",event.target.value)}>
+                            <option value="">انتخاب درس</option>
+                            {entry.subject&&!routineSubjects.includes(entry.subject)&&<option value={entry.subject}>{entry.subject} (ثبت قبلی)</option>}
+                            {routineSubjects.map(subject=><option key={subject} value={subject}>{subject}</option>)}
+                          </select>
+                        </label>
+                        <label>توضیح روتین {faNumber(entry.number)}
+                          <textarea value={entry.details} maxLength={500} rows={2} onChange={event=>updateRoutine(dayIndex,entry.detailsKey as "details" | "secondDetails",event.target.value)} placeholder="مثلاً مرور فرمول‌های پرتکرار" />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
                 </section>;
               })()}
             </section>

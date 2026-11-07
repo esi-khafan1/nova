@@ -25,6 +25,8 @@ const plan = {
     dayOfWeek,
     subject: "فارسی ۱",
     details: "مرور فرمولها",
+    secondSubject: "ریاضی",
+    secondDetails: "حل تمرین",
   })),
   weekly_plan_items: Array.from({ length: 35 }, (_, index) => {
     const isTest = index % 7 === 0;
@@ -104,11 +106,13 @@ const stubs = {
   const routineWeekdays = [
     ...html.matchAll(/<article class="print-activity print-routine"[^>]*data-weekday="([^"]+)"/g),
   ].map((match) => match[1]);
-  const routineTitles = html.match(/class="print-fit-text print-activity-subject"[^>]*>روتین<\/span>/g) || [];
+  const routineTitles = html.match(/class="print-fit-text print-activity-subject"[^>]*>روتین [۱۲]<\/span>/g) || [];
 
   assert.deepEqual(headings, expectedWeekdays, "day headers must follow week_start");
   assert.deepEqual(routineWeekdays, expectedWeekdays, "routine data-weekday must follow week_start");
-  assert.equal(routineTitles.length, 7, "exactly seven routine boxes");
+  assert.equal(routineTitles.length, 14, "two routines inside each of seven boxes");
+  assert.equal((html.match(/درس: ریاضی/g) || []).length,7);
+  assert.equal((html.match(/حل تمرین/g) || []).length,7);
   assert.equal((html.match(/class="print-day-column"/g) || []).length, 7, "seven day columns");
   assert.ok(!html.includes("روتین ·"), "routine title must not contain a static weekday");
   assert.ok(html.includes("۹۰ دقیقه"), "duration is written out in the third row");

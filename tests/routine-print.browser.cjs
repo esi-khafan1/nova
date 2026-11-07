@@ -61,6 +61,8 @@ const routines=Array.from({length:7},(_,dayOfWeek)=>({
  dayOfWeek,
  subject:subjects[(dayOfWeek*4+1)%subjects.length],
  details:details[(dayOfWeek+2)%details.length]||'توضیحی ثبت نشده',
+ secondSubject:subjects[(dayOfWeek+2)%subjects.length],
+ secondDetails:'مرور تمرین و واژگان',
 }));
 const plan={id:'plan-1',student_id:'student-1',week_start:'2026-10-22',title:'برنامه هفتگی نمونه',notes:'یادداشت کلی مشاور.',status:'published',routines,weekly_plan_items};
 const props={plan,student:{full_name:'شیما حسین زاده',grade:12,study_field:'experimental_sciences'},counselorName:'مشاور نووا',backHref:'/dashboard/counselor/plans'};
@@ -134,7 +136,8 @@ const props={plan,student:{full_name:'شیما حسین زاده',grade:12,study
    const activities=[...document.querySelectorAll('.print-activity:not(.print-routine):not(.print-activity-empty)')];
    const inside=(child,parent)=>{const a=child.getBoundingClientRect(),b=parent.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&a.top>=b.top-1&&a.bottom<=b.bottom+1;};
    const clippedDetails=[...document.querySelectorAll('.print-activity')].flatMap(box=>[...box.children].filter(c=>getComputedStyle(c).display!=='none'&&!inside(c,box)).map(c=>({text:c.textContent.slice(0,30),rect:c.getBoundingClientRect().toJSON(),box:box.getBoundingClientRect().toJSON(),cls:c.className,style:c.getAttribute('style')})));
-   const clipped=clippedDetails.length;
+   const nestedClipped=[...document.querySelectorAll('.print-routine-entry')].flatMap(entry=>[...entry.children].filter(c=>!inside(c,entry)).map(c=>c.textContent));
+   const clipped=clippedDetails.length+nestedClipped.length;
    const badFit=[...document.querySelectorAll('.print-fit-text')].filter(el=>{
     const cs=getComputedStyle(el);
     const fit=parseFloat(el.dataset.fitSize||'0');
@@ -157,6 +160,7 @@ const props={plan,student:{full_name:'شیما حسین زاده',grade:12,study
     hasTargetText:[...document.querySelectorAll('.print-activity-summary')].some(el=>el.textContent.includes('هدف')),
     testLines:[...document.querySelectorAll('.print-activity-last.is-test')].map(el=>el.textContent.trim()),
     routineTitle:document.querySelector('.print-routine .print-activity-subject')?.textContent?.trim(),
+    entryCounts:dayColumns.map(c=>c.querySelectorAll('.print-routine-entry').length),
     subjectBase:document.querySelector('.print-activity-subject')?.dataset.basePt,
    };
   });
@@ -173,7 +177,8 @@ const props={plan,student:{full_name:'شیما حسین زاده',grade:12,study
   assert.equal(checks.hasTargetText,false,'no extra target-test text in third row');
   assert.ok(checks.testLines.length>0,'test boxes exist');
   for(const line of checks.testLines)assert.match(line,/زده شده از [۰-۹]+ تست/);
-  assert.equal(checks.routineTitle,'روتین');
+  assert.equal(checks.routineTitle,'روتین ۱');
+  assert.deepEqual(checks.entryCounts,[2,2,2,2,2,2,2]);
   assert.deepEqual(checks.routineWeekdays,expectedWeekdays);
   assert.deepEqual(checks.dayHeadings,expectedWeekdays);
   assert.equal(checks.subjectBase,'10.5');
