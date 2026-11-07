@@ -43,8 +43,28 @@ export function completedTestBreakdown(items: StudyItem[], completions: Map<stri
  return [...groups.values()].sort((a,b)=>a.subject.localeCompare(b.subject,"fa") || (a.chapter??"").localeCompare(b.chapter??"","fa"));
 }
 
-export function overlapsWindow(start:string, plans:{id:string;week_start:string;student_id:string;status:string}[],studentId:string,excludeId='') {
- const end=dayIso(start,6);return plans.some(p=>p.id!==excludeId&&p.student_id===studentId&&['draft','published'].includes(p.status)&&p.week_start<=end&&dayIso(p.week_start,6)>=start);
+type PlanWindow = {id:string;week_start:string;student_id:string;status:string;weekly_plan_items?:{day_of_week:number}[]};
+export function overlapsWindow(start:string, plans:PlanWindow[], studentId:string, excludeId='', candidateDays:number[] = []) {
+ const end=dayIso(start,6);
+ return plans.some(p=>{
+  if(p.id===excludeId || p.student_id!==studentId || !['draft','published'].includes(p.status) || p.week_start>end || dayIso(p.week_start,6)<start)return false;
+  if(p.week_start===start)return true;
+  if(p.week_start<start) return !p.weekly_plan_items || p.weekly_plan_items.some(item=>dayIso(p.week_start,item.day_of_week)>=start);
+  return candidateDays.some(day=>dayIso(start,day)>=p.week_start);
+ });
+}
+
+// Only published plans are supplied. Preserve legacy overlaps that contain
+// activity boxes: never hide existing work when calculating the visible end.
+export function visiblePlanDays(plan:{id:string;week_start:string;weekly_plan_items:{day_of_week:number}[]}, publishedPlans:{id:string;week_start:string}[]):number {
+ let count=7;
+ for(const next of publishedPlans){
+  if(next.id===plan.id || next.week_start<=plan.week_start || next.week_start>dayIso(plan.week_start,6))continue;
+  if(plan.weekly_plan_items.some(item=>dayIso(plan.week_start,item.day_of_week)>=next.week_start))continue;
+  const offset=Array.from({length:7},(_,i)=>i).find(i=>dayIso(plan.week_start,i)===next.week_start);
+  if(offset!==undefined)count=Math.min(count,offset);
+ }
+ return count;
 }
 
 // Only a student's own progress controls are shown; past days stay editable.

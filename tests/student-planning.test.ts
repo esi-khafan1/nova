@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activityRatio,summarizeItems,dayIso,containsDay,overlapsWindow,type StudyItem,type StudyCompletion,type StudyPlan} from '../lib/student-planning';
+import {activityRatio,summarizeItems,dayIso,containsDay,overlapsWindow,visiblePlanDays,type StudyItem,type StudyCompletion,type StudyPlan} from '../lib/student-planning';
 const study:StudyItem={id:'a',plan_id:'p',day_of_week:0,duration_minutes:90,subject:'ریاضی',chapter:'تابع',activity_type:'lesson',target_test_count:null,details:null,sort_order:0};
 const tests:StudyItem={...study,id:'b',duration_minutes:60,activity_type:'practice_tests',target_test_count:40};
 const completion=(id:string,count:number|null):StudyCompletion=>({item_id:id,completed_at:'2026-10-14T08:00:00Z',completed_test_count:count});
@@ -31,3 +31,16 @@ test('recorded study minutes drive time and fulfillment; legacy ticks retain pla
  assert.equal(summarizeItems([study],new Map([['a',extra]])).minutes,120,'Real extra minutes are still reported');
 });
 test('rolling seven days cross calendar weeks and month boundaries',()=>{assert.equal(dayIso('2026-10-14',6),'2026-10-20');assert.equal(dayIso('2026-12-28',6),'2027-01-03');const plan:StudyPlan={id:'p',title:'تست',week_start:'2026-10-14',notes:null,weekly_plan_items:[]};assert.equal(containsDay(plan,'2026-10-20'),true);assert.equal(containsDay(plan,'2026-10-21'),false);const windows=[{id:'p',student_id:'s',week_start:'2026-10-14',status:'published'}];assert.equal(overlapsWindow('2026-10-20',windows,'s'),true);assert.equal(overlapsWindow('2026-10-21',windows,'s'),false);assert.equal(overlapsWindow('2026-10-14',windows,'s','p'),false);assert.equal(overlapsWindow('2026-10-14',windows,'other'),false);});
+
+test('trailing empty days may be reused, but boxes and previous history stay protected',()=>{
+ const prior={id:'a',student_id:'s',week_start:'2026-10-14',status:'published',weekly_plan_items:[{day_of_week:2}]};
+ const later={id:'b',student_id:'s',week_start:'2026-10-18',status:'draft',weekly_plan_items:[]};
+ assert.equal(overlapsWindow('2026-10-18',[prior],'s'),false);
+ assert.equal(overlapsWindow('2026-10-16',[prior],'s'),true);
+ assert.equal(overlapsWindow('2026-10-14',[later],'s','a',[3]),false);
+ assert.equal(overlapsWindow('2026-10-14',[later],'s','a',[4]),true);
+ const plan:StudyPlan={id:'a',title:'first',week_start:'2026-10-14',notes:null,weekly_plan_items:[{...study,day_of_week:2}]};
+ assert.equal(visiblePlanDays(plan,[plan]),7,'draft is not supplied to student view');
+ assert.equal(visiblePlanDays(plan,[plan,later]),4,'published later start takes only empty days');
+ assert.equal(visiblePlanDays({...plan,weekly_plan_items:[{...study,day_of_week:5}]},[plan,later]),7,'never hide legacy overlapping activities');
+});

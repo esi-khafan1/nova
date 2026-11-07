@@ -156,6 +156,7 @@ export function WeeklyPlanBuilder({
   completedItemIds,
   numberingPlans = [],
   recentPlans = [],
+  overlapPlans = plans,
   counselorId,
 }: {
   students: Student[];
@@ -166,6 +167,7 @@ export function WeeklyPlanBuilder({
   completedItemIds: string[];
   numberingPlans?: NumberablePlan[];
   recentPlans?: RecentCounselorPlan[];
+  overlapPlans?: Array<Pick<CounselorWeeklyPlan, "id" | "student_id" | "week_start" | "status"> & {weekly_plan_items:{day_of_week:number}[]}>;
   counselorId?: string;
 }) {
   const completedIdSet = new Set(completedItemIds);
@@ -259,7 +261,7 @@ export function WeeklyPlanBuilder({
   const isLockedDay = (dayIndex: number) => isPastDay(weekStart, dayIndex);
 
   const periodEnded = dayIso(weekStart, 6) < tehranToday();
-  const hasOverlap = overlapsWindow(weekStart, plans, student?.student_id ?? "", planId);
+  const hasOverlap = overlapsWindow(weekStart, overlapPlans, student?.student_id ?? "", planId, items.map(item => item.dayOfWeek));
   const editableItems = items.filter((item) => !isLockedDay(item.dayOfWeek));
 
   const updateRoutine = <K extends keyof PlanRoutine>(
@@ -393,7 +395,7 @@ export function WeeklyPlanBuilder({
         )}
       </section>
 
-      {hasOverlap && <div className="portal-alert error" role="alert">این بازه با برنامهٔ دیگری هم‌پوشانی دارد. تاریخ شروع را بعد از پایان برنامهٔ قبلی انتخاب کن.</div>}
+      {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
       <div className="weekly-days">
         {weekDays.map((_, dayIndex) => {
           const dayIsLocked = isLockedDay(dayIndex);

@@ -9,9 +9,9 @@ export function loadCounselorPlans(supabase: SupabaseClient, counselorId: string
 // original authorship remains immutable and only this counselor's own plans
 // may be edited.
 export function loadAssignedPublishedHistory(supabase: SupabaseClient) {
-    return collectQueryPages<Pick<CounselorWeeklyPlan,"id"|"student_id"|"week_start"|"title"|"status"> & {counselor_id:string}>(200,
+    return collectQueryPages<Pick<CounselorWeeklyPlan,"id"|"student_id"|"week_start"|"title"|"status"> & {counselor_id:string;weekly_plan_items:{day_of_week:number}[]}>(200,
       (from,to)=>supabase.from("weekly_plans")
-        .select("id,student_id,counselor_id,week_start,title,status")
+        .select("id,student_id,counselor_id,week_start,title,status,weekly_plan_items(day_of_week)")
         .eq("status","published")
         .order("week_start",{ascending:false}).order("id").range(from,to),"Published history unavailable");
 }

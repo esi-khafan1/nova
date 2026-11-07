@@ -79,10 +79,10 @@ export function formatPersianFullDate(date: Date) {
   return `${weekday}، ${persianNumber.format(parts.day)} ${persianMonthNames[parts.month - 1]} ${persianNumber.format(parts.year)}`;
 }
 
-export function formatPersianWeekRange(weekStart: string | Date) {
+export function formatPersianWeekRange(weekStart: string | Date, days = 7) {
   const start =
     typeof weekStart === "string" ? parseIsoDate(weekStart) : weekStart;
-  const end = addDays(start, 6);
+  const end = addDays(start, days - 1);
   const startParts = persianParts(start);
   const endParts = persianParts(end);
   const startLabel = `${persianNumber.format(startParts.day)} ${persianMonthNames[startParts.month - 1]}`;

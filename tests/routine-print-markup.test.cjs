@@ -59,7 +59,7 @@ const stubs = {
     absWorkingDir: process.cwd(),
     tsconfig: "tsconfig.json",
     stdin: {
-      contents: `import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';import {PrintWeeklyPlan} from './components/dashboard/print-weekly-plan';const props=${JSON.stringify(props)};export const html=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,props));`,
+      contents: `import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';import {PrintWeeklyPlan} from './components/dashboard/print-weekly-plan';const props=${JSON.stringify(props)};export const html=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,props));export const shortened=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,{...props,visibleDays:4}));`,
       resolveDir: process.cwd(),
       loader: "ts",
     },
@@ -93,6 +93,8 @@ const stubs = {
   const compiled = { exports: {} };
   new Function("module", "exports", "require", bundle.outputFiles[0].text)(compiled, compiled.exports, require);
   const html = compiled.exports.html;
+  const shortened = compiled.exports.shortened;
+  assert.equal((shortened.match(/class="print-day-column"/g) || []).length, 4, "transferred days do not appear in the old print");
 
   const headings = [...html.matchAll(/<h2>([^<]+)<\/h2>/g)].map((match) => match[1]);
   const routineWeekdays = [

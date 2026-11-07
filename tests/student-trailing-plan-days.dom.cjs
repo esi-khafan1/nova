@@ -1,0 +1,35 @@
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const Module=require('node:module');
+const path=require('node:path');
+const {JSDOM}=require('jsdom');
+const React=require('react');
+const {act}=React;
+const dom=new JSDOM('<div id="root"></div>',{url:'https://nova.test/',pretendToBeVisual:true});
+global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;global.location=dom.window.location;global.IS_REACT_ACT_ENVIRONMENT=true;
+const {createRoot}=require('react-dom/client');
+(async()=>{
+ const built=await esbuild.build({entryPoints:['components/dashboard/student-planning-panel.tsx'],bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,external:['react','react/jsx-runtime'],plugins:[{name:'mock-ui',setup(build){
+  build.onResolve({filter:/^(next\/link|@\/components\/dashboard\/(student-plan-checkbox|student-daily-note|persian-date-picker))$/},args=>({path:args.path,namespace:'mock'}));
+  build.onLoad({filter:/.*/,namespace:'mock'},args=>({loader:'js',contents:args.path==='next/link'?'import React from "react"; export default function Link({href,children,...props}) {return React.createElement("a",{href,...props},children)}':args.path.endsWith('student-plan-checkbox')?'export const StudentPlanCheckbox=()=>null;':args.path.endsWith('student-daily-note')?'export const StudentDailyNote=()=>null;':'export const PersianDatePicker=()=>null;'}));
+ }}]});
+ const filename=path.join(process.cwd(),'virtual-student-plan-days.cjs');const mod=new Module(filename,module);mod.filename=filename;mod.paths=Module._nodeModulePaths(process.cwd());mod._compile(built.outputFiles[0].text,filename);
+ const {StudentPlanningPanel}=mod.exports;
+ const item={id:'i',plan_id:'old',day_of_week:2,duration_minutes:60,subject:'ریاضی',chapter:null,activity_type:'lesson',target_test_count:null,details:null,sort_order:0};
+ const old={id:'old',title:'اول',week_start:'2026-11-01',notes:null,weekly_plan_items:[item]};
+ const next={id:'new',title:'دوم',week_start:'2026-11-05',notes:null,weekly_plan_items:[]};
+ const props={plans:[old],completions:[],dailyNotes:[],today:'2026-11-03',profile:{full_name:'تست',grade:10,study_field:'humanities'}};
+ const root=createRoot(document.getElementById('root'));
+ await act(async()=>root.render(React.createElement(StudentPlanningPanel,{...props,key:'before'})));
+ const weekly=()=>Array.from(document.querySelectorAll('.sp-tabs button')).find(b=>b.textContent.includes('هفتگی'));
+ await act(async()=>weekly().click());
+ assert.equal(document.querySelectorAll('.sp-week-days button').length,7,'draft is not published and old week stays whole');
+ await act(async()=>root.render(React.createElement(StudentPlanningPanel,{...props,plans:[old,next],key:'after'})));
+ await act(async()=>weekly().click());
+ assert.equal(document.querySelectorAll('.sp-week-days button').length,4,'published new plan takes trailing days');
+ assert.doesNotMatch(document.body.textContent,/بعضی برنامه‌های قدیمی بازهٔ مشترک دارند/);
+ const select=document.querySelector('select[aria-label="انتخاب برنامه و گزارش هفته"]');
+ await act(async()=>{select.value='new';select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.equal(document.querySelectorAll('.sp-week-days button').length,7,'new plan retains seven days');
+ await act(async()=>root.unmount());dom.window.close();console.log('PASS: published new plan transfers only empty trailing days in student weekly view.');
+})().catch(e=>{console.error(e);process.exitCode=1;dom.window.close();});

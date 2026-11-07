@@ -61,7 +61,7 @@ function normalizeRoutines(routines: PrintablePlan["routines"]) {
   });
 }
 
-export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:PrintablePlan;student:{full_name:string;grade:number|null;study_field:StudyField|null}|undefined;counselorName:string;backHref:string}){
+export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays=7}:{plan:PrintablePlan;student:{full_name:string;grade:number|null;study_field:StudyField|null}|undefined;counselorName:string;backHref:string;visibleDays?:number}){
   const weekStart = parseIsoDate(plan.week_start);
   const activityLabels = new Map<string, string>(
     activityTypes.map((activity) => [activity.value, activity.label]),
@@ -94,7 +94,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
           <div className="print-plan-title">
             <h1>{plan.title}</h1>
             <div>
-              <strong>{formatPersianWeekRange(plan.week_start)}</strong>
+              <strong>{formatPersianWeekRange(plan.week_start, visibleDays)}</strong>
               <span className={`print-plan-status ${plan.status}`}>
                 {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
               </span>
@@ -137,7 +137,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref}:{plan:Prin
         )}
 
         <div className="print-week-grid">
-          {weekDays.map((_, dayIndex) => {
+          {weekDays.slice(0, visibleDays).map((_, dayIndex) => {
             const dayItems = items.filter(
               (item) => item.day_of_week === dayIndex,
             );

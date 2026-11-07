@@ -1,0 +1,26 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {PGlite}=require('@electric-sql/pglite');
+(async()=>{
+ const db=new PGlite();
+ await db.exec(`create role anon; create role authenticated; create schema private;
+ create type public.content_status as enum ('draft','published','archived');
+ create table public.weekly_plans(id uuid primary key,student_id uuid not null,week_start date not null,status public.content_status not null,routines jsonb default '[]');
+ create table public.weekly_plan_items(id uuid primary key,plan_id uuid not null references public.weekly_plans(id),day_of_week smallint not null);
+ create function private.prevent_plan_window_overlap() returns trigger language plpgsql as $$begin return new; end$$;
+ create trigger weekly_plans_no_new_overlap before insert or update of week_start,student_id,status on public.weekly_plans for each row execute function private.prevent_plan_window_overlap();`);
+ await db.exec(fs.readFileSync('supabase/migrations/108_plan_trailing_empty_days.sql','utf8'));
+ const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222',c='33333333-3333-4333-8333-333333333333',student='44444444-4444-4444-8444-444444444444',other='55555555-5555-4555-8555-555555555555';
+ await db.query('insert into public.weekly_plans(id,student_id,week_start,status,routines) values ($1,$2,$3,$4,$5)',[a,student,'2026-11-01','published',JSON.stringify([{dayOfWeek:4,subject:'روتین'}])]);
+ await db.query('insert into public.weekly_plan_items values ($1,$2,$3)',[c,a,2]);
+ await assert.rejects(db.query('insert into public.weekly_plans(id,student_id,week_start,status) values ($1,$2,$3,$4)',[b,student,'2026-11-03','draft']),{code:'23P01'});
+ await db.query('insert into public.weekly_plans(id,student_id,week_start,status) values ($1,$2,$3,$4)',[b,student,'2026-11-04','draft']);
+ await assert.rejects(db.query('insert into public.weekly_plan_items values ($1,$2,$3)',[other,a,3]),{code:'23P01'});
+ await db.query('insert into public.weekly_plan_items values ($1,$2,$3)',[other,b,0]);
+ await db.query("update public.weekly_plans set status='published' where id=$1",[b]);
+ assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_items where plan_id=$1',[a])).rows[0].n,1);
+ await assert.rejects(db.query('insert into public.weekly_plans(id,student_id,week_start,status) values ($1,$2,$3,$4)',[c,student,'2026-11-04','draft']),{code:'23P01'});
+ await db.query('insert into public.weekly_plans(id,student_id,week_start,status) values ($1,$2,$3,$4)',[c,other,'2026-11-04','draft']);
+ await db.close();
+ console.log('PASS: overlapping empty trailing days, routine-only days, preserved items, and conflict guards.');
+})().catch(e=>{console.error(e);process.exitCode=1});
