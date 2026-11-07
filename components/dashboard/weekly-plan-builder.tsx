@@ -2,8 +2,9 @@
 
 import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
 import { useState } from "react";
+import Link from "next/link";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
-import { formatPersianFullDate, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
+import { formatPersianFullDate, formatPersianWeekRange, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
 import { saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
 import {
@@ -77,6 +78,8 @@ export type CounselorWeeklyPlan = {
     linked_exam_id?:string|null;
   }>;
 };
+
+export type RecentCounselorPlan = Pick<CounselorWeeklyPlan, "id" | "student_id" | "week_start" | "title" | "status"> & { counselor_id: string };
 
 const newItem = (
   dayOfWeek = 0,
@@ -152,6 +155,8 @@ export function WeeklyPlanBuilder({
   initialWeekStart,
   completedItemIds,
   numberingPlans = [],
+  recentPlans = [],
+  counselorId,
 }: {
   students: Student[];
   plans: CounselorWeeklyPlan[];
@@ -160,6 +165,8 @@ export function WeeklyPlanBuilder({
   initialWeekStart?: string;
   completedItemIds: string[];
   numberingPlans?: NumberablePlan[];
+  recentPlans?: RecentCounselorPlan[];
+  counselorId?: string;
 }) {
   const completedIdSet = new Set(completedItemIds);
   const selectedStudentIndex = Math.max(0, students.findIndex(s => s.student_id === initialStudentId));
@@ -185,6 +192,7 @@ export function WeeklyPlanBuilder({
 
   const student = students[studentIndex] ?? students[0];
   const numbers = planNumbers(numberingPlans.length ? numberingPlans : plans);
+  const studentRecentPlans = recentPlans.filter(plan => plan.student_id === student?.student_id).slice(0, 8);
   const selectedNumber = planId ? numbers.get(planId) ?? 1 : nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart);
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([9,10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
@@ -794,6 +802,30 @@ export function WeeklyPlanBuilder({
         </div>
       </section>
     </form>
+    {studentRecentPlans.length > 0 && (
+      <section className="portal-card recent-plans">
+        <div className="portal-card-title">
+          <div><span>سوابق</span><h2>برنامه‌های اخیر</h2></div>
+        </div>
+        <div>
+          {studentRecentPlans.map(plan => (
+            <article key={plan.id}>
+              <div>
+                <strong>{student.full_name || "دانش‌آموز نووا"}</strong>
+                <span>{numberedPlanTitle(plan.title, numbers.get(plan.id) ?? 1)} · {formatPersianWeekRange(plan.week_start)}</span>
+              </div>
+              <div className="recent-plan-actions">
+                {plan.counselor_id !== counselorId && <small>برنامهٔ مشاور پیشین · فقط مشاهده</small>}
+                <span className={`plan-status ${plan.status}`}>
+                  {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
+                </span>
+                <Link className="print-plan-link" href={`/dashboard/counselor/plans/${plan.id}/print`}>چاپ A4</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
     </>
   );
 }

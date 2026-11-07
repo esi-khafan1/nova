@@ -7,10 +7,6 @@ import {
 } from "@/components/dashboard/weekly-plan-builder";
 import { requireProfile } from "@/lib/auth";
 import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
-import {planNumbers,numberedPlanTitle} from "@/lib/plan-numbering";
-import {
-  formatPersianWeekRange,
-} from "@/lib/persian-date";
 
 type StudentDirectoryRow = {
   student_id: string;
@@ -41,19 +37,13 @@ export default async function CounselorPlansPage({
   const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
   const recentPlans = [...new Map([...loadedHistory.data,...counselorPlans.filter(plan=>plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
     .sort((a,b)=>b.week_start.localeCompare(a.week_start)||a.id.localeCompare(b.id));
-  const sequenceNumbers = planNumbers(recentPlans);
   const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
   const requestedProgressStudent = params.progress_student;
   const progressStudent =
     selectedStudents.find(
       (student) => student.student_id === requestedProgressStudent,
     ) ?? selectedStudents[0];
-  const studentNames = new Map(
-    directory.map((student) => [
-      student.student_id,
-      student.full_name || "دانش‌آموز نووا",
-    ]),
-  );
+
 
   return (
     <DashboardShell role="counselor" name={profile.full_name}>
@@ -147,48 +137,13 @@ export default async function CounselorPlansPage({
         students={selectedStudents}
         plans={counselorPlans}
         numberingPlans={recentPlans}
+        recentPlans={recentPlans}
+        counselorId={profile.id}
         initialStudentId={params.student}
         initialPlanId={params.plan}
         initialWeekStart={params.week_start}
         completedItemIds={completedItemIds}
       />
-
-      {recentPlans.length > 0 && (
-        <section className="portal-card recent-plans">
-          <div className="portal-card-title">
-            <div>
-              <span>سوابق</span>
-              <h2>برنامه‌های اخیر</h2>
-            </div>
-          </div>
-          <div>
-            {recentPlans.slice(0, 8).map((plan) => (
-              <article key={plan.id}>
-                <div>
-                  <strong>
-                    {studentNames.get(plan.student_id) || "دانش‌آموز نووا"}
-                  </strong>
-                  <span>
-                    {numberedPlanTitle(plan.title,sequenceNumbers.get(plan.id)??1)} · {formatPersianWeekRange(plan.week_start)}
-                  </span>
-                </div>
-                <div className="recent-plan-actions">
-                  {plan.counselor_id !== profile.id && <small>برنامهٔ مشاور پیشین · فقط مشاهده</small>}
-                  <span className={`plan-status ${plan.status}`}>
-                    {plan.status === "published" ? "منتشرشده" : "پیش‌نویس"}
-                  </span>
-                  <Link
-                    className="print-plan-link"
-                    href={`/dashboard/counselor/plans/${plan.id}/print`}
-                  >
-                    چاپ A4
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
     </DashboardShell>
   );
 }
