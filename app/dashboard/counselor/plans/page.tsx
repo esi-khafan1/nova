@@ -26,7 +26,7 @@ export default async function CounselorPlansPage({
   const [{data:directoryData,error:directoryError},loadedPlans,loadedHistory,{data:completedRows,error:completedError}]=await Promise.all([
     supabase.rpc("counselor_student_directory"),
     loadCounselorPlans(supabase,profile.id).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
-    loadAssignedPublishedHistory(supabase).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
+    loadAssignedPublishedHistory(supabase,profile.id).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
     supabase.rpc("counselor_completed_plan_item_ids"),
   ]);
   const plans=loadedPlans.data,plansFailed=loadedPlans.failed;
@@ -35,7 +35,7 @@ export default async function CounselorPlansPage({
   const directory = (directoryData ?? []) as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
   const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
-  const recentPlans = [...new Map([...loadedHistory.data,...counselorPlans.filter(plan=>plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
+  const recentPlans = [...new Map([...loadedHistory.data,...counselorPlans.filter(plan=>plan.status==="published"||plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
     .sort((a,b)=>b.week_start.localeCompare(a.week_start)||a.id.localeCompare(b.id));
   const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
   const requestedProgressStudent = params.progress_student;

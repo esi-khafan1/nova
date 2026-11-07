@@ -15,7 +15,7 @@ const client = {
     planCalls++;
     return rpcFailure ? {error:{code:'PZ001'}} : {data:plan,error:null};
   },
-  from(name) {assert.equal(name,'weekly_plans');return {select:()=>({eq:()=>({eq:()=>({maybeSingle:async()=>({data:{routines:[]},error:null})})})})};},
+  from(name) {assert.equal(name,'weekly_plans');return {select:()=>({eq:()=>({maybeSingle:async()=>({data:{counselor_id:'33333333-3333-4333-8333-333333333333',routines:[]},error:null})})})};},
 };
 const moduleStub = {exports:{}};
 const script = ts.transpileModule(readFileSync('app/dashboard/actions.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -28,6 +28,7 @@ vm.runInNewContext(script,{
     if(name==='@/lib/auth')return {requireProfile:()=>{throw Error('not needed')}};
     if(name==='@/lib/study-catalog')return {activityTypes:[{value:'lesson'}]};
     if(name==='@/lib/planning-curriculum')return {curriculumBooks:()=>[],routineSubjectOptions:()=>[]};
+    if(name==='@/lib/makeup-plan-box')return {makeupActivity:'makeup',makeupTitle:'باکس جبرانی'};
     if(name==='@/lib/external-simulation')return {externalSimulationActivity:'external_simulation_exam',simulationProvider:()=>null};
     if(name==='@/lib/recommended-publishers')return {canRecommendPublisher:()=>false,cleanRecommendedPublisher:()=>null};
     throw Error(name);

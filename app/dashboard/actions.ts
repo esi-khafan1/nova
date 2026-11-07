@@ -73,13 +73,18 @@ type WeeklyPlanItemInput = {
 
 export async function saveWeeklyPlan(fd: FormData) {
   const s = await createClient();
-  const {
-    data: { user },
-  } = await s.auth.getUser();
-  if (!user) redirect("/auth/sign-in");
-
   const studentId = clean(fd.get("student_id"), 50);
   const planId = clean(fd.get("plan_id"), 50);
+  // These independent reads are protected by the caller's Supabase session and
+  // RLS. Start them together, but do not use any result until getUser has
+  // independently confirmed the current user. The save RPC remains authoritative.
+  const [authResult, directoryResult, existingPlanResult] = await Promise.all([
+    s.auth.getUser(),
+    uuidPattern.test(studentId) ? s.rpc("counselor_student_directory") : Promise.resolve({data:null,error:null}),
+    uuidPattern.test(planId) ? s.from("weekly_plans").select("counselor_id,routines").eq("id",planId).maybeSingle() : Promise.resolve({data:null,error:null}),
+  ]);
+  const user = authResult.data.user;
+  if (!user) redirect("/auth/sign-in");
   const weekStart = clean(fd.get("week_start"), 10);
   const title = clean(fd.get("title"), 120);
   const notes = clean(fd.get("notes"), 2000);
@@ -209,7 +214,7 @@ export async function saveWeeklyPlan(fd: FormData) {
   )
     planError("items");
 
-  const {data:directory,error:directoryError}=await s.rpc("counselor_student_directory");
+  const {data:directory,error:directoryError}=directoryResult;
   const student=(directory as {student_id:string;is_selected:boolean;grade:number|null;study_field:import("@/lib/study-catalog").StudyField|null}[]|null)?.find(row=>row.student_id===studentId&&row.is_selected);
   if(directoryError||!student)planError("items");
   if(safeItems.some(item=>item.activityType===externalSimulationActivity && (
@@ -223,9 +228,11 @@ export async function saveWeeklyPlan(fd: FormData) {
   if(safeItems.some(item=>item.activityType===externalSimulationActivity || item.activityType===makeupActivity ? false : !['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![9,10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&(item.examYear!==null || (item.sourceGrade===9 && (item.subject!=="هوش و استعداد تحلیلی" || item.recommendedPublisher!==null))))))planError("items");
   let savedRoutineSubjects:string[]=[];
   if(planId){
-    const {data:existingPlan,error:existingPlanError}=await s.from("weekly_plans").select("routines").eq("id",planId).eq("counselor_id",user.id).maybeSingle();
+    const {data:existingPlan,error:existingPlanError}=existingPlanResult;
     if(existingPlanError)planError("plan");
-    const savedRoutines:unknown=existingPlan?.routines;
+    // Previous counselors' published plans may be readable through RLS; only
+    // the owner's own routines are eligible for this existing-plan validation.
+    const savedRoutines:unknown=existingPlan?.counselor_id===user.id?existingPlan.routines:null;
     savedRoutineSubjects=(Array.isArray(savedRoutines)?savedRoutines:[])
       .map((routine)=>typeof routine?.subject==="string"?routine.subject.trim():"")
       .filter(Boolean);
