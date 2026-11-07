@@ -70,6 +70,7 @@ const item = (day, subject, options = {}) => ({
   await db.exec(v6);
   await db.exec(completedMigration);
   await db.exec(fs.readFileSync('supabase/migrations/103_external_simulation_provider_plan_boxes.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/109_makeup_plan_boxes.sql','utf8'));
   await db.exec(counselorFlags);
   const date = (await db.query(`select (timezone('Asia/Tehran',now())::date-1)::text as day`)).rows[0].day;
   const actor = id => db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
@@ -133,6 +134,20 @@ const item = (day, subject, options = {}) => ({
   assert.equal((await db.query('select completed_test_count from public.weekly_plan_item_completions where item_id=$1',[ids.completed])).rows[0].completed_test_count,12,
     'new box saves preserve already-completed activities');
   await assert.rejects(saveV9([...initial.filter(i=>i.id!==ids.linked),{...providerBox,chapter:'فصل ۱'}]),/Invalid external simulation provider/);
+  const makeupBox=item(2,'باکس جبرانی',{activityType:'makeup',sourceGrade:null,chapter:'',preparationTrack:'konkur'});
+  await saveV9([...initial.filter(i=>i.id!==ids.linked),makeupBox]);
+  assert.equal((await db.query("select count(*)::int as n from public.weekly_plan_items where activity_type::text='makeup' and subject='باکس جبرانی' and chapter is null and source_grade is null")).rows[0].n,1,'makeup box persists through the complete save chain');
+  const makeupBefore=await signature();
+  await assert.rejects(saveV9([...initial.filter(i=>i.id!==ids.linked),{...makeupBox,chapter:'فصل ۱'}]),/makeup_plan_box_shape/);
+  assert.deepEqual(await signature(),makeupBefore,'invalid makeup save rolls back without replacing any items');
+  assert.equal((await db.query('select completed_test_count from public.weekly_plan_item_completions where item_id=$1',[ids.completed])).rows[0].completed_test_count,12,'existing completion survives makeup saves');
+  const makeupToday={...makeupBox,dayOfWeek:1};
+  await saveV9([...initial.filter(i=>i.id!==ids.linked),makeupToday]);
+  const makeupId=(await db.query("select id from public.weekly_plan_items where activity_type::text='makeup'")).rows[0].id;
+  await db.query('insert into public.weekly_plan_item_completions values ($1,$2,now(),now(),null)',[makeupId,ids.student]);
+  await saveV9([...initial.filter(i=>i.id!==ids.linked),{...makeupToday,id:makeupId}]);
+  assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_item_completions where item_id=$1',[makeupId])).rows[0].n,1,'a completed makeup box retains its progress during resave');
+  await assert.rejects(saveV9([...initial.filter(i=>i.id!==ids.linked),{...makeupToday,id:makeupId,durationMinutes:90}]),/Completed plan activity cannot be changed/);
   await actor(ids.other);
   await assert.rejects(save(initial),/Only counselors can save plans|Student not assigned/);
   console.log('PASS: completed boxes immutable; linked boxes removable without deleting exams; past and progress stay protected');

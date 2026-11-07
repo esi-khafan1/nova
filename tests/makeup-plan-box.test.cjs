@@ -1,0 +1,31 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {PGlite}=require('@electric-sql/pglite');
+(async()=>{
+ const db=new PGlite();
+ await db.exec(`create role authenticated; create role anon; create schema private; create schema auth;
+ create type public.study_activity_type as enum ('lesson','practice_tests');
+ create type public.app_role as enum ('student','counselor');
+ create table public.profiles(id uuid primary key,role public.app_role,registration_status text);
+ create table public.weekly_plans(id uuid primary key,student_id uuid,week_start date,status text);
+ create table public.weekly_plan_items(id uuid primary key,plan_id uuid,day_of_week smallint,subject text not null,chapter text,activity_type public.study_activity_type not null,source_grade smallint,preparation_track text not null default 'konkur',exam_year smallint,target_test_count smallint,recommended_publisher text,linked_exam_id uuid);
+ create table public.weekly_plan_item_completions(item_id uuid primary key,student_id uuid,completed_at timestamptz,checked_at timestamptz,completed_test_count smallint,completed_minutes smallint);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql stable as $$select role from public.profiles where id=auth.uid()$$;`);
+ await db.exec(fs.readFileSync('supabase/migrations/109_makeup_plan_boxes.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/087_optional_plan_progress_amounts.sql','utf8'));
+ const student='11111111-1111-4111-8111-111111111111',plan='22222222-2222-4222-8222-222222222222',item='33333333-3333-4333-8333-333333333333';
+ await db.query("insert into public.profiles values($1,'student','active')",[student]);
+ await db.query("insert into public.weekly_plans values($1,$2,timezone('Asia/Tehran',now())::date,'published')",[plan,student]);
+ await db.query("insert into public.weekly_plan_items(id,plan_id,day_of_week,subject,activity_type) values($1,$2,0,'باکس جبرانی','makeup')",[item,plan]);
+ const invalids=[['subject','ریاضی'],['chapter','فصل ۱'],['source_grade',10],['preparation_track','final_exam'],['exam_year',1405],['target_test_count',10],['recommended_publisher','گاج'],['linked_exam_id','44444444-4444-4444-8444-444444444444']];
+ for(const [column,value] of invalids){await assert.rejects(db.query(`update public.weekly_plan_items set ${column}=$1 where id=$2`,[value,item]),/makeup_plan_box_shape/);}
+ await db.query("select set_config('request.jwt.claim.sub',$1,false)",[student]);
+ await db.query('select public.set_weekly_plan_item_progress($1,true,null,null)',[item]);
+ let row=(await db.query('select completed_minutes,completed_test_count from public.weekly_plan_item_completions where item_id=$1',[item])).rows[0];assert.equal(row.completed_minutes,null);assert.equal(row.completed_test_count,null);
+ await db.query('select public.set_weekly_plan_item_progress($1,true,null,75)',[item]);
+ row=(await db.query('select completed_minutes,completed_test_count from public.weekly_plan_item_completions where item_id=$1',[item])).rows[0];assert.equal(row.completed_minutes,75);
+ await assert.rejects(db.query('select public.set_weekly_plan_item_progress($1,true,5,null)',[item]),/Test count is only supported/);
+ await db.query('select public.set_weekly_plan_item_progress($1,false,null,null)',[item]);assert.equal((await db.query('select count(*)::int as n from public.weekly_plan_item_completions')).rows[0].n,0);
+ await db.close();console.log('PASS: subject-free makeup constraints and student completion/duration RPC.');
+})().catch(e=>{console.error(e);process.exitCode=1});

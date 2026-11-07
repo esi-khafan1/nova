@@ -1,3 +1,4 @@
+import { makeupActivity } from "@/lib/makeup-plan-box";
 import { externalSimulationActivity, externalSimulationTitle, simulationProvider } from "@/lib/external-simulation";
 import Link from "next/link";
 import { PrintPlanButton } from "@/components/dashboard/print-plan-button";
@@ -170,10 +171,10 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                           </FitText>
                         </div>
                         <FitText basePt={8.5} className="print-activity-chapter">
-                          {item.activity_type === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "نامشخص"}` : item.chapter || "مبحث آزاد"}
+                          {item.activity_type === makeupActivity ? "" : item.activity_type === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "نامشخص"}` : item.chapter || "مبحث آزاد"}
                         </FitText>
                         <FitText basePt={8.5} className="print-activity-summary">
-                          {item.activity_type === externalSimulationActivity ? `${item.duration_minutes.toLocaleString("fa-IR")} دقیقه` : durationText}
+                          {item.activity_type === externalSimulationActivity || item.activity_type === makeupActivity ? `${item.duration_minutes.toLocaleString("fa-IR")} دقیقه` : durationText}
                         </FitText>
                         <FitText
                           basePt={7.5}

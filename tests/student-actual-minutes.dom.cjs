@@ -14,6 +14,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/stud
   if(name==='react/jsx-runtime')return require('react/jsx-runtime');
   if(name==='next/navigation')return {useRouter:()=>({refresh(){refreshes++;}})};
   if(name==='@/lib/study-duration')return durationStub.exports;
+  if(name==='@/lib/external-simulation')return {externalSimulationActivity:'external_simulation_exam'};
   if(name==='@/app/dashboard/actions')return {togglePlanItemCompletion:async(...args)=>{calls.push(args);const ok=!failNext;failNext=false;return {ok};}};
   throw Error(`Unexpected import ${name}`);
  },
@@ -63,6 +64,11 @@ const click=async el=>act(async()=>el.click());
  await click(checkbox());assert.deepEqual(calls.at(-1),['test-item',true,null,null],'Empty test count means full target');
  await change(number(),'9');await act(async()=>number().dispatchEvent(new dom.window.FocusEvent('focusout',{bubbles:true})));
  assert.deepEqual(calls.at(-1),['test-item',true,9,null]);
+ await render({itemId:'makeup-item',activityType:'makeup',defaultChecked:false});
+ assert.match(document.body.textContent,/انجام داده‌ام/);
+ await change(number(),'1:15');await click(checkbox());
+ assert.deepEqual(calls.at(-1),['makeup-item',true,null,75],'makeup boxes use the same optional duration and completion action');
+ await click(checkbox());assert.deepEqual(calls.at(-1),['makeup-item',false,null,null]);
  await act(async()=>root.unmount());dom.window.close();
  console.log('Mocked study/test controls: optional HH:MM/count, inferred full goals, invalid edit, legacy tick and undo; no real writes.');
 })().catch(e=>{console.error(e);process.exitCode=1;dom.window.close();});

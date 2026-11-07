@@ -1,5 +1,6 @@
 import { studyCatalog, type StudyField, type StudyBook } from "@/lib/study-catalog";
 import { schoolBooks } from "./school-catalog";
+import { makeupActivity } from "@/lib/makeup-plan-box";
 import { type StudyItem } from "@/lib/student-planning";
 export type Grade = 9|10|11|12;
 // Planning is independent of the student’s enrolled grade.
@@ -36,7 +37,7 @@ export function journeyGroups(items:StudyItem[],field:StudyField|null,maxGrade:n
  const groups=new Map<string,{key:string;subject:string;grade:Grade|null;track:PreparationTrack;chapters:string[];items:StudyItem[]}>();
  const key=(subject:string,grade:Grade|null)=>JSON.stringify([subject,grade]);
  for(const grade of availableGrades(maxGrade))for(const book of curriculumBooks(field,grade,'final_exam'))groups.set(key(book.subject,grade),{key:key(book.subject,grade),subject:book.subject,grade,track:'konkur',chapters:book.chapters,items:[]});
- for(const item of items){const grade=inferItemGrade(item,field,maxGrade),track=item.preparation_track??'konkur',id=key(item.subject,grade);if(!groups.has(id))groups.set(id,{key:id,subject:item.subject,grade,track,chapters:grade?curriculumBooks(field,grade,track).find(b=>b.subject===item.subject)?.chapters??[]:[],items:[]});groups.get(id)!.items.push(item);}
+ for(const item of items){if(item.activity_type===makeupActivity)continue;const grade=inferItemGrade(item,field,maxGrade),track=item.preparation_track??'konkur',id=key(item.subject,grade);if(!groups.has(id))groups.set(id,{key:id,subject:item.subject,grade,track,chapters:grade?curriculumBooks(field,grade,track).find(b=>b.subject===item.subject)?.chapters??[]:[],items:[]});groups.get(id)!.items.push(item);}
  return [...groups.values()];
 }
 // Calendar years/months, then remaining days; omit zero units. Future starts do not create negative membership.

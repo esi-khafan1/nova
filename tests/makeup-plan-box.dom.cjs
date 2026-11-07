@@ -1,0 +1,55 @@
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const Module=require('node:module');
+const path=require('node:path');
+const {JSDOM}=require('jsdom');
+const React=require('react');
+const {act}=React;
+const dom=new JSDOM('<div id="root"></div>',{url:'https://nova.test/',pretendToBeVisual:true});
+global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;global.location=dom.window.location;global.IS_REACT_ACT_ENVIRONMENT=true;
+const {createRoot}=require('react-dom/client');
+async function build(entry){
+ const result=await esbuild.build({entryPoints:[entry],bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,external:['react','react/jsx-runtime'],plugins:[{name:'mock',setup(b){
+  b.onResolve({filter:/^(next\/link|@\/(app\/dashboard\/actions|components\/dashboard\/(persian-date-picker|counselor-student-study-editor|student-plan-checkbox|student-daily-note)))$/},a=>({path:a.path,namespace:'mock'}));
+  b.onLoad({filter:/.*/,namespace:'mock'},a=>({loader:'js',contents:a.path==='next/link'?'import React from "react"; export default function Link({href,children,...rest}){return React.createElement("a",{href,...rest},children)}':a.path.includes('actions')?'export const saveWeeklyPlan="/save";':a.path.endsWith('persian-date-picker')?'export const PersianDatePicker=()=>null;':a.path.endsWith('counselor-student-study-editor')?'export const CounselorStudentStudyEditor=()=>null;':a.path.endsWith('student-plan-checkbox')?'export const StudentPlanCheckbox=()=>null;':'export const StudentDailyNote=()=>null;'}));
+ }}]});
+ const filename=path.join(process.cwd(),'virtual-'+path.basename(entry)+'.cjs');const m=new Module(filename,module);m.filename=filename;m.paths=Module._nodeModulePaths(process.cwd());m._compile(result.outputFiles[0].text,filename);return m.exports;
+}
+(async()=>{
+ const {WeeklyPlanBuilder}=await build('components/dashboard/weekly-plan-builder.tsx');
+ const root=createRoot(document.getElementById('root'));
+ const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const v=t=>parts.find(p=>p.type===t).value;const today=`${v('year')}-${v('month')}-${v('day')}`;
+ const students=[{student_id:'student',full_name:'دانش‌آموز',grade:10,study_field:'experimental_sciences'}];
+ await act(async()=>root.render(React.createElement(WeeklyPlanBuilder,{students,plans:[],completedItemIds:[]})));
+ const editor=()=>document.querySelector('.plan-item-editor');
+ let subject=editor().querySelector('label:has(select[required]) select');
+ assert.ok(subject && [...subject.options].some(o=>o.value==='__makeup__'));
+ await act(async()=>{subject.value='__makeup__';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.equal(editor().querySelector('select[aria-label="نوع باکس"]').value,'__makeup__');
+ assert.doesNotMatch(editor().textContent,/فصل یا مبحث|پایهٔ درس|مسیر آمادگی|نوع فعالیت|توضیح تکمیلی/);
+ assert.match(editor().textContent,/مدت \(دقیقه\)/);
+ let serialized=JSON.parse(document.querySelector('input[name="items"]').value)[0];
+ assert.equal(serialized.activityType,'makeup');assert.equal(serialized.subject,'باکس جبرانی');assert.equal(serialized.chapter,'');assert.equal(serialized.sourceGrade,null);assert.equal(serialized.targetTestCount,null);
+ subject=editor().querySelector('select[aria-label="نوع باکس"]');
+ await act(async()=>{subject.value='__external_simulation__';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.ok(editor().textContent.includes('برگزارکنندهٔ آزمون'));
+ subject=editor().querySelector('select[aria-label="درس"]');
+ await act(async()=>{subject.value='__makeup__';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.equal(editor().querySelector('select[aria-label="نوع باکس"]').value,'__makeup__');
+ subject=editor().querySelector('select[aria-label="نوع باکس"]');
+ const ordinary=[...subject.options].find(o=>!['','__makeup__','__external_simulation__'].includes(o.value));assert.ok(ordinary);
+ await act(async()=>{subject.value=ordinary.value;subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.match(editor().textContent,/فصل یا مبحث/);
+ serialized=JSON.parse(document.querySelector('input[name="items"]').value)[0];assert.equal(serialized.activityType,'lesson');
+ const {StudentPlanningPanel}=await build('components/dashboard/student-planning-panel.tsx');
+ const item={id:'item',plan_id:'plan',day_of_week:0,duration_minutes:90,subject:'باکس جبرانی',chapter:null,activity_type:'makeup',target_test_count:null,details:null,sort_order:0,source_grade:null,preparation_track:'konkur'};
+ const plan={id:'plan',title:'برنامه',week_start:today,notes:null,weekly_plan_items:[item]};
+ const props={plans:[plan],completions:[{item_id:'item',completed_at:new Date().toISOString(),completed_minutes:null,completed_test_count:null}],dailyNotes:[],today,profile:{full_name:'دانش‌آموز',grade:10,study_field:'experimental_sciences'}};
+ await act(async()=>root.render(React.createElement(StudentPlanningPanel,props)));
+ const task=document.querySelector('.sp-task');assert.match(task.textContent,/باکس جبرانی/);assert.doesNotMatch(task.textContent,/مبحث آزاد|فعالیت درسی|پایه/);
+ assert.match(document.querySelector('.sp-summary').textContent,/۱ ساعت و ۳۰ دقیقه/);
+ const journey=[...document.querySelectorAll('.sp-tabs button')].find(b=>b.textContent.includes('مسیر مطالعه'));await act(async()=>journey.click());
+ assert.doesNotMatch(document.querySelector('#study-journey').textContent,/باکس جبرانی/,'not listed as a real school subject');
+ assert.match(document.querySelector('#study-journey .sp-journey-totals').textContent,/۱ ساعت و ۳۰ دقیقه/);
+ await act(async()=>root.unmount());dom.window.close();console.log('PASS: makeup selection, switching, serialized data, student totals and subject-free reports.');
+})().catch(e=>{console.error(e);process.exitCode=1;dom.window.close();});

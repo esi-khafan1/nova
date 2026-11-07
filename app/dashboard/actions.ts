@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
 import { activityTypes } from "@/lib/study-catalog";
+import { makeupActivity, makeupTitle } from "@/lib/makeup-plan-box";
 import { externalSimulationActivity, simulationProvider } from "@/lib/external-simulation";
 import { canRecommendPublisher, cleanRecommendedPublisher } from "@/lib/recommended-publishers";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
@@ -156,6 +157,7 @@ export async function saveWeeklyPlan(fd: FormData) {
     activityTypes.map((activity) => activity.value),
   );
   allowedActivityTypes.add(externalSimulationActivity);
+  allowedActivityTypes.add(makeupActivity);
 
   const safeItems = items
     .slice(0, 100)
@@ -214,7 +216,11 @@ export async function saveWeeklyPlan(fd: FormData) {
     !simulationProvider(item.subject) || item.chapter!=="" || item.sourceGrade!==null ||
     item.preparationTrack!=="konkur" || item.recommendedPublisher!==null || item.examYear!==null || item.targetTestCount!==null
   )))planError("items");
-  if(safeItems.some(item=>item.activityType===externalSimulationActivity ? false : !['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![9,10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&(item.examYear!==null || (item.sourceGrade===9 && (item.subject!=="هوش و استعداد تحلیلی" || item.recommendedPublisher!==null))))))planError("items");
+  if(safeItems.some(item=>item.activityType===makeupActivity && (
+    item.subject!==makeupTitle || item.chapter!=="" || item.sourceGrade!==null ||
+    item.preparationTrack!=="konkur" || item.recommendedPublisher!==null || item.examYear!==null || item.targetTestCount!==null
+  )))planError("items");
+  if(safeItems.some(item=>item.activityType===externalSimulationActivity || item.activityType===makeupActivity ? false : !['konkur','final_exam'].includes(item.preparationTrack)|| (item.sourceGrade!==null&&![9,10,11,12].includes(item.sourceGrade)) || (item.preparationTrack==='final_exam'&&(item.examYear!==null||!item.sourceGrade||!curriculumBooks(student.study_field,item.sourceGrade as Grade,'final_exam').some(book=>book.subject===item.subject))) || (item.preparationTrack==='konkur'&&(item.examYear!==null || (item.sourceGrade===9 && (item.subject!=="هوش و استعداد تحلیلی" || item.recommendedPublisher!==null))))))planError("items");
   let savedRoutineSubjects:string[]=[];
   if(planId){
     const {data:existingPlan,error:existingPlanError}=await s.from("weekly_plans").select("routines").eq("id",planId).eq("counselor_id",user.id).maybeSingle();

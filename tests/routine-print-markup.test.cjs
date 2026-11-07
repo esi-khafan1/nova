@@ -59,7 +59,7 @@ const stubs = {
     absWorkingDir: process.cwd(),
     tsconfig: "tsconfig.json",
     stdin: {
-      contents: `import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';import {PrintWeeklyPlan} from './components/dashboard/print-weekly-plan';const props=${JSON.stringify(props)};export const html=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,props));export const shortened=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,{...props,visibleDays:4}));`,
+      contents: `import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';import {PrintWeeklyPlan} from './components/dashboard/print-weekly-plan';const props=${JSON.stringify(props)};export const html=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,props));export const shortened=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,{...props,visibleDays:4}));export const makeup=renderToStaticMarkup(React.createElement(PrintWeeklyPlan,{...props,plan:{...props.plan,weekly_plan_items:[{id:'m',day_of_week:0,duration_minutes:60,subject:'باکس جبرانی',chapter:null,activity_type:'makeup',target_test_count:null,details:null,sort_order:0}]}}));`,
       resolveDir: process.cwd(),
       loader: "ts",
     },
@@ -94,6 +94,10 @@ const stubs = {
   new Function("module", "exports", "require", bundle.outputFiles[0].text)(compiled, compiled.exports, require);
   const html = compiled.exports.html;
   const shortened = compiled.exports.shortened;
+  const makeup = compiled.exports.makeup;
+  assert.match(makeup, /باکس جبرانی/);
+  assert.doesNotMatch(makeup, /مبحث آزاد|فعالیت درسی/);
+  assert.match(makeup, /۶۰ دقیقه/);
   assert.equal((shortened.match(/class="print-day-column"/g) || []).length, 4, "transferred days do not appear in the old print");
 
   const headings = [...html.matchAll(/<h2>([^<]+)<\/h2>/g)].map((match) => match[1]);
