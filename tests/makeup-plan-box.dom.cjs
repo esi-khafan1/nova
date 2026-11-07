@@ -41,6 +41,36 @@ async function build(entry){
  await act(async()=>{subject.value=ordinary.value;subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
  assert.match(editor().textContent,/فصل یا مبحث/);
  serialized=JSON.parse(document.querySelector('input[name="items"]').value)[0];assert.equal(serialized.activityType,'lesson');
+ // Ninth grade has no study field. Both school and aptitude tracks must
+ // expose the special option, including after switching students.
+ const ninth={student_id:'ninth',full_name:'دانش‌آموز نهم',grade:9,study_field:null};
+ await act(async()=>root.render(React.createElement(WeeklyPlanBuilder,{key:'ninth',students:[ninth],plans:[],completedItemIds:[]})));
+ subject=editor().querySelector('label:has(select[required]) select');
+ assert.ok(subject && [...subject.options].some(o=>o.value==='__makeup__'),'ninth grade school track offers makeup');
+ await act(async()=>{subject.value='__makeup__';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ serialized=JSON.parse(document.querySelector('input[name="items"]').value)[0];
+ assert.equal(serialized.activityType,'makeup');assert.equal(serialized.sourceGrade,null);assert.equal(serialized.preparationTrack,'konkur');
+ subject=editor().querySelector('select[aria-label="نوع باکس"]');
+ await act(async()=>{subject.value='';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ const track=[...editor().querySelectorAll('label')].find(x=>x.textContent.startsWith('مسیر آمادگی')).querySelector('select');
+ await act(async()=>{track.value='konkur';track.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ subject=editor().querySelector('label:has(select[required]) select');
+ assert.ok(subject && [...subject.options].some(o=>o.value==='__makeup__'),'ninth grade aptitude track offers makeup');
+ await act(async()=>{subject.value='__makeup__';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.equal(JSON.parse(document.querySelector('input[name="items"]').value)[0].activityType,'makeup');
+ await act(async()=>root.render(React.createElement(WeeklyPlanBuilder,{key:'switch',students:[students[0],ninth],plans:[],completedItemIds:[]})));
+ const studentSelector=document.querySelector('select[name="student_id"]');
+ await act(async()=>{studentSelector.value='ninth';studentSelector.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ subject=editor().querySelector('label:has(select[required]) select');
+ assert.equal(studentSelector.value,'ninth');
+ assert.ok(subject && [...subject.options].some(o=>o.value==='__makeup__'),'ninth grade still offers makeup after switching students');
+ const currentWeek=today;
+ const existing={id:'plan-nine',student_id:'ninth',week_start:currentWeek,title:'برنامه',notes:null,status:'published',weekly_plan_items:[{id:'item-nine',day_of_week:0,duration_minutes:60,subject:'ریاضی',chapter:null,activity_type:'lesson',target_test_count:null,details:'',sort_order:0,source_grade:9,preparation_track:'final_exam',recommended_publisher:null}]};
+ await act(async()=>root.render(React.createElement(WeeklyPlanBuilder,{key:'existing-ninth',students:[ninth],plans:[existing],initialStudentId:'ninth',initialPlanId:'plan-nine',initialWeekStart:currentWeek,completedItemIds:[]})));
+ subject=editor().querySelector('label:has(select[required]) select');
+ assert.ok(subject && [...subject.options].some(o=>o.value==='__makeup__'),'ninth grade existing plan offers makeup');
+ await act(async()=>{subject.value='__makeup__';subject.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+ assert.equal(JSON.parse(document.querySelector('input[name="items"]').value)[0].activityType,'makeup');
  const {StudentPlanningPanel}=await build('components/dashboard/student-planning-panel.tsx');
  const item={id:'item',plan_id:'plan',day_of_week:0,duration_minutes:90,subject:'باکس جبرانی',chapter:null,activity_type:'makeup',target_test_count:null,details:null,sort_order:0,source_grade:null,preparation_track:'konkur'};
  const plan={id:'plan',title:'برنامه',week_start:today,notes:null,weekly_plan_items:[item]};
