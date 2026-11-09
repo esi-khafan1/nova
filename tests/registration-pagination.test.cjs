@@ -22,6 +22,7 @@ const {PGlite} = require('@electric-sql/pglite');
  insert into public.counselor_students values ('00000000-0000-4000-8000-000000000012','00000000-0000-4000-8000-999999999999',now());
  `);
  await db.exec(fs.readFileSync('supabase/migrations/112_admin_registration_pagination.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/113_registration_phone_search.sql','utf8'));
  await assert.rejects(db.query('select public.admin_registration_directory_page()'), /Admin only/);
  await db.exec("set test.role = 'admin'");
  const get=async (...args)=>(await db.query('select public.admin_registration_directory_page($1,$2,$3,$4) as data',args)).rows[0].data;
@@ -38,6 +39,14 @@ const {PGlite} = require('@electric-sql/pglite');
  const review=await get('', 'تهران',true,1); assert.equal(review.total,1);assert.equal(review.review_count,1);
  const empty=await get('no match',null,false,23); assert.equal(empty.page,1); assert.equal(empty.pages,1);assert.equal(empty.total,0);assert.deepEqual(empty.rows,[]);
  assert.equal((await get('%',null,false,1)).total,0);
+ await db.exec("update public.profiles set phone='989123456012' where id='00000000-0000-4000-8000-000000000012'");
+ for (const query of ['09123456012','989123456012','+98 912 345 6012','۰۰۹۸۹۱۲۳۴۵۶۰۱۲']) {
+   const match=await get(query,null,false,1);
+   assert.equal(match.total,1,query);
+   assert.equal(match.rows[0].student_id,'00000000-0000-4000-8000-000000000012');
+ }
+ // Also find stored national-format phones with an international-format query.
+ assert.equal((await get('989123456013',null,false,1)).total,1);
 
  // Exercise a filtered result that spans three pages, rather than just testing
  // small filters. All data here is synthetic and stays in the local PGlite DB.
