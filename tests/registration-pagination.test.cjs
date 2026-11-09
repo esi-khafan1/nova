@@ -38,5 +38,34 @@ const {PGlite} = require('@electric-sql/pglite');
  const review=await get('', 'تهران',true,1); assert.equal(review.total,1);assert.equal(review.review_count,1);
  const empty=await get('no match',null,false,23); assert.equal(empty.page,1); assert.equal(empty.pages,1);assert.equal(empty.total,0);assert.deepEqual(empty.rows,[]);
  assert.equal((await get('%',null,false,1)).total,0);
+
+ // Exercise a filtered result that spans three pages, rather than just testing
+ // small filters. All data here is synthetic and stays in the local PGlite DB.
+ await db.exec(`
+   update public.profiles set full_name='student ' || substring(id::text from 25) || ' review',
+     registration_status='active'
+   where role='student' and id <> '00000000-0000-4000-8000-000000000001';
+   insert into public.student_account_details(student_id,province)
+     select id,'تهران' from public.profiles where role='student'
+       and id <> '00000000-0000-4000-8000-000000000001'
+       and id <> '00000000-0000-4000-8000-000000000012';
+   insert into public.counselor_students(student_id,counselor_id,created_at)
+     select id,'00000000-0000-4000-8000-999999999999',now()
+     from public.profiles where role='student'
+       and id <> '00000000-0000-4000-8000-000000000001'
+       and id <> '00000000-0000-4000-8000-000000000012';
+ `);
+ for (const [query, province, reviewOnly] of [
+   ['student',null,false], ['', 'تهران',false],
+   ['مشاور يكتا', 'تهران',false], ['student', 'تهران',true],
+ ]) {
+   const resultPages = await Promise.all([1,2,3].map(n=>get(query,province,reviewOnly,n)));
+   const expected = reviewOnly || query.includes('مشاور') ? 25 : 26;
+   assert.equal(resultPages[0].total,expected);
+   assert.deepEqual(resultPages.map(p=>p.rows.length),[10,10,expected-20]);
+   assert.ok(resultPages.every(p=>p.rows.length<=10 && p.pages===3 && p.total===expected));
+   assert.deepEqual(resultPages.map(p=>p.page),[1,2,3]);
+   assert.equal(new Set(resultPages.flatMap(p=>p.rows.map(r=>r.student_id))).size,expected);
+ }
  await db.close(); console.log('PASS: admin-only database pagination, global priority, search, review, counts, page boundaries and details');
 })().catch(e=>{console.error(e);process.exitCode=1});
