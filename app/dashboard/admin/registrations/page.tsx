@@ -1,4 +1,5 @@
 import { requireProfile } from "@/lib/auth";
+import { hasSuperAdminAccess } from "@/lib/super-admin";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { RegistrationDirectory } from "@/components/dashboard/registration-directory";
 import { provinces } from "@/lib/registration";
@@ -8,11 +9,12 @@ export default async function Registrations({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const { profile } = await requireProfile(["admin"]);
-  const params = await searchParams;
+  const context = await requireProfile(["admin"]);
+  const { profile } = context;
+  const [params, isSuperAdmin] = await Promise.all([searchParams, hasSuperAdminAccess(context)]);
 
   return (
-    <DashboardShell role="admin" name={profile.full_name}>
+    <DashboardShell role="admin" name={profile.full_name} isSuperAdmin={isSuperAdmin}>
       <section className="portal-heading">
         <div>
           <span>مدیریت نووا</span>

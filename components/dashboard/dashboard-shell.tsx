@@ -84,11 +84,13 @@ export function DashboardShell({
   name,
   children,
   variant = "default",
+  isSuperAdmin = false,
 }: {
   role: AppRole;
   name: string;
   children: React.ReactNode;
   variant?: "default" | "student-focus";
+  isSuperAdmin?: boolean;
 }) {
   const links: {
     href: string;
@@ -138,6 +140,7 @@ export function DashboardShell({
     ...(role === "admin"
       ? [
           {href:"/dashboard/admin/registrations",label:"خدمات دانش‌آموزان",icon:"admin" as const},
+          ...(isSuperAdmin ? [{href:"/dashboard/admin/courses",label:"دوره‌ها",icon:"admin" as const}] : []),
           {
             href: "/dashboard/admin/password-recovery",
             label: "بازیابی رمز عبور",

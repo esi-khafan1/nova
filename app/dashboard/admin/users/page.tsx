@@ -28,13 +28,13 @@ export default async function AdminUsersPage({
 }) {
   const { supabase, profile } = await requireProfile(["admin"]);
   const params = await searchParams;
-  const [{data},{data:superAdmins}]=await Promise.all([supabase.rpc("admin_list_users"),supabase.rpc("admin_list_super_admins")]);
+  const [{data},{data:superAdmins,error:superAdminError}]=await Promise.all([supabase.rpc("admin_list_users"),supabase.rpc("admin_list_super_admins")]);
   const users = (data ?? []) as UserRow[];
   const superAdminIds = new Set<string>((superAdmins ?? []).map((row: { user_id: string }) => row.user_id));
-  const canGrantAdmin = superAdminIds.has(profile.id);
+  const canGrantAdmin = !superAdminError && superAdminIds.has(profile.id);
 
   return (
-    <DashboardShell role="admin" name={profile.full_name}>
+    <DashboardShell role="admin" name={profile.full_name} isSuperAdmin={canGrantAdmin}>
       <section className="portal-heading">
         <div>
           <span>مدیریت نووا</span>

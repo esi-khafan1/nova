@@ -9,7 +9,7 @@ import "./settings.css";
 export default async function CourseSettingsPage({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}) {
   const {profile}=await requireSuperAdmin();
   const [offers,params]=await Promise.all([loadCourseOffers(),searchParams]);
-  return <DashboardShell role="admin" name={profile.full_name}>
+  return <DashboardShell role="admin" name={profile.full_name} isSuperAdmin>
     <section className="portal-heading"><div><span>مدیریت نووا</span><h1>دوره‌ها</h1></div><Link href="/dashboard/admin">بازگشت</Link></section>
     {params.saved && <p role="status" className="portal-alert success">تنظیمات ثبت شد.</p>}
     {params.error && <p role="alert" className="portal-alert error">تنظیمات ثبت نشد؛ مقادیر را بررسی و دوباره تلاش کن.</p>}

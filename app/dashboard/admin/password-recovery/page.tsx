@@ -10,9 +10,9 @@ export default async function PasswordRecoveryPage({ searchParams }: { searchPar
   const params = await searchParams;
   const [{data:supers,error:superError},{data,error}]=await Promise.all([supabase.rpc("admin_list_super_admins"),supabase.rpc("admin_list_users")]);
   const superIds = new Set<string>((supers ?? []).map((row: { user_id: string }) => row.user_id));
-  const isSuper = superIds.has(profile.id);
+  const isSuper = !superError && superIds.has(profile.id);
   const accounts = ((data ?? []) as Account[]).filter(account => account.email && (isSuper || !superIds.has(account.id)));
-  return <DashboardShell role="admin" name={profile.full_name}>
+  return <DashboardShell role="admin" name={profile.full_name} isSuperAdmin={isSuper}>
     <section className="portal-heading"><div><span>مدیریت نووا</span><h1>بازیابی رمز عبور</h1><p>کاربر را انتخاب کن تا لینک تعیین رمز جدید برای ایمیل خودش ارسال شود.</p></div></section>
     {params.sent && <div className="portal-alert success" role="status">ایمیل بازیابی ارسال شد. کاربر با لینک ایمیل، رمز جدیدش را در صفحهٔ ورود تعیین می‌کند.</div>}
     {params.error && <div className="portal-alert error" role="alert">{params.error === "limit" ? "محدودیت ارسال فعال است. حداقل یک دقیقه صبر کن؛ ممکن است سهمیهٔ ساعتی هم پر شده باشد." : params.error === "target" ? "کاربر قابل انتخاب نیست یا اجازهٔ بازیابی این حساب را نداری." : "ارسال ایمیل انجام نشد؛ تنظیمات ایمیل و اتصال را بررسی کن."}</div>}
