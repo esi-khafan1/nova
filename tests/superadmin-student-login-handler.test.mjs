@@ -32,3 +32,8 @@ res=await handler(request({step:'verify',challenge_id:start.challenge_id,code,pa
 isSuper=false;res=await handler(request({step:'start',action:'create',phone:'989123456780',target_id:null}));assert.equal(res.status,403);assert.equal(mutations.length,2);
 isSuper=true;mailOk=false;res=await handler(request({step:'start',action:'create',phone:'989123456780',target_id:null}));assert.equal(res.status,503);assert.equal(mutations.length,2);
 console.log('PASS: OTP email, no plaintext code persistence, super-admin checks, single-use code, create and reset with fake auth and mail');
+
+// The Edge entrypoint must not load the optional JSR type declarations at runtime.
+const {readFileSync} = await import('node:fs');
+const entry = readFileSync(new URL('../supabase/functions/superadmin-student-login/index.ts', import.meta.url), 'utf8');
+assert.doesNotMatch(entry, /(?:import|export)\s+["']jsr:/);
