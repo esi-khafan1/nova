@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 const m={exports:{}};
 const deps={react:React,'react/jsx-runtime':require('react/jsx-runtime'),
- './course-price':{CoursePrice:()=>null},
+ './course-price':{CoursePrice:()=>null},'@/lib/course-offers':{defaultCourseOffers:[]},
  '@/app/dashboard/registration/actions':{submitRegistration:async()=>({})},
  '@/lib/courses':{courseTypeLabel:()=>'',courseDurationLabel:()=>''},
  '@/lib/study-catalog':{studyFieldLabels:{}},

@@ -31,9 +31,10 @@ test('only a confirmed auth phone becomes the registration 09 number', () => {
 function form(verifiedPhone, mode = 'profile') {
   const jsx = (type, props) => ({ type, props });
   const { RegistrationForm } = load('components/registration/registration-form.tsx', {
-    react: { useState: value => [value, () => {}], useActionState: () => [{}, () => {}, false], startTransition: () => {} },
+    react: { useState: value => [value, () => {}], useRef: () => ({current:null}), useEffect: () => {}, useActionState: () => [{}, () => {}, false], startTransition: () => {} },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     './course-price': { CoursePrice: () => null },
+    '@/lib/course-offers': { defaultCourseOffers: [] },
     '@/app/dashboard/registration/actions': { submitRegistration: () => {} },
     '@/lib/courses': { courseTypeLabel: () => '', courseDurationLabel: () => '' },
     '@/lib/study-catalog': { studyFieldLabels: {} },
@@ -82,6 +83,8 @@ test('course-selection page passes the confirmed phone to the enrollment form be
   const StudentProfileCompletionNotice = () => null;
   let accountPhone;
   const { default: Page } = load('app/dashboard/registration/page.tsx', {
+    '@/lib/course-offers': { defaultCourseOffers: [] },
+    '@/lib/load-course-offers': { loadCourseOffers: async () => [{reservation:false}] },
     '@/lib/phone-auth': phoneAuth,
     'next/link': { default: () => null },
     'next/navigation': { redirect(path) { throw Error(`unexpected redirect: ${path}`); } },

@@ -11,7 +11,7 @@ import { parseCourseSelection, courseRegistrationPath, studentCourseCatalogPath 
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { StudentProfileCompletionNotice } from "@/components/dashboard/student-profile-completion-notice";
-import { requiredStudentFieldsIssue } from "@/lib/registration";
+import { requiredStudentFieldsIssue, requiredStudentNameIssue } from "@/lib/registration";
 import "@/app/registration.css";
 export default async function RegistrationPage({ searchParams }: { searchParams: Promise<Record<string,string|string[]|undefined>> }) {
   const params = await searchParams;
@@ -34,7 +34,7 @@ export default async function RegistrationPage({ searchParams }: { searchParams:
   const completionIssue = !account.error ? requiredStudentFieldsIssue({ ...account.values, grade: selection?.grade ?? account.values.grade, study_field: selection ? selection.field : account.values.study_field }, true) : null;
   return <DashboardShell role="student" name={profile.full_name}><div className="registration-page"><section className="registration-welcome"><span>به خانوادهٔ نووا خوش آمدی</span><h1>{reservation ? "رزرو دوره را کامل کن" : "ثبت‌نام دوره را کامل کن"}</h1><p>{reservation ? "این دوره در حالت رزرو است. " : ""}اطلاعات و فیش واریزی را ارسال کن. خدمات پولی پس از تأیید فیش و تخصیص مشاور توسط مدیر فعال می‌شوند؛ در این فاصله می‌توانی همهٔ بخش‌های پنل را ببینی.</p><Link href="/dashboard/student">مشاهدهٔ پنل من ←</Link></section>
     {profile.registration_status === "pending" && <section className="registration-pending" role="status"><strong>اطلاعاتت ارسال شده و منتظر بررسی است.</strong><p>تا قبل از تأیید می‌توانی اطلاعات یا فیش همین درخواست را اصلاح کنی.</p></section>}
-    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={false} onRegistrationPage={Boolean(!invalidSelection && (selection || legacy))}/>}
+    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={false} focusName={Boolean(requiredStudentNameIssue(account.values))} onRegistrationPage={Boolean(!invalidSelection && (selection || legacy))}/>}
     <section id="student-registration-details" className="registration-card">{account.error ? <p role="alert">اطلاعات فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p> : invalidSelection || (!selection && !legacy) ? <><h2>ابتدا دوره‌ات را انتخاب کن</h2><p>با انتخاب پایه و برای پایه‌های دهم به بعد رشته، ۸ دوره در دو پلن و چهار بازهٔ زمانی برایت نمایش داده می‌شود.</p><Link className="button" href={studentCourseCatalogPath(account.values.grade, account.values.study_field)}>انتخاب دوره</Link><p><Link href="/dashboard/student/account">تکمیل عادی اطلاعات، بدون دوره و فیش ←</Link></p></> : !offers && selection ? <p role="alert">اطلاعات دوره فعلاً در دسترس نیست؛ صفحه را دوباره باز کن.</p> : <RegistrationForm offers={offers ?? defaultCourseOffers} key={selection ? courseRegistrationPath(selection) : "legacy"} values={{...account.values,receipt_name:existing?.receipt_name,additional_notes:existing?.additional_notes ?? account.values.additional_notes}} verifiedPhone={verifiedPhone} selection={selection}/>}</section>
   </div></DashboardShell>;
 }

@@ -28,7 +28,7 @@ export function validateRegistration(v:RegistrationFormValues, accountOnly = fal
 }
 // Only required fields determine whether an active student's completion reminder
 // is shown. Optional contact details never trigger this notice.
-function requiredStudentNameIssue(v:RegistrationFormValues){
+export function requiredStudentNameIssue(v:RegistrationFormValues){
  const name=(v.full_name?.trim() || [v.first_name,v.last_name].filter(Boolean).join(" ").trim()).replace(/\s+/gu," ");
  if(name.length<3||name.length>121||!/^\S+\s+\S+(?:\s+\S+)*$/u.test(name))return "نام و نام خانوادگی را کامل وارد کن.";
  if(!v.full_name?.trim() && ((v.first_name?.length??0)>50||(v.last_name?.length??0)>70))return "نام و نام خانوادگی را کامل وارد کن.";

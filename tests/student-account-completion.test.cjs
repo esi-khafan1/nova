@@ -113,8 +113,11 @@ test('optional legacy contact fields alone never trigger the completion reminder
 test('missing or incomplete signup name prompts active students to complete their name', async () => {
   for (const name of ['', 'نیما']) {
     const options = { profileName: name, details: { ...complete, full_name: null } };
-    assert.match(await dashboard(options), /نام و نام خانوادگی را کامل وارد کن/);
-    assert.match(await account(options), /نام و نام خانوادگی را کامل وارد کن/);
+    const home = await dashboard(options), accountPage = await account(options);
+    assert.match(home, /نام و نام خانوادگی را کامل وارد کن/);
+    assert.match(home, /href="\/dashboard\/student\/account#student-full-name"/);
+    assert.match(accountPage, /نام و نام خانوادگی را کامل وارد کن/);
+    assert.match(accountPage, /href="#student-full-name"/);
   }
 });
 

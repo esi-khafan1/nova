@@ -1,7 +1,7 @@
 "use client";
 import { defaultCourseOffers, type CourseOffers } from "@/lib/course-offers";
 import { CoursePrice } from "./course-price";
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { submitRegistration } from "@/app/dashboard/registration/actions";
 import { type RegistrationFormValues } from "@/lib/registration";
 import { courseTypeLabel, courseDurationLabel, type CourseSelection } from "@/lib/courses";
@@ -12,6 +12,12 @@ export function RegistrationForm({ values, mode = "enrollment", selection, verif
   const enrollment = mode === "enrollment";
   const reservation = enrollment && Boolean(selection) && offers[0]?.reservation;
   const [grade, setGrade] = useState(String(selection?.grade ?? values.grade ?? ""));
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (window.location.hash !== "#student-full-name") return;
+    const frame = window.requestAnimationFrame(() => nameRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     // React resets uncontrolled fields (including the receipt file) after a
     // form action resolves, even when the server returns a validation error.
@@ -27,7 +33,7 @@ export function RegistrationForm({ values, mode = "enrollment", selection, verif
     <input type="hidden" name="form_mode" value={mode}/>
     {enrollment && selection && <section className="registration-course-summary" aria-label="دورهٔ انتخابی"><h2>{reservation ? "رزرو دوره" : "انتخاب تو"}</h2><dl><div><dt>پلن انتخابی</dt><dd>{courseTypeLabel(selection.course)}</dd></div><div><dt>بازهٔ انتخابی</dt><dd>{courseDurationLabel(selection.months)}</dd></div><div><dt>پایهٔ تحصیلی</dt><dd>{selection.grade.toLocaleString("fa-IR")}</dd></div>{selection.field && <div><dt>رشته</dt><dd>{studyFieldLabels[selection.field]}</dd></div>}</dl><div className="registration-price-offer"><CoursePrice selection={selection} offers={offers} offer/></div><input type="hidden" name="course" value={selection.course}/><input type="hidden" name="months" value={selection.months}/><input type="hidden" name="grade" value={selection.grade}/><input type="hidden" name="study_field" value={selection.field ?? ""}/></section>}
     <div className="registration-fields">
-      <label className="registration-full-name">نام و نام خانوادگی<input name="full_name" autoComplete="name" required minLength={3} maxLength={121} defaultValue={values.full_name ?? [values.first_name,values.last_name].filter(Boolean).join(" ")}/></label>
+      <label className="registration-full-name">نام و نام خانوادگی<input id="student-full-name" ref={nameRef} name="full_name" autoComplete="name" required minLength={3} maxLength={121} defaultValue={values.full_name ?? [values.first_name,values.last_name].filter(Boolean).join(" ")}/></label>
       {verifiedPhone ? <div className="registration-verified-phone"><span>شمارهٔ همراه تأییدشده</span><strong dir="ltr">{verifiedPhone}</strong><small>شماره از حساب کاربری‌ات دریافت شد؛ نیازی به واردکردن دوباره نیست.</small></div> : <label><span>شمارهٔ تلفن همراه <small>(اختیاری)</small></span><input name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={16} defaultValue={values.phone ?? ""} placeholder="۰۹۱۲۱۲۳۴۵۶۷" dir="ltr"/></label>}
       <label><span>آیدی تلگرام <small>(اختیاری)</small></span><input name="telegram_id" minLength={5} maxLength={33} defaultValue={values.telegram_id ?? ""} placeholder="@username" dir="ltr"/></label>
       {!selection && <><label>پایهٔ تحصیلی<select name="grade" required value={grade} onChange={e => setGrade(e.target.value)}><option value="" disabled>انتخاب پایه</option><option value="9">نهم</option><option value="10">دهم</option><option value="11">یازدهم</option><option value="12">دوازدهم</option></select></label>{grade === "9" ? <input type="hidden" name="study_field" value=""/> : <label>رشته<select key={grade} name="study_field" required defaultValue={values.study_field ?? ""}><option value="" disabled>انتخاب رشته</option><option value="mathematics">ریاضی و فیزیک</option><option value="experimental_sciences">علوم تجربی</option><option value="humanities">علوم انسانی</option>{!enrollment && <><option value="arts">هنر</option><option value="foreign_languages">زبان‌های خارجی</option></>}</select></label>}</>}

@@ -8,7 +8,7 @@ import { StudentProfileCompletionNotice } from "@/components/dashboard/student-p
 import { StudentNameForm } from "@/components/dashboard/student-name-form";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { verifiedMobileForAccount } from "@/lib/phone-auth";
-import { requiredStudentFieldsIssue } from "@/lib/registration";
+import { requiredStudentFieldsIssue, requiredStudentNameIssue } from "@/lib/registration";
 import { requireProfile } from "@/lib/auth";
 import "@/app/registration.css";
 export default async function StudentAccountPage() {
@@ -24,7 +24,7 @@ export default async function StudentAccountPage() {
       <p>دورهٔ اختصاص‌یافته توسط مدیر: <strong>{courseTypeLabel(account.service?.service_course_type) || "بدون دورهٔ اختصاص‌یافته"}</strong>{account.service?.service_course_duration_months ? ` · ${courseDurationLabel(account.service.service_course_duration_months)}` : ""}</p>
       {account.registration?.course_type && <p>درخواست ثبت‌شدهٔ شما: {courseTypeLabel(account.registration.course_type)}{account.registration.course_duration_months ? ` · ${courseDurationLabel(account.registration.course_duration_months)}` : ""} (این درخواست، دورهٔ فعال‌شده نیست.)</p>}
     </section>}
-    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={profile.registration_status === "active"} onAccountPage/>}
+    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={profile.registration_status === "active"} focusName={Boolean(requiredStudentNameIssue(account.values))} onAccountPage/>}
     <section id="student-account-details" className="registration-card"><h2>اطلاعات حساب</h2>{account.error ? <p className="portal-alert error" role="alert">اطلاعات فعلاً دریافت نشد؛ صفحه را دوباره باز کن.</p> : <RegistrationForm values={account.values} verifiedPhone={verifiedPhone} mode="profile"/>}</section>
     <PhoneLink enabled={process.env.PHONE_SIGNUP_ENABLED === "true"} verifiedPhone={user.phone_confirmed_at ? user.phone || null : null}/>
     <section className="portal-card account-delete-card"><span>منطقه حساس</span><h2>حذف دائمی حساب</h2><p>با حذف حساب، پروفایل، برنامه‌های مرتبط، ثبت پیشرفت و پاسخ‌های آزمون وابسته به حساب حذف می‌شوند. این عملیات قابل بازگشت نیست.</p><DeleteAccount/></section>

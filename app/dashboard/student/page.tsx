@@ -8,7 +8,7 @@ import { requireProfile } from "@/lib/auth";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { verifiedMobileForAccount } from "@/lib/phone-auth";
 import { loadStudentDashboard } from "@/lib/load-student-dashboard";
-import { requiredStudentFieldsIssue } from "@/lib/registration";
+import { requiredStudentFieldsIssue, requiredStudentNameIssue } from "@/lib/registration";
 import { tehranToday } from "@/lib/student-planning";
 import type { StudentPlanExam } from "@/lib/student-plan-exams";
 
@@ -54,7 +54,7 @@ export default async function StudentDashboard() {
   return <DashboardShell role="student" name={profile.full_name}>
     {!profile.full_name?.trim() && <StudentNameForm/>}
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>
-    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={active}/>}
+    {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={active} focusName={Boolean(account && requiredStudentNameIssue(account.values))}/>}
     <StudentDashboardRefresh currentDate={tehranToday()}/>
     {failed ? <section className="portal-card portal-alert error" role="alert"><h1>برنامه‌ها و آزمون‌ها فعلاً کامل دریافت نشدند</h1><p>دوباره صفحه را باز کن. این پیام به معنی نداشتن برنامه، آزمون یا گزارش نیست.</p><a href="/dashboard/student">تلاش دوباره</a></section> : <StudentPlanningPanel audience="student" plans={plans} completions={completions} dailyNotes={dailyNotes} exams={assignedExams.exams} submittedExamIds={assignedExams.attemptIds} today={tehranToday()} profile={{ full_name: profile.full_name, grade: profile.grade, study_field: profile.study_field }}/>}
   </DashboardShell>;
