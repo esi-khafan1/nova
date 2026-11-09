@@ -34,10 +34,13 @@ const countLinks = doc => doc.querySelectorAll('a[href="/dashboard/admin/courses
   let doc = nav(renderToStaticMarkup(React.createElement(Shell, {role:'admin', name:'مدیر', isSuperAdmin:true}, 'content')));
   assert.equal(doc.querySelectorAll('.portal-sidebar a[href="/dashboard/admin/courses"]').length, 1);
   assert.equal(doc.querySelectorAll('.portal-mobile-nav a[href="/dashboard/admin/courses"]').length, 1);
+  assert.equal(doc.querySelectorAll('.portal-sidebar a[href="/dashboard/admin/student-login"]').length, 1);
+  assert.equal(doc.querySelectorAll('.portal-mobile-nav a[href="/dashboard/admin/student-login"]').length, 1);
   assert.equal(doc.querySelector('.portal-sidebar a[href="/dashboard/admin/courses"]').textContent, 'دوره‌ها');
   for (const props of [{role:'admin'}, {role:'admin',isSuperAdmin:false}, {role:'student',isSuperAdmin:true}, {role:'counselor',isSuperAdmin:true}]) {
     doc = nav(renderToStaticMarkup(React.createElement(Shell, {...props, name:'نام'}, 'content')));
     assert.equal(countLinks(doc), 0, `unexpected course link for ${JSON.stringify(props)}`);
+    assert.equal(doc.querySelectorAll('a[href="/dashboard/admin/student-login"]').length,0);
   }
 
   let context;

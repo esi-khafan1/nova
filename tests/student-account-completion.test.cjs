@@ -49,6 +49,7 @@ function setup({ status = 'active', details = null, registrationRow = null, serv
     '@/components/dashboard/dashboard-shell': { DashboardShell: ({ children }) => React.createElement('main', null, children) },
     '@/components/dashboard/student-service-notice': { StudentServiceNotice: () => null },
     '@/components/dashboard/student-profile-completion-notice': { StudentProfileCompletionNotice },
+    '@/components/dashboard/student-name-form': { StudentNameForm: () => React.createElement('section', null, 'ثبت نام و نام خانوادگی') },
     '@/lib/auth': { requireProfile: async () => ({ supabase, profile, user }) },
     '@/lib/phone-auth': phoneAuth,
     '@/lib/load-student-account': { loadStudentAccount: accountLoader.loadStudentAccount },

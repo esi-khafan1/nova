@@ -5,6 +5,7 @@ import { DeleteAccount } from "@/components/dashboard/delete-account";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { StudentServiceNotice } from "@/components/dashboard/student-service-notice";
 import { StudentProfileCompletionNotice } from "@/components/dashboard/student-profile-completion-notice";
+import { StudentNameForm } from "@/components/dashboard/student-name-form";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { verifiedMobileForAccount } from "@/lib/phone-auth";
 import { requiredStudentFieldsIssue } from "@/lib/registration";
@@ -17,6 +18,7 @@ export default async function StudentAccountPage() {
   const completionIssue = !account.error ? requiredStudentFieldsIssue(account.values, true) : null;
   return <DashboardShell role="student" name={profile.full_name}><div className="student-account-layout">
     <section className="portal-heading"><div><span>حساب کاربری</span><h1>اطلاعات و مدیریت حساب</h1><p>برای تکمیل اطلاعات حساب نیازی به انتخاب دوره یا ارسال فیش نیست.</p></div></section>
+    {!profile.full_name?.trim() && <StudentNameForm/>}
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>
     {!account.error && <section className="portal-card"><h2>دورهٔ حساب</h2>
       <p>دورهٔ اختصاص‌یافته توسط مدیر: <strong>{courseTypeLabel(account.service?.service_course_type) || "بدون دورهٔ اختصاص‌یافته"}</strong>{account.service?.service_course_duration_months ? ` · ${courseDurationLabel(account.service.service_course_duration_months)}` : ""}</p>

@@ -3,6 +3,7 @@ import { StudentPlanningPanel } from "@/components/dashboard/student-planning-pa
 import { StudentDashboardRefresh } from "@/components/dashboard/student-dashboard-refresh";
 import { StudentServiceNotice } from "@/components/dashboard/student-service-notice";
 import { StudentProfileCompletionNotice } from "@/components/dashboard/student-profile-completion-notice";
+import { StudentNameForm } from "@/components/dashboard/student-name-form";
 import { requireProfile } from "@/lib/auth";
 import { loadStudentAccount } from "@/lib/load-student-account";
 import { verifiedMobileForAccount } from "@/lib/phone-auth";
@@ -51,6 +52,7 @@ export default async function StudentDashboard() {
   const completions = active && !failed ? loaded.completions : [];
   const dailyNotes = active && !failed ? loaded.dailyNotes : [];
   return <DashboardShell role="student" name={profile.full_name}>
+    {!profile.full_name?.trim() && <StudentNameForm/>}
     <StudentServiceNotice status={profile.registration_status} grade={profile.grade} studyField={profile.study_field}/>
     {completionIssue && <StudentProfileCompletionNotice issue={completionIssue} active={active}/>}
     <StudentDashboardRefresh currentDate={tehranToday()}/>
