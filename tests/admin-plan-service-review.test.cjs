@@ -18,8 +18,8 @@ assert.doesNotMatch(migration, /counselor.*notification|notification.*counselor/
 assert.match(milestoneMigration, /\(count\(\*\)::integer \/ 4\) \* 4 as review_count/);
 assert.match(milestoneMigration, /current_review_count := \(current_plan_count \/ 4\) \* 4/);
 
-assert.match(directory, /نیازمند بررسی ادامه یا توقف خدمات \(\{reviewRows\.length\.toLocaleString\("fa-IR"\)\} نفر\)/);
-assert.match(directory, /reviewOnly \? reviewRows : provinceRows/);
+assert.match(directory, /نیازمند بررسی ادامه یا توقف خدمات \(\{reviewCount\.toLocaleString\("fa-IR"\)\} نفر\)/);
+assert.match(fs.readFileSync("supabase/migrations/112_admin_registration_pagination.sql", "utf8"), /not coalesce\(review_only,false\) or review_plan_count is not null/);
 assert.match(directory, /continueStudentPlanServiceReview/);
 assert.match(directory, /label="ادامهٔ خدمات تأیید شد"/);
 assert.doesNotMatch(directory, /برنامهٔ \{reviewPlanCount[^}]*\} · نیازمند بررسی/);

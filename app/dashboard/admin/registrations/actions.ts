@@ -3,8 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
-import { receiptImageType } from "@/lib/registration";
+import { provinces, receiptImageType } from "@/lib/registration";
+import { parseRegistrationPage } from "@/lib/registration-pagination";
 import { parseAdminFinalCourse } from "@/lib/admin-final-course";
+
+function directoryRedirect(fd: FormData, result: string): never {
+  const params = new URLSearchParams(result);
+  const search = fd.get("directory_search");
+  const province = fd.get("directory_province");
+  const review = fd.get("directory_review");
+  const page = fd.get("directory_page");
+  if (typeof search === "string" && search.trim()) params.set("q", search.trim().slice(0, 120));
+  if (typeof province === "string" && provinces.includes(province)) params.set("province", province);
+  if (review === "continuation") params.set("review", "continuation");
+  if (typeof page === "string" && parseRegistrationPage(page) > 1) params.set("page", String(parseRegistrationPage(page)));
+  redirect(`/dashboard/admin/registrations?${params}`);
+}
 
 const uuidPattern = /^[0-9a-f-]{36}$/i;
 const revalidateRegistrationPaths = () => {
@@ -28,7 +42,7 @@ export async function assignCounselor(fd: FormData) {
   const counselorId = String(fd.get("counselor_id") ?? "");
 
   if (!uuidPattern.test(studentId) || !uuidPattern.test(counselorId)) {
-    redirect("/dashboard/admin/registrations?error=assignment");
+    directoryRedirect(fd, "error=assignment");
   }
 
   const { data: existing, error: lookupError } = await supabase
@@ -37,17 +51,17 @@ export async function assignCounselor(fd: FormData) {
     .eq("student_id", studentId)
     .limit(1);
   if (lookupError || existing?.length) {
-    redirect("/dashboard/admin/registrations?error=assignment");
+    directoryRedirect(fd, "error=assignment");
   }
 
   const { error } = await supabase.rpc("admin_assign_student_counselor", {
     target_student_id: studentId,
     target_counselor_id: counselorId,
   });
-  if (error) redirect("/dashboard/admin/registrations?error=assignment");
+  if (error) directoryRedirect(fd, "error=assignment");
 
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?assigned=1");
+  directoryRedirect(fd, "assigned=1");
 }
 
 export async function activateStudent(fd: FormData) {
@@ -56,17 +70,17 @@ export async function activateStudent(fd: FormData) {
   const counselorId = String(fd.get("counselor_id") ?? "");
 
   if (!uuidPattern.test(studentId) || !uuidPattern.test(counselorId)) {
-    redirect("/dashboard/admin/registrations?error=1");
+    directoryRedirect(fd, "error=1");
   }
 
   const finalCourse = parseAdminFinalCourse(fd);
-  if (!finalCourse) redirect("/dashboard/admin/registrations?error=course");
+  if (!finalCourse) directoryRedirect(fd, "error=course");
 
   // The database chooses the receipt/manual route from its locked registration
   // row. The expected path only detects a new/replaced receipt since page load.
   const expectedReceiptPath = fd.get("expected_receipt_path");
   if (typeof expectedReceiptPath !== "string" || expectedReceiptPath.length > 1000) {
-    redirect("/dashboard/admin/registrations?error=1");
+    directoryRedirect(fd, "error=1");
   }
   const { error } = await supabase.rpc("admin_activate_student_with_course", {
     target_student_id: studentId,
@@ -75,10 +89,10 @@ export async function activateStudent(fd: FormData) {
     target_course_type: finalCourse.course,
     target_course_duration_months: finalCourse.months,
   });
-  if (error) redirect("/dashboard/admin/registrations?error=1");
+  if (error) directoryRedirect(fd, "error=1");
 
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?saved=1");
+  directoryRedirect(fd, "saved=1");
 }
 
 export async function uploadStudentReceipt(fd: FormData) {
@@ -88,18 +102,18 @@ export async function uploadStudentReceipt(fd: FormData) {
   const file = fd.get("receipt");
   if (!uuidPattern.test(studentId) || typeof expected !== "string" || expected.length > 1000 ||
       !(file instanceof File) || !file.size || file.size > 5 * 1024 * 1024) {
-    redirect("/dashboard/admin/registrations?error=upload");
+    directoryRedirect(fd, "error=upload");
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
   const type = receiptImageType(bytes);
-  if (!type) redirect("/dashboard/admin/registrations?error=upload");
+  if (!type) directoryRedirect(fd, "error=upload");
 
   const path = `${studentId}/${crypto.randomUUID()}.${type.extension}`;
   // The bucket is private; RLS allows an admin to write only to an inactive
   // student's folder. The DB function checks the exact target and stale path.
   const bucket = supabase.storage.from("registration-receipts");
   const { error: uploadError } = await bucket.upload(path, bytes, { contentType: type.mime, upsert: false });
-  if (uploadError) redirect("/dashboard/admin/registrations?error=upload");
+  if (uploadError) directoryRedirect(fd, "error=upload");
 
   const name = (file.name.split(/[\\/]/).pop() ?? "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 150) || `receipt.${type.extension}`;
   const { error } = await supabase.rpc("admin_submit_student_receipt", {
@@ -110,13 +124,13 @@ export async function uploadStudentReceipt(fd: FormData) {
   });
   if (error) {
     await bucket.remove([path]);
-    redirect("/dashboard/admin/registrations?error=upload");
+    directoryRedirect(fd, "error=upload");
   }
   // Old files are never deleted before the new receipt is recorded. If
   // cleanup fails, the old object stays private and is no longer linked.
   if (expected) await bucket.remove([expected]);
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?uploaded=1");
+  directoryRedirect(fd, "uploaded=1");
 }
 
 export async function disableStudent(fd: FormData) {
@@ -125,15 +139,15 @@ export async function disableStudent(fd: FormData) {
   const expected = fd.get("expected_counselor_id");
   if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
       typeof expected !== "string" || (expected !== "" && !uuidPattern.test(expected))) {
-    redirect("/dashboard/admin/registrations?error=disable");
+    directoryRedirect(fd, "error=disable");
   }
   const { error } = await supabase.rpc("admin_disable_student", {
     target_student_id: studentId,
     expected_counselor_id: expected || null,
   });
-  if (error) redirect("/dashboard/admin/registrations?error=disable");
+  if (error) directoryRedirect(fd, "error=disable");
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?disabled=1");
+  directoryRedirect(fd, "disabled=1");
 }
 
 export async function resumeStudent(fd: FormData) {
@@ -142,19 +156,19 @@ export async function resumeStudent(fd: FormData) {
   const counselorId = fd.get("counselor_id");
   if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
       typeof counselorId !== "string" || !uuidPattern.test(counselorId)) {
-    redirect("/dashboard/admin/registrations?error=resume");
+    directoryRedirect(fd, "error=resume");
   }
   const finalCourse = parseAdminFinalCourse(fd);
-  if (!finalCourse) redirect("/dashboard/admin/registrations?error=course");
+  if (!finalCourse) directoryRedirect(fd, "error=course");
   const { error } = await supabase.rpc("admin_resume_student_with_course", {
     target_student_id: studentId,
     target_counselor_id: counselorId,
     target_course_type: finalCourse.course,
     target_course_duration_months: finalCourse.months,
   });
-  if (error) redirect("/dashboard/admin/registrations?error=resume");
+  if (error) directoryRedirect(fd, "error=resume");
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?resumed=1");
+  directoryRedirect(fd, "resumed=1");
 }
 
 export async function changeStudentCourse(fd: FormData) {
@@ -164,7 +178,7 @@ export async function changeStudentCourse(fd: FormData) {
   const selected = parseAdminFinalCourse(fd);
   if (typeof studentId !== "string" || !uuidPattern.test(studentId) || !expected || !selected ||
       (expected.course === selected.course && expected.months === selected.months)) {
-    redirect("/dashboard/admin/registrations?error=course-change");
+    directoryRedirect(fd, "error=course-change");
   }
   const { error } = await supabase.rpc("admin_change_student_course", {
     target_student_id: studentId,
@@ -173,9 +187,9 @@ export async function changeStudentCourse(fd: FormData) {
     target_course_type: selected.course,
     target_course_duration_months: selected.months,
   });
-  if (error) redirect("/dashboard/admin/registrations?error=course-change");
+  if (error) directoryRedirect(fd, "error=course-change");
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?course_changed=1");
+  directoryRedirect(fd, "course_changed=1");
 }
 
 export async function continueStudentPlanServiceReview(fd: FormData) {
@@ -184,15 +198,15 @@ export async function continueStudentPlanServiceReview(fd: FormData) {
   const planCount = Number(fd.get("expected_plan_count"));
   if (typeof studentId !== "string" || !uuidPattern.test(studentId) ||
       !Number.isInteger(planCount) || planCount < 4 || planCount % 4 !== 0) {
-    redirect("/dashboard/admin/registrations?review=continuation&error=plan-review");
+    directoryRedirect(fd, "review=continuation&error=plan-review");
   }
   const { error } = await supabase.rpc("admin_continue_student_plan_service_review", {
     target_student_id: studentId,
     expected_plan_count: planCount,
   });
-  if (error) redirect("/dashboard/admin/registrations?review=continuation&error=plan-review");
+  if (error) directoryRedirect(fd, "review=continuation&error=plan-review");
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?review=continuation&plan_review_continued=1");
+  directoryRedirect(fd, "review=continuation&plan_review_continued=1");
 }
 
 export async function changeStudentCounselor(fd: FormData) {
@@ -204,14 +218,14 @@ export async function changeStudentCounselor(fd: FormData) {
       typeof oldCounselorId !== "string" || !uuidPattern.test(oldCounselorId) ||
       typeof newCounselorId !== "string" || !uuidPattern.test(newCounselorId) ||
       oldCounselorId === newCounselorId) {
-    redirect("/dashboard/admin/registrations?error=reassign");
+    directoryRedirect(fd, "error=reassign");
   }
   const { error } = await supabase.rpc("admin_change_student_counselor", {
     target_student_id: studentId,
     expected_counselor_id: oldCounselorId,
     target_counselor_id: newCounselorId,
   });
-  if (error) redirect("/dashboard/admin/registrations?error=reassign");
+  if (error) directoryRedirect(fd, "error=reassign");
   revalidateRegistrationPaths();
-  redirect("/dashboard/admin/registrations?reassigned=1");
+  directoryRedirect(fd, "reassigned=1");
 }

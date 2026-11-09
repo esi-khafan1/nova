@@ -95,3 +95,9 @@
 .registration-directory .registration-final-course select{width:100%;min-height:44px;background:#fff;padding:9px 10px}
 
 .registration-province-filter{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:16px 0}.registration-province-filter label{display:grid;gap:6px;font-size:13px;font-weight:700}.registration-province-filter select{min-width:190px;min-height:42px}.registration-province-filter button{min-height:42px;cursor:pointer}
+.registration-province-filter input[type=search]{width:min(100%,300px);min-width:220px;min-height:42px;padding:9px 12px;border:1px solid #c8daff;border-radius:8px;font:inherit;background:#fff;color:#12304d}
+.registration-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:#547191}
+.registration-pagination div{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.registration-pagination a{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:6px;border:1px solid #c8daff;border-radius:8px;color:#12304d;text-decoration:none;font-weight:700}
+.registration-pagination a[aria-current=page]{background:#225db2;border-color:#225db2;color:white}
+@media(max-width:600px){.registration-province-filter label{width:100%}.registration-province-filter input[type=search],.registration-province-filter select{width:100%;max-width:none}}

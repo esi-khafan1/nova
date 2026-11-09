@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
-import { loadRegistrationDirectory } from "@/lib/load-registration-directory";
-import { isPendingUnassignedReceipt, prioritizePendingUnassignedReceipts, provinces, registrationLabels } from "@/lib/registration";
+import { loadRegistrationPage, parseRegistrationPage, registrationPageNumbers } from "@/lib/registration-pagination";
+import { isPendingUnassignedReceipt, provinces, registrationLabels } from "@/lib/registration";
 import { courseTypeLabel, courseDurationLabel } from "@/lib/courses";
 import { studyFieldLabels } from "@/lib/study-catalog";
 import {
@@ -21,50 +21,43 @@ import { RequiredFieldsForm } from "@/components/dashboard/required-fields-form"
 import { RegistrationManagementButton } from "@/components/dashboard/registration-management-button";
 import "@/app/registration.css";
 
-type PlanServiceReview = {
-  student_id: string;
-  review_plan_count: number;
-};
-
 export async function RegistrationDirectory({
-  audience,
-  province,
-  reviewOnly = false,
+  audience, province, reviewOnly = false, search = "", pageParam,
 }: {
-  audience: "admin";
-  province?: string;
-  reviewOnly?: boolean;
+  audience: "admin"; province?: string; reviewOnly?: boolean; search?: string; pageParam?: string;
 }) {
   const { supabase } = await requireProfile(["admin"]);
-  let rows: Awaited<ReturnType<typeof loadRegistrationDirectory>>;
+  let directory: Awaited<ReturnType<typeof loadRegistrationPage>>;
   let counselors: { id: string; full_name: string }[] = [];
-  let planServiceReviews: PlanServiceReview[] = [];
   try {
-    const [directory,counselorResult,reviewResult]=await Promise.all([
-      loadRegistrationDirectory(supabase),
+    const [page, counselorResult] = await Promise.all([
+      loadRegistrationPage(supabase, {search, province, reviewOnly, page: parseRegistrationPage(pageParam)}),
       supabase.from("profiles").select("id,full_name,counselor_profiles!inner(approval_status)")
         .eq("role","counselor").eq("counselor_profiles.approval_status","approved").order("full_name"),
-      supabase.rpc("admin_student_plan_service_reviews"),
     ]);
-    rows=directory;
-    if(counselorResult.error)return <p className="portal-alert error" role="alert">فهرست مشاورها دریافت نشد؛ برای جلوگیری از تخصیص ناقص، دوباره تلاش کن.</p>;
-    if(reviewResult.error)return <p className="portal-alert error" role="alert">فهرست بررسی ادامه یا توقف خدمات دریافت نشد؛ دوباره تلاش کن.</p>;
-    counselors=(counselorResult.data??[]) as {id:string;full_name:string}[];
-    planServiceReviews=(reviewResult.data??[]) as PlanServiceReview[];
+    directory = page;
+    if (counselorResult.error) return <p className="portal-alert error" role="alert">فهرست مشاورها دریافت نشد؛ برای جلوگیری از تخصیص ناقص، دوباره تلاش کن.</p>;
+    counselors = (counselorResult.data ?? []) as {id:string; full_name:string}[];
   } catch {
     return <p className="portal-alert error" role="alert">وضعیت ثبت‌نام دریافت نشد. دوباره تلاش کن.</p>;
   }
 
-  const provinceRows = province ? rows.filter(row => row.province === province) : rows;
-  const reviewPlanCounts = new Map(planServiceReviews.map(review => [review.student_id, review.review_plan_count]));
-  const reviewRows = provinceRows.filter(row => row.registration_status === "active" && reviewPlanCounts.has(row.student_id));
-  const filteredRows = reviewOnly ? reviewRows : provinceRows;
-  const orderedRows = prioritizePendingUnassignedReceipts(filteredRows);
-  const waitingForReview = filteredRows.filter(isPendingUnassignedReceipt).length;
-  const reviewParams = new URLSearchParams();
-  if (province) reviewParams.set("province", province);
-  if (!reviewOnly) reviewParams.set("review", "continuation");
-  const reviewHref = `/dashboard/admin/registrations${reviewParams.size ? `?${reviewParams.toString()}` : ""}`;
+  const {rows, total, waiting, assigned, unassigned, review_count: reviewCount, page, pages} = directory;
+  function hrefFor(options: {page?: number; review?: boolean}) {
+    const params = new URLSearchParams();
+    if (province) params.set("province", province);
+    if (search) params.set("q", search);
+    if (options.review ?? reviewOnly) params.set("review", "continuation");
+    if (options.page && options.page > 1) params.set("page", String(options.page));
+    return `/dashboard/admin/registrations${params.size ? `?${params}` : ""}`;
+  }
+  const reviewHref = hrefFor({review: !reviewOnly});
+  const directoryContext = <>
+    <input type="hidden" name="directory_search" value={search} />
+    <input type="hidden" name="directory_province" value={province ?? ""} />
+    <input type="hidden" name="directory_review" value={reviewOnly ? "continuation" : ""} />
+    <input type="hidden" name="directory_page" value={page} />
+  </>;
 
   return (
     <section className="portal-card registration-directory">
@@ -77,11 +70,11 @@ export async function RegistrationDirectory({
         </div>
         <div className="registration-directory-actions">
           <Link
-            className={`button ${reviewOnly || reviewRows.length ? "registration-review-button" : "button-secondary"}`}
+            className={`button ${reviewOnly || reviewCount ? "registration-review-button" : "button-secondary"}`}
             href={reviewHref}
             aria-pressed={reviewOnly}
           >
-            نیازمند بررسی ادامه یا توقف خدمات ({reviewRows.length.toLocaleString("fa-IR")} نفر)
+            نیازمند بررسی ادامه یا توقف خدمات ({reviewCount.toLocaleString("fa-IR")} نفر)
           </Link>
           <a className="button button-secondary" href="/api/registrations/export">
             دریافت خروجی CSV
@@ -91,6 +84,10 @@ export async function RegistrationDirectory({
       <small className="registration-export-note">خروجی شامل همهٔ استان‌ها و لینک خصوصی فیش است؛ بازکردن آن به ورود ادمین نیاز دارد.</small>
 
       <form className="registration-province-filter" method="get" action="/dashboard/admin/registrations">
+        {reviewOnly && <input type="hidden" name="review" value="continuation" />}
+        <label>جست‌وجوی دانش‌آموز یا مشاور
+          <input type="search" name="q" maxLength={120} defaultValue={search} placeholder="نام، شماره موبایل یا نام مشاور" />
+        </label>
         <label>فیلتر استان
           <select name="province" defaultValue={province ?? ""}>
             <option value="">همهٔ استان‌ها</option>
@@ -100,14 +97,14 @@ export async function RegistrationDirectory({
         <button className="button secondary" type="submit">نمایش دانش‌آموزان</button>
       </form>
       <div className="registration-summary" aria-label="خلاصه دانش‌آموزها">
-        <span>فیش‌های منتظر تأیید و بدون مشاور <strong>{waitingForReview.toLocaleString("fa-IR")}</strong></span>
-        <span>{province?"دانش‌آموزهای این استان":"کل دانش‌آموزها"} <strong>{filteredRows.length.toLocaleString("fa-IR")}</strong></span>
-        <span>بدون مشاور <strong>{filteredRows.filter((row) => !row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
-        <span>دارای مشاور <strong>{filteredRows.filter((row) => row.counselor_id).length.toLocaleString("fa-IR")}</strong></span>
+        <span>فیش‌های منتظر تأیید و بدون مشاور <strong>{waiting.toLocaleString("fa-IR")}</strong></span>
+        <span>{search ? "نتایج جست‌وجو" : province ? "دانش‌آموزهای این استان" : reviewOnly ? "دانش‌آموزهای نیازمند بررسی" : "کل دانش‌آموزها"} <strong>{total.toLocaleString("fa-IR")}</strong></span>
+        <span>بدون مشاور <strong>{unassigned.toLocaleString("fa-IR")}</strong></span>
+        <span>دارای مشاور <strong>{assigned.toLocaleString("fa-IR")}</strong></span>
       </div>
 
-      {!filteredRows.length ? (
-        <p>{reviewOnly ? "دانش‌آموزی اکنون نیازمند بررسی ادامه یا توقف خدمات نیست." : province ? `دانش‌آموزی برای استان ${province} پیدا نشد.` : "هنوز دانش‌آموزی در این فهرست نیست."}</p>
+      {!total ? (
+        <p>{search ? "دانش‌آموزی با این جست‌وجو پیدا نشد." : reviewOnly ? "دانش‌آموزی اکنون نیازمند بررسی ادامه یا توقف خدمات نیست." : province ? `دانش‌آموزی برای استان ${province} پیدا نشد.` : "هنوز دانش‌آموزی در این فهرست نیست."}</p>
       ) : (
         <div className="registration-table-wrap">
           <table>
@@ -122,7 +119,7 @@ export async function RegistrationDirectory({
               </tr>
             </thead>
             <tbody>
-              {orderedRows.map((row) => {
+              {rows.map((row) => {
                 const isActive = row.registration_status === "active";
                 const isDisabled = row.registration_status === "disabled";
                 const hasReceipt = Boolean(row.receipt_path);
@@ -131,7 +128,7 @@ export async function RegistrationDirectory({
                   : Boolean(row.has_account_details));
                 const canAssign = isActive && !row.counselor_id;
                 const priorityReceipt = isPendingUnassignedReceipt(row);
-                const reviewPlanCount = reviewPlanCounts.get(row.student_id);
+                const reviewPlanCount = row.review_plan_count;
 
                 return (
                   <tr key={row.student_id} className={priorityReceipt ? "registration-priority-row" : hasReceipt ? "registration-receipt-row" : "registration-ordinary-row"}>
@@ -198,6 +195,7 @@ export async function RegistrationDirectory({
 
                       {audience === "admin" && (canActivate || canAssign) && (
                         <RequiredFieldsForm action={canActivate ? activateStudent : assignCounselor} className="registration-student-actions">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           {canActivate && <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />}
 
@@ -248,6 +246,7 @@ export async function RegistrationDirectory({
                       )}
                       {audience === "admin" && !isActive && !isDisabled && row.has_account_details && (
                         <RequiredFieldsForm action={uploadStudentReceipt} className="registration-receipt-upload">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_receipt_path" type="hidden" value={row.receipt_path ?? ""} />
                           <label>
@@ -260,6 +259,7 @@ export async function RegistrationDirectory({
                       )}
                       {isActive && (
                         <RequiredFieldsForm action={changeStudentCourse} className="registration-admin-control registration-course-control">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_service_course_type" type="hidden" value={row.service_course_type ?? ""} />
                           <input name="expected_service_course_duration_months" type="hidden" value={row.service_course_duration_months ?? ""} />
@@ -270,6 +270,7 @@ export async function RegistrationDirectory({
                       )}
                       {isActive && row.counselor_id && (
                         <RequiredFieldsForm action={changeStudentCounselor} className="registration-admin-control">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_counselor_id" type="hidden" value={row.counselor_id} />
                           <label className="registration-counselor-picker">
@@ -290,6 +291,7 @@ export async function RegistrationDirectory({
                       )}
                       {reviewOnly && isActive && reviewPlanCount && (
                         <RequiredFieldsForm action={continueStudentPlanServiceReview} className="registration-admin-control">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_plan_count" type="hidden" value={reviewPlanCount} />
                           <RegistrationManagementButton label="ادامهٔ خدمات تأیید شد"
@@ -298,6 +300,7 @@ export async function RegistrationDirectory({
                       )}
                       {isActive && (
                         <RequiredFieldsForm action={disableStudent} className="registration-admin-control registration-disable-control">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <input name="expected_counselor_id" type="hidden" value={row.counselor_id ?? ""} />
                           <RegistrationManagementButton label="غیرفعال‌سازی خدمات" className="button button-secondary"
@@ -306,6 +309,7 @@ export async function RegistrationDirectory({
                       )}
                       {isDisabled && (
                         <RequiredFieldsForm action={resumeStudent} className="registration-admin-control">
+                          {directoryContext}
                           <input name="student_id" type="hidden" value={row.student_id} />
                           <label className="registration-counselor-picker">
                             <span>مشاور برای فعال‌سازی دوباره</span>
@@ -338,6 +342,14 @@ export async function RegistrationDirectory({
           </table>
         </div>
       )}
+      {total > 0 && <nav className="registration-pagination" aria-label="صفحه‌های دانش‌آموزان">
+        <span>صفحهٔ {page.toLocaleString("fa-IR")} از {pages.toLocaleString("fa-IR")}</span>
+        <div>
+          {registrationPageNumbers(page, pages).map((number, index) => number === "ellipsis"
+            ? <span key={`gap-${index}`} aria-hidden="true">…</span>
+            : <Link key={number} href={hrefFor({page:number})} aria-label={`صفحهٔ ${number.toLocaleString("fa-IR")}`} aria-current={number === page ? "page" : undefined}>{number.toLocaleString("fa-IR")}</Link>)}
+        </div>
+      </nav>}
     </section>
   );
 }

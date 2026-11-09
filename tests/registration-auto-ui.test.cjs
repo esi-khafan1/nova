@@ -21,12 +21,12 @@ const moduleStub={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/registration-directory.tsx','utf8'),{
   compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText,{
-  module:moduleStub,exports:moduleStub.exports,
+  module:moduleStub,exports:moduleStub.exports, URLSearchParams,
   require(name){
     if(name==='react/jsx-runtime')return require('react/jsx-runtime');
-    if(name==='next/link')return {default:props=>React.createElement('a',{href:props.href},props.children)};
+    if(name==='next/link')return {default:({children,...props})=>React.createElement('a',props,children)};
     if(name==='@/lib/auth')return {requireProfile:async()=>({supabase:{from:()=>({select:()=>({eq:()=>({eq:()=>({order:async()=>({data:[{id:counselor,full_name:'مشاور'}],error:null})})})})})}})};
-    if(name==='@/lib/load-registration-directory')return {loadRegistrationDirectory:async()=>rows};
+    if(name==='@/lib/registration-pagination')return {loadRegistrationPage:async()=>({rows:[rows[1],rows[0],...rows.slice(2)],total:26,waiting:1,assigned:1,unassigned:25,review_count:2,page:2,pages:3}),parseRegistrationPage:()=>2,registrationPageNumbers:()=>[1,2,3]};
     if(name==='@/lib/registration')return {
       isPendingUnassignedReceipt:r=>r.registration_status==='pending'&&Boolean(r.receipt_path)&&!r.counselor_id,
       prioritizePendingUnassignedReceipts:all=>[...all.filter(r=>r.registration_status==='pending'&&r.receipt_path&&!r.counselor_id),...all.filter(r=>!(r.registration_status==='pending'&&r.receipt_path&&!r.counselor_id))],
@@ -46,7 +46,14 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/dashboard/regi
   },
 });
 (async()=>{
-  const html=renderToStaticMarkup(await moduleStub.exports.RegistrationDirectory({audience:'admin'}));
+  const html=renderToStaticMarkup(await moduleStub.exports.RegistrationDirectory({audience:'admin',province:'تهران',search:'علی',reviewOnly:true,pageParam:'2'}));
+  assert.match(html,/name="q"/);
+  assert.match(html,/name="review" value="continuation"/);
+  assert.match(html,/aria-current="page"/);
+  assert.match(html,/page=3/);
+  assert.match(html,/review=continuation/);
+  assert.match(html,/province=/);
+  assert.match(html,/q=/);
   const body=html.slice(html.indexOf('<tbody>'));
   const cards=[...body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].map(match=>match[1]);
   assert.equal(cards.length,6);

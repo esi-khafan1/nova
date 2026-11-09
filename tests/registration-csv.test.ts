@@ -67,7 +67,7 @@ async function checkDirectory() {
   };
   const rows = await loadRegistrationDirectory(mock as unknown as Parameters<typeof loadRegistrationDirectory>[0]);
   assert.deepEqual(ranges, [0, 500]);
-  assert.deepEqual(batches, [200, 200, 200, 200, 200, 200, 101, 101, 101]);
+  assert.deepEqual(batches, [200, 200, 200, 200, 200, 200, 200, 200, 101, 101, 101, 101]);
   assert.equal(prioritizePendingUnassignedReceipts(rows)[0].student_id, "500", "Receipt on a later page must appear first in the activation view.");
   assert.equal(rows[0].student_id, "0", "The loader / CSV order must not change.");
   assert.deepEqual(registrationCsvValues(rows[0]).slice(11), ["مشاوره با آزمون", 6, "توضیحات خرید"]);

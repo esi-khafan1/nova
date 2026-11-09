@@ -69,7 +69,7 @@ export default async function Registrations({
         </p>
       )}
 
-      <RegistrationDirectory audience="admin" province={provinces.includes(params.province??"") ? params.province : undefined} reviewOnly={params.review === "continuation"} />
+      <RegistrationDirectory audience="admin" province={provinces.includes(params.province??"") ? params.province : undefined} reviewOnly={params.review === "continuation"} search={(params.q ?? "").trim().slice(0, 120)} pageParam={params.page} />
     </DashboardShell>
   );
 }
