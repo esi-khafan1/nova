@@ -1,4 +1,5 @@
-import {loadCounselorPlans,loadAssignedPublishedHistory} from "@/lib/load-counselor-plans";
+import {loadCounselorEditorPage, type CounselorPlanHistory} from "@/lib/load-counselor-plans";
+import {getRequestClient} from "@/lib/supabase/request-auth";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import Link from "next/link";
 import {
@@ -21,21 +22,24 @@ export default async function CounselorPlansPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const { supabase, profile } = await requireProfile(["counselor"]);
-  const params = await searchParams;
-  const [{data:directoryData,error:directoryError},loadedPlans,loadedHistory,{data:completedRows,error:completedError}]=await Promise.all([
+  // All reads derive their identity from auth.uid() and enforce their existing
+  // role/RLS guards. Never render results before fresh Auth succeeds.
+  const supabase = await getRequestClient();
+  const [{profile},params,{data:directoryData,error:directoryError},loadedPlans,loadedHistory,{data:completedRows,error:completedError}]=await Promise.all([
+    requireProfile(["counselor"]),
+    searchParams,
     supabase.rpc("counselor_student_directory"),
-    loadCounselorPlans(supabase,profile.id).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
-    loadAssignedPublishedHistory(supabase,profile.id).then(data=>({data,failed:false}),()=>({data:[],failed:true})),
+    loadCounselorEditorPage<CounselorWeeklyPlan>(supabase,false).then(data=>({data,failed:false}),()=>({data:null,failed:true})),
+    loadCounselorEditorPage<CounselorPlanHistory>(supabase,true).then(data=>({data,failed:false}),()=>({data:null,failed:true})),
     supabase.rpc("counselor_completed_plan_item_ids"),
   ]);
-  const plans=loadedPlans.data,plansFailed=loadedPlans.failed;
-  if(directoryError||plansFailed||loadedHistory.failed||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
+  if(directoryError||!Array.isArray(directoryData)||loadedPlans.failed||loadedHistory.failed||!loadedPlans.data||!loadedHistory.data||
+    loadedPlans.data.counselorId!==profile.id||loadedHistory.data.counselorId!==profile.id||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
 
-  const directory = (directoryData ?? []) as StudentDirectoryRow[];
+  const directory = directoryData as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
-  const counselorPlans = (plans ?? []) as CounselorWeeklyPlan[];
-  const recentPlans = [...new Map([...loadedHistory.data,...counselorPlans.filter(plan=>plan.status==="published"||plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
+  const counselorPlans = loadedPlans.data.plans;
+  const recentPlans = [...new Map([...loadedHistory.data.plans,...counselorPlans.filter(plan=>plan.status==="published"||plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
     .sort((a,b)=>b.week_start.localeCompare(a.week_start)||a.id.localeCompare(b.id));
   const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
   const requestedProgressStudent = params.progress_student;

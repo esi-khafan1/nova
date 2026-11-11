@@ -13,8 +13,9 @@ function client(){return{from(table){assert.equal(table,'weekly_plans');let rows
  const jsx=(type,props)=>({type,props});const mod={exports:{}};const Builder=()=>null;let checkedId;
  vm.runInNewContext(pageSource,{module:mod,exports:mod.exports,Promise,Map,Set,Array,require(name){
  if(name==='react/jsx-runtime')return{jsx,jsxs:jsx,Fragment:'fragment'};if(name==='next/link')return{default:'a',__esModule:true};
- if(name==='@/lib/load-counselor-plans')return{loadCounselorPlans:async()=>own,loadAssignedPublishedHistory:async(_s,id)=>{checkedId=id;return result}};
- if(name==='@/lib/auth')return{requireProfile:async()=>({supabase:{rpc:async(name)=>({data:name==='counselor_completed_plan_item_ids'?[]:[{student_id:student,is_selected:true,full_name:'الف',grade:10,study_field:'humanities'}],error:null})},profile:{id:counselor,full_name:'مشاور'}})};
+ if(name==='@/lib/load-counselor-plans')return{loadCounselorEditorPage:async(_s,history)=>{checkedId=counselor;return {counselorId:counselor,plans:history?result:own}}};
+ if(name==='@/lib/supabase/request-auth')return{getRequestClient:async()=>({rpc:async(name)=>({data:name==='counselor_completed_plan_item_ids'?[]:[{student_id:student,is_selected:true,full_name:'الف',grade:10,study_field:'humanities'}],error:null})})};
+ if(name==='@/lib/auth')return{requireProfile:async()=>({profile:{id:counselor,full_name:'مشاور'}})};
  if(name==='@/components/dashboard/dashboard-shell')return{DashboardShell:'shell'};if(name==='@/components/dashboard/weekly-plan-builder')return{WeeklyPlanBuilder:Builder};if(name==='@/lib/study-catalog')return{studyFieldLabels:{humanities:'انسانی'}};throw Error(name)}});
  const root=await mod.exports.default({searchParams:Promise.resolve({})});
  function find(n){if(!n||typeof n!=='object')return null;if(n.type===Builder)return n;const children=n.props?.children;for(const child of Array.isArray(children)?children:[children]){const found=find(child);if(found)return found}return null}
