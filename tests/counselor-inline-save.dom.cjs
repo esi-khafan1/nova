@@ -16,7 +16,13 @@ const {createRoot}=require('react-dom/client');
  await act(async()=>render());
  const feedback=()=>document.querySelector('.plan-save-feedback');
  assert.match(feedback().textContent,/تغییرات برنامه با موفقیت ثبت شد/,'redirect success is visible next to save button');
- assert.equal(feedback().getAttribute('role'),'status');assert.equal(feedback().parentElement,document.querySelector('button[name="status"][value="published"]').parentElement);
+ assert.equal(feedback().getAttribute('role'),'status');
+ const actions=feedback().parentElement,buttons=document.querySelector('button[name="status"][value="published"]').parentElement;
+ assert.equal(actions.className,'plan-publish-actions');assert.equal(buttons.className,'plan-publish-buttons');assert.equal(buttons.parentElement,actions);assert.equal(actions.firstElementChild,feedback(),'status comes first on the right in RTL');assert.equal(actions.lastElementChild,buttons,'buttons remain at the left edge');
+ const css=require('node:fs').readFileSync('app/globals.css','utf8');
+ assert.match(css,/\.plan-publish > \.plan-publish-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/s,'feedback has a reserved flexible column even when empty');
+ assert.doesNotMatch(css,/\.plan-save-feedback:empty\s*\{[^}]*display:\s*none/s,'empty feedback must not collapse its column');
+ assert.match(css,/\.plan-publish-buttons\s*\{[^}]*flex-direction:\s*column/s,'narrow screens can stack draft and publish buttons');
  let previousConfirmation=feedback().firstElementChild;
  for(let n=1;n<=2;n++){
   const button=document.querySelector('button[name="status"][value="published"]');assert.equal(button.disabled,false);

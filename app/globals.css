@@ -3747,15 +3747,17 @@ main .eyebrow span {
   display: grid;
   gap: 16px;
 }
-.plan-publish > div {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-wrap: wrap;
+.plan-publish > .plan-publish-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 10px;
 }
-.plan-save-feedback:empty { display: none; }
-.plan-save-feedback { font-size: 13px; font-weight: 700; line-height: 1.7; }
+.plan-publish-buttons {
+  display: flex;
+  gap: 10px;
+}
+.plan-save-feedback { min-width: 0; padding-top: 10px; font-size: 13px; font-weight: 700; line-height: 1.7; }
 .plan-save-pending { color: #496582; }
 .plan-save-success { color: #17643f; animation: plan-save-confirmation 1.2s ease-out; }
 @keyframes plan-save-confirmation {
@@ -4129,8 +4131,8 @@ main .eyebrow span {
     grid-column: 2;
     justify-self: end;
   }
-  .plan-publish > div {
-    display: grid;
+  .plan-publish-buttons {
+    flex-direction: column;
   }
   .plan-publish .button {
     width: 100%;

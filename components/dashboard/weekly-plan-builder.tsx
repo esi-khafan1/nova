@@ -884,28 +884,30 @@ export function WeeklyPlanBuilder({
           )}
         />
         <input type="hidden" name="routines" value={JSON.stringify(routines)} />
-        <div>
-          {planStatus !== "published" && (
-            <button
-              className="button button-secondary"
-              name="status"
-              value="draft"
-              disabled={savingCurrent || periodEnded || hasOverlap || !editableItems.length}
-            >
-              ذخیره پیش‌نویس
-            </button>
-          )}
-          <button
-            className="button"
-            name="status"
-            value="published"
-            disabled={savingCurrent || periodEnded || hasOverlap || (!editableItems.length && !planId)}
-          >
-            {planStatus === "published"
-              ? "انتشار دوباره تغییرات"
-              : "انتشار برای دانش‌آموز"}
-          </button>
+        <div className="plan-publish-actions">
           <PlanSaveFeedback notice={saveNotice} saving={savingCurrent} matchesSubmission={Boolean(saveContext && saveContext.studentId === student?.student_id && saveContext.weekStart === weekStart && saveContext.planId === planId)} />
+          <div className="plan-publish-buttons">
+            {planStatus !== "published" && (
+              <button
+                className="button button-secondary"
+                name="status"
+                value="draft"
+                disabled={savingCurrent || periodEnded || hasOverlap || !editableItems.length}
+              >
+                ذخیره پیش‌نویس
+              </button>
+            )}
+            <button
+              className="button"
+              name="status"
+              value="published"
+              disabled={savingCurrent || periodEnded || hasOverlap || (!editableItems.length && !planId)}
+            >
+              {planStatus === "published"
+                ? "انتشار دوباره تغییرات"
+                : "انتشار برای دانش‌آموز"}
+            </button>
+          </div>
         </div>
       </section>
     </form>
