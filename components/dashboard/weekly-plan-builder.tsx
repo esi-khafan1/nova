@@ -2,6 +2,7 @@
 
 import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
 import { formatPersianFullDate, formatPersianWeekRange, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
@@ -83,6 +84,18 @@ export type CounselorWeeklyPlan = {
 };
 
 export type RecentCounselorPlan = Pick<CounselorWeeklyPlan, "id" | "student_id" | "week_start" | "title" | "status"> & { counselor_id: string };
+
+type SaveNotice = {status: "draft" | "published"; revision: string};
+function PlanSaveFeedback({notice, saving, matchesSubmission}: {notice: SaveNotice | null; saving: boolean; matchesSubmission: boolean}) {
+  const {pending} = useFormStatus();
+  const inProgress = matchesSubmission && (pending || saving);
+  const message = inProgress ? "در حال ثبت تغییرات..." : notice?.status === "draft"
+    ? "پیش‌نویس با موفقیت ذخیره شد."
+    : notice ? "تغییرات برنامه با موفقیت ثبت شد." : "";
+  return <span className="plan-save-feedback" role="status" aria-live="polite" aria-atomic="true">
+    {message && <span key={inProgress ? "pending" : notice?.revision} className={inProgress ? "plan-save-pending" : "plan-save-success"}>{message}</span>}
+  </span>;
+}
 
 const newItem = (
   dayOfWeek = 0,
@@ -201,6 +214,12 @@ export function WeeklyPlanBuilder({
 
   const student = students[studentIndex] ?? students[0];
   const [saveResult, saveCurrentAction, savingCurrent] = useActionState(saveCurrentWeeklyPlan, null);
+  const [saveNotice, setSaveNotice] = useState<SaveNotice | null>(() =>
+    initialPlan && initialPlan.id === initialPlanId && initialPlan.student_id === initialStudentId && initialPlan.week_start === initialWeekStart &&
+    (initialSaved === "draft" || initialSaved === "published") && initialPlan.status === initialSaved
+      ? {status: initialSaved, revision: "initial"} : null,
+  );
+  const [saveContext, setSaveContext] = useState<{studentId: string; weekStart: string; planId: string} | null>(null);
   const lastAppliedSave = useRef<string | null>(null);
   useEffect(() => {
     if (!saveResult || lastAppliedSave.current === saveResult.revision) return;
@@ -216,14 +235,21 @@ export function WeeklyPlanBuilder({
     setNotes(saved.notes ?? "");
     setRoutines(planRoutines(saved));
     setItems(planItems(saved, new Set(completedItemIds)));
+    setSaveNotice({status: "published", revision: saveResult.revision});
   }, [saveResult, plans, completedItemIds, student?.student_id, weekStart]);
   const currentUrlPlan = Boolean(initialSaved === "published" && planStatus === "published" && planId && planId===initialPlanId && student?.student_id===initialStudentId && weekStart===initialWeekStart);
   function submitCurrentPlan(event: FormEvent<HTMLFormElement>) {
-    if (!currentUrlPlan) return;
+    if (!currentUrlPlan) {
+      setSaveNotice(null);
+      setSaveContext({studentId: student?.student_id ?? "", weekStart, planId});
+      return;
+    }
     // React automatically resets a form after a successful action. Avoid that:
     // the counselor may have switched students or edited a field during save.
     event.preventDefault();
     if (savingCurrent || !event.currentTarget.reportValidity()) return;
+    setSaveNotice(null);
+    setSaveContext({studentId: student?.student_id ?? "", weekStart, planId});
     const fd = new FormData(event.currentTarget);
     fd.set("status", "published"); // This fast path only has the publish button.
     startTransition(() => saveCurrentAction(fd));
@@ -286,6 +312,7 @@ export function WeeklyPlanBuilder({
   );
 
   const loadPlan = (studentId: string, nextWeek: string) => {
+    setSaveNotice(null);
     const plan = plans.find(
       (item) => item.student_id === studentId && item.week_start === nextWeek,
     );
@@ -355,7 +382,7 @@ export function WeeklyPlanBuilder({
   return (
     <>
     <CounselorStudentStudyEditor key={student.student_id} student={student} />
-    <form action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} className="weekly-builder">
+    <form action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder">
       <section className="portal-card plan-basics">
         <div className="portal-card-title">
           <div>
@@ -465,9 +492,10 @@ export function WeeklyPlanBuilder({
                   <button
                     type="button"
                     className="plan-add"
-                    onClick={() =>
-                      setItems((current) => [...current, newStudentItem(dayIndex, undefined, student?.grade)])
-                    }
+                    onClick={() => {
+                      setSaveNotice(null);
+                      setItems((current) => [...current, newStudentItem(dayIndex, undefined, student?.grade)]);
+                    }}
                   >
                     + افزودن فعالیت
                   </button>
@@ -784,6 +812,7 @@ export function WeeklyPlanBuilder({
                         aria-label="حذف فعالیت"
                         onClick={() => {
                           if (item.linkedExamId && !window.confirm("این باکس به آزمون متصل است. با حذف آن، دسترسی دانش‌آموز به آزمون از طریق این باکس قطع می‌شود. آزمون و پاسخ‌های ثبت‌شده حذف نمی‌شوند. آیا از حذف باکس مطمئنی؟")) return;
+                          setSaveNotice(null);
                           setItems(current => current.filter(currentItem => currentItem.key !== item.key));
                         }}
                       >
@@ -876,6 +905,7 @@ export function WeeklyPlanBuilder({
               ? "انتشار دوباره تغییرات"
               : "انتشار برای دانش‌آموز"}
           </button>
+          <PlanSaveFeedback notice={saveNotice} saving={savingCurrent} matchesSubmission={Boolean(saveContext && saveContext.studentId === student?.student_id && saveContext.weekStart === weekStart && saveContext.planId === planId)} />
         </div>
       </section>
     </form>

@@ -3750,8 +3750,19 @@ main .eyebrow span {
 .plan-publish > div {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
+.plan-save-feedback:empty { display: none; }
+.plan-save-feedback { font-size: 13px; font-weight: 700; line-height: 1.7; }
+.plan-save-pending { color: #496582; }
+.plan-save-success { color: #17643f; animation: plan-save-confirmation 1.2s ease-out; }
+@keyframes plan-save-confirmation {
+  from { color: #0c7c49; background: #d8f5e3; }
+  to { color: #17643f; background: transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .plan-save-success { animation: none; } }
 .button.button-secondary {
   color: #9d3f06;
   background: #fff0df;
