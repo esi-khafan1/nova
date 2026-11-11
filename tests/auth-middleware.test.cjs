@@ -25,10 +25,10 @@ vm.runInNewContext(code, {
 });
 const { config, middleware } = moduleStub.exports;
 const matches = path => unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: `https://nova-academy.ir${path}` });
-for (const path of ['/', '/about', '/faq', '/mag', '/mag/article', '/news', '/podcasts', '/courses', '/fonts/estedad-arabic-wght-normal.woff2', '/_next/static/app.js', '/api/imagekit-auth', '/auth/callback', '/auth/confirm', '/auth/recovery']) {
-  assert.equal(matches(path), false, `Public/handler request unexpectedly matched: ${path}`);
+for (const path of ['/about', '/faq', '/fonts/estedad-arabic-wght-normal.woff2', '/_next/static/app.js', '/api/imagekit-auth', '/auth/callback', '/auth/confirm', '/auth/recovery']) {
+  assert.equal(matches(path), false, `Unrelated public/handler request unexpectedly matched: ${path}`);
 }
-for (const path of ['/dashboard', '/dashboard/student', '/dashboard/admin/users', '/dashboard/counselor', '/dashboard/exam_designer', '/dashboard/registration', '/auth', '/auth/sign-in', '/auth/sign-up']) {
+for (const path of ['/', '/mag', '/mag/article', '/news', '/podcasts', '/courses', '/dashboard', '/dashboard/student', '/dashboard/admin/users', '/dashboard/counselor', '/dashboard/exam_designer', '/dashboard/registration', '/auth', '/auth/sign-in', '/auth/sign-up']) {
   assert.equal(matches(path), true, `Protected/session route missing: ${path}`);
 }
 (async () => {
@@ -49,5 +49,21 @@ for (const path of ['/dashboard', '/dashboard/student', '/dashboard/admin/users'
   const invalid = await middleware(new NextRequest('https://nova-academy.ir/dashboard/student'));
   assert.equal(invalid.status, 307);
   assert.equal(claimCalls, 3);
-  console.log('Middleware matcher, verified-claims, refresh cookies and guest redirect tests passed.');
+  claims = { sub: 'account' }; authError = null;
+  for (const path of ['/', '/courses', '/mag/article', '/news', '/podcasts']) {
+    const previousCalls = claimCalls;
+    const noCookie = await middleware(new NextRequest(`https://nova-academy.ir${path}`));
+    assert.equal(noCookie.status, 200);
+    assert.equal(claimCalls, previousCalls, `Guest should not call Auth for ${path}`);
+    const authenticated = new NextRequest(`https://nova-academy.ir${path}`, {headers: {cookie: 'sb-test-auth-token.0=old'}});
+    const refreshed = await middleware(authenticated);
+    assert.equal(refreshed.status, 200);
+    assert.equal(refreshed.cookies.get('sb-test-session').value, 'refreshed');
+    assert.equal(authenticated.cookies.get('sb-test-session').value, 'refreshed');
+  }
+  const beforeAudio = claimCalls;
+  const audio = await middleware(new NextRequest('https://nova-academy.ir/podcasts/audio/sample', {headers: {cookie: 'sb-test-auth-token=old'}}));
+  assert.equal(audio.status, 200);
+  assert.equal(claimCalls, beforeAudio);
+  console.log('Middleware matcher, public refresh cookies, verified claims and guest redirect tests passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

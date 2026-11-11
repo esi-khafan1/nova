@@ -2,12 +2,20 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // Matcher is deliberately narrow. Public pages and callback handlers do not
-  // need a second auth check before their own server code can run.
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return response;
+  const path = request.nextUrl.pathname;
+  const publicPage = !path.startsWith("/dashboard") && !path.startsWith("/auth");
+  if (publicPage) {
+    // Public Server Components cannot persist a refreshed session cookie.
+    // Refresh only when the browser has this project's session cookie; guests
+    // and the podcast audio route do not need an extra Auth request.
+    if (path === "/podcasts/audio" || path.startsWith("/podcasts/audio/")) return response;
+    const cookieName = `sb-${new URL(url).hostname.split(".")[0]}-auth-token`;
+    if (!request.cookies.getAll().some(({name}) => name === cookieName || name.startsWith(`${cookieName}.`))) return response;
+  }
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -42,5 +50,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth", "/auth/sign-in", "/auth/sign-up"],
+  matcher: ["/dashboard/:path*", "/auth", "/auth/sign-in", "/auth/sign-up", "/", "/courses/:path*", "/mag/:path*", "/news/:path*", "/podcasts/:path*"],
 };

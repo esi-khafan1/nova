@@ -1,9 +1,16 @@
 # Shared auth performance changes
 
 ## Changes
-- Middleware matches `/dashboard/:path*`, `/auth`, `/auth/sign-in`, and
-  `/auth/sign-up` only. Public editorial/course/static pages, APIs, signup
-  confirmation and recovery handlers no longer pay the global middleware check.
+- Middleware matches dashboard and sign-in routes, plus `/`, courses, magazine,
+  news and podcast pages that render a personalized header. On these public
+  pages it skips Auth for visitors without this project's session cookie and
+  skips the podcast audio handler. Other static files, APIs, signup confirmation
+  and recovery handlers remain outside the matcher.
+- A public Server Component can refresh an expired session while reading data,
+  but cannot persist the rotated cookie. Middleware now refreshes beforehand on
+  personalized public pages, forwarding the resulting cookies to both the render
+  and browser. This addresses a reproducible session-persistence risk; it does
+  not establish the cause of any particular live logout or deployment 404.
 - Middleware uses `auth.getClaims()` (signature/expiry verification), not
   `getSession()` or an untrusted request header. Asymmetric signing keys allow
   local verification using cached JWKS; legacy symmetric signing can still need
@@ -45,6 +52,9 @@ server-side. This is not a replacement for optimizing each page's data queries.
   cache with isolated concurrent test request dispatchers, read counts, changed
   roles on a fresh request, guest/missing profile/unconfirmed/inactive denial.
 - `node tests/auth-middleware.test.cjs`: actual Next matcher/response behavior;
-  excludes public and callback routes, verifies refresh cookie propagation and
-  rejects claims accompanied by an auth error. Auth network responses are mocked.
+  verifies public guest bypass, authenticated refresh propagation, excluded
+  callback routes and rejection of claims accompanied by an auth error.
+- `node tests/public-session-refresh.test.cjs`: real Supabase SSR SDK with an
+  expired fake session and mocked Auth HTTP responses. Confirms rotated cookies
+  reach the public-page render and browser without a second refresh.
 - Recovery and confirmation regression suites remain unchanged and pass.
