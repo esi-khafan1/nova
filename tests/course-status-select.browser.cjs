@@ -16,21 +16,34 @@ function load(path, deps) {
 (async()=>{
  assert.ok(process.env.CHROMIUM_PATH,'Set CHROMIUM_PATH to a Chromium executable');
  const offers=[9,10,11,12].flatMap(grade=>['base','progress'].map(plan=>({grade,plan,discount_percent:15,monthly_price:2700000,reservation:true,sold_out:false})));
+ const Link={__esModule:true,default:({href,children,...rest})=>React.createElement('a',{href,...rest},children)};
+ const shell=load('components/dashboard/dashboard-shell.tsx',{
+  'next/link':Link, '@/components/logo':{Logo:()=>React.createElement('span',null,'نوا')},
+  '@/components/landing-header':{LandingHeader:()=>null}, '@/app/landing-approved.css':{}, '@/app/student-panel.css':{},
+  '@/app/courses.css':{}, '@/app/counselor-panel.css':{}, '@/app/exam-panel-refresh.css':{}, '@/app/dashboard/actions':{signOut:async()=>{}},
+ });
+ const offerLib=load('lib/course-offers.ts',{});
+ const offerForm=load('components/dashboard/course-offer-form.tsx',{'@/lib/course-offers':offerLib,'@/app/dashboard/admin/courses/actions':{saveCourseOffer:async()=>{}}});
  const {default:Page}=load('app/dashboard/admin/courses/page.tsx',{
-  'next/link':{__esModule:true,default:({href,children,...rest})=>React.createElement('a',{href,...rest},children)},
-  '@/components/dashboard/dashboard-shell':{DashboardShell:({children})=>React.createElement('div',{className:'portal-shell'},children)},
-  '@/components/dashboard/course-offer-form':{CourseOfferForm:()=>null},
+  'next/link':Link, '@/components/dashboard/dashboard-shell':shell, '@/components/dashboard/course-offer-form':offerForm,
   '@/lib/load-course-offers':{loadCourseOffers:async()=>offers},
   '@/lib/super-admin':{requireSuperAdmin:async()=>({profile:{full_name:'Test'}})},
   './actions':{saveCourseReservation:async()=>{}},'./settings.css':{},
  });
- const html=renderToStaticMarkup(await Page({searchParams:Promise.resolve({})}));
- const css=fs.readFileSync('app/globals.css','utf8')+'\n'+fs.readFileSync('app/dashboard/admin/courses/settings.css','utf8');
+ const html=renderToStaticMarkup(await Page({searchParams:Promise.resolve({saved:'1'})}));
+ const css=['app/globals.css','app/landing-approved.css','app/student-panel.css','app/courses.css','app/counselor-panel.css','app/exam-panel-refresh.css','app/dashboard/admin/courses/settings.css'].map(f=>fs.readFileSync(f,'utf8')).join('\n');
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox'],headless:true});
  try {
-  for(const scheme of ['light','dark']) for(const width of [1200,390]) {
+  for(const scheme of ['light','dark']) for(const width of [1440,1200,768,390,320]) {
    const page=await browser.newPage({colorScheme:scheme,viewport:{width,height:900}});
    await page.setContent(`<html lang="fa" dir="rtl"><head><style>${css}</style></head><body>${html}</body></html>`);
+   const cards=page.locator('.course-settings-sections > .portal-card');
+   assert.equal(await cards.count(),2,'the two settings cards are present');
+   const first=await cards.nth(0).boundingBox(), second=await cards.nth(1).boundingBox();
+   assert.ok(first && second);
+   assert.ok(Math.abs(second.y-(first.y+first.height)-20)<0.1,`status and pricing cards must have a 20px gap at ${width}px/${scheme}`);
+   assert.ok(Math.abs(first.x-second.x)<0.1 && Math.abs(first.width-second.width)<0.1,'cards stay aligned');
+   assert.ok(await page.locator('.portal-alert.success').isVisible(),'saved state does not collapse spacing');
    const select=page.locator('.course-settings-status select');
    assert.equal(await select.inputValue(),'reservation');
    const options=await select.locator('option').evaluateAll(elements=>elements.map(el=>({label:el.textContent,value:el.value,color:getComputedStyle(el).color,background:getComputedStyle(el).backgroundColor,font:getComputedStyle(el).fontFamily})));
@@ -46,5 +59,5 @@ function load(path, deps) {
    await page.close();
   }
  }finally{await browser.close();}
- console.log('PASS: native course status options have explicit readable colors and font in light/dark browser themes, and keyboard selection works.');
+ console.log('PASS: course cards are separated and aligned on desktop/mobile; native status options remain readable and keyboard accessible in light/dark themes.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
