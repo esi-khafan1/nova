@@ -17,7 +17,7 @@ export async function saveCourseOffer(fd: FormData) {
 export async function saveCourseReservation(fd: FormData) {
   const {supabase} = await requireSuperAdmin();
   const status=fd.get("reservation");
-  if (status!=="sale" && status!=="reservation") done(true);
-  const {error}=await supabase.rpc("super_admin_set_course_reservation",{p_reservation:status==="reservation"});
+  if (status!=="sale" && status!=="reservation" && status!=="sold_out") done(true);
+  const {error}=await supabase.rpc("super_admin_set_course_status",{p_status:status});
   done(Boolean(error));
 }

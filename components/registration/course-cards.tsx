@@ -159,6 +159,7 @@ export function CourseCards({
                     <span className="course-plan-duration">{courseDurationLabel(course.months)}</span>
                   </div>
                   <h2>{plan.label}</h2>
+                  {!sizing && offers[0].sold_out && <strong>تکمیل ظرفیت</strong>}
                   {!sizing && offers[0].reservation && <strong>رزرو دوره</strong>}
                   <p className="course-plan-tagline">{plan.tagline}</p>
                   <p className="mag-card-summary course-plan-summary">{plan.summary}</p>

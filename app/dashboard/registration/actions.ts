@@ -24,6 +24,9 @@ export async function submitRegistration(_state: { error?: string; success?: str
   }
   if (profile.registration_status === "disabled") return { error: "خدمات حساب توسط مدیر غیرفعال است؛ برای پیگیری با پشتیبانی تماس بگیر." };
   if (profile.registration_status === "active") redirect("/dashboard/student");
+  const {data: enrollmentOpen, error: statusError} = await supabase.rpc("course_enrollment_open");
+  if (statusError || typeof enrollmentOpen !== "boolean") return { error: "وضعیت دوره‌ها دریافت نشد؛ دوباره تلاش کن." };
+  if (!enrollmentOpen) return { error: "ظرفیت دوره‌ها تکمیل شده است؛ ثبت‌نام، رزرو و ارسال فیش فعلاً امکان‌پذیر نیست. لطفاً وجهی واریز نکن." };
   const selection = parseCourseSelection({ grade: text("grade"), field: text("study_field"), course: text("course"), months: text("months") });
   const { data: previous, error: readError } = await supabase.from("student_registrations").select("receipt_path,receipt_name,course_type,course_duration_months").eq("student_id",profile.id).maybeSingle();
   if (readError) return { error: "اطلاعات قبلی دریافت نشد؛ دوباره تلاش کن." };
@@ -41,7 +44,7 @@ export async function submitRegistration(_state: { error?: string; success?: str
   }
   if (!receipt_path) return { error: "عکس فیش واریزی را بارگذاری کن." };
   const { error } = await supabase.rpc("submit_student_registration", { payload: { ...values, receipt_path, receipt_name, course_type: selection?.course ?? null, course_duration_months: selection?.months ?? null } });
-  if (error) { if (uploaded) await supabase.storage.from("registration-receipts").remove([receipt_path]); return { error: "ثبت اطلاعات انجام نشد. اگر حساب تأیید شده، صفحه را دوباره باز کن؛ در غیر این صورت دوباره تلاش کن." }; }
+  if (error) { if (uploaded) await supabase.storage.from("registration-receipts").remove([receipt_path]); return { error: error.message?.includes("Course capacity full") ? "ظرفیت دوره‌ها تکمیل شده است؛ ثبت‌نام، رزرو و ارسال فیش فعلاً امکان‌پذیر نیست. لطفاً وجهی واریز نکن." : "ثبت اطلاعات انجام نشد. اگر حساب تأیید شده، صفحه را دوباره باز کن؛ در غیر این صورت دوباره تلاش کن." }; }
   if (uploaded && previous?.receipt_path && previous.receipt_path !== receipt_path) await supabase.storage.from("registration-receipts").remove([previous.receipt_path]);
   revalidatePath("/dashboard", "layout"); revalidatePath("/dashboard/admin/registrations"); redirect("/dashboard/registration?saved=1");
 }

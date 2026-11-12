@@ -1,5 +1,7 @@
 const {PGlite}=require('@electric-sql/pglite'),fs=require('fs'),assert=require('assert/strict'),{randomUUID}=require('crypto');
-(async()=>{const db=new PGlite(),student=randomUUID();await db.exec(`create role authenticated;create role anon;create schema auth;create schema storage;
+(async()=>{const db=new PGlite(),student=randomUUID();await db.exec(`create role authenticated;create role anon;create role service_role;create schema auth;create schema storage;create schema private;
+ create function private.is_super_admin() returns boolean language sql stable as $$select current_setting('test.super',true)='yes'$$;
+ create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;
  create type public.study_field as enum('mathematics','experimental_sciences','humanities');
  create table auth.users(id uuid primary key,email_confirmed_at timestamptz);
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
@@ -23,6 +25,15 @@ const {PGlite}=require('@electric-sql/pglite'),fs=require('fs'),assert=require('
  await assert.rejects(()=>save({course_type:'invalid'}),/Invalid course selection/);
  await assert.rejects(()=>save({course_duration_months:null}),/Complete course selection/);
  await assert.rejects(()=>save({receipt_path:randomUUID()+'/receipt.png'}),/private receipt/);
+ await db.exec('reset role; alter table storage.objects enable row level security; create policy receipt_upload_own_pending on storage.objects for insert to authenticated with check (true)');
+ await db.exec(fs.readFileSync('supabase/migrations/110_super_admin_course_settings.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/116_course_capacity_closed.sql','utf8'));
+ await db.exec("set role authenticated; select set_config('test.super','yes',false)");
+ await assert.rejects(()=>save({course_type:'invalid'}),/Invalid course selection/);
+ await db.query("select public.super_admin_set_course_status('sold_out')");
+ await assert.rejects(()=>save({}),/Course capacity full/);
+ await db.query("select public.super_admin_set_course_status('sale')");
+ await save({});
  await db.exec('reset role');await db.query('update auth.users set email_confirmed_at=null where id=$1',[student]);await db.exec('set role authenticated');await assert.rejects(()=>save({}),/Confirmed email/);
  await db.exec('reset role');await db.query("update public.profiles set registration_status='active' where id=$1",[student]);await db.exec('set role authenticated');await assert.rejects(()=>save({}),/Registration not editable/);
  await db.exec('reset role;set role anon');await assert.rejects(()=>save({}),/permission denied/);

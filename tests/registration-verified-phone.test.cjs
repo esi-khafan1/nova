@@ -108,10 +108,10 @@ test('course-selection page passes the confirmed phone to the enrollment form be
   assert.equal(reminder.props.onRegistrationPage, true, 'The chosen course already supplies grade and field; link to the current form.');
 });
 
-function actionContext(user, status = 'active') {
+function actionContext(user, status = 'active', enrollmentOpen = true) {
   const calls = [];
   const supabase = {
-    rpc: async (name, args) => { calls.push({ name, args }); return { error: null }; },
+    rpc: async (name, args) => { calls.push({ name, args }); return name === 'course_enrollment_open' ? (enrollmentOpen === null ? {data:null,error:{message:'unavailable'}} : {data:enrollmentOpen,error:null}) : { error: null }; },
     from: () => ({ select() { return this; }, eq() { return this; }, async maybeSingle() {
       return { data: { receipt_path: 'student-id/receipt.png', receipt_name: 'receipt.png', course_type: 'base' }, error: null };
     } }),
@@ -164,14 +164,27 @@ test('account save and course enrollment reuse a required name while contact det
   sparse.set('form_mode', 'enrollment');
   const enrolling = actionContext(confirmed, 'incomplete');
   await assert.rejects(enrolling.submitRegistration({}, sparse), /REDIRECT:\/dashboard\/registration/);
-  assert.equal(enrolling.calls[0].args.payload.full_name, values.full_name);
-  assert.equal(enrolling.calls[0].args.payload.telegram_id, null);
-  assert.equal(enrolling.calls[0].args.payload.phone, '09121234567');
+  assert.equal(enrolling.calls[0].name, 'course_enrollment_open');
+  assert.equal(enrolling.calls[1].args.payload.full_name, values.full_name);
+  assert.equal(enrolling.calls[1].args.payload.telegram_id, null);
+  assert.equal(enrolling.calls[1].args.payload.phone, '09121234567');
 });
 
 test('course enrollment also stores the confirmed auth phone, not a submitted value', async () => {
   const { submitRegistration, calls } = actionContext(confirmed, 'incomplete');
   await assert.rejects(submitRegistration({}, data('enrollment', '09100000000')), /REDIRECT:\/dashboard\/registration/);
-  assert.equal(calls[0].name, 'submit_student_registration');
-  assert.equal(calls[0].args.payload.phone, '09121234567');
+  assert.equal(calls[0].name, 'course_enrollment_open');
+  assert.equal(calls[1].name, 'submit_student_registration');
+  assert.equal(calls[1].args.payload.phone, '09121234567');
+});
+
+test('closed or unavailable status blocks stale enrollment but not ordinary account edits', async () => {
+  for (const open of [false, null]) {
+    const ctx = actionContext(confirmed, 'pending', open);
+    const result = await ctx.submitRegistration({}, data('enrollment', ''));
+    assert.match(result.error, open === false ? /ظرفیت دوره‌ها تکمیل/ : /وضعیت دوره‌ها دریافت نشد/);
+    assert.deepEqual(ctx.calls.map(call => call.name), ['course_enrollment_open']);
+    assert.ok((await ctx.submitRegistration({}, data('profile', ''))).success);
+    assert.equal(ctx.calls[1].name, 'save_student_account_details');
+  }
 });

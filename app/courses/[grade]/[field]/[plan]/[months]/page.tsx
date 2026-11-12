@@ -86,11 +86,11 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
 
         <section className="course-detail-cta" aria-labelledby="course-detail-cta-title">
           <div>
-            <h2 id="course-detail-cta-title">آماده‌ای مسیرت رو شروع کنی؟</h2>
-            <p>{offers?.[0].reservation ? "این دوره در حالت رزرو است. " : ""}پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel}{fieldLabel && ` و رشتهٔ ${fieldLabel}`} ثبت می‌شود.</p>
+            <h2 id="course-detail-cta-title">{offers?.[0].sold_out ? "ظرفیت دوره‌ها تکمیل شده است" : "آماده‌ای مسیرت رو شروع کنی؟"}</h2>
+            <p>{offers?.[0].sold_out ? "در حال حاضر ثبت‌نام و رزرو امکان‌پذیر نیست. لطفاً وجهی واریز نکن." : <>{offers?.[0].reservation ? "این دوره در حالت رزرو است. " : ""}پلن و بازهٔ زمانی انتخاب‌شده برای پایهٔ {gradeLabel}{fieldLabel && ` و رشتهٔ ${fieldLabel}`} ثبت می‌شود.</>}</p>
           </div>
           {offers ? <CoursePrice selection={selection} offers={offers}/> : <p role="alert">اطلاعات دوره فعلاً در دسترس نیست؛ صفحه را دوباره باز کن.</p>}
-          {offers && <Link className="course-cta-button" href={registrationHref}>
+          {offers && !offers[0].sold_out && <Link className="course-cta-button" href={registrationHref}>
             {offers[0].reservation ? "رزرو این دوره" : "انتخاب و ثبت‌نام در این دوره"} <span aria-hidden="true">←</span>
           </Link>}
         </section>
