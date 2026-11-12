@@ -54,6 +54,7 @@ async function details(offers) {
  assert.ok(!nodes(closedDetails).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));
  for(const offers of [sale,reserved])assert.ok(nodes(await details(offers)).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));
  const cards=fs.readFileSync('components/registration/course-cards.tsx','utf8');assert.match(cards,/offers\[0\]\.sold_out && <strong>تکمیل ظرفیت/);
- const admin=fs.readFileSync('app/dashboard/admin/courses/page.tsx','utf8');assert.match(admin,/requireSuperAdmin/);assert.match(admin,/<option value="sold_out">تکمیل ظرفیت<\/option>/);
+ const admin=fs.readFileSync('app/dashboard/admin/courses/page.tsx','utf8');assert.match(admin,/requireSuperAdmin/);assert.match(admin,/<CourseStatusPicker/);
+ const picker=fs.readFileSync('components/dashboard/course-status-picker.tsx','utf8');assert.match(picker,/value: "sold_out", label: "تکمیل ظرفیت"/);assert.match(picker,/name="reservation"/);
  console.log('PASS: closed/unknown registration has no payment form; details, pending and open/reservation states');
 })().catch(e=>{console.error(e);process.exitCode=1;});

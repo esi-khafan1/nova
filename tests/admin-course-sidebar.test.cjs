@@ -118,6 +118,7 @@ const countLinks = doc => doc.querySelectorAll('a[href="/dashboard/admin/courses
     'next/link':{__esModule:true,default:Link},
     '@/components/dashboard/dashboard-shell':{DashboardShell:stubShell},
     '@/components/dashboard/course-offer-form':{CourseOfferForm:()=>null},
+    '@/components/dashboard/course-status-picker':{CourseStatusPicker:()=>null},
     '@/lib/load-course-offers':{loadCourseOffers:async()=>null},
     '@/lib/super-admin':{requireSuperAdmin:async()=>({profile:{full_name:'مدیر'}})},
     './actions':{saveCourseReservation:async()=>{}},'./settings.css':{},
