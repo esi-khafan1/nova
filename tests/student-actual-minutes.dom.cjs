@@ -60,7 +60,7 @@ const click=async el=>act(async()=>el.click());
  assert.equal(number().value,'','A legacy tick must not claim a recorded duration');
  await render({itemId:'test-item',activityType:'practice_tests',targetTestCount:40,defaultCompletedTestCount:null});
  assert.equal(number().type,'number','Test count remains a number field');
- assert.match(document.body.textContent,/تعداد تست زده شده/);
+ assert.match(document.body.textContent,/تست زده شده/);
  await click(checkbox());assert.deepEqual(calls.at(-1),['test-item',true,null,null],'Empty test count means full target');
  await change(number(),'9');await act(async()=>number().dispatchEvent(new dom.window.FocusEvent('focusout',{bubbles:true})));
  assert.deepEqual(calls.at(-1),['test-item',true,9,null]);

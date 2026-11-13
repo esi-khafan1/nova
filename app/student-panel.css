@@ -89,3 +89,70 @@
 .sp-daily-note-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.sp-daily-note-actions small[role=alert]{color:#a92727}
 
 .sp-test-breakdown{width:100%}.sp-test-breakdown summary{cursor:pointer;font-size:24px;font-weight:800;list-style:none;display:flex;align-items:center;gap:10px}.sp-test-breakdown summary::-webkit-details-marker{display:none}.sp-test-breakdown summary span{font-size:16px;color:var(--sp-blue)}.sp-test-breakdown[open] summary span{transform:rotate(180deg)}.sp-test-breakdown ul{padding:0;margin:12px 0;list-style:none;display:grid;gap:7px}.sp-test-breakdown li{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:1.8;border-bottom:1px solid var(--sp-line);padding-bottom:6px}.sp-test-breakdown li strong{font-size:14px;white-space:nowrap}.sp-test-breakdown p{font-size:13px;margin:12px 0}
+/* Practice-test progress: two equally aligned fields, with a clear action and hint. */
+.student-portal .sp-task .student-progress-control--tests {
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+}
+.student-portal .sp-task .student-progress-control--tests .student-plan-check {
+  margin-top: 0;
+}
+.student-portal .sp-task .student-test-count--tests {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  width: min(100%, 460px);
+  max-width: 100%;
+  justify-self: start;
+  justify-content: initial;
+  align-items: stretch;
+}
+.student-portal .sp-task .student-test-count--tests > span,
+.student-portal .sp-task .student-test-count--tests > small {
+  grid-column: 1 / -1;
+  width: auto;
+  line-height: 1.8;
+}
+.student-portal .sp-task .student-test-count--tests > label {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--sp-ink);
+}
+.student-portal .sp-task .student-test-count--tests input {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  height: 44px;
+  text-align: center;
+}
+.student-portal .sp-task .student-test-count--tests > small {
+  font-size: 12px;
+  color: var(--sp-copy);
+}
+.student-portal .sp-task .student-test-count--tests > small[role="alert"] {
+  color: #a92727;
+}
+@media (max-width: 900px) {
+  .student-portal .sp-task .student-progress-control--tests {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .student-portal .sp-task .student-progress-control--tests .student-plan-check {
+    order: 0;
+    align-self: flex-start;
+  }
+  .student-portal .sp-task .student-progress-control--tests .student-test-count--tests {
+    order: 1;
+    width: min(100%, 460px);
+  }
+}

@@ -86,7 +86,7 @@ export function StudentPlanCheckbox({
   };
 
   return (
-    <div className={`student-progress-control${canToggle ? "" : " locked"}`}>
+    <div className={`student-progress-control${isTestActivity ? " student-progress-control--tests" : ""}${canToggle ? "" : " locked"}`}>
       <label
         className={`student-plan-check${checked ? " checked" : ""}${canToggle ? "" : " locked"}`}
         title={canToggle ? undefined : "ثبت انجام فعالیت‌های آینده هنوز فعال نیست"}
@@ -104,7 +104,7 @@ export function StudentPlanCheckbox({
       <div className={`student-test-count${isTestActivity ? " student-test-count--tests" : ""}`}>
         <span>{isTestActivity ? `هدف مشاور: ${targetTestCount ? faNumber(targetTestCount) : "—"} تست` : "زمان واقعی را به صورت ساعت:دقیقه وارد کن؛ مثلاً 01:30"}</span>
         <label>
-          {isTestActivity ? "تعداد تست زده شده" : isExamActivity ? "مدت آزمون (ساعت:دقیقه)" : "مدت مطالعه (ساعت:دقیقه)"}
+          {isTestActivity ? "تست زده شده" : isExamActivity ? "مدت آزمون (ساعت:دقیقه)" : "مدت مطالعه (ساعت:دقیقه)"}
           <input
             type={isTestActivity ? "number" : "text"}
             inputMode={isTestActivity ? "numeric" : "text"}
@@ -130,7 +130,7 @@ export function StudentPlanCheckbox({
           />
         </label>
         {isTestActivity && <label>
-          مدت تست زنی (ساعت:دقیقه)
+          مدت تست زنی
           <input type="text" inputMode="text" className="student-duration-input" maxLength={5} dir="ltr" autoComplete="off"
             value={testDuration} disabled={!canToggle || isPending} placeholder="01:30"
             onChange={event => {setTestDuration(event.target.value); setHasTestDurationError(false);}}
@@ -143,7 +143,7 @@ export function StudentPlanCheckbox({
               }
             }} />
         </label>}
-        <small className="student-progress-optional">{isTestActivity ? "هر دو اختیاری‌اند؛ تعداد خالی یعنی هدف کامل و مدت خالی یعنی زمان صفر." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
+        <small className="student-progress-optional">{isTestActivity ? "مدت به شکل ساعت:دقیقه است. تعداد خالی یعنی هدف کامل؛ مدت خالی یعنی صفر." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
         {hasError && <small role="alert">{isTestActivity ? "تعداد تست را بین ۱ تا ۵۰۰۰ وارد کن یا خالی بگذار." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار."}</small>}
         {hasTestDurationError && <small role="alert">مدت تست را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار.</small>}
         {saveFailed && <small role="alert">ثبت انجام نشد؛ دوباره تلاش کن.</small>}
