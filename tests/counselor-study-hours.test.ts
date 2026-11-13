@@ -12,13 +12,13 @@ const completions:StudyCompletion[]=[
 ];
 const done=new Map(completions.map(completion=>[completion.item_id,completion]));
 
-test("study hours weight test activities by completed / target tests",()=>{
+test("study hours exclude missing test durations regardless of completed count",()=>{
   assert.equal(studiedMinutes(lesson,done.get("lesson")),90);
-  assert.equal(studiedMinutes(tests,done.get("tests")),30);
+  assert.equal(studiedMinutes(tests,done.get("tests")),0);
   assert.equal(studiedMinutes(untouched),0);
   const summary=summarizeItems([lesson,tests,untouched],done);
-  assert.equal(summary.weightedMinutes,120);
-  assert.equal(summary.hours,2);
+  assert.equal(summary.weightedMinutes,90);
+  assert.equal(summary.hours,1.5);
   assert.equal(summary.plannedHours,195/60);
   assert.equal(summary.percent,Math.round((1+0.5+0)/3*100));
 });

@@ -4,7 +4,7 @@ import {activityRatio,summarizeItems,dayIso,containsDay,overlapsWindow,visiblePl
 const study:StudyItem={id:'a',plan_id:'p',day_of_week:0,duration_minutes:90,subject:'ریاضی',chapter:'تابع',activity_type:'lesson',target_test_count:null,details:null,sort_order:0};
 const tests:StudyItem={...study,id:'b',duration_minutes:60,activity_type:'practice_tests',target_test_count:40};
 const completion=(id:string,count:number|null):StudyCompletion=>({item_id:id,completed_at:'2026-10-14T08:00:00Z',completed_test_count:count});
-test('fulfillment ratios are independent of planned study time',()=>{const map=new Map([['a',completion('a',null)],['b',completion('b',20)]]);assert.equal(activityRatio(study,map.get('a')),1);assert.equal(activityRatio(tests,map.get('b')),0.5);assert.equal(summarizeItems([study,tests],map).percent,75);assert.equal(summarizeItems([study,tests],map).minutes,120);assert.equal(summarizeItems([study,tests],map).tests,20);assert.equal(activityRatio(tests,completion('b',80)),1);assert.equal(activityRatio(tests),0);assert.equal(summarizeItems([],map).percent,null);assert.equal(summarizeItems([study,tests],new Map()).percent,0);});
+test('fulfillment ratios are independent of planned study time',()=>{const map=new Map([['a',completion('a',null)],['b',completion('b',20)]]);assert.equal(activityRatio(study,map.get('a')),1);assert.equal(activityRatio(tests,map.get('b')),0.5);assert.equal(summarizeItems([study,tests],map).percent,75);assert.equal(summarizeItems([study,tests],map).minutes,90);assert.equal(summarizeItems([study,tests],map).tests,20);assert.equal(activityRatio(tests,completion('b',80)),1);assert.equal(activityRatio(tests),0);assert.equal(summarizeItems([],map).percent,null);assert.equal(summarizeItems([study,tests],new Map()).percent,0);});
 test('empty amounts on checked boxes mean full goals without entered actual measurements',()=>{
  const inferredStudy=completion('a',null),inferredTests=completion('b',null);
  const map=new Map([['a',inferredStudy],['b',inferredTests]]);
@@ -12,7 +12,7 @@ test('empty amounts on checked boxes mean full goals without entered actual meas
  assert.equal(activityRatio(tests,inferredTests),1);
  const summary=summarizeItems([study,tests],map);
  assert.equal(summary.percent,100);
- assert.equal(summary.minutes,150);
+ assert.equal(summary.minutes,90);
  assert.equal(summary.tests,40);
  const noTarget={...tests,target_test_count:null};
  assert.equal(activityRatio(noTarget,inferredTests),1);
@@ -22,21 +22,22 @@ test('recorded study minutes drive time and fulfillment; legacy ticks retain pla
  const actual={...completion('a',null),completed_minutes:45};
  const map=new Map([['a',actual],['b',completion('b',20)]]);
  assert.equal(activityRatio(study,actual),0.5);
- assert.equal(summarizeItems([study,tests],map).minutes,75);
- assert.equal(summarizeItems([study,tests],map).weightedMinutes,75);
+ assert.equal(summarizeItems([study,tests],map).minutes,45);
+ assert.equal(summarizeItems([study,tests],map).weightedMinutes,45);
  assert.equal(summarizeItems([study,tests],map).percent,50);
  assert.equal(summarizeItems([study],new Map([['a',completion('a',null)]])).minutes,90);
  const extra={...actual,completed_minutes:120};
  assert.equal(activityRatio(study,extra),1,'Over-goal minutes must not exceed 100% fulfillment');
  assert.equal(summarizeItems([study],new Map([['a',extra]])).minutes,120,'Real extra minutes are still reported');
 });
-test('test time is independent of count, with legacy results preserved',()=>{
+test('test time is independent of count and missing duration is zero, including legacy ticks',()=>{
  const legacy={...completion('b',20),completed_minutes:null,test_duration_recorded:false};
  const entered={...legacy,completed_minutes:45,test_duration_recorded:true};
  const blank={...legacy,test_duration_recorded:true};
- assert.equal(summarizeItems([tests],new Map([['b',legacy]])).minutes,30);
+ assert.equal(summarizeItems([tests],new Map([['b',legacy]])).minutes,0);
  assert.equal(summarizeItems([tests],new Map([['b',entered]])).minutes,45);
- assert.equal(summarizeItems([tests],new Map([['b',blank]])).minutes,60);
+ assert.equal(summarizeItems([tests],new Map([['b',{...entered,test_duration_recorded:false}]])).minutes,45,'never discard recorded minutes');
+ assert.equal(summarizeItems([tests],new Map([['b',blank]])).minutes,0);
  assert.equal(activityRatio(tests,entered),0.5,'test fulfillment remains based on count');
  assert.equal(summarizeItems([tests],new Map([['b',entered]])).tests,20);
 });

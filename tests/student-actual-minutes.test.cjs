@@ -76,7 +76,7 @@ const fs=require('node:fs');
  assert.equal((await db.query('select completed_minutes from public.weekly_plan_item_completions where item_id=$1',[tests])).rows[0].completed_minutes,45);
  await saveNew(tests,true,12,null);
  row=(await db.query('select completed_minutes,test_duration_recorded from public.weekly_plan_item_completions where item_id=$1',[tests])).rows[0];
- assert.equal(row.completed_minutes,null);assert.equal(row.test_duration_recorded,true,'blank is a new full-time entry');
+ assert.equal(row.completed_minutes,null);assert.equal(row.test_duration_recorded,true,'blank remains unrecorded');
  await actor(other);await assert.rejects(()=>saveNew(tests,true,9,40));
  await actor(inactive);await assert.rejects(()=>saveNew('12345678-1234-4123-8123-123456789013',true,null,30));
  await db.exec('reset role; set role anon');await assert.rejects(()=>saveNew(tests,true,9,40),/permission denied/);

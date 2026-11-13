@@ -73,7 +73,7 @@ const click=async el=>act(async()=>el.click());
  const prior=calls.length;await change(testTime(),'1:65');await act(async()=>testTime().dispatchEvent(new dom.window.FocusEvent('focusout',{bubbles:true})));
  assert.equal(calls.length,prior);assert.match(document.querySelector('[role=alert]').textContent,/مدت تست/);
  await change(testTime(),'');await act(async()=>testTime().dispatchEvent(new dom.window.FocusEvent('focusout',{bubbles:true})));
- assert.deepEqual(calls.at(-1),['test-item',true,12,null],'empty test duration uses full planned time');
+ assert.deepEqual(calls.at(-1),['test-item',true,12,null],'empty test duration stays unrecorded');
  await render({itemId:'test-reloaded',activityType:'practice_tests',defaultChecked:true,targetTestCount:40,defaultCompletedTestCount:12,defaultCompletedMinutes:75});
  assert.equal(number().value,'12');assert.equal(testTime().value,'01:15','stored duration appears after reload');
  const savedBeforeFailure=saved.length;failNext=true;await change(testTime(),'2:00');await act(async()=>testTime().dispatchEvent(new dom.window.FocusEvent('focusout',{bubbles:true})));

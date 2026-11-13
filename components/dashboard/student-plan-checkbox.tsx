@@ -53,7 +53,7 @@ export function StudentPlanCheckbox({
 
   const saveProgress = (nextChecked: boolean) => {
     if (isPending) return;
-    // An empty input is a full planned activity, not a measured actual value.
+    // Empty values remain unrecorded; the report applies the activity's fallback.
     const invalidEntry = nextChecked && entry.trim() !== "" && completedValue === null;
     const invalidTestDuration = nextChecked && isTestActivity && testDuration.trim() !== "" && completedTestMinutes === null;
     setHasError(invalidEntry);
@@ -143,7 +143,7 @@ export function StudentPlanCheckbox({
               }
             }} />
         </label>}
-        <small className="student-progress-optional">{isTestActivity ? "هر دو اختیاری‌اند؛ تعداد خالی یعنی هدف کامل و مدت خالی یعنی کل زمان برنامه." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
+        <small className="student-progress-optional">{isTestActivity ? "هر دو اختیاری‌اند؛ تعداد خالی یعنی هدف کامل و مدت خالی یعنی زمان صفر." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
         {hasError && <small role="alert">{isTestActivity ? "تعداد تست را بین ۱ تا ۵۰۰۰ وارد کن یا خالی بگذار." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار."}</small>}
         {hasTestDurationError && <small role="alert">مدت تست را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار.</small>}
         {saveFailed && <small role="alert">ثبت انجام نشد؛ دوباره تلاش کن.</small>}
