@@ -31,28 +31,38 @@ export function StudentPlanCheckbox({
   const savedEntry = isTestActivity ? defaultCompletedTestCount?.toString() ?? "" : formatStudyDuration(defaultCompletedMinutes);
   const [checked, setChecked] = useState(defaultChecked);
   const [entry, setEntry] = useState(savedEntry);
+  const [testDuration, setTestDuration] = useState(formatStudyDuration(defaultCompletedMinutes));
   // Track successful edits even if the server refresh has not remounted this box yet.
   const [recordedValue, setRecordedValue] = useState<number | null>(isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes);
+  const [recordedTestMinutes, setRecordedTestMinutes] = useState(defaultCompletedMinutes);
   const [hasError, setHasError] = useState(false);
+  const [hasTestDurationError, setHasTestDurationError] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [isPending, startTransition] = useTransition();
   useEffect(() => {
     setChecked(defaultChecked);
     setRecordedValue(isTestActivity ? defaultCompletedTestCount : defaultCompletedMinutes);
+    setRecordedTestMinutes(defaultCompletedMinutes);
+    setTestDuration(formatStudyDuration(defaultCompletedMinutes));
     setEntry(savedEntry);
   }, [itemId, defaultChecked, defaultCompletedTestCount, defaultCompletedMinutes, isTestActivity, savedEntry]);
   const completedValue = isTestActivity
     ? /^[0-9]+$/.test(entry) && Number(entry) >= 1 && Number(entry) <= 5000 ? Number(entry) : null
     : parseStudyDuration(entry);
+  const completedTestMinutes = parseStudyDuration(testDuration);
 
   const saveProgress = (nextChecked: boolean) => {
     if (isPending) return;
     // An empty input is a full planned activity, not a measured actual value.
-    if (nextChecked && entry.trim() !== "" && completedValue === null) {
-      setHasError(true);
-      return;
-    }
-    setHasError(false);
+    const invalidEntry = nextChecked && entry.trim() !== "" && completedValue === null;
+    const invalidTestDuration = nextChecked && isTestActivity && testDuration.trim() !== "" && completedTestMinutes === null;
+    setHasError(invalidEntry);
+    setHasTestDurationError(invalidTestDuration);
+    setSaveFailed(false);
+    if (invalidEntry || invalidTestDuration) return;
     if (nextChecked && !isTestActivity && completedValue !== null) setEntry(formatStudyDuration(completedValue));
+    if (nextChecked && isTestActivity && completedTestMinutes !== null) setTestDuration(formatStudyDuration(completedTestMinutes));
+    const previouslyChecked = checked;
     setChecked(nextChecked);
     startTransition(async () => {
       try {
@@ -60,16 +70,17 @@ export function StudentPlanCheckbox({
           itemId,
           nextChecked,
           nextChecked && isTestActivity ? completedValue : null,
-          nextChecked && !isTestActivity ? completedValue : null,
+          nextChecked ? (isTestActivity ? completedTestMinutes : completedValue) : null,
         );
         if (!result.ok) throw new Error("Progress not saved");
         setRecordedValue(nextChecked ? completedValue : null);
+        setRecordedTestMinutes(nextChecked && isTestActivity ? completedTestMinutes : null);
         onSaved?.(itemId, nextChecked,
           nextChecked && isTestActivity ? completedValue : null,
-          nextChecked && !isTestActivity ? completedValue : null);
+          nextChecked ? (isTestActivity ? completedTestMinutes : completedValue) : null);
       } catch {
-        setChecked(!nextChecked);
-        setHasError(true);
+        setChecked(previouslyChecked);
+        setSaveFailed(true);
       }
     });
   };
@@ -90,7 +101,7 @@ export function StudentPlanCheckbox({
         <span aria-hidden="true">{checked ? "✓" : ""}</span>
         <strong>{canToggle ? "انجام داده‌ام" : checked ? "انجام‌شده" : "هنوز موعدش نرسیده"}</strong>
       </label>
-      <div className="student-test-count">
+      <div className={`student-test-count${isTestActivity ? " student-test-count--tests" : ""}`}>
         <span>{isTestActivity ? `هدف مشاور: ${targetTestCount ? faNumber(targetTestCount) : "—"} تست` : "زمان واقعی را به صورت ساعت:دقیقه وارد کن؛ مثلاً 01:30"}</span>
         <label>
           {isTestActivity ? "تعداد تست زده شده" : isExamActivity ? "مدت آزمون (ساعت:دقیقه)" : "مدت مطالعه (ساعت:دقیقه)"}
@@ -118,8 +129,24 @@ export function StudentPlanCheckbox({
             placeholder={isTestActivity ? "مثلاً ۳۰" : "01:30"}
           />
         </label>
-        <small className="student-progress-optional">{isTestActivity ? "اختیاری؛ اگر خالی بماند، هدف تست کامل حساب می‌شود." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
+        {isTestActivity && <label>
+          مدت تست زنی (ساعت:دقیقه)
+          <input type="text" inputMode="text" className="student-duration-input" maxLength={5} dir="ltr" autoComplete="off"
+            value={testDuration} disabled={!canToggle || isPending} placeholder="01:30"
+            onChange={event => {setTestDuration(event.target.value); setHasTestDurationError(false);}}
+            onBlur={() => {
+              if (completedTestMinutes !== null) setTestDuration(formatStudyDuration(completedTestMinutes));
+              const recorded = formatStudyDuration(recordedTestMinutes);
+              if (checked && (completedTestMinutes === null ? testDuration !== recorded : completedTestMinutes !== recordedTestMinutes)) {
+                if (testDuration.trim() === "" || completedTestMinutes !== null) saveProgress(true);
+                else setHasTestDurationError(true);
+              }
+            }} />
+        </label>}
+        <small className="student-progress-optional">{isTestActivity ? "هر دو اختیاری‌اند؛ تعداد خالی یعنی هدف کامل و مدت خالی یعنی کل زمان برنامه." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
         {hasError && <small role="alert">{isTestActivity ? "تعداد تست را بین ۱ تا ۵۰۰۰ وارد کن یا خالی بگذار." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار."}</small>}
+        {hasTestDurationError && <small role="alert">مدت تست را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار.</small>}
+        {saveFailed && <small role="alert">ثبت انجام نشد؛ دوباره تلاش کن.</small>}
       </div>
     </div>
   );

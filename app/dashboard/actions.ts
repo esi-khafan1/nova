@@ -297,7 +297,7 @@ export async function togglePlanItemCompletion(
     (!completed && (completedTestCount !== null || completedMinutes !== null))
   ) return { ok: false };
 
-  const { error } = await s.rpc("set_weekly_plan_item_progress", {
+  const { error } = await s.rpc("set_weekly_plan_item_progress_with_duration", {
     target_item_id: itemId,
     target_completed: completed,
     target_completed_test_count: completedTestCount,

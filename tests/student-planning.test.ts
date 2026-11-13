@@ -30,6 +30,16 @@ test('recorded study minutes drive time and fulfillment; legacy ticks retain pla
  assert.equal(activityRatio(study,extra),1,'Over-goal minutes must not exceed 100% fulfillment');
  assert.equal(summarizeItems([study],new Map([['a',extra]])).minutes,120,'Real extra minutes are still reported');
 });
+test('test time is independent of count, with legacy results preserved',()=>{
+ const legacy={...completion('b',20),completed_minutes:null,test_duration_recorded:false};
+ const entered={...legacy,completed_minutes:45,test_duration_recorded:true};
+ const blank={...legacy,test_duration_recorded:true};
+ assert.equal(summarizeItems([tests],new Map([['b',legacy]])).minutes,30);
+ assert.equal(summarizeItems([tests],new Map([['b',entered]])).minutes,45);
+ assert.equal(summarizeItems([tests],new Map([['b',blank]])).minutes,60);
+ assert.equal(activityRatio(tests,entered),0.5,'test fulfillment remains based on count');
+ assert.equal(summarizeItems([tests],new Map([['b',entered]])).tests,20);
+});
 test('rolling seven days cross calendar weeks and month boundaries',()=>{assert.equal(dayIso('2026-10-14',6),'2026-10-20');assert.equal(dayIso('2026-12-28',6),'2027-01-03');const plan:StudyPlan={id:'p',title:'تست',week_start:'2026-10-14',notes:null,weekly_plan_items:[]};assert.equal(containsDay(plan,'2026-10-20'),true);assert.equal(containsDay(plan,'2026-10-21'),false);const windows=[{id:'p',student_id:'s',week_start:'2026-10-14',status:'published'}];assert.equal(overlapsWindow('2026-10-20',windows,'s'),true);assert.equal(overlapsWindow('2026-10-21',windows,'s'),false);assert.equal(overlapsWindow('2026-10-14',windows,'s','p'),false);assert.equal(overlapsWindow('2026-10-14',windows,'other'),false);});
 
 test('trailing empty days may be reused, but boxes and previous history stay protected',()=>{

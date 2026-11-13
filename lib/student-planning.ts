@@ -1,7 +1,7 @@
 import { addDays, parseIsoDate, toIsoDate } from "@/lib/persian-date";
 export type StudyItem = { id:string; plan_id:string; day_of_week:number; duration_minutes:number; subject:string; chapter:string|null; activity_type:string; target_test_count:number|null; details:string|null; sort_order:number; source_grade?:9|10|11|12|null; preparation_track?:"konkur"|"final_exam"; exam_year?:number|null; recommended_publisher?:string|null; linked_exam_id?:string|null };
 export type StudyPlan = { id:string; title:string; week_start:string; notes:string|null; weekly_plan_items:StudyItem[] };
-export type StudyCompletion = { item_id:string; completed_at:string; checked_at?:string|null; completed_test_count:number|null; completed_minutes?:number|null };
+export type StudyCompletion = { item_id:string; completed_at:string; checked_at?:string|null; completed_test_count:number|null; completed_minutes?:number|null; test_duration_recorded?:boolean };
 export function tehranToday() { const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tehran",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const value=(type:string)=>parts.find(p=>p.type===type)?.value??"";return `${value("year")}-${value("month")}-${value("day")}`; }
 export const dayIso = (start:string, offset:number) => toIsoDate(addDays(parseIsoDate(start),offset));
 export const containsDay = (plan:StudyPlan,date:string) => plan.week_start<=date && dayIso(plan.week_start,6)>=date;
@@ -19,7 +19,8 @@ export function activityRatio(item:StudyItem, completion?:StudyCompletion) {
 }
 export function studiedMinutes(item:StudyItem, completion?:StudyCompletion){
  if(!completion)return 0;
- return item.activity_type==='practice_tests'?activityRatio(item,completion)*item.duration_minutes:completion.completed_minutes??item.duration_minutes;
+ if(item.activity_type==='practice_tests' && !completion.test_duration_recorded) return activityRatio(item,completion)*item.duration_minutes;
+ return completion.completed_minutes??item.duration_minutes;
 }
 export function summarizeItems(items:StudyItem[], completions:Map<string,StudyCompletion>) {
  let minutes=0,weightedMinutes=0,tests=0,goal=0,checked=0,realized=0;
