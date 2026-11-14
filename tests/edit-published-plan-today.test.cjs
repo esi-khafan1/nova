@@ -163,6 +163,8 @@ const item = (day, subject, options = {}) => ({
   await db.exec(fs.readFileSync('supabase/migrations/111_two_daily_routines.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/118_planner_private_drafts.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/119_planner_atomic_publish.sql','utf8'));
+  // Fixture-only grant to verify the disabled publisher's rollback semantics.
+  await db.exec('grant execute on function public.planner_publish_working_draft(uuid,date,text) to authenticated');
   await db.exec(fs.readFileSync('supabase/migrations/121_planner_reviews.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/122_planner_published_extras.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/123_planner_review_history.sql','utf8'));
@@ -236,5 +238,14 @@ const item = (day, subject, options = {}) => ({
   await db.query(`select public.save_weekly_plan_v9($1,$2,$3,'ذخیرهٔ قدیمی',null,'published',$4::jsonb,$5::jsonb)`,[ids.plan,ids.student,date,JSON.stringify(legacy),JSON.stringify(routines)]);
   assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'old save endpoints archive a checked review instead of deleting it');
   assert.equal((await db.query('select chapter from private.planner_review_history where review_offset=7')).rows[0].chapter,'فصل جدید');
-  console.log('PASS: real save chain, atomic metadata, review transfer and preserved review history');
+  // Gate the unfinished publisher while leaving the actual old v9 chain usable.
+  await saveDraft(legacy,null);const beforeGate=await signature();
+  await db.exec('reset role');await db.exec(fs.readFileSync('supabase/migrations/124_planner_publish_safety_gate.sql','utf8'));await actor(ids.counselor);
+  await db.exec('set role authenticated');await assert.rejects(publishDraft('1'),/permission denied/);await db.exec('reset role');
+  assert.deepEqual(await signature(),beforeGate,'blocked publication changes no old plan items');
+  assert.equal((await db.query('select public.planner_get_working_draft($1,$2) d',[ids.student,date])).rows[0].d.revision,'1');
+  await db.query(`select public.save_weekly_plan_v9($1,$2,$3,'ذخیرهٔ قبلی بعد از محافظ',null,'published',$4::jsonb,$5::jsonb)`,[ids.plan,ids.student,date,JSON.stringify(legacy),JSON.stringify(routines)]);
+  assert.equal((await db.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=any($1::uuid[])',[[ids.completed,makeupId]])).rows[0].n,2,'legacy save after gate retains completed activity progress');
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'legacy save after gate retains review history');
+  console.log('PASS: real save chain, atomic metadata, review transfer, preserved history and fail-closed gate');
 })().catch(error => { console.error(error); process.exitCode = 1; });

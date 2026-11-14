@@ -29,6 +29,8 @@ const fs=require('node:fs');const assert=require('node:assert/strict');
   `);
   await db.exec(fs.readFileSync('supabase/migrations/118_planner_private_drafts.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/119_planner_atomic_publish.sql','utf8'));
+  // Exercise internal transaction behavior in isolation, not release readiness.
+  await db.exec('grant execute on function public.planner_publish_working_draft(uuid,date,text) to authenticated');
   const counselor=randomUUID(),student=randomUUID(),other=randomUUID(),id=randomUUID();
   await db.query("insert into public.profiles values($1,'counselor','active'),($2,'student','active'),($3,'counselor','active')",[counselor,student,other]);
   await db.query("insert into public.counselor_profiles values($1,'approved'),($2,'approved')",[counselor,other]);

@@ -68,6 +68,8 @@ begin
   if not found then raise exception 'Draft has changed' using errcode='40001'; end if;
   return saved_id;
 end; $$;
-revoke all on function public.planner_publish_working_draft(uuid,date,text) from public, anon;
-grant execute on function public.planner_publish_working_draft(uuid,date,text) to authenticated;
+-- Fail closed from the moment this migration is applied. The direct RPC is
+-- not yet equivalent to the server action's full validation and exam-link
+-- concurrency protections; a later reviewed release will enable it.
+revoke all on function public.planner_publish_working_draft(uuid,date,text) from public, anon, authenticated;
 notify pgrst, 'reload schema';

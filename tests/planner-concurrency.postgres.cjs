@@ -11,14 +11,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   const client=async()=>{const c=db.getPgClient();await c.connect();clients.push(c);await c.query("set statement_timeout='5s'");return c};
   const setup=await client();
   await setup.query(`create role anon;create role authenticated;create schema auth;create schema private;
-   create type public.app_role as enum('student','counselor');create type public.content_status as enum('draft','published');
+   create type public.app_role as enum('student','counselor','exam_designer');create type public.content_status as enum('draft','published');
    create type public.study_activity_type as enum('lesson','exam','practice_tests');
    create table public.profiles(id uuid primary key,role public.app_role,registration_status text,grade smallint,study_field text);
    create table public.counselor_profiles(user_id uuid primary key,approval_status text);
    create table public.counselor_students(counselor_id uuid,student_id uuid,primary key(counselor_id,student_id));
    create table public.school_subjects(study_field text,grade smallint,subject text);
    create table public.weekly_plans(id uuid primary key default gen_random_uuid(),counselor_id uuid,student_id uuid,week_start date,updated_at timestamptz default clock_timestamp(),title text,notes text,status public.content_status,routines jsonb default '[]'::jsonb);
-   create table public.exams(id uuid primary key);
+   create table public.exams(id uuid primary key,counselor_id uuid,explicit_students boolean,template_version text);
+   create table public.exam_students(exam_id uuid,student_id uuid);
+   create function private.save_designer_exam_with_window(uuid,text,text,text,timestamptz,public.content_status,jsonb,text,timestamptz) returns uuid language sql as $$select $1$$;
    create table public.weekly_plan_items(id uuid primary key default gen_random_uuid(),plan_id uuid references public.weekly_plans(id) on delete cascade,day_of_week smallint,start_time time,duration_minutes smallint,subject text,chapter text,activity_type public.study_activity_type,target_test_count smallint,details text,sort_order smallint,source_grade smallint,preparation_track text default 'konkur',exam_year smallint,linked_exam_id uuid references public.exams(id));
    create table public.weekly_plan_item_completions(item_id uuid primary key references public.weekly_plan_items(id) on delete cascade,student_id uuid,completed_at timestamptz,checked_at timestamptz,completed_test_count smallint);
    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
@@ -33,12 +35,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await setup.query('create or replace function public.save_weekly_plan_v5('+v5);
   await setup.query(migration('085_konkur_recommended_publisher').split('-- Re-issue the student RPC')[0]);
   await setup.query(migration('091_completed_boxes_and_linked_exam_removal'));
+  await setup.query(migration('081_exam_box_edit_validation'));
   await setup.query(migration('103_external_simulation_provider_plan_boxes'));
   await setup.query(migration('109_makeup_plan_boxes'));
   await setup.query('create or replace function public.save_weekly_plan_v4'+migration('100_grade_nine_planning_and_exam_troubleshooting').split('create or replace function public.save_weekly_plan_v4')[1]);
   await setup.query(migration('111_two_daily_routines'));
   await setup.query(migration('118_planner_private_drafts'));
   await setup.query(migration('119_planner_atomic_publish'));
+  // Isolated fixture only: inspect the still-disabled publication internals.
+  await setup.query('grant execute on function public.planner_publish_working_draft(uuid,date,text) to authenticated');
   await setup.query(migration('121_planner_reviews'));
   await setup.query(migration('122_planner_published_extras'));
   await setup.query(migration('123_planner_review_history'));
@@ -104,6 +109,30 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   assert.notEqual(replacement,futureId);
   assert.equal((await setup.query('select count(*)::int n from private.planner_review_completions where item_id=$1 and review_offset=1',[replacement])).rows[0].n,1,'concurrent review follows the unchanged replaced activity');
   assert.equal((await setup.query('select count(*)::int n from private.planner_review_history')).rows[0].n,0);
-  console.log('PASS: real save chain and multi-session publication, CAS conflicts, stale plans, progress and review ticks');
+  // Reproduce an existing designer race before enabling the new publisher.
+  // The real designer RPC validates box IDs BEFORE locking the exam. Hold that
+  // lock so it has validated an unlinked future box while v9 replaces the box.
+  // The designer then resumes and reports success although its update matched
+  // zero rows. This is intentionally documented as a release-blocking finding.
+  const designer=randomUUID(),exam=randomUUID(),examBox=randomUUID();
+  await setup.query("insert into public.profiles values($1,'exam_designer','active',null,null)",[designer]);
+  await setup.query('insert into public.exams(id,counselor_id) values($1,$2)',[exam,designer]);
+  await setup.query("insert into public.weekly_plan_items(id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,sort_order,source_grade,preparation_track) values($1,$2,2,60,'آزمون فیزیک','فصل یک','exam',2,10,'konkur')",[examBox,plan]);
+  const examItem={id:null,sourceItemId:examBox,dayOfWeek:2,durationMinutes:60,subject:'آزمون فیزیک',chapter:'فصل یک',activityType:'exam',targetTestCount:null,details:'',sourceGrade:10,preparationTrack:'konkur',recommendedPublisher:null};
+  const examDraft={...reviewDraft,items:[{...reviewDraft.items[0],sourceItemId:replacement},reviewDraft.items[1],examItem],extras:{week:{},items:[snapshot.extras.items[0],null,null]}};
+  await save(b,null,examDraft);
+  const designerClient=await client();await designerClient.query("select set_config('request.jwt.claim.sub',$1,false)",[designer]);await designerClient.query('set role authenticated');
+  const designerPid=(await designerClient.query('select pg_backend_pid() pid')).rows[0].pid;
+  await a.query('reset role');await a.query('begin');await a.query('select id from public.exams where id=$1 for update',[exam]);
+  let finished=false;
+  const design=designerClient.query("select public.save_designer_exam($1,'exam','',$2::uuid[],now(),'published','[]'::jsonb,null,null,$3::uuid[]) x",[exam,[],[examBox]]).finally(()=>{finished=true});
+  await new Promise(resolve=>setTimeout(resolve,150));
+  assert.equal(finished,false,'designer is waiting after validating the box');
+  assert.ok((await setup.query('select cardinality(pg_blocking_pids($1)) n',[designerPid])).rows[0].n>0,'designer really holds at the exam lock');
+  await publish(b);
+  await a.query('commit');assert.equal((await design).rows[0].x,exam);
+  assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_items where linked_exam_id=$1',[exam])).rows[0].n,0,'known race: designer success without its selected box');
+  assert.equal((await setup.query("select count(*)::int n from public.weekly_plan_items where plan_id=$1 and subject='آزمون فیزیک'",[plan])).rows[0].n,1,'plan still has a replacement box');
+  console.log('PASS: transaction protections; reproduced designer/plan race, so publisher must remain disabled');
  } finally {for(const c of clients)await c.end().catch(()=>{});if(started)await db.stop().catch(()=>{});fs.rmSync(dir,{recursive:true,force:true})}
 })().catch(error=>{console.error(error);process.exitCode=1});
