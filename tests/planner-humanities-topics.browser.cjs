@@ -1,0 +1,19 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require('esbuild'),{chromium}=require('playwright-core');
+(async()=>{
+ for(const [migration,grade,subject,chapter] of [['144_planner_sociology11_topics',11,'جامعه‌شناسی ۲','درس ۱۵'],['145_planner_philosophy12_topics',12,'فلسفه ۲','درس ۱۲']]){
+ const sql=fs.readFileSync(`supabase/migrations/${migration}.sql`,'utf8');
+ const books=JSON.parse(sql.split('$books$')[1]);const lesson=books[0].chapters.find(c=>c.chapter===chapter);
+ const records=lesson.topics.map((t,i)=>({id:`seed-${i}`,grade:String(grade),track:'konkur',subject,chapter,title:t.title,pageStart:null,pageEnd:null,order:i}));
+ const built=await esbuild.build({stdin:{contents:`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import {PlannerTopicEditor} from './components/dashboard/planner-topic-editor';function App(){const [topics,setTopics]=useState([]);window.topics=topics;return <PlannerTopicEditor topics={topics} onChange={setTopics} selection={{studentId:'student',field:'humanities',grade:${grade},track:'konkur',subject:${JSON.stringify(subject)},chapter:${JSON.stringify(chapter)},weekStart:'2026-11-03',date:'2026-11-03',order:1,uses:[]}}/>};createRoot(document.getElementById('root')).render(<App/>);`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,platform:'browser',format:'iife',jsx:'automatic',write:false,outdir:'virtual-economics',plugins:[{name:'mock',setup(b){b.onResolve({filter:/^@\/lib\/supabase\/client$/},()=>({path:'client',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({loader:'js',contents:'export function createClient(){return {rpc:window.mockRpc}}'}));}}]});
+ const js=built.outputFiles.find(f=>f.path.endsWith('.js')).text,css=built.outputFiles.find(f=>f.path.endsWith('.css')).text,globals=fs.readFileSync('app/globals.css','utf8');
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});try{for(const width of [320,390,768,1200]){
+  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.setContent(`<html dir="rtl"><style>${globals}\n${css}</style><main style="padding:16px"><div id="root"></div></main></html>`);
+  await page.evaluate(({records,subject,chapter})=>{window.mockRpc=async(name,args)=>{if(name==='planner_topic_history')return {data:[],error:null};if(name==='planner_list_topics'&&args.target_subject===subject&&args.target_chapter===chapter)return {data:records,error:null};throw Error('unexpected request')}},{records,subject,chapter});
+  await page.addScriptTag({content:js});await page.locator('summary').click();const bank=page.getByLabel('بانک مباحث');await bank.locator('option').nth(3).waitFor({state:'attached'});await bank.selectOption('seed-2');
+  assert.equal(await page.getByLabel('نام زیرمبحث').inputValue(),records[2].title);assert.equal(await page.getByLabel('از صفحه').inputValue(),'');assert.equal(await page.getByLabel('تا صفحه').inputValue(),'');
+  await page.getByRole('button',{name:'افزودن مبحث'}).click();assert.deepEqual(await page.evaluate(()=>window.topics),[{title:records[2].title,pageStart:null,pageEnd:null,bankId:'seed-2'}]);
+  await page.getByRole('button',{name:`ویرایش ${records[2].title}`}).click();await page.getByLabel('از صفحه').fill('۱۵۰');await page.getByLabel('تا صفحه').fill('۱۵۳');await page.getByRole('button',{name:'ثبت ویرایش'}).click();
+  assert.deepEqual(await page.evaluate(()=>window.topics),[{title:records[2].title,pageStart:150,pageEnd:153,bankId:'seed-2'}]);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);await page.close();
+ }}finally{await browser.close()}console.log(`PASS: ${subject} selection, unset and editable pages at four widths`);}
+})().catch(e=>{console.error(e);process.exitCode=1});

@@ -78,7 +78,7 @@ The following are study groupings derived from the readable beginning of the **1
 - [Philosophy 2](https://dl.daneshchi.ir/file/chap-school/Falsafe-EM-12_Daneshchi.iR.pdf), code 112226, 1405: lessons 1–3 only.
 - [Economics](https://dl.daneshchi.ir/file/chap-school/Eghtesad-Ensani-10_Daneshchi.iR.pdf), code 110221, 1405: lessons 1–2 only; the extraction is incomplete, especially lesson 2.
 
-The remaining sociology 11 and philosophy 12 lessons have not yet been seeded; economics lessons 3–14 and sociology 12 lessons 3–10 are added as secondary-source groupings in migrations 142 and 143; textbook contents pages show lesson starts, but cannot establish reliable section-level page ranges.
+Philosophy 12 lessons 4–12 and sociology 11 lessons 4–15 are added as secondary-source groupings in migrations 145 and 144 respectively; economics lessons 3–14 and sociology 12 lessons 3–10 are added as secondary-source groupings in migrations 142 and 143; textbook contents pages show lesson starts, but cannot establish reliable section-level page ranges.
 
 ### Migration 142 — economics 10 lessons 3–14
 
@@ -87,3 +87,11 @@ The chapter/lesson sequence comes from the 1405 [economics textbook 110221](http
 ### Migration 143 — sociology 12 lessons 3–10
 
 Lesson titles and order are checked against the [1405 sociology 3 textbook 112222](https://dl.daneshchi.ir/file/chap-school/JameeShenasi-EM-12_Daneshchi.iR.pdf); the text extraction is incomplete. These are study groupings based on secondary summaries for [lessons 3–10](https://my-dars.com/shah-kelid-nokat/show-fasl/1331), with subsequent lessons at 1332–1338. The secondary source is not verified as the 1405 edition, and the groupings are not claimed to exhaust the book or quote its headings verbatim. All section page ranges remain unset. Together with migration 141, each lesson in this book has selectable groupings for both humanities tracks.
+
+### Migration 144 — sociology 11 lessons 4–15
+
+The [1405 textbook 111222](https://dl.daneshchi.ir/file/chap-school/JameeShenasi-EM-11_Daneshchi.iR.pdf) establishes the lesson sequence, but its extraction ends during lesson 3. The remaining study groupings are based on secondary summaries: [lesson 4](https://magerta.ir/lifestyle/answers-fourth-lesson-sociology-eleventh/), [lesson 5](https://magerta.ir/lifestyle/answers-fifth-lesson-sociology-eleventh/), [lesson 6](https://magerta.ir/lifestyle/answers-sixth-lesson-sociology-eleventh/), and [lessons 7–15](https://my-dars.com/shah-kelid-nokat/show-fasl/1099) (with lesson summaries at 1099–1107). These groupings are not verbatim verified 1405 section headings or a claim of granular completeness; section page ranges are deliberately unset. Combined with 141, all 15 lessons have selectable groupings for both humanities tracks.
+
+### Migration 145 — philosophy 12 lessons 4–12
+
+The [1405 textbook 112226](https://dl.daneshchi.ir/file/chap-school/Falsafe-EM-12_Daneshchi.iR.pdf) confirms the twelve-lesson sequence; extracted full text ends in the earlier lessons. The groupings use secondary lesson material for [lesson 4](https://gama.ir/tutorials/1201), [5](https://magerta.ir/lifestyle/questions-fifth-lesson-philosophy-twelfth/), [6](https://hamyar.me/soalmatn-12falsafe-d6/), [7](https://magerta.ir/lifestyle/questions-seventh-lesson-philosophy-twelfth/), [8](https://gama.ir/tutorials/1205), [9](https://shenoto.com/channel/podcast/Konkoor-ensani), [10](https://hamyar.me/soalmatn-12falsafe-d10/), [11](https://magerta.ir/lifestyle/questions-eleventh-lesson-philosophy-twelfth/), [12](https://magerta.ir/lifestyle/questions-twelfth-lesson-philosophy-twelfth/) and the [contemporary philosophy overview](https://salamsch.org/blog/final-exam-score-grade-12-falsafeh/). These are study groupings, not independently verified verbatim section headings or a guarantee of complete granular coverage in the 1405 printing. Page ranges remain null. With 141 all 12 lessons have selectable groupings in both humanities tracks.
