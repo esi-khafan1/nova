@@ -277,7 +277,7 @@ export const studyCatalog: Record<
       { subject: "علوم و فنون ادبی ۳", chapters: numbered("فصل", 4) },
       { subject: "عربی ۳ تخصصی", chapters: numbered("درس", 5) },
       { subject: "تاریخ ۳", chapters: numbered("درس", 12) },
-      { subject: "جغرافیا ۳", chapters: numbered("درس", 10) },
+      { subject: "جغرافیا ۳", chapters: numbered("درس", 6) },
       { subject: "جامعه‌شناسی ۳", chapters: numbered("درس", 10) },
       { subject: "فلسفه ۲", chapters: numbered("درس", 12) },
     ],
