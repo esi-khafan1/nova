@@ -8,7 +8,7 @@ const {renderToStaticMarkup} = require('react-dom/server');
 (async()=>{
   const built = await esbuild.build({
     entryPoints:['components/dashboard/weekly-plan-builder.tsx'],
-    bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,
+    bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,outdir:'virtual-nova-completed-plan-test',
     external:['react','react/jsx-runtime'],
     plugins:[{name:'mock-only-form-dependencies',setup(build){
       build.onResolve({filter:/^@\/(app\/dashboard\/actions|components\/dashboard\/(persian-date-picker|counselor-student-study-editor))$/},args=>({path:args.path,namespace:'mock'}));

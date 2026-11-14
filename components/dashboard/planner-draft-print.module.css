@@ -1,0 +1,7 @@
+.overlay{position:fixed;inset:0;z-index:10000;overflow:auto;background:#f2f7fc}
+.message{margin:24px auto;padding:20px;max-width:600px;background:#fff;border:1px solid #d8e6f3;border-radius:14px;line-height:1.9}
+.message button{font:inherit;padding:8px 16px;border:1px solid #b7d2e8;border-radius:8px;background:#f3f8fc;color:#205c89;cursor:pointer}
+@media print{
+ :global(body):has(>.planner-draft-print-overlay)>:not(.planner-draft-print-overlay){display:none!important}
+ .overlay{position:static!important;overflow:visible!important;background:#fff!important}
+}

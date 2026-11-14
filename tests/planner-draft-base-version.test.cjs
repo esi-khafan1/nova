@@ -1,0 +1,22 @@
+const {PGlite}=require('@electric-sql/pglite'),{randomUUID}=require('node:crypto'),fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+ create type public.app_role as enum('student','counselor');create table public.profiles(id uuid primary key,role public.app_role,registration_status text);
+ create table public.counselor_profiles(user_id uuid,approval_status text);create table public.counselor_students(counselor_id uuid,student_id uuid);
+ create table public.weekly_plans(id uuid primary key,counselor_id uuid,student_id uuid,week_start date,updated_at timestamptz);
+ create function auth.uid() returns uuid language sql stable as $$select current_setting('request.jwt.claim.sub')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql security definer as $$select role from public.profiles where id=auth.uid()$$;
+ grant usage on schema public,auth,private to authenticated,anon;`);
+ for(const m of ['118_planner_private_drafts','127_planner_draft_base_version'])await db.exec(fs.readFileSync(`supabase/migrations/${m}.sql`,'utf8'));
+ const c=randomUUID(),s=randomUUID(),p=randomUUID(),week='2099-01-01',base='2026-10-19T10:00:00.123456Z';
+ await db.query("insert into public.profiles values($1,'counselor','active'),($2,'student','active')",[c,s]);await db.query("insert into public.counselor_profiles values($1,'approved')",[c]);await db.query('insert into public.counselor_students values($1,$2)',[c,s]);await db.query('insert into public.weekly_plans values($1,$2,$3,$4,$5)',[p,c,s,week,base]);
+ await db.query("select set_config('request.jwt.claim.sub',$1,false)",[c]);await db.exec('set role authenticated');
+ const save=(version,rev=null,text='draft')=>db.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,$5,$6) result',[s,week,p,JSON.stringify({title:text}),rev,version]);
+ await assert.rejects(()=>save(null),/Missing plan version/);await assert.rejects(()=>save('2026-10-19T10:00:00.123457Z'),/Published plan has changed/);
+ assert.equal((await save(base)).rows[0].result.revision,'1');
+ await assert.rejects(()=>db.query('select public.planner_save_working_draft($1,$2,$3,$4::jsonb,$5)',[s,week,p,'{}',null]),/permission denied/);
+ await db.exec('reset role');await db.query("update public.weekly_plans set updated_at=updated_at + interval '1 second' where id=$1",[p]);await db.exec('set role authenticated');
+ const updated=(await save(base,'1','kept private')).rows[0].result;assert.equal(updated.revision,'2');assert.ok(updated.base_plan_updated_at.includes('123456'));
+ const stored=(await db.query('select public.planner_get_working_draft($1,$2) result',[s,week])).rows[0].result;assert.equal(stored.snapshot.title,'kept private');
+ console.log('PASS: initial draft compares exact plan version; later private edits survive live changes');
+}finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});

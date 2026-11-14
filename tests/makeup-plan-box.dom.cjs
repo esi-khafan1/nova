@@ -9,7 +9,7 @@ const dom=new JSDOM('<div id="root"></div>',{url:'https://nova.test/',pretendToB
 global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;global.location=dom.window.location;global.IS_REACT_ACT_ENVIRONMENT=true;
 const {createRoot}=require('react-dom/client');
 async function build(entry){
- const result=await esbuild.build({entryPoints:[entry],bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,external:['react','react/jsx-runtime'],plugins:[{name:'mock',setup(b){
+ const result=await esbuild.build({entryPoints:[entry],bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,outdir:'virtual-nova-makeup-plan-test',external:['react','react/jsx-runtime'],plugins:[{name:'mock',setup(b){
   b.onResolve({filter:/^(next\/link|@\/(app\/dashboard\/actions|components\/dashboard\/(persian-date-picker|counselor-student-study-editor|student-plan-checkbox|student-daily-note)))$/},a=>({path:a.path,namespace:'mock'}));
   b.onLoad({filter:/.*/,namespace:'mock'},a=>({loader:'js',contents:a.path==='next/link'?'import React from "react"; export default function Link({href,children,...rest}){return React.createElement("a",{href,...rest},children)}':a.path.includes('actions')?'export const saveWeeklyPlan="/save"; export const saveCurrentWeeklyPlan=async()=>null;':a.path.endsWith('persian-date-picker')?'export const PersianDatePicker=()=>null;':a.path.endsWith('counselor-student-study-editor')?'export const CounselorStudentStudyEditor=()=>null;':a.path.endsWith('student-plan-checkbox')?'export const StudentPlanCheckbox=()=>null;':'export const StudentDailyNote=()=>null;'}));
  }}]});

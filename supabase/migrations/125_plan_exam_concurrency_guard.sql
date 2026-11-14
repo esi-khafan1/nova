@@ -117,6 +117,11 @@ declare
   original_status public.content_status;
   normalized jsonb;
   saved_links jsonb := '[]'::jsonb;
+  link jsonb;
+  candidate_id uuid;
+  candidate_count integer;
+  mapping_count integer;
+  has_source_ids boolean := false;
 begin
   if (select private.current_user_role()) is distinct from 'counselor'::public.app_role then
     raise exception 'Only counselors can save plans';
@@ -148,12 +153,22 @@ begin
       order by i.id for update;
     end if;
     select coalesce(jsonb_agg(jsonb_build_object(
-      'day',i.day_of_week,'subject',i.subject,
+      'id',i.id,'day',i.day_of_week,'subject',i.subject,
       'chapter',coalesce(i.chapter,''),'exam',i.linked_exam_id
     )),'[]'::jsonb) into saved_links
     from public.weekly_plan_items i
     where i.plan_id=target_plan_id and i.activity_type::text='exam' and i.linked_exam_id is not null;
   end if;
+
+  -- A source-aware client must refer only to distinct items from this exact
+  -- plan. Stale IDs are conflicts, never evidence that a link was removed.
+  select exists(select 1 from jsonb_array_elements(target_items) x where x ? 'sourceItemId') into has_source_ids;
+  if has_source_ids and (
+    exists(select 1 from jsonb_array_elements(target_items) x where x->>'sourceItemId' is not null
+      and not exists(select 1 from public.weekly_plan_items i where i.plan_id=target_plan_id and i.id::text=x->>'sourceItemId'))
+    or exists(select 1 from jsonb_array_elements(target_items) x where x->>'sourceItemId' is not null
+      group by x->>'sourceItemId' having count(*)>1)
+  ) then raise exception 'Invalid or duplicate source identity' using errcode='PZ002'; end if;
 
   -- A cached older planner sends only the original routine fields. Retain
   -- second-routine values already stored for that day unless explicitly sent.
@@ -185,14 +200,38 @@ begin
     and counselor_id = (select auth.uid());
 
   if saved_links <> '[]'::jsonb then
-    update public.weekly_plan_items i
-    set linked_exam_id = (l.link->>'exam')::uuid
-    from jsonb_array_elements(saved_links) as l(link)
-    where i.plan_id=saved and i.activity_type::text='exam' and i.linked_exam_id is null
-      and i.day_of_week=(l.link->>'day')::smallint
-      and i.subject=l.link->>'subject'
-      and coalesce(i.chapter,'')=l.link->>'chapter'
-      and exists(select 1 from public.exams e where e.id=(l.link->>'exam')::uuid);
+    -- The new publisher carries sourceItemId even where v3 replaces a future
+    -- ID. Legacy callers do not. Prefer exact source identity when available;
+    -- never spread one link onto multiple identical exam boxes.
+    for link in select value from jsonb_array_elements(saved_links) loop
+      -- Today's retained row already has its link. Matching another identical
+      -- unlinked row here would silently grant access to the wrong exam.
+      if exists(select 1 from public.weekly_plan_items i where i.id=(link->>'id')::uuid and i.plan_id=saved) then continue; end if;
+      if has_source_ids then
+        select count(*)::integer into mapping_count from jsonb_array_elements(target_items) x where x->>'sourceItemId'=link->>'id';
+        if mapping_count > 1 then raise exception 'Ambiguous exam source identity' using errcode='PZ002'; end if;
+        select count(*)::integer,(array_agg(i.id))[1] into candidate_count,candidate_id
+        from jsonb_array_elements(target_items) with ordinality x(value,position)
+        join public.weekly_plan_items i on i.plan_id=saved and i.sort_order=x.position-1
+        where x.value->>'sourceItemId'=link->>'id' and i.activity_type::text='exam'
+          and i.day_of_week=(link->>'day')::smallint and i.subject=link->>'subject'
+          and coalesce(i.chapter,'')=link->>'chapter' and i.linked_exam_id is null;
+        if mapping_count > 0 and candidate_count <> 1 then raise exception 'Exam source identity changed' using errcode='PZ002'; end if;
+      else
+        select count(*)::integer,(array_agg(i.id))[1] into candidate_count,candidate_id
+        from public.weekly_plan_items i where i.plan_id=saved and i.activity_type::text='exam' and i.linked_exam_id is null
+          and i.day_of_week=(link->>'day')::smallint and i.subject=link->>'subject' and coalesce(i.chapter,'')=link->>'chapter';
+        -- A legacy payload has no source IDs. If more than one old link has
+        -- this identity, or more than one candidate exists, matching is unsafe.
+        if candidate_count > 1 or (candidate_count > 0 and (select count(*) from jsonb_array_elements(saved_links) x
+          where x->>'day'=link->>'day' and x->>'subject'=link->>'subject' and x->>'chapter'=link->>'chapter'
+            and not exists(select 1 from public.weekly_plan_items i where i.id=(x->>'id')::uuid and i.plan_id=saved)) > 1)
+        then raise exception 'Ambiguous exam boxes; reopen and review the plan' using errcode='PZ002'; end if;
+      end if;
+      if candidate_count=1 and exists(select 1 from public.exams e where e.id=(link->>'exam')::uuid) then
+        update public.weekly_plan_items set linked_exam_id=(link->>'exam')::uuid where id=candidate_id;
+      end if;
+    end loop;
   end if;
 
   return saved;

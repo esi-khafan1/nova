@@ -259,7 +259,9 @@ const item = (day, subject, options = {}) => ({
   const client={rpc:async(name,args)=>{
     const queries={
       planner_get_working_draft:['select public.planner_get_working_draft($1,$2) d',[args.target_student_id,args.target_week_start]],
-      planner_save_working_draft:['select public.planner_save_working_draft($1,$2,$3,$4::jsonb,$5) d',[args.target_student_id,args.target_week_start,args.target_plan_id,JSON.stringify(args.target_snapshot),args.expected_revision]],
+      // This legacy-chain fixture predates migration 127; the checked RPC's
+      // version race is exercised against migration 127 in its own fixture.
+      planner_save_working_draft_checked:['select public.planner_save_working_draft($1,$2,$3,$4::jsonb,$5) d',[args.target_student_id,args.target_week_start,args.target_plan_id,JSON.stringify(args.target_snapshot),args.expected_revision]],
       planner_publish_working_draft:['select public.planner_publish_working_draft($1,$2,$3) d',[args.target_student_id,args.target_week_start,args.expected_revision]],
     };
     if(!queries[name])throw new Error('Unexpected RPC');
@@ -287,6 +289,24 @@ const item = (day, subject, options = {}) => ({
   assert.deepEqual((await db.query('select * from public.weekly_plan_items where id=$1',[ids.past])).rows[0],pastBefore,'adapter publication preserves the locked past');
   assert.equal((await db.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=any($1::uuid[])',[[ids.completed,makeupId]])).rows[0].n,2,'adapter publication preserves completed items');
   assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'adapter publication preserves review history');
+  // Two identical future exam boxes must never inherit one another's link.
+  // The source-aware publication identifies exactly which replacement receives
+  // the exam; a cached legacy client without source IDs must fail atomically.
+  const examA='77777777-7777-4777-8777-777777777777',examB='88888888-8888-4888-8888-888888888888';
+  await db.query(`insert into public.weekly_plan_items(id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,sort_order,source_grade,preparation_track,linked_exam_id)
+    values($1,$3,2,60,'آزمون یکسان','فصل','exam',95,10,'konkur',$4),($2,$3,2,60,'آزمون یکسان','فصل','exam',96,10,'konkur',null)`,[examA,examB,ids.plan,ids.exam]);
+  const fresh=await loadFresh();
+  const gridWithExams=bridge.exports.plannerGridFromPlan(fresh.plan,fresh.completed,fresh.extras,today);
+  const examSnapshot=bridge.exports.plannerSnapshotFromEditor({title:fresh.plan.title,notes:fresh.plan.notes??'',weekStart:date,today,planStatus:'published',grid:gridWithExams,routines:fresh.plan.routines,weekExtra:fresh.extras.week});
+  const linkedIndex=examSnapshot.items.findIndex(x=>x.sourceItemId===examA),unlinkedIndex=examSnapshot.items.findIndex(x=>x.sourceItemId===examB);
+  assert.ok(linkedIndex>=0&&unlinkedIndex>=0);
+  await db.query('select public.planner_save_working_draft($1,$2,$3,$4::jsonb,null)',[ids.student,date,ids.plan,JSON.stringify(examSnapshot)]);await publishDraft('1');
+  const boxes=(await db.query("select sort_order,linked_exam_id from public.weekly_plan_items where plan_id=$1 and subject='آزمون یکسان' order by sort_order",[ids.plan])).rows;
+  assert.equal(boxes.length,2);assert.equal(boxes.find(x=>x.sort_order===linkedIndex).linked_exam_id,ids.exam);assert.equal(boxes.find(x=>x.sort_order===unlinkedIndex).linked_exam_id,null);
+  const beforeAmbiguous=await signature();
+  const legacyExamItems=examSnapshot.items.map(item=>{const legacyItem={...item};delete legacyItem.sourceItemId;return legacyItem});
+  await assert.rejects(db.query(`select public.save_weekly_plan_v9($1,$2,$3,'ذخیرهٔ قدیمی',null,'published',$4::jsonb,$5::jsonb)`,[ids.plan,ids.student,date,JSON.stringify(legacyExamItems),JSON.stringify(routines)]),/Ambiguous exam boxes/);
+  assert.deepEqual(await signature(),beforeAmbiguous,'ambiguous v9 legacy save rolls back including linked boxes');
   // Gate the unfinished publisher while leaving the actual old v9 chain usable.
   await saveDraft(legacy,null);const beforeGate=await signature();
   await db.exec('reset role');await db.exec(fs.readFileSync('supabase/migrations/124_planner_publish_safety_gate.sql','utf8'));await actor(ids.counselor);
@@ -296,5 +316,20 @@ const item = (day, subject, options = {}) => ({
   await db.query(`select public.save_weekly_plan_v9($1,$2,$3,'ذخیرهٔ قبلی بعد از محافظ',null,'published',$4::jsonb,$5::jsonb)`,[ids.plan,ids.student,date,JSON.stringify(legacy),JSON.stringify(routines)]);
   assert.equal((await db.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=any($1::uuid[])',[[ids.completed,makeupId]])).rows[0].n,2,'legacy save after gate retains completed activity progress');
   assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'legacy save after gate retains review history');
-  console.log('PASS: real save chain, atomic metadata, review transfer, preserved history and fail-closed gate');
+  // Exercise both candidate migrations with the full real chain, not just the
+  // validation stub. Explicit grant is limited to this disposable fixture.
+  await db.query('select public.planner_discard_working_draft($1,$2,$3)',[ids.student,date,'1']);
+  await db.exec(fs.readFileSync('supabase/migrations/126_planner_publish_validation.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/127_planner_draft_base_version.sql','utf8'));
+  assert.equal((await db.query("select has_function_privilege('authenticated','public.planner_publish_working_draft(uuid,date,text)','execute') allowed")).rows[0].allowed,false);
+  await db.exec('grant execute on function public.planner_publish_working_draft(uuid,date,text) to authenticated');
+  const checkedFresh=await loadFresh();
+  const checkedGrid=bridge.exports.plannerGridFromPlan(checkedFresh.plan,checkedFresh.completed,checkedFresh.extras,today);
+  const checkedSnapshot=bridge.exports.plannerSnapshotFromEditor({title:'انتشار با اعتبارسنجی',notes:checkedFresh.plan.notes??'',weekStart:date,today,planStatus:'published',grid:checkedGrid,routines:checkedFresh.plan.routines,weekExtra:checkedFresh.extras.week});
+  await db.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,null,$5)',[ids.student,date,ids.plan,JSON.stringify(checkedSnapshot),checkedFresh.planUpdatedAt]);
+  await publishDraft('1');
+  assert.equal((await db.query('select title from public.weekly_plans where id=$1',[ids.plan])).rows[0].title,'انتشار با اعتبارسنجی');
+  assert.equal((await db.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=any($1::uuid[])',[[ids.completed,makeupId]])).rows[0].n,2);
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3);
+  console.log('PASS: real save chain, candidate validation, version-checked draft, metadata, progress and review history');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -5,6 +5,7 @@ const ts = require('typescript');
 const student = '11111111-1111-4111-8111-111111111111';
 const plan = '22222222-2222-4222-8222-222222222222';
 let rpcFailure = true;
+let rpcFailureCode = 'PZ001';
 let planCalls = 0;
 let savedRoutines;
 const client = {
@@ -15,7 +16,7 @@ const client = {
     assert.equal(args.target_plan_id,plan);
     planCalls++;
     savedRoutines=args.target_routines;
-    return rpcFailure ? {error:{code:'PZ001'}} : {data:plan,error:null};
+    return rpcFailure ? {error:{code:rpcFailureCode}} : {data:plan,error:null};
   },
   from(name) {assert.equal(name,'weekly_plans');return {select:()=>({eq:()=>({maybeSingle:async()=>({data:{counselor_id:'33333333-3333-4333-8333-333333333333',routines:[]},error:null})})})};},
 };
@@ -68,6 +69,8 @@ const checkUrl=(err,kind)=>{
   rpcFailure=true;
   await assert.rejects(moduleStub.exports.saveCurrentWeeklyPlan(null,build()),error=>checkUrl(error,'error'));
   assert.equal(planCalls,4);
+  rpcFailureCode='PZ002';
+  await assert.rejects(moduleStub.exports.saveCurrentWeeklyPlan(null,build()),e=>new URL(e.message,'https://nova.example').searchParams.get('error')==='exam-identity');
   rpcFailure=false;
   const two=Array.from({length:7},(_,dayOfWeek)=>({dayOfWeek,subject:'',details:'',secondSubject:dayOfWeek===0?'ریاضی':'',secondDetails:dayOfWeek===0?'مرور':''}));
   await moduleStub.exports.saveCurrentWeeklyPlan(null,build({routines:JSON.stringify(two)}));
@@ -79,7 +82,8 @@ const checkUrl=(err,kind)=>{
   await moduleStub.exports.saveCurrentWeeklyPlan(null,build({routines:JSON.stringify(legacy)}));
   assert.equal(Object.hasOwn(savedRoutines[0],'secondSubject'),false,'older clients do not overwrite a saved second routine');
   const page=readFileSync('app/dashboard/counselor/plans/page.tsx','utf8');
-  assert.match(page,/initialStudentId=\{params.student\}/);
+  assert.match(page,/initialStudentId=\{params.student \?\? params.progress_student\}/);
+  assert.match(page,/params.error === "exam-identity"/);
   assert.match(page,/initialPlanId=\{params.plan\}/);
   console.log('PASS: failed and successful counselor saves retain the selected student, plan and week');
 })().catch(error=>{console.error(error);process.exitCode=1});

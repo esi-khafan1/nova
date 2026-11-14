@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import {dayIso, visiblePlanDays} from "@/lib/student-planning";
 import { PrintWeeklyPlan,type PrintablePlan } from "@/components/dashboard/print-weekly-plan";
+import { PlannerPrintSuite } from "@/components/dashboard/planner-print-suite";
+import { loadPublishedPlannerPrintData } from "@/lib/load-planner-print";
 import type { StudyField } from "@/lib/study-catalog";
 type StudentDirectoryRow={student_id:string;full_name:string;grade:number|null;study_field:StudyField|null};
 export default async function PrintWeeklyPlanPage({
@@ -37,5 +39,12 @@ export default async function PrintWeeklyPlanPage({
     if(laterError || !laterPlans) throw new Error("Unable to load published plan dates");
     visibleDays=visiblePlanDays(plan,laterPlans);
   }
-  return <PrintWeeklyPlan plan={plan} student={student} counselorName={planData.counselor_id === profile.id ? profile.full_name : "مشاور پیشین نووا"} backHref="/dashboard/counselor/plans" visibleDays={visibleDays}/>;
+  const counselorName = planData.counselor_id === profile.id ? profile.full_name : "مشاور پیشین نووا";
+  // Old installations and unpublished legacy drafts retain the original print
+  // path. Never turn an RPC/authorization failure into an empty review list.
+  if (plan.status !== "published") return <PrintWeeklyPlan plan={plan} student={student} counselorName={counselorName} backHref="/dashboard/counselor/plans" visibleDays={visibleDays}/>;
+  const printData = await loadPublishedPlannerPrintData(supabase, plan);
+  if (!printData) return <PrintWeeklyPlan plan={plan} student={student} counselorName={counselorName} backHref="/dashboard/counselor/plans" visibleDays={visibleDays}/>;
+  const planWithTopics={...plan,weekly_plan_items:plan.weekly_plan_items.map(item=>({...item,topics:printData.itemTopics[item.id]??[]}))};
+  return <PlannerPrintSuite plan={planWithTopics} student={student} counselorName={counselorName} backHref="/dashboard/counselor/plans" visibleDays={visibleDays} weekDetails={printData.weekDetails} sources={[]} completed={new Set()} reviewRows={printData.reviewRows}/>;
 }

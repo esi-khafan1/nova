@@ -15,15 +15,20 @@ export function createPlannerDraftTransport<T>(client: SupabaseClient, parseSnap
           ((data.plan_id === null) !== (data.base_plan_updated_at === null))) throw new Error("Invalid draft response");
       return {planId:data.plan_id, basePlanUpdatedAt:data.base_plan_updated_at, revision:data.revision, snapshot:parseSnapshot(data.snapshot)};
     },
-    async save(context, snapshot, expectedRevision) {
-      const {data,error} = await client.rpc("planner_save_working_draft",{
+    async save(context, snapshot, expectedRevision, expectedBasePlanUpdatedAt) {
+      const {data,error} = await client.rpc("planner_save_working_draft_checked",{
         ...contextArgs(context), target_plan_id:context.planId, target_snapshot:snapshot, expected_revision:expectedRevision,
+        expected_base_plan_updated_at:expectedBasePlanUpdatedAt,
       });
       if (error) throw error;
       if (!data || typeof data !== "object" || Array.isArray(data) || typeof data.revision !== "string" ||
           !(data.base_plan_updated_at === null || (typeof data.base_plan_updated_at === "string" && Number.isFinite(Date.parse(data.base_plan_updated_at)))) ||
           ((context.planId === null) !== (data.base_plan_updated_at === null))) throw new Error("Invalid saved draft response");
       return {revision:data.revision,basePlanUpdatedAt:data.base_plan_updated_at};
+    },
+    async discard(context, expectedRevision) {
+      const {error} = await client.rpc("planner_discard_working_draft",{...contextArgs(context),expected_revision:expectedRevision});
+      if (error) throw error;
     },
     async publish(context, expectedRevision) {
       const {data,error} = await client.rpc("planner_publish_working_draft",{...contextArgs(context),expected_revision:expectedRevision});

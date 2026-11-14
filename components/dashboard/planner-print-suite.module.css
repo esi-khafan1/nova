@@ -21,3 +21,8 @@
  .paper{min-height:210mm!important;padding:8mm!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
  .table{min-width:0!important}.reviewColumns{grid-template-columns:repeat(3,minmax(0,1fr))!important}.stats{grid-template-columns:repeat(4,1fr)!important}
 }
+@media print {
+ .reviewDay{break-inside:auto}
+}
+
+.backButton{font:inherit;color:#225f94;border:0;background:none;text-decoration:underline;cursor:pointer}

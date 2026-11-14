@@ -1,0 +1,20 @@
+// Synthetic storage only; no real student or plan records are touched.
+const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require('esbuild'),{chromium}=require('playwright-core');
+(async()=>{
+ const built=await esbuild.build({stdin:{contents:`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import {PlannerReadyBlocks} from './components/dashboard/planner-ready-blocks';
+ const box={key:'source',id:'source',sourceItemId:'source',sourceDayOfWeek:2,dayOfWeek:2,subject:'زیست',chapter:'فصل اول',activityType:'lesson',durationMinutes:60,targetTestCount:null,details:'',sourceGrade:10,preparationTrack:'konkur',recommendedPublisher:null,otherPublisher:false};
+ function App(){const [item,setItem]=useState(box);window.current=item;return <form onSubmit={e=>{e.preventDefault();window.submitted=true}}><button type="button" onClick={()=>setItem({...item,subject:'ریاضی'})}>تغییر درس</button><PlannerReadyBlocks item={item} onApply={setItem}/></form>};createRoot(document.getElementById('root')).render(<App/>);`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,platform:'browser',format:'iife',jsx:'automatic',write:false,outdir:'virtual-ready-browser',plugins:[{name:'mock-client',setup(b){b.onResolve({filter:/^@\/lib\/supabase\/client$/},()=>({path:'client',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({loader:'js',contents:'export function createClient(){return {rpc:window.mockRpc}}'}));}}]});
+ const js=built.outputFiles.find(f=>f.path.endsWith('.js')).text,css=built.outputFiles.find(f=>f.path.endsWith('.css')).text,font=fs.readFileSync('public/fonts/estedad-arabic-wght-normal.woff2').toString('base64');
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
+ try{for(const width of [320,390,768,1200]){
+  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+  await page.setContent(`<html dir="rtl" lang="fa"><style>@font-face{font-family:Estedad;src:url(data:font/woff2;base64,${font})}*{box-sizing:border-box}body{margin:0;padding:16px;font-family:Estedad,sans-serif}${css}</style><div id="root"></div></html>`);
+  await page.evaluate(()=>{window.presets=[];window.submitted=false;window.mockRpc=async(name,args)=>{if(name==='planner_list_presets')return {data:structuredClone(window.presets),error:null};if(name==='planner_save_preset'){window.presets.push({id:'ready',name:args.target_name,payload:args.target_payload,revision:'1'});return {data:{},error:null}};if(name==='planner_delete_preset'){window.presets=[];return {data:null,error:null}};throw Error(name)}});
+  await page.addScriptTag({content:js});await page.locator('summary').click();await page.getByText('هنوز بلوک آماده‌ای ذخیره نشده است.').waitFor();
+  await page.getByLabel('نام بلوک').fill('مطالعهٔ زیست');await page.getByLabel('نام بلوک').press('Enter');await page.getByText('بلوک آماده ذخیره شد.').waitFor();assert.equal(await page.evaluate(()=>window.submitted),false);
+  assert.equal(await page.evaluate(()=>window.presets[0].payload.days[2][0].sourceItemId),null);
+  await page.getByRole('button',{name:'تغییر درس'}).click();await page.getByRole('button',{name:'استفاده در این فعالیت'}).click();await page.getByText('بلوک آماده در فرم قرار گرفت.').waitFor();assert.equal(await page.evaluate(()=>window.current.subject),'زیست');assert.equal(await page.evaluate(()=>window.current.id),'source');assert.equal(await page.evaluate(()=>window.current.dayOfWeek),2);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`no page overflow ${width}`);if(process.env.TEST_SCREENSHOT)await page.screenshot({path:`${process.env.TEST_SCREENSHOT}-${width}.png`});
+  await page.getByRole('button',{name:'حذف',exact:true}).click();await page.getByText('بلوک آماده حذف شد.').waitFor();assert.deepEqual(errors,[]);await page.close();
+ }}finally{await browser.close()}console.log('PASS: ready-block save, apply, delete and responsive UI at four widths');
+})().catch(e=>{console.error(e);process.exitCode=1});

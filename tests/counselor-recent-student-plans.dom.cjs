@@ -13,7 +13,7 @@ const {createRoot} = require('react-dom/client');
 
 (async()=>{
   const built = await esbuild.build({
-    entryPoints:['components/dashboard/weekly-plan-builder.tsx'], bundle:true, platform:'node', format:'cjs', jsx:'automatic', write:false,
+    entryPoints:['components/dashboard/weekly-plan-builder.tsx'], bundle:true, platform:'node', format:'cjs', jsx:'automatic', write:false, outdir:'virtual-nova-recent-plans-test',
     external:['react','react/jsx-runtime'],
     plugins:[{name:'mock-planner-dependencies', setup(build){
       build.onResolve({filter:/^(next\/link|@\/(app\/dashboard\/actions|components\/dashboard\/(persian-date-picker|counselor-student-study-editor)))$/}, args=>({path:args.path,namespace:'mock'}));

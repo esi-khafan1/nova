@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),esbuild=require('esbuild'),Module=require('node:module'),path=require('node:path');
+(async()=>{
+ const built=await esbuild.build({entryPoints:['app/dashboard/student/plans/[planId]/print/page.tsx'],bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,outdir:'virtual-student-print',external:['react','react/jsx-runtime'],plugins:[{name:'mock',setup(b){
+  b.onResolve({filter:/^(next\/navigation|next\/link|@\/lib\/auth)$/},a=>({path:a.path,namespace:'mock'}));
+  b.onLoad({filter:/.*/,namespace:'mock'},a=>({loader:'js',contents:a.path==='next/navigation'?`export function notFound(){throw Error('not-found')}`:a.path==='next/link'?`import React from 'react';export default function Link({href,children}){return React.createElement('a',{href},children)}`:`export async function requireProfile(){return global.__printAuth}`}));
+ }}]});
+ const filename=path.join(process.cwd(),'virtual-student-print.cjs'),mod=new Module(filename,module);mod.filename=filename;mod.paths=Module._nodeModulePaths(process.cwd());mod._compile(built.outputFiles.find(f=>f.path.endsWith('.js')).text,filename);
+ const plan={id:'11111111-1111-4111-8111-111111111111',student_id:'student',week_start:'2026-11-03',title:'هفته',notes:null,status:'published',weekly_plan_items:[{id:'exam',day_of_week:0,duration_minutes:60,subject:'آزمون',chapter:null,activity_type:'exam',target_test_count:null,details:'یادداشت خصوصی طراح',sort_order:0},{id:'lesson',day_of_week:1,duration_minutes:60,subject:'زیست',chapter:'اول',activity_type:'lesson',target_test_count:null,details:'راهنمای درس',sort_order:0}]};
+ let missing=false;const client={from(){const q={select(){return q},eq(){return q},gt(){return q},lte(){return Promise.resolve({data:[],error:null})},single(){return Promise.resolve({data:plan,error:null})}};return q},rpc(name){if(missing)return Promise.resolve({error:{code:'PGRST202'}});return Promise.resolve({data:name==='planner_review_week'?[]:{week:{},items:{}},error:null})}};
+ global.__printAuth={supabase:client,profile:{id:'student',full_name:'دانش‌آموز',grade:10,study_field:'humanities',phone:'private'}};
+ const run=()=>mod.exports.default({params:Promise.resolve({planId:plan.id})});
+ const element=await run();assert.equal(element.props.plan.weekly_plan_items[0].details,null,'exam designer notes must not cross client boundary');assert.equal(element.props.plan.weekly_plan_items[1].details,'راهنمای درس');assert.equal(element.props.student.phone,undefined);assert.equal(plan.weekly_plan_items[0].details,'یادداشت خصوصی طراح');assert.ok(Array.isArray(element.props.reviewRows));
+ missing=true;const fallback=await run();assert.equal(fallback.props.plan.weekly_plan_items[0].details,'یادداشت خصوصی طراح');assert.equal(fallback.type.name,'PrintWeeklyPlan','legacy fallback stays server-rendered');
+ console.log('PASS: student print omits designer notes from client payload and preserves lesson notes; legacy path remains server-side');
+})().catch(e=>{console.error(e);process.exitCode=1});

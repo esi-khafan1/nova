@@ -5,12 +5,12 @@ import { addDays, formatPersianWeekday, parseIsoDate, persianMonthNames, persian
 import { clonePlannerGrid, copyPlannerBlock, movePlannerBlock, summarizePlannerGrid, type GridPosition, type PlannerBlock, type PlannerGrid } from "@/lib/planner-grid";
 import styles from "./planner-week-grid.module.css";
 
-type Props = {
+type Props<T extends PlannerBlock> = {
   weekStart: string;
-  grid: PlannerGrid;
+  grid: Array<Array<T | null>>;
   lockedDays: boolean[];
-  onChange: (grid: PlannerGrid) => void;
-  onEdit: (block: PlannerBlock) => void;
+  onChange: (grid: Array<Array<T | null>>) => void;
+  onEdit: (block: T) => void;
   onAdd: (day: number) => void;
 };
 
@@ -41,14 +41,14 @@ function locate(grid: PlannerGrid, key: string): GridPosition | null {
 }
 
 /** A controlled editor surface; persistence and authorization remain with its caller. */
-export function PlannerWeekGrid({weekStart, grid, lockedDays, onChange, onEdit, onAdd}: Props) {
+export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, lockedDays, onChange, onEdit, onAdd}: Props<T>) {
   const [selected, setSelected] = useState<string | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
-  const [clipboard, setClipboard] = useState<PlannerBlock | null>(null);
-  const [dayClipboard, setDayClipboard] = useState<PlannerBlock[] | null>(null);
+  const [clipboard, setClipboard] = useState<T | null>(null);
+  const [dayClipboard, setDayClipboard] = useState<T[] | null>(null);
   const [message, setMessage] = useState("");
   const [canUndo, setCanUndo] = useState(false);
-  const history = useRef<PlannerGrid[]>([]);
+  const history = useRef<Array<Array<Array<T | null>>>>([]);
   const expected = useRef(JSON.stringify(grid));
   const dragKey = useRef<string | null>(null);
   const focusKey = useRef<string | null>(null);
@@ -59,8 +59,11 @@ export function PlannerWeekGrid({weekStart, grid, lockedDays, onChange, onEdit, 
     if (focusKey.current) { buttons.current.get(focusKey.current)?.focus(); focusKey.current = null; }
   }, [signature]);
   if (grid.length !== 7 || lockedDays.length !== 7) throw new Error("Seven planner days are required");
-  const summary = summarizePlannerGrid(grid);
-  const commit = (next: PlannerGrid, focus?: string) => {
+  // A partially typed numeric input may temporarily be invalid. Keep the grid
+  // usable while the existing form validation explains what needs correction.
+  let summary: ReturnType<typeof summarizePlannerGrid> | null = null;
+  try { summary = summarizePlannerGrid(grid); } catch { /* Incomplete activity input. */ }
+  const commit = (next: Array<Array<T | null>>, focus?: string) => {
     history.current = [...history.current.slice(-49), clonePlannerGrid(grid)];
     setCanUndo(true); expected.current = JSON.stringify(next); focusKey.current = focus ?? null;
     onChange(next); setMenu(null); setMessage("");
@@ -81,7 +84,7 @@ export function PlannerWeekGrid({weekStart, grid, lockedDays, onChange, onEdit, 
     const taken = new Set(grid.flatMap(day => day.flatMap(block => block ? [block.key] : [])));
     let key = newClientKey(); while (taken.has(key)) key = newClientKey(); return key;
   };
-  const insertCopy = (block: PlannerBlock, day: number, index: number) => {
+  const insertCopy = (block: T, day: number, index: number) => {
     if (lockedDays[day]) { setMessage("این روز قابل ویرایش نیست."); return; }
     const next = clonePlannerGrid(grid), copied = copyPlannerBlock(block,day,uniqueKey());
     next[day].splice(index,0,copied); commit(next,copied.key); setSelected(copied.key);
@@ -136,12 +139,12 @@ export function PlannerWeekGrid({weekStart, grid, lockedDays, onChange, onEdit, 
       {grid.map((day,dayIndex)=>{
         const date=addDays(parseIsoDate(weekStart),dayIndex), parts=persianParts(date), weekday=formatPersianWeekday(date);
         return <section className={styles.day} key={dayIndex} aria-label={weekday}>
-          <header className={styles.dayHeader}><div><strong>{weekday}</strong><small>{persianNumber.format(parts.day)} {persianMonthNames[parts.month-1]}</small></div><button type="button" className={styles.dayButton} disabled={!day.some(Boolean)} onClick={()=>{setDayClipboard(day.filter((block):block is PlannerBlock=>Boolean(block)));setMessage(`${weekday} کپی شد؛ در روز مقصد چسباندن را بزن.`)}}>کپی روز</button></header>
+          <header className={styles.dayHeader}><div><strong>{weekday}</strong><small>{persianNumber.format(parts.day)} {persianMonthNames[parts.month-1]}</small></div><button type="button" className={styles.dayButton} disabled={!day.some(Boolean)} onClick={()=>{setDayClipboard(day.filter((block):block is T=>Boolean(block)));setMessage(`${weekday} کپی شد؛ در روز مقصد چسباندن را بزن.`)}}>کپی روز</button></header>
           {dayClipboard && !lockedDays[dayIndex] && <button type="button" className={styles.dayButton} onClick={()=>pasteDay(dayIndex)}>چسباندن روز</button>}
           <div className={styles.items} onDragOver={e=>e.preventDefault()} onDrop={e=>drop(e,dayIndex,day.length)}>
             {day.map((block,index)=>block ? <div key={block.key} className={styles.slot} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}}>
               <button type="button" ref={element=>{if(element) buttons.current.set(block.key,element);else buttons.current.delete(block.key)}} className={`${styles.block} ${selected===block.key?styles.selected:""}`} style={{borderInlineStartColor:subjectColor(block.subject)}} draggable={!protect(block,dayIndex)} onDragStart={()=>{dragKey.current=block.key;setSelected(block.key)}} onDragEnd={()=>{dragKey.current=null}} onFocus={()=>setSelected(block.key)} onClick={()=>{setSelected(block.key);onEdit(block)}} onContextMenu={e=>{e.preventDefault();setSelected(block.key);setMenu(menu===block.key?null:block.key)}} onKeyDown={e=>keyDown(e,block.key)}>
-                <strong>{block.subject || "فعالیت جدید"}</strong><span>{block.chapter || "مبحث آزاد"}</span><small>{displayMinutes(block.durationMinutes)}{block.targetTestCount!==null?` · ${persianNumber.format(block.targetTestCount)} تست`:""}</small>{protect(block,dayIndex)&&<small>محافظت‌شده</small>}
+                <strong>{block.subject || "فعالیت جدید"}</strong><span>{block.chapter || "مبحث آزاد"}</span>{Boolean(block.topics?.length)&&<span>{block.topics?.map(topic=>`${topic.title}${topic.pageStart!=null&&topic.pageEnd!=null?` (${persianNumber.format(topic.pageStart)}–${persianNumber.format(topic.pageEnd)})`:""}`).join("، ")}</span>}<small>{displayMinutes(block.durationMinutes)}{block.targetTestCount!==null?` · ${persianNumber.format(block.targetTestCount)} تست`:""}</small>{protect(block,dayIndex)&&<small>محافظت‌شده</small>}
               </button>
               <button type="button" className={styles.menuTrigger} aria-label={`گزینه‌های ${block.subject || "باکس"}`} aria-expanded={menu===block.key} onClick={()=>{setSelected(block.key);setMenu(menu===block.key?null:block.key)}}>⋮</button>
               {menu===block.key && <div className={styles.menu}>
@@ -160,7 +163,7 @@ export function PlannerWeekGrid({weekStart, grid, lockedDays, onChange, onEdit, 
         </section>;
       })}
     </div></div>
-    <div className={styles.summary}><strong>خلاصهٔ هفته</strong><span>{displayMinutes(summary.minutes)}</span><span>{persianNumber.format(summary.tests)} تست</span><span>{persianNumber.format(summary.blocks)} باکس</span><span>{persianNumber.format(summary.emptySlots)} جای خالی</span></div>
+    <div className={styles.summary}><strong>خلاصهٔ هفته</strong>{summary ? <><span>{displayMinutes(summary.minutes)}</span><span>{persianNumber.format(summary.tests)} تست</span><span>{persianNumber.format(summary.blocks)} باکس</span><span>{persianNumber.format(summary.emptySlots)} جای خالی</span></> : <span>مقادیر فعالیت‌ها را کامل و معتبر کن.</span>}</div>
     <div className={styles.live} role="status" aria-live="polite">{message}</div>
   </section>;
 }

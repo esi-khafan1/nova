@@ -1,0 +1,26 @@
+const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema private;create schema auth;create type public.content_status as enum('draft','published');
+ create table public.weekly_plans(id uuid primary key,student_id uuid,week_start date,status public.content_status);
+ create table public.weekly_plan_items(id uuid primary key,plan_id uuid,day_of_week integer,sort_order integer,source_grade integer,preparation_track text,subject text,chapter text);
+ create table private.planner_item_extras(item_id uuid,data jsonb);
+ create type public.app_role as enum('student','counselor','admin');
+ create table public.profiles(id uuid,role public.app_role,registration_status text);
+ create table public.counselor_profiles(user_id uuid,approval_status text);
+ create table public.counselor_students(counselor_id uuid,student_id uuid);
+ create function auth.uid() returns uuid language sql stable as $$select current_setting('test.user')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql stable as $$select current_setting('test.role')::public.app_role$$;
+ grant usage on schema public,private to authenticated,anon;`);
+ const source=fs.readFileSync('supabase/migrations/118_planner_private_drafts.sql','utf8');await db.exec(source.slice(source.indexOf('create function private.require_planner_draft_access'),source.indexOf('create function public.planner_get_working_draft')));
+ await db.exec(fs.readFileSync('supabase/migrations/129_planner_topic_history.sql','utf8'));
+ const student=randomUUID(),other=randomUUID(),counselor=randomUUID(),plan=randomUUID(),draft=randomUUID(),i=randomUUID(),j=randomUUID();
+ await db.query("insert into public.profiles values($1,'student','active'),($2,'student','active');",[student,other]);await db.query("insert into public.counselor_profiles values($1,'approved');",[counselor]);await db.query('insert into public.counselor_students values($1,$2)',[counselor,student]);
+ await db.query("insert into public.weekly_plans values($1,$2,'2026-10-01','published'),($3,$2,'2026-10-08','draft')",[plan,student,draft]);
+ await db.query("insert into public.weekly_plan_items values($1,$3,0,1,10,'konkur','زیست','فصل'),($2,$4,0,1,10,'konkur','زیست','فصل')",[i,j,plan,draft]);
+ await db.query('insert into private.planner_item_extras values($1,$2),($3,$2)',[i,JSON.stringify({topics:[{title:'مبحث',bankId:'first'}]}),j]);
+ await db.query("select set_config('test.user',$1,false),set_config('test.role','counselor',false)",[counselor]);await db.exec('set role authenticated');
+ const query=s=>db.query("select public.planner_topic_history($1,'2026-10-15',10,'konkur','زیست','فصل') result",[s]);
+ assert.deepEqual((await query(student)).rows[0].result,[{date:'2026-10-01',order:1,topicIds:['first']}]);await assert.rejects(()=>query(other),/Student not available/);
+ assert.deepEqual((await db.query("select public.planner_topic_history($1,'2026-10-01',10,'konkur','زیست','فصل') result",[student])).rows[0].result,[]);await db.query("select set_config('test.role','student',false)");await assert.rejects(()=>query(student),/Student not available/);await db.exec('reset role');await db.query("update public.counselor_profiles set approval_status='pending' where user_id=$1",[counselor]);await db.query("select set_config('test.role','counselor',false)");await db.exec('set role authenticated');await assert.rejects(()=>query(student),/Student not available/);
+ console.log('PASS: topic history excludes drafts, later dates and other students');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});

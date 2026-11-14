@@ -1,12 +1,22 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
 import { formatPersianFullDate, formatPersianWeekRange, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
 import { saveCurrentWeeklyPlan, saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
+import { PlannerWeekGrid } from "@/components/dashboard/planner-week-grid";
+import { PlannerAnalysis } from "@/components/dashboard/planner-insights";
+import { PlannerPublishedReviews } from "@/components/dashboard/planner-published-reviews";
+import { PlannerWeekTemplates } from "@/components/dashboard/planner-week-templates";
+import { PlannerReadyBlocks } from "@/components/dashboard/planner-ready-blocks";
+import { PlannerDraftPrint } from "@/components/dashboard/planner-draft-print";
+import { PlannerTopicEditor } from "@/components/dashboard/planner-topic-editor";
+import { PlannerBankChapterInput } from "@/components/dashboard/planner-bank-chapter-input";
+import { usePlannerWorkingCopy } from "@/components/dashboard/use-planner-working-copy";
+import { plannerGridToItems, plannerItemsToGrid, type PlannerTopic } from "@/lib/planner-grid";
 import {
   activityTypes,
   studyFieldLabels,
@@ -27,8 +37,10 @@ type Student = {
   study_field: StudyField | null;
 };
 
-type PlanItem = {
-  id?: string;
+export type PlanItem = {
+  id?: string | null;
+  sourceItemId?: string | null;
+  sourceDayOfWeek?: number | null;
   key: string;
   dayOfWeek: number;
   durationMinutes: number;
@@ -46,6 +58,10 @@ type PlanItem = {
   previousPreparationTrack?: PreparationTrack;
   linkedExamId?: string|null;
   completed?: boolean;
+  locked?: boolean;
+  examYear?: number | null;
+  extra?: Record<string, unknown> | null;
+  topics?: PlannerTopic[];
 };
 
 export type PlanRoutine = {
@@ -63,6 +79,7 @@ export type CounselorWeeklyPlan = {
   title: string;
   notes: string | null;
   status: "draft" | "published";
+  updated_at?: string;
   routines?: PlanRoutine[];
   weekly_plan_items: Array<{
     id: string;
@@ -146,6 +163,8 @@ function planItems(plan: CounselorWeeklyPlan, completedItemIds: ReadonlySet<stri
     )
     .map((item) => ({
       id: item.id,
+      sourceItemId: item.id,
+      sourceDayOfWeek: item.day_of_week,
       key: item.id,
       dayOfWeek: item.day_of_week,
       durationMinutes: item.duration_minutes,
@@ -176,6 +195,8 @@ export function WeeklyPlanBuilder({
   recentPlans = [],
   overlapPlans = plans,
   counselorId,
+  counselorName = "",
+  privateDrafts = false,
 }: {
   students: Student[];
   plans: CounselorWeeklyPlan[];
@@ -188,6 +209,8 @@ export function WeeklyPlanBuilder({
   recentPlans?: RecentCounselorPlan[];
   overlapPlans?: Array<Pick<CounselorWeeklyPlan, "id" | "student_id" | "week_start" | "status"> & {weekly_plan_items:{day_of_week:number}[]}>;
   counselorId?: string;
+  counselorName?: string;
+  privateDrafts?: boolean;
 }) {
   const completedIdSet = new Set(completedItemIds);
   const formId = useId();
@@ -205,6 +228,9 @@ export function WeeklyPlanBuilder({
   );
   const [title, setTitle] = useState(initialPlan?.title ?? "برنامه هفتگی");
   const [notes, setNotes] = useState(initialPlan?.notes ?? "");
+  const [showDraftPrint,setShowDraftPrint] = useState(false);
+  const closeDraftPrint = useCallback(()=>setShowDraftPrint(false),[]);
+  const [weekExtra, setWeekExtra] = useState<Record<string, unknown>>({});
   const [routines, setRoutines] = useState<PlanRoutine[]>(() => planRoutines(initialPlan));
   const [items, setItems] = useState<PlanItem[]>(() => [
     ...(initialPlan
@@ -239,6 +265,11 @@ export function WeeklyPlanBuilder({
   }, [saveResult, plans, completedItemIds, student?.student_id, weekStart]);
   const currentUrlPlan = Boolean(initialSaved === "published" && planStatus === "published" && planId && planId===initialPlanId && student?.student_id===initialStudentId && weekStart===initialWeekStart);
   function submitCurrentPlan(event: FormEvent<HTMLFormElement>) {
+    if (privateDrafts) {
+      event.preventDefault();
+      if (workingCopy.phase === 'ready' && event.currentTarget.reportValidity()) void workingCopy.publish();
+      return;
+    }
     if (!currentUrlPlan) {
       setSaveNotice(null);
       setSaveContext({studentId: student?.student_id ?? "", weekStart, planId});
@@ -258,18 +289,29 @@ export function WeeklyPlanBuilder({
   const studentRecentPlans = recentPlans.filter(plan => plan.student_id === student?.student_id).slice(0, 8);
   const selectedNumber = planId ? numbers.get(planId) ?? 1 : nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart);
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([9,10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
+  const workingCopy=usePlannerWorkingCopy({
+    enabled:privateDrafts && Boolean(student?.student_id && counselorId),
+    context:{studentId:student?.student_id??'',weekStart,planId:planId||null},counselorId:counselorId??'',planStatus,
+    value:{title,notes,routines,weekExtra,items:items.map(item=>({...item,
+      sourceGrade:item.activityType===externalSimulationActivity||item.activityType===makeupActivity?null:item.completed?item.sourceGrade:itemGrade(item),
+      recommendedPublisher:item.completed?item.recommendedPublisher:itemGrade(item)!==9&&canRecommendPublisher(item.preparationTrack,item.activityType)?item.recommendedPublisher?.trim()||null:null,
+    }))},
+    onRestore:(value,status)=>{setTitle(value.title);setNotes(value.notes);setItems(value.items);setRoutines(value.routines);setWeekExtra(value.weekExtra);setPlanStatus(status);},
+    onPublished:id=>{const params=new URLSearchParams({student:student.student_id,plan:id,week_start:weekStart,saved:'published'});window.location.assign(`/dashboard/counselor/plans?${params.toString()}`);},
+  });
   const itemBooks=(item:PlanItem)=>curriculumBooks(student?.study_field??null,itemGrade(item),item.preparationTrack);
   const chapters=(item:PlanItem)=>itemBooks(item).find(b=>b.subject===item.subject)?.chapters??[];
   const routineSubjects=routineSubjectOptions(student?.study_field??null,student?.grade??null);
+  const confirmTopicScope=(item:PlanItem)=>!item.topics?.length || window.confirm('با تغییر درس، پایه یا فصل، زیرمبحث‌های این فعالیت پاک می‌شوند. ادامه می‌دهی؟');
   const chooseExternalSimulation=(key:string)=>setItems(current=>current.map(item=>item.key===key?{
     ...item,previousSourceGrade:item.activityType===makeupActivity?item.previousSourceGrade:itemGrade(item),previousPreparationTrack:item.activityType===makeupActivity?item.previousPreparationTrack:item.preparationTrack,
-    activityType:externalSimulationActivity,subject:externalSimulationTitle,chapter:"",targetTestCount:null,
+    activityType:externalSimulationActivity,subject:externalSimulationTitle,chapter:"",topics:[],targetTestCount:null,
     sourceGrade:null,preparationTrack:"konkur",recommendedPublisher:null,otherPublisher:false,otherSimulationProvider:false,
   }:item));
   const chooseMakeup=(key:string)=>setItems(current=>current.map(item=>item.key===key?{
     ...item,previousSourceGrade:item.activityType===externalSimulationActivity?item.previousSourceGrade:itemGrade(item),
     previousPreparationTrack:item.activityType===externalSimulationActivity?item.previousPreparationTrack:item.preparationTrack,
-    activityType:makeupActivity,subject:makeupTitle,chapter:"",targetTestCount:null,details:"",
+    activityType:makeupActivity,subject:makeupTitle,chapter:"",topics:[],targetTestCount:null,details:"",
     sourceGrade:null,preparationTrack:"konkur",recommendedPublisher:null,otherPublisher:false,otherSimulationProvider:false,
   }:item));
   const leaveMakeup=(key:string,subject="")=>setItems(current=>current.map(item=>item.key===key?{
@@ -285,7 +327,7 @@ export function WeeklyPlanBuilder({
       previousSourceGrade:undefined,previousPreparationTrack:undefined,otherSimulationProvider:false,
     }:item));
   };
-  const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:"",recommendedPublisher:track==='konkur'?item.recommendedPublisher:null,otherPublisher:track==='konkur'&&item.otherPublisher}:item));
+  const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:"",topics:[],recommendedPublisher:track==='konkur'?item.recommendedPublisher:null,otherPublisher:track==='konkur'&&item.otherPublisher}:item));
 
   const durationField=(item:PlanItem)=>(
       <label>
@@ -313,6 +355,7 @@ export function WeeklyPlanBuilder({
 
   const loadPlan = (studentId: string, nextWeek: string) => {
     setSaveNotice(null);
+    setWeekExtra({});
     const plan = plans.find(
       (item) => item.student_id === studentId && item.week_start === nextWeek,
     );
@@ -339,6 +382,16 @@ export function WeeklyPlanBuilder({
   const periodEnded = dayIso(weekStart, 6) < tehranToday();
   const hasOverlap = overlapsWindow(weekStart, overlapPlans, student?.student_id ?? "", planId, items.map(item => item.dayOfWeek));
   const editableItems = items.filter((item) => !isLockedDay(item.dayOfWeek));
+  const weekGrid = useMemo(()=>plannerItemsToGrid(items),[items]);
+  const analysisReady = items.every(item => Number.isFinite(item.durationMinutes) && item.durationMinutes >= 0 &&
+    (item.targetTestCount === null || (Number.isFinite(item.targetTestCount) && item.targetTestCount >= 0)));
+  const focusPlanItem = (key: string) => {
+    requestAnimationFrame(() => {
+      const item = [...document.querySelectorAll<HTMLElement>("[data-plan-item-key]")].find(element => element.dataset.planItemKey === key);
+      item?.scrollIntoView({block: "center", behavior: "smooth"});
+      item?.focus({preventScroll: true});
+    });
+  };
 
   const updateRoutine = <K extends keyof PlanRoutine>(
     dayOfWeek: number,
@@ -360,6 +413,7 @@ export function WeeklyPlanBuilder({
       current.map((item) =>
         item.key === key ? {
           ...item, [property]: value,
+          ...((property === 'subject' || property === 'chapter') && value!==item[property] ? {topics:[]} : {}),
           ...(property === "activityType" && !canRecommendPublisher(item.preparationTrack, String(value))
             ? { recommendedPublisher: null, otherPublisher: false } : {}),
         } : item,
@@ -377,6 +431,7 @@ export function WeeklyPlanBuilder({
 
   return (
     <>
+      {showDraftPrint && <PlannerDraftPrint plan={{id:planId,student_id:student.student_id,week_start:weekStart,title,notes,status:"draft",routines,weekly_plan_items:items.map((item,index)=>({id:item.key,day_of_week:item.dayOfWeek,duration_minutes:item.durationMinutes,subject:item.subject,chapter:item.chapter,activity_type:item.activityType,target_test_count:item.targetTestCount,details:item.details,sort_order:index,topics:item.topics}))}} student={student} counselorName={counselorName} weekDetails={{goal:typeof weekExtra.goal==='string'?weekExtra.goal:'',wakeTime:typeof weekExtra.wakeTime==='string'?weekExtra.wakeTime:'',sleepTime:typeof weekExtra.sleepTime==='string'?weekExtra.sleepTime:'',mobileLimit:typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''}} grid={weekGrid} onBack={closeDraftPrint}/>}
       <section className="portal-card counselor-plan-student">
         <div className="counselor-plan-student-row">
           <label className="portal-form">
@@ -386,12 +441,12 @@ export function WeeklyPlanBuilder({
               form={formId}
               value={student?.student_id ?? ""}
               onChange={(event) => {
-                const nextIndex = students.findIndex(
-                  (item) => item.student_id === event.target.value,
-                );
-                setStudentIndex(nextIndex >= 0 ? nextIndex : 0);
-                loadPlan(event.target.value, weekStart);
+                const nextStudent=event.target.value;
+                const change=()=>{const nextIndex=students.findIndex(item=>item.student_id===nextStudent);setStudentIndex(nextIndex>=0?nextIndex:0);loadPlan(nextStudent,weekStart);};
+                if(!privateDrafts){change();return;}
+                void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});
               }}
+              disabled={privateDrafts && workingCopy.phase !== 'ready'}
               required
             >
               {students.map((item) => (
@@ -405,6 +460,15 @@ export function WeeklyPlanBuilder({
         </div>
       </section>
     <form id={formId} action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder">
+      {privateDrafts && <div className="portal-card" aria-live="polite">
+        <strong>پیش‌نویس خصوصی</strong><p>{workingCopy.status}</p>
+        {workingCopy.warning && <p role="alert">{workingCopy.warning}</p>}
+        {workingCopy.phase==='ready' && <div className="plan-publish-buttons">
+          <button type="button" className="button button-secondary" onClick={()=>void workingCopy.retry()}>تلاش دوباره برای ذخیره</button>
+          {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
+        </div>}
+      </div>}
+      <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>
       <section className="portal-card plan-basics">
         <div className="portal-card-title">
           <div>
@@ -412,7 +476,7 @@ export function WeeklyPlanBuilder({
             <h2>برنامهٔ هفت‌روزه</h2>
           </div>
         </div>
-        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();setWeekStart(start);loadPlan(student.student_id,start);}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
+        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();const change=()=>{setWeekStart(start);loadPlan(student.student_id,start);};if(!privateDrafts){change();return;}void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
         <div className="plan-basics-grid">
           <label>
             شروع برنامهٔ هفت‌روزه
@@ -422,8 +486,9 @@ export function WeeklyPlanBuilder({
               plannedWeeks={plannedWeeks}
               selectionMode="range"
               onChange={(nextWeek) => {
-                setWeekStart(nextWeek);
-                loadPlan(student.student_id, nextWeek);
+                const change=()=>{setWeekStart(nextWeek);loadPlan(student.student_id,nextWeek);};
+                if(!privateDrafts){change();return;}
+                void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});
               }}
             />
           </label>
@@ -472,7 +537,34 @@ export function WeeklyPlanBuilder({
         )}
       </section>
 
-      {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
+        {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
+      {privateDrafts && <section className="portal-card plan-basics">
+        <div className="portal-card-title"><div><span>جزئیات هفته</span><h2>هدف و برنامهٔ روزانه</h2></div></div>
+        <div className="plan-basics-grid">
+          <label>هدف هفته<input value={typeof weekExtra.goal==='string'?weekExtra.goal:''} maxLength={300} onChange={e=>setWeekExtra(current=>({...current,goal:e.target.value}))}/></label>
+          <label>ساعت بیداری<input type="time" value={typeof weekExtra.wakeTime==='string'?weekExtra.wakeTime:''} onChange={e=>setWeekExtra(current=>({...current,wakeTime:e.target.value}))}/></label>
+          <label>ساعت خواب<input type="time" value={typeof weekExtra.sleepTime==='string'?weekExtra.sleepTime:''} onChange={e=>setWeekExtra(current=>({...current,sleepTime:e.target.value}))}/></label>
+          <label>محدودیت استفاده از موبایل<input value={typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''} maxLength={100} onChange={e=>setWeekExtra(current=>({...current,mobileLimit:e.target.value}))} placeholder="مثلاً روزی یک ساعت"/></label>
+        </div>
+      </section>}
+      <PlannerWeekGrid
+        key={`${student.student_id}:${weekStart}:${planId}`}
+        weekStart={weekStart}
+        grid={weekGrid}
+        lockedDays={weekDays.map((_, day) => isLockedDay(day))}
+        onChange={next => { setSaveNotice(null); setItems(plannerGridToItems(next)); }}
+        onEdit={item => focusPlanItem(item.key)}
+        onAdd={day => {
+          const item = newStudentItem(day, undefined, student.grade);
+          setSaveNotice(null);
+          setItems(current => [...current, item]);
+          focusPlanItem(item.key);
+        }}
+      />
+      <PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);setItems(nextItems);setRoutines(nextRoutines)}} />
+      {privateDrafts && <button type="button" className="button button-secondary" disabled={!analysisReady || workingCopy.phase!=="ready"} onClick={()=>setShowDraftPrint(true)}>پیش‌نمایش و چاپ پیش‌نویس</button>}
+      {analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
+      <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} />
       <div className="weekly-days">
         {weekDays.map((_, dayIndex) => {
           const dayIsLocked = isLockedDay(dayIndex);
@@ -509,7 +601,7 @@ export function WeeklyPlanBuilder({
                     این روز گذشته و دیگر قابل تغییر نیست.
                   </p>
                   {dayItems.map((item) => (
-                    <article className="plan-item-readonly" key={item.key}>
+                    <article className="plan-item-readonly" key={item.key} data-plan-item-key={item.key} tabIndex={-1}>
                       <strong>{item.subject}</strong>
                       <span>
                         {item.activityType === makeupActivity ? "" : item.activityType === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "ثبت نشده"} · ` : `${item.chapter || "بدون مبحث"} · `}{" "}
@@ -539,7 +631,7 @@ export function WeeklyPlanBuilder({
               ) : (
                 <div className="plan-item-list">
                   {dayItems.map((item, index) => item.completed ? (
-                    <article className="plan-item-readonly" key={item.key}>
+                    <article className="plan-item-readonly" key={item.key} data-plan-item-key={item.key} tabIndex={-1}>
                       <strong>{item.activityType === externalSimulationActivity ? externalSimulationTitle : item.subject}</strong>
                       <span>{item.activityType === makeupActivity ? "" : item.activityType === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "ثبت نشده"} · ` : `${item.chapter || "بدون مبحث"} · `}{faNumber(item.durationMinutes)} دقیقه
                         {item.activityType === "practice_tests" && item.targetTestCount && ` · هدف ${faNumber(item.targetTestCount)} تست`}
@@ -549,7 +641,7 @@ export function WeeklyPlanBuilder({
                       <p className="plan-exam-box-status" role="status">این باکس انجام شده و قابل تغییر یا حذف نیست.</p>
                     </article>
                   ) : (
-                    <article className="plan-item-editor" key={item.key}>
+                    <article className="plan-item-editor" key={item.key} data-plan-item-key={item.key} tabIndex={-1}>
                       <div className="plan-item-number">
                         {faNumber(index + 1)}
                       </div>
@@ -613,8 +705,8 @@ export function WeeklyPlanBuilder({
                             />
                           </label>}
                         </> : <>
-                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
-                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
+                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>{if(confirmTopicScope(item))changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>{if(confirmTopicScope(item))changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
                         {durationField(item)}
                         <label>
                           درس
@@ -623,6 +715,7 @@ export function WeeklyPlanBuilder({
                               value={item.subject}
                               disabled={Boolean(item.linkedExamId)}
                               onChange={(event) => {
+                                if (event.target.value!==item.subject && !confirmTopicScope(item)) return;
                                 if(event.target.value === "__external_simulation__") {chooseExternalSimulation(item.key);return;}
                                 if(event.target.value === "__makeup__") {chooseMakeup(item.key);return;}
                                 updateItem(
@@ -648,10 +741,12 @@ export function WeeklyPlanBuilder({
                             <input
                               value={item.subject}
                               disabled={Boolean(item.linkedExamId)}
-                              onChange={(event) => event.target.value===externalSimulationTitle
-                                ? chooseExternalSimulation(item.key)
-                                : event.target.value===makeupTitle ? chooseMakeup(item.key)
-                                : updateItem(item.key,"subject",event.target.value)}
+                              onChange={(event) => {
+                                if(event.target.value!==item.subject && !confirmTopicScope(item))return;
+                                if(event.target.value===externalSimulationTitle)chooseExternalSimulation(item.key);
+                                else if(event.target.value===makeupTitle)chooseMakeup(item.key);
+                                else updateItem(item.key,"subject",event.target.value);
+                              }}
                               placeholder="نام درس را وارد کن یا آزمون شبیه‌ساز را انتخاب کن"
                               list={`subjects-${item.key}`}
                               maxLength={100}
@@ -665,13 +760,10 @@ export function WeeklyPlanBuilder({
                           {chapters(item).length ? (
                             <select
                               value={item.chapter}
-                              onChange={(event) =>
-                                updateItem(
-                                  item.key,
-                                  "chapter",
-                                  event.target.value,
-                                )
-                              }
+                              onChange={(event) => {
+                                if(event.target.value!==item.chapter && !confirmTopicScope(item))return;
+                                updateItem(item.key,"chapter",event.target.value);
+                              }}
                               disabled={!item.subject || Boolean(item.linkedExamId)}
                             >
                               <option value="">
@@ -687,18 +779,15 @@ export function WeeklyPlanBuilder({
                               ))}
                             </select>
                           ) : (
-                            <input
-                              value={item.chapter}
-                              disabled={Boolean(item.linkedExamId)}
-                              onChange={(event) =>
-                                updateItem(
-                                  item.key,
-                                  "chapter",
-                                  event.target.value,
-                                )
-                              }
-                              placeholder="نام فصل، درس یا مبحث را وارد کن"
-                              maxLength={160}
+                            <PlannerBankChapterInput
+                              enabled={privateDrafts}
+                              field={itemGrade(item)===9?'all':student.study_field??'all'}
+                              grade={itemGrade(item)} track={item.preparationTrack} subject={item.subject}
+                              value={item.chapter} disabled={Boolean(item.linkedExamId)}
+                              onChange={(value) => {
+                                if(value!==item.chapter && !confirmTopicScope(item))return;
+                                updateItem(item.key,"chapter",value);
+                              }}
                             />
                           )}
                         </label>
@@ -806,6 +895,14 @@ export function WeeklyPlanBuilder({
                             maxLength={500}
                           />
                         </label>}
+                        {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <PlannerTopicEditor key={`${item.key}:${item.subject}:${item.chapter}`} topics={item.topics??[]} onChange={topics=>updateItem(item.key,'topics',topics)} selection={{studentId:student.student_id,field:itemGrade(item)===9?'all':student.study_field??'all',grade:itemGrade(item),track:item.preparationTrack,subject:item.subject,chapter:item.chapter,weekStart,date:dayIso(weekStart,item.dayOfWeek),order:index*2+1,uses:items.map((other)=>({studentId:student.student_id,subject:other.subject,grade:itemGrade(other),chapter:other.chapter,date:dayIso(weekStart,other.dayOfWeek),order:items.filter(x=>x.dayOfWeek===other.dayOfWeek).findIndex(x=>x.key===other.key)*2,topicIds:(other.topics??[]).flatMap(topic=>topic.bankId?[topic.bankId]:[])}))}}/>}
+                        <PlannerReadyBlocks item={item} onApply={next=>{
+                          if(item.topics?.length && !window.confirm('زیرمبحث‌های فعلی با اطلاعات بلوک آماده جایگزین می‌شوند. ادامه می‌دهی؟'))return false;
+                          setSaveNotice(null);
+                          setItems(current=>current.map(existing=>existing.key===item.key && !existing.completed && !existing.linkedExamId && !existing.locked
+                            ? {...next,key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
+                            : existing));
+                        }}/>
                       </div>
                       <button
                         type="button"
@@ -869,7 +966,7 @@ export function WeeklyPlanBuilder({
           name="items"
           value={JSON.stringify(
             editableItems.map((item) => ({
-              id: planStatus === "published" && dayIso(weekStart, item.dayOfWeek) === tehranToday() ? item.id ?? null : null,
+              id: planStatus === "published" && dayIso(weekStart, item.dayOfWeek) === tehranToday() && item.sourceDayOfWeek === item.dayOfWeek ? item.id ?? null : null,
               dayOfWeek: item.dayOfWeek,
               durationMinutes: item.durationMinutes,
               subject: item.subject,
@@ -888,7 +985,7 @@ export function WeeklyPlanBuilder({
         <div className="plan-publish-actions">
           <PlanSaveFeedback notice={saveNotice} saving={savingCurrent} matchesSubmission={Boolean(saveContext && saveContext.studentId === student?.student_id && saveContext.weekStart === weekStart && saveContext.planId === planId)} />
           <div className="plan-publish-buttons">
-            {planStatus !== "published" && (
+            {!privateDrafts && planStatus !== "published" && (
               <button
                 className="button button-secondary"
                 name="status"
@@ -911,6 +1008,7 @@ export function WeeklyPlanBuilder({
           </div>
         </div>
       </section>
+      </fieldset>
     </form>
     {studentRecentPlans.length > 0 && (
       <section className="portal-card recent-plans">

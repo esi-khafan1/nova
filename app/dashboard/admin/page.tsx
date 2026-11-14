@@ -38,6 +38,11 @@ export default async function AdminDashboard() {
         </article>
       </div>
 
+      <section className="portal-card">
+        <h2>بانک مباحث برنامه‌ریزی</h2>
+        <p>مباحث و بازهٔ صفحهٔ کتاب‌ها را برای مشاوران مدیریت کن.</p>
+        <Link className="button button-small" href="/dashboard/admin/planner-topics">مدیریت بانک مباحث</Link>
+      </section>
       <section className="portal-card admin-role-card">
         <div>
           <span>نقش‌ها و پنل‌ها</span>

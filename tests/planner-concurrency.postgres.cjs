@@ -172,7 +172,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await designerClient.query('begin');
   assert.equal((await designerClient.query("select public.save_designer_exam($1,'exam','',$2::uuid[],now(),'published','[]'::jsonb,null,null,$3::uuid[]) x",[exam,[],[linked[0].id]])).rows[0].x,exam);
   let legacySettled=false;
-  const legacy=b.query("select public.save_weekly_plan_v5($1,$2,$3,'legacy','', 'published',$4::jsonb,$5::jsonb) x",[plan,student,week,JSON.stringify([snapshot.items[0],examItem]),JSON.stringify(snapshot.routines)]).then(value=>({value}),error=>({error})).finally(()=>{legacySettled=true});
+  const legacyExamItem={...examItem};delete legacyExamItem.sourceItemId;
+  const legacy=b.query("select public.save_weekly_plan_v5($1,$2,$3,'legacy','', 'published',$4::jsonb,$5::jsonb) x",[plan,student,week,JSON.stringify([snapshot.items[0],legacyExamItem]),JSON.stringify(snapshot.routines)]).then(value=>({value}),error=>({error})).finally(()=>{legacySettled=true});
   await new Promise(resolve=>setTimeout(resolve,150));assert.equal(legacySettled,false,'legacy save waits for exam box');
   await designerClient.query('commit');const legacyResult=await legacy;assert.equal(legacyResult.error,undefined);assert.equal(legacyResult.value.rows[0].x,plan);
   linked=(await setup.query('select id,linked_exam_id from public.weekly_plan_items where plan_id=$1 and linked_exam_id=$2',[plan,exam])).rows;assert.equal(linked.length,1,'legacy save keeps the exam link');
@@ -183,6 +184,19 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await a.query('commit');
   assert.equal((await setup.query('select linked_exam_id from public.weekly_plan_items where id=$1',[linked[0].id])).rows[0].linked_exam_id,exam,'busy rejection leaves prior link intact');
   assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=$1',[todayItem])).rows[0].n,1,'today progress survives both race orders');
-  console.log('PASS: reproduced race on 084; guarded both orderings with actual v9 chain and preserved progress/link');
+  // A plan edit racing the first autosave must not be adopted as the base of a
+  // stale editor. 127 locks the row before comparing the loaded microseconds.
+  await setup.query(migration('127_planner_draft_base_version'));
+  const base=(await setup.query("select to_jsonb(updated_at)#>>'{}' version from public.weekly_plans where id=$1",[plan])).rows[0].version;
+  await a.query('begin');await a.query("update public.weekly_plans set title='concurrent change' where id=$1",[plan]);
+  let savedSettled=false;
+  const firstSave=b.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,null,$5)',[student,week,plan,JSON.stringify({title:'stale'}),base]).then(value=>({value}),error=>({error})).finally(()=>{savedSettled=true});
+  await new Promise(resolve=>setTimeout(resolve,150));assert.equal(savedSettled,false,'first save waits for the plan version lock');
+  await a.query('commit');const staleFirstSave=await firstSave;assert.equal(staleFirstSave.error?.code,'40001','concurrent plan update rejects the stale first save');
+  assert.equal((await setup.query('select count(*)::int n from private.planner_working_drafts')).rows[0].n,0);
+  const freshBase=(await setup.query("select to_jsonb(updated_at)#>>'{}' version from public.weekly_plans where id=$1",[plan])).rows[0].version;
+  await b.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,null,$5)',[student,week,plan,JSON.stringify({title:'fresh draft'}),freshBase]);
+  assert.equal((await setup.query('select snapshot->>\'title\' title from private.planner_working_drafts')).rows[0].title,'fresh draft');
+  console.log('PASS: designer/plan races, checked first autosave race and preserved progress/link');
  } finally {for(const c of clients)await c.end().catch(()=>{});if(started)await db.stop().catch(()=>{});fs.rmSync(dir,{recursive:true,force:true})}
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -1,6 +1,8 @@
 import { makeupActivity } from "@/lib/makeup-plan-box";
 import { externalSimulationActivity, externalSimulationTitle, simulationProvider } from "@/lib/external-simulation";
 import Link from "next/link";
+import { displayPublishedTopic } from "@/lib/planner-published-topics";
+import type { PlannerTopic } from "@/lib/planner-grid";
 import { PrintPlanButton } from "@/components/dashboard/print-plan-button";
 import { FitText } from "@/components/dashboard/print-fit-text";
 import {
@@ -45,6 +47,7 @@ export type PrintablePlan = {
     target_test_count: number | null;
     details: string | null;
     sort_order: number;
+    topics?: PlannerTopic[];
   }>;
 };
 
@@ -183,7 +186,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                           </FitText>
                         </div>
                         <FitText basePt={8.5} className="print-activity-chapter">
-                          {item.activity_type === makeupActivity ? "" : item.activity_type === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "نامشخص"}` : item.chapter || "مبحث آزاد"}
+                          {item.activity_type === makeupActivity ? "" : item.activity_type === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "نامشخص"}` : [item.chapter || "مبحث آزاد",...(item.topics??[]).map(displayPublishedTopic)].join(" · ")}
                         </FitText>
                         <FitText basePt={8.5} className="print-activity-summary">
                           {item.activity_type === externalSimulationActivity || item.activity_type === makeupActivity ? `${item.duration_minutes.toLocaleString("fa-IR")} دقیقه` : durationText}

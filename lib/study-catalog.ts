@@ -259,7 +259,7 @@ export const studyCatalog: Record<
       { subject: "اقتصاد", chapters: numbered("درس", 14) },
       { subject: "تاریخ ۱", chapters: numbered("درس", 16) },
       { subject: "جغرافیای ایران", chapters: numbered("درس", 10) },
-      { subject: "جامعه‌شناسی ۱", chapters: numbered("درس", 14) },
+      { subject: "جامعه‌شناسی ۱", chapters: numbered("درس", 16) },
       { subject: "منطق", chapters: numbered("درس", 10) },
     ],
     11: [
@@ -279,7 +279,7 @@ export const studyCatalog: Record<
       { subject: "تاریخ ۳", chapters: numbered("درس", 12) },
       { subject: "جغرافیا ۳", chapters: numbered("درس", 10) },
       { subject: "جامعه‌شناسی ۳", chapters: numbered("درس", 10) },
-      { subject: "فلسفه ۲", chapters: numbered("درس", 11) },
+      { subject: "فلسفه ۲", chapters: numbered("درس", 12) },
     ],
   },
   arts: {

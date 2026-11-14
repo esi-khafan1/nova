@@ -4,14 +4,15 @@ export type PlannerDraftContext = { studentId: string; weekStart: string; planId
 export type LoadedPlannerDraft<T> = { planId: string | null; basePlanUpdatedAt: string | null; revision: string; snapshot: T };
 export type PlannerDraftTransport<T, Published> = {
   load: (context: PlannerDraftContext) => Promise<LoadedPlannerDraft<T> | null>;
-  save: (context: PlannerDraftContext, snapshot: T, expectedRevision: string | null) => Promise<{ revision: string; basePlanUpdatedAt: string | null }>;
+  save: (context: PlannerDraftContext, snapshot: T, expectedRevision: string | null, expectedBasePlanUpdatedAt: string | null) => Promise<{ revision: string; basePlanUpdatedAt: string | null }>;
   publish: (context: PlannerDraftContext, expectedRevision: string) => Promise<Published>;
+  discard?: (context: PlannerDraftContext, expectedRevision: string) => Promise<void>;
 };
 export type PlannerDraftEvent<T> =
   | { type: "opened"; context: PlannerDraftContext; snapshot: T; restored: boolean; basePlanUpdatedAt: string | null }
   | { type: "save-state"; context: PlannerDraftContext; state: DraftSaveState; error?: unknown }
-  | { type: "busy"; operation: "open" | "publish" | null }
-  | { type: "error"; operation: "open" | "publish"; error: unknown }
+  | { type: "busy"; operation: "open" | "publish" | "discard" | null }
+  | { type: "error"; operation: "open" | "publish" | "discard"; error: unknown }
   | { type: "published"; context: PlannerDraftContext };
 
 type Active<T> = { context: PlannerDraftContext; queue: DraftSaveQueue<T>; revision: string | null; basePlanUpdatedAt: string | null; snapshot: T; saveState: DraftSaveState };
@@ -32,7 +33,7 @@ export function createPlannerDraftSession<T, Published>(options: {
 }) {
   const clone = options.clone ?? ((value: T) => structuredClone(value));
   let active: Active<T> | null = null;
-  let busy: "open" | "publish" | null = null;
+  let busy: "open" | "publish" | "discard" | null = null;
   let disposed = false;
   const emit = (event: PlannerDraftEvent<T>) => { if (!disposed) options.onEvent(event); };
   const setBusy = (operation: typeof busy) => { busy = operation; emit({type: "busy", operation}); };
@@ -41,7 +42,7 @@ export function createPlannerDraftSession<T, Published>(options: {
     if (busy) throw new Error("Draft session is busy");
   };
   const sameContext = (a: PlannerDraftContext, b: PlannerDraftContext) => a.studentId === b.studentId && a.weekStart === b.weekStart && a.planId === b.planId;
-  const open = async (context: PlannerDraftContext, initial: T): Promise<boolean> => {
+  const open = async (context: PlannerDraftContext, initial: T, initialBasePlanUpdatedAt: string | null = null): Promise<boolean> => {
     requireIdle();
     if (active && sameContext(active.context, context)) return true;
     setBusy("open");
@@ -54,14 +55,14 @@ export function createPlannerDraftSession<T, Published>(options: {
           (loaded.basePlanUpdatedAt !== null && (typeof loaded.basePlanUpdatedAt !== "string" || !Number.isFinite(Date.parse(loaded.basePlanUpdatedAt)))))) throw new Error("Draft does not match this plan");
       const selected: Active<T> = {
         context: {...context}, snapshot: clone(loaded ? loaded.snapshot : initial),
-        revision: loaded?.revision ?? null, basePlanUpdatedAt: loaded?.basePlanUpdatedAt ?? null, saveState: "idle", queue: null as unknown as DraftSaveQueue<T>,
+        revision: loaded?.revision ?? null, basePlanUpdatedAt: loaded?.basePlanUpdatedAt ?? initialBasePlanUpdatedAt, saveState: "idle", queue: null as unknown as DraftSaveQueue<T>,
       };
       selected.queue = createDraftSaveQueue<T>({
         revision: selected.revision,
         delayMs: options.delayMs,
         clone,
         save: async (snapshot, revision) => {
-          const result = await options.transport.save({...selected.context}, snapshot, revision);
+          const result = await options.transport.save({...selected.context}, snapshot, revision, selected.basePlanUpdatedAt);
           if (!/^[1-9][0-9]*$/.test(result.revision) ||
               ((selected.context.planId === null) !== (result.basePlanUpdatedAt === null)) ||
               (result.basePlanUpdatedAt !== null && !Number.isFinite(Date.parse(result.basePlanUpdatedAt)))) throw new Error("Invalid saved revision");
@@ -128,8 +129,21 @@ export function createPlannerDraftSession<T, Published>(options: {
       return null;
     } finally { setBusy(null); }
   };
+  const discard = async (): Promise<boolean> => {
+    requireIdle();
+    if (!active || !options.transport.discard) throw new Error("Draft cannot be discarded");
+    const selected=active;setBusy("discard");
+    try {
+      // Flush first so a failed or conflicting save is never silently erased.
+      if (!(await selected.queue.flush()) || disposed) return false;
+      if (selected.revision) await options.transport.discard({...selected.context},selected.revision);
+      if (disposed) return false;
+      selected.queue.dispose();active=null;return true;
+    } catch (error) {emit({type:"error",operation:"discard",error});return false;}
+    finally {setBusy(null);}
+  };
   return {
-    open, update, flush, retry, publish,
+    open, update, flush, retry, publish, discard,
     /** Used by the UI's navigation / beforeunload guard. */
     hasPendingWork() { return Boolean(busy || (active && ["dirty", "saving", "error"].includes(active.saveState))); },
     /** Call flush before disposing when navigation can be delayed. */

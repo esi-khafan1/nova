@@ -1,3 +1,4 @@
+import {loadPlannerEditorCapability} from "@/lib/planner-editor-capability";
 import {loadCounselorEditorPage, type CounselorPlanHistory} from "@/lib/load-counselor-plans";
 import {getRequestClient} from "@/lib/supabase/request-auth";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -24,16 +25,17 @@ export default async function CounselorPlansPage({
   // All reads derive their identity from auth.uid() and enforce their existing
   // role/RLS guards. Never render results before fresh Auth succeeds.
   const supabase = await getRequestClient();
-  const [{profile},params,{data:directoryData,error:directoryError},loadedPlans,loadedHistory,{data:completedRows,error:completedError}]=await Promise.all([
+  const [{profile},params,{data:directoryData,error:directoryError},loadedPlans,loadedHistory,{data:completedRows,error:completedError},capability]=await Promise.all([
     requireProfile(["counselor"]),
     searchParams,
     supabase.rpc("counselor_student_directory"),
     loadCounselorEditorPage<CounselorWeeklyPlan>(supabase,false).then(data=>({data,failed:false}),()=>({data:null,failed:true})),
     loadCounselorEditorPage<CounselorPlanHistory>(supabase,true).then(data=>({data,failed:false}),()=>({data:null,failed:true})),
     supabase.rpc("counselor_completed_plan_item_ids"),
+    loadPlannerEditorCapability(supabase).then(data=>({data,failed:false}),()=>({data:false,failed:true})),
   ]);
   if(directoryError||!Array.isArray(directoryData)||loadedPlans.failed||loadedHistory.failed||!loadedPlans.data||!loadedHistory.data||
-    loadedPlans.data.counselorId!==profile.id||loadedHistory.data.counselorId!==profile.id||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
+    capability.failed||loadedPlans.data.counselorId!==profile.id||loadedHistory.data.counselorId!==profile.id||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
 
   const directory = directoryData as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
@@ -64,7 +66,7 @@ export default async function CounselorPlansPage({
       )}
       {params.error && (
         <div className="portal-alert error">
-          {params.error === "overlap" ? "این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد." : params.error === "week" ? "برای برنامهٔ جدید، امروز یا یک روز آینده را انتخاب کن؛ برنامهٔ تمام‌شده قابل تغییر نیست." : params.error === "protected" ? "باکس انجام‌شده قابل تغییر یا حذف نیست. ممکن است دانش‌آموز پس از باز شدن فرم آن را انجام داده باشد؛ صفحه را تازه‌سازی کن و بقیهٔ فعالیت‌ها را ویرایش کن." : params.error === "routines" ? "روتین هر هفت روز باید کامل و یکتا باشد و درس روتین باید مربوط به رشتهٔ دانش‌آموز باشد." : "ذخیره انجام نشد. اطلاعات برنامه را بررسی و دوباره تلاش کن."}
+          {params.error === "overlap" ? "این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد." : params.error === "week" ? "برای برنامهٔ جدید، امروز یا یک روز آینده را انتخاب کن؛ برنامهٔ تمام‌شده قابل تغییر نیست." : params.error === "protected" ? "باکس انجام‌شده قابل تغییر یا حذف نیست. ممکن است دانش‌آموز پس از باز شدن فرم آن را انجام داده باشد؛ صفحه را تازه‌سازی کن و بقیهٔ فعالیت‌ها را ویرایش کن." : params.error === "exam-identity" ? "باکس‌های آزمون هم‌نام قابل تشخیص نیستند؛ برای جلوگیری از اتصال آزمون به باکس اشتباه، ذخیره انجام نشد. برنامه را تازه‌سازی و باکس‌های آزمون را بررسی کن." : params.error === "routines" ? "روتین هر هفت روز باید کامل و یکتا باشد و درس روتین باید مربوط به رشتهٔ دانش‌آموز باشد." : "ذخیره انجام نشد. اطلاعات برنامه را بررسی و دوباره تلاش کن."}
         </div>
       )}
 
@@ -76,6 +78,8 @@ export default async function CounselorPlansPage({
         overlapPlans={recentPlans}
         recentPlans={recentPlans}
         counselorId={profile.id}
+        counselorName={profile.full_name}
+        privateDrafts={capability.data}
         initialStudentId={params.student ?? params.progress_student}
         initialPlanId={params.plan}
         initialWeekStart={params.week_start}

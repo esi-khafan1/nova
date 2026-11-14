@@ -254,7 +254,7 @@ async function saveWeeklyPlanCore(fd: FormData) {
     target_routines: safeRoutines,
   });
 
-  if (error) planError(error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : "plan");
+  if (error) planError(error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : error.code === "PZ002" ? "exam-identity" : "plan");
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student");

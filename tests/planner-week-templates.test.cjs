@@ -1,0 +1,25 @@
+const assert=require('node:assert/strict'),esbuild=require('esbuild');
+(async()=>{
+ const out=await esbuild.build({entryPoints:['lib/planner-week-templates.ts'],bundle:true,platform:'node',format:'cjs',write:false});const m={exports:{}};new Function('module','exports',out.outputFiles[0].text)(m,m.exports);
+ const {makeWeekTemplate,parseWeekTemplate,applyWeekTemplate,makeReadyBlock,readReadyBlock,applyReadyBlock}=m.exports;
+ const item=(key,day,extra={})=>({key,id:key,sourceItemId:key,sourceDayOfWeek:day,dayOfWeek:day,subject:'زیست',chapter:'فصل',activityType:'lesson',durationMinutes:60,targetTestCount:null,details:'',sourceGrade:10,preparationTrack:'konkur',recommendedPublisher:null,otherPublisher:false,...extra});
+ const routines=Array.from({length:7},(_,dayOfWeek)=>({dayOfWeek,subject:'',details:'',secondSubject:'',secondDetails:''}));routines[0].subject='زیست';routines[0].secondDetails='دوم';
+ const original=[item('a',0,{completed:true,linkedExamId:'exam'}),item('b',0),item('c',1)];const template=makeWeekTemplate(original,routines);
+ assert.equal(template.days[0][0].id,null);assert.equal(template.days[0][0].sourceItemId,null);assert.equal(template.days[0][0].linkedExamId,null);assert.equal(template.days[0][0].completed,false);
+ const input=[item('keep',0,{completed:true})],selected=[true,true,false,false,false,false,false],lockedDays=[false,false,false,false,false,false,false];let n=0;
+ const apply=(mode,override={})=>applyWeekTemplate({items:input,routines,template,mode,selected,lockedDays,newKey:()=>`new-${++n}`,...override});
+ let result=apply('empty');assert.equal(result.items.length,3);assert.equal(result.items.find(x=>x.key==='keep').completed,true);assert.equal(result.items[1].id,null);assert.equal(result.items[2].dayOfWeek,1);
+ assert.throws(()=>apply('replace'),/انجام‌شده یا آزمون متصل/);assert.equal(input.length,1);assert.equal(input[0].id,'keep');
+ assert.throws(()=>apply('complete',{selected:[true,false,false,false,false,false,false],lockedDays:[true,false,false,false,false,false,false]}),/روز گذشته/);
+ const emptyRoutines=routines.map(x=>({...x,subject:'',secondDetails:''}));result=apply('complete',{items:[],routines:emptyRoutines});assert.equal(result.routines[0].subject,'زیست');assert.equal(result.routines[0].secondDetails,'دوم');assert.equal(result.routines[2].subject,'');
+ assert.throws(()=>parseWeekTemplate({...template,days:[[ {...template.days[0][0],durationMinutes:-1}],...template.days.slice(1)]}),/Invalid template/);
+ assert.throws(()=>apply('empty',{items:[item('dup',0)],newKey:()=> 'dup'}),/Duplicate template key/);
+ const spoof=structuredClone(template);spoof.days[0][0].id='foreign';spoof.days[0][0].completed=true;spoof.days[0][0].linkedExamId='foreign-exam';const safe=parseWeekTemplate(spoof);assert.equal(safe.days[0][0].id,null);assert.equal(safe.days[0][0].linkedExamId,null);assert.equal(safe.days[0][0].completed,false);
+ const ready=makeReadyBlock(item('source',2,{completed:true,linkedExamId:'exam'}));const readyItem=readReadyBlock(ready);
+ assert.equal(readyItem.id,null);assert.equal(readyItem.sourceItemId,null);assert.equal(readyItem.linkedExamId,null);assert.equal(readyItem.completed,false);
+ const target=item('target',4,{subject:'ریاضی'});const applied=applyReadyBlock(target,ready);
+ assert.equal(applied.subject,'زیست');assert.equal(applied.dayOfWeek,4);assert.equal(applied.id,'target');assert.equal(applied.sourceItemId,'target');
+ for(const extra of [{completed:true},{linkedExamId:'exam'},{locked:true}])assert.throws(()=>applyReadyBlock(item('protected',0,extra),ready),/محافظت‌شده/);
+ assert.throws(()=>readReadyBlock(template),/Invalid ready block/);
+ console.log('PASS: week templates and ready blocks strip copied identity and protect completed, linked and past activities');
+})().catch(e=>{console.error(e);process.exitCode=1});

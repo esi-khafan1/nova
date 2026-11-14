@@ -90,3 +90,5 @@
 .counselor-portal .cp-student-actions .button{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 @media(max-width:600px){.counselor-portal .counselor-plan-student-row label{max-width:none}.counselor-portal .counselor-plan-student-row .button{width:100%}}
 .counselor-portal .student-study-meta strong a{font-size:14px;color:#1e5faf;text-decoration:underline}
+/* Group the private editor's controls while its draft is loading or saving. */
+.counselor-portal .planner-working-fields{display:contents}
