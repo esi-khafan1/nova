@@ -896,6 +896,13 @@ export function WeeklyPlanBuilder({
                           />
                         </label>}
                         {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <PlannerTopicEditor key={`${item.key}:${item.subject}:${item.chapter}`} topics={item.topics??[]} onChange={topics=>updateItem(item.key,'topics',topics)} selection={{studentId:student.student_id,field:itemGrade(item)===9?'all':student.study_field??'all',grade:itemGrade(item),track:item.preparationTrack,subject:item.subject,chapter:item.chapter,weekStart,date:dayIso(weekStart,item.dayOfWeek),order:index*2+1,uses:items.map((other)=>({studentId:student.student_id,subject:other.subject,grade:itemGrade(other),chapter:other.chapter,date:dayIso(weekStart,other.dayOfWeek),order:items.filter(x=>x.dayOfWeek===other.dayOfWeek).findIndex(x=>x.key===other.key)*2,topicIds:(other.topics??[]).flatMap(topic=>topic.bankId?[topic.bankId]:[])}))}}/>}
+                        {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <PlannerReadyBlocks kind="pattern" item={item} onApply={next=>{
+                          if(item.topics?.length && !window.confirm('زیرمبحث‌های فعلی با اطلاعات الگو جایگزین می‌شوند. ادامه می‌دهی؟'))return false;
+                          setSaveNotice(null);
+                          setItems(current=>current.map(existing=>existing.key===item.key && !existing.completed && !existing.linkedExamId && !existing.locked
+                            ? {...next,key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
+                            : existing));
+                        }}/>}
                         <PlannerReadyBlocks item={item} onApply={next=>{
                           if(item.topics?.length && !window.confirm('زیرمبحث‌های فعلی با اطلاعات بلوک آماده جایگزین می‌شوند. ادامه می‌دهی؟'))return false;
                           setSaveNotice(null);

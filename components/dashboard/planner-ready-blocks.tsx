@@ -13,42 +13,46 @@ function parseList(value:unknown):ReadyBlock[] {
   readReadyBlock(raw.payload);return {id:raw.id,name:raw.name,revision:raw.revision,payload:raw.payload as WeekTemplate};
  });
 }
-export function PlannerReadyBlocks({item,onApply}:{item:PlanItem;onApply:(item:PlanItem)=>boolean | void}) {
+/** Blocks and patterns are separately owned lists. Both are editor snapshots;
+ * neither transfers student identities, completion or exam links. Topic order
+ * is retained by the snapshot so a pattern can represent an ordered combination. */
+export function PlannerReadyBlocks({item,onApply,kind='block'}:{item:PlanItem;onApply:(item:PlanItem)=>boolean | void;kind?:'block'|'pattern'}) {
+ const pattern=kind==='pattern', noun=pattern?'الگو':'بلوک آماده', plural=pattern?'الگوهای من':'بلوک‌های آماده';
  const [open,setOpen]=useState(false),[blocks,setBlocks]=useState<ReadyBlock[]|null>(null),[name,setName]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
  const sequence=useRef(0),mutating=useRef(false);
  const load=useCallback(async()=>{
   const id=++sequence.current;setError('');
-  try{const {data,error}=await createClient().rpc('planner_list_presets',{target_kind:'block'});if(error)throw error;const parsed=parseList(data);if(id===sequence.current)setBlocks(parsed);}
-  catch{if(id===sequence.current){setBlocks(null);setError('دریافت بلوک‌های آماده انجام نشد؛ دوباره تلاش کن.')}}
- },[]);
+  try{const {data,error}=await createClient().rpc('planner_list_presets',{target_kind:kind});if(error)throw error;const parsed=parseList(data);if(id===sequence.current)setBlocks(parsed);}
+  catch{if(id===sequence.current){setBlocks(null);setError(`دریافت ${pattern?'الگوها':'بلوک‌های آماده'} انجام نشد؛ دوباره تلاش کن.`)}}
+ },[kind,pattern]);
  useEffect(()=>{const current=sequence;if(open)void load();return()=>{current.current++}},[open,load]);
  const save=async()=>{
   if(mutating.current)return;
   let payload:WeekTemplate;const title=name.trim();
-  try{if(!title||title.length>120)throw Error('نام بلوک را وارد کن.');payload=makeReadyBlock(item);}
-  catch(e){setError(e instanceof Error&&e.message==='نام بلوک را وارد کن.'?e.message:'مقادیر بلوک را بررسی کن.');return;}
+  try{if(!title||title.length>120)throw Error(`نام ${noun} را وارد کن.`);payload=makeReadyBlock(item);}
+  catch(e){setError(e instanceof Error&&e.message===`نام ${noun} را وارد کن.`?e.message:'مقادیر فعالیت را بررسی کن.');return;}
   mutating.current=true;setBusy(true);setError('');setMessage('');
-  try{const result=await createClient().rpc('planner_save_preset',{target_id:null,target_kind:'block',target_name:title,target_payload:payload,target_pinned:false,expected_revision:null});if(result.error)throw result.error;await load();setMessage('بلوک آماده ذخیره شد.');}
-  catch{setError('ذخیرهٔ بلوک آماده انجام نشد؛ دوباره تلاش کن.');}
+  try{const result=await createClient().rpc('planner_save_preset',{target_id:null,target_kind:kind,target_name:title,target_payload:payload,target_pinned:false,expected_revision:null});if(result.error)throw result.error;await load();setMessage(`${noun} ذخیره شد.`);}
+  catch{setError(`ذخیرهٔ ${noun} انجام نشد؛ دوباره تلاش کن.`);}
   finally{mutating.current=false;setBusy(false);}
  };
  const remove=async(block:ReadyBlock)=>{
-  if(mutating.current||!window.confirm(`بلوک آمادهٔ «${block.name}» حذف شود؟`))return;
+  if(mutating.current||!window.confirm(`${noun} «${block.name}» حذف شود؟`))return;
   mutating.current=true;setBusy(true);setError('');setMessage('');
-  try{const result=await createClient().rpc('planner_delete_preset',{target_id:block.id,expected_revision:block.revision});if(result.error)throw result.error;await load();setMessage('بلوک آماده حذف شد.');}
-  catch{setError('حذف بلوک انجام نشد. فهرست را تازه‌سازی کن.');}
+  try{const result=await createClient().rpc('planner_delete_preset',{target_id:block.id,expected_revision:block.revision});if(result.error)throw result.error;await load();setMessage(`${noun} حذف شد.`);}
+  catch{setError(`حذف ${noun} انجام نشد. فهرست را تازه‌سازی کن.`);}
   finally{mutating.current=false;setBusy(false);}
  };
  const apply=(block:ReadyBlock)=>{
-  try{if(onApply(applyReadyBlock(item,block.payload))===false){setMessage('');return;}setError('');setMessage('بلوک آماده در فرم قرار گرفت.');}
-  catch(e){setMessage('');setError(e instanceof Error?e.message:'اعمال بلوک انجام نشد.');}
+  try{if(onApply(applyReadyBlock(item,block.payload))===false){setMessage('');return;}setError('');setMessage(`${noun} در فرم قرار گرفت.`);}
+  catch(e){setMessage('');setError(e instanceof Error?e.message:`اعمال ${noun} انجام نشد.`);}
  };
  return <details className={`${styles.wrap} ${styles.ready}`} open={open} onToggle={e=>setOpen(e.currentTarget.open)}>
-  <summary>بلوک‌های آماده</summary>
-  <p className={styles.intro}>این فعالیت را ذخیره کن یا یک بلوک آماده را در همین فعالیت قرار بده. تیک و اتصال آزمون کپی نمی‌شود.</p>
-  <div className={styles.form}><label>نام بلوک<input className={styles.input} maxLength={120} value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();if(!busy)void save()}}}/></label><button className={styles.button} type="button" disabled={busy} onClick={()=>void save()}>ذخیرهٔ بلوک آماده</button><button className={styles.button} type="button" disabled={busy} onClick={()=>void load()}>تازه‌سازی</button></div>
+  <summary>{plural}</summary>
+  <p className={styles.intro}>{pattern?'ترکیب فعلی درس و زیرمبحث‌ها را با ترتیبشان به عنوان الگوی شخصی ذخیره کن یا الگوی قبلی را در این فعالیت به کار ببر.':'این فعالیت را ذخیره کن یا یک بلوک آماده را در همین فعالیت قرار بده.'} تیک و اتصال آزمون کپی نمی‌شود.</p>
+  <div className={styles.form}><label>نام {pattern?'الگو':'بلوک'}<input className={styles.input} maxLength={120} value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();if(!busy)void save()}}}/></label><button className={styles.button} type="button" disabled={busy} onClick={()=>void save()}>ذخیرهٔ {noun}</button><button className={styles.button} type="button" disabled={busy} onClick={()=>void load()}>تازه‌سازی</button></div>
   {error&&<p className={styles.notice} role="alert">{error}</p>}{message&&<p className={styles.success} role="status">{message}</p>}
-  {blocks===null&&!error&&<p className={styles.intro}>در حال دریافت بلوک‌ها...</p>}{blocks?.length===0&&<p className={styles.intro}>هنوز بلوک آماده‌ای ذخیره نشده است.</p>}
+  {blocks===null&&!error&&<p className={styles.intro}>در حال دریافت {pattern?'الگوها':'بلوک‌ها'}...</p>}{blocks?.length===0&&<p className={styles.intro}>{pattern?'هنوز الگویی ذخیره نشده است.':'هنوز بلوک آماده‌ای ذخیره نشده است.'}</p>}
   <div className={styles.list}>{blocks?.map(block=><article className={styles.card} key={block.id}><div className={styles.cardHeader}><span className={styles.title}>{block.name}</span><div className={styles.actions}><button className={styles.button} type="button" disabled={busy||Boolean(item.linkedExamId||item.completed||item.locked)} onClick={()=>apply(block)}>استفاده در این فعالیت</button><button className={styles.button} type="button" disabled={busy} onClick={()=>void remove(block)}>حذف</button></div></div></article>)}</div>
  </details>;
 }
