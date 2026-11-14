@@ -8745,6 +8745,9 @@ main .feature-card:before {
   }
 }
 
+.print-week-details { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:5px; font-size:9px; line-height:1.5; }
+@media print { .print-week-details { margin-top:1mm; font-size:7pt; } }
+
 /* PDF.js canvases are sized to their actual page viewport. Never scale the
    bitmap again with max-width:100%, which blurs/distorts mobile and zoomed PDFs. */
 .exam-pdf-scroll-viewport{direction:ltr}

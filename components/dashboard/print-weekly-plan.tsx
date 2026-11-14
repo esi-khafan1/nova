@@ -66,7 +66,9 @@ function normalizeRoutines(routines: PrintablePlan["routines"]) {
   });
 }
 
-export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays=7}:{plan:PrintablePlan;student:{full_name:string;grade:number|null;study_field:StudyField|null}|undefined;counselorName:string;backHref:string;visibleDays?:number}){
+export type PrintableWeekDetails = { goal?: string; wakeTime?: string; sleepTime?: string; mobileLimit?: string };
+
+export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays=7,weekDetails}:{plan:PrintablePlan;student:{full_name:string;grade:number|null;study_field:StudyField|null}|undefined;counselorName:string;backHref:string;visibleDays?:number;weekDetails?:PrintableWeekDetails}){
   const weekStart = parseIsoDate(plan.week_start);
   const activityLabels = new Map<string, string>(
     activityTypes.map((activity) => [activity.value, activity.label]),
@@ -226,6 +228,12 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
           })}
         </div>
 
+        {weekDetails && Object.values(weekDetails).some(value => value?.trim()) && <section className="print-week-details" aria-label="هدف و تنظیمات هفته">
+          {weekDetails.goal?.trim() && <div><strong>هدف هفته: </strong>{weekDetails.goal}</div>}
+          {weekDetails.wakeTime?.trim() && <div><strong>بیداری: </strong><bdi dir="ltr">{weekDetails.wakeTime}</bdi></div>}
+          {weekDetails.sleepTime?.trim() && <div><strong>خواب: </strong><bdi dir="ltr">{weekDetails.sleepTime}</bdi></div>}
+          {weekDetails.mobileLimit?.trim() && <div><strong>استفاده از موبایل: </strong>{weekDetails.mobileLimit}</div>}
+        </section>}
         <footer className="print-plan-footer">
           <span>Nova · مسیر روشن موفقیت تحصیلی</span>
           <span>امضای مشاور: ....................................</span>
