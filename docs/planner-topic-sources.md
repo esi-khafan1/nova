@@ -139,3 +139,13 @@ This migration adds preliminary entries for ten catalog contexts, **not ten full
 - Grade 11 **تعلیمات دینی ۲** mathematics and experimental sciences follows the 12-lesson [1405–1406 listing](https://www.daneshchi.ir/dinozendegi-11/); the educational groupings draw on this [secondary summary](https://my-dars.com/shah-kelid-nokat/show-book/103), not a complete verification of the 1405 book. Pages remain null. The distinct humanities book and its university-entrance track are not seeded here.
 
 Reapplying the seed does not overwrite edits. Further collation is needed before calling any of these ten contexts complete, especially the finer topics and page ranges.
+
+### Supplement to shared school books (migration 155)
+
+This is additive to 154, not a replacement: 144 entrepreneurship, 105 defence and 24 religion rows across eight contexts. Stable separate IDs and `on conflict do nothing` preserve both old and new administrator edits. No stored plans or published records are rewritten.
+
+- Entrepreneurship: finer planning groups for sections 1–19, 29 and 32, based on the [1405 book](https://dl.daneshchi.ir/file/chap-school/KargahKarAfarini-10_Daneshchi.iR.pdf) where available and the older [Gama lesson index](https://gama.ir/tutorials?section=67&base=1168&course=1183&lesson=2579), [section 29](https://gama.ir/tutorials/873) and [section 32](https://gama.ir/tutorials/878). These are educational groupings, not a verified exhaustive list of the 1405 activities. Sections 20–28 and 30–31 still need finer collation. Subsection page ranges are not inferred from older materials.
+- Defence: grouped topics for all 13 lessons using the [older lesson index](https://gama.ir/tutorials?base=1168&course=1183&lesson=1187&section=67). Names are learning groupings and were not independently collated against all pages of the 1405 edition; page ranges remain null. The whole-lesson rows from 154 remain available.
+- Religion 11: the [1405 tenth printing, book 111204](https://dl.daneshchi.ir/file/chap-school/DinoZendegi-11_Daneshchi.iR.pdf), gives lesson starts 12, 22, 36, 48, 62, 74, 88, 98, 110, 124, 138 and 148. Each new whole-lesson range ends immediately before the next lesson; lesson 12's end is not verified and is left null. Existing individual study groups retain null pages.
+
+Social identity is unchanged. These improvements do **not** establish exhaustive 1405 subtopic or subsection-page coverage for any of the ten contexts; further direct collation is required.
