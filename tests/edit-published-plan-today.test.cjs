@@ -165,6 +165,7 @@ const item = (day, subject, options = {}) => ({
   await db.exec(fs.readFileSync('supabase/migrations/119_planner_atomic_publish.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/121_planner_reviews.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/122_planner_published_extras.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/123_planner_review_history.sql','utf8'));
   await actor(ids.counselor);
   const intact=[...initial.filter(i=>i.id!==ids.linked),{...makeupToday,id:makeupId}];
   const routines=Array.from({length:7},(_,dayOfWeek)=>({dayOfWeek,subject:'',details:'',secondSubject:'',secondDetails:''}));
@@ -201,5 +202,39 @@ const item = (day, subject, options = {}) => ({
   // A legacy edit of the identity must not leave stale topic metadata behind.
   await db.query('update public.weekly_plan_items set chapter=$1 where id=$2',['فصل دیگر',added.id]);
   assert.equal(Object.hasOwn((await publicExtras()).items,added.id),false);
-  console.log('PASS: real save chain preserves progress and atomically publishes correctly mapped, protected extras');
+  // A future item is replaced by v9, but checked reviews must follow an
+  // unchanged source. A failure in later metadata persistence rolls back too.
+  await actor(ids.student);await db.query('select public.planner_set_review_completed($1,1,true)',[future.id]);await db.query('select public.planner_set_review_completed($1,3,true)',[future.id]);
+  const originalChecks=(await db.query('select review_offset,completed_at from private.planner_review_completions where item_id=$1 order by review_offset',[future.id])).rows;
+  await actor(ids.counselor);
+  const withSources=intact.map(i=>i.subject==='درس فردا'?{...i,sourceItemId:future.id}:i);
+  await saveDraft(withSources,null,{week:{},items:[]});await assert.rejects(publishDraft('1'),/Invalid plan extras/);
+  assert.deepEqual((await db.query('select review_offset,completed_at from private.planner_review_completions where item_id=$1 order by review_offset',[future.id])).rows,originalChecks,'rollback retains checks and timestamps');
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,0);
+  await saveDraft(withSources,'1',extras);await publishDraft('2');
+  const newFuture=(await db.query("select id from public.weekly_plan_items where plan_id=$1 and subject='درس فردا'",[ids.plan])).rows[0].id;
+  assert.notEqual(newFuture,future.id,'legacy future ID changed');
+  assert.deepEqual((await db.query('select review_offset,completed_at from private.planner_review_completions where item_id=$1 order by review_offset',[newFuture])).rows,originalChecks,'checks follow the unchanged source, retaining their original timestamps');
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,0);
+  // A changed subject/topic represents new study. Preserve checked history as
+  // a separate record instead of attributing it to a different topic.
+  const changed=withSources.map(i=>i.subject==='درس فردا'?{...i,sourceItemId:newFuture,chapter:'فصل جدید'}:i);
+  await saveDraft(changed,null,extras);await publishDraft('1');
+  const archive=(await db.query('select * from private.planner_review_history order by review_offset')).rows;
+  assert.deepEqual(archive.map(r=>r.review_offset),[1,3]);assert.equal(archive[0].chapter,null);
+  const changedId=(await db.query("select id from public.weekly_plan_items where plan_id=$1 and subject='درس فردا'",[ids.plan])).rows[0].id;
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_completions where item_id=$1',[changedId])).rows[0].n,0);
+  await actor(ids.student);
+  const weekReviews=(await db.query('select public.planner_review_week($1,$2) data',[ids.student,date])).rows[0].data;
+  assert.equal(weekReviews.filter(r=>r.historical&&r.completed).length,2);
+  await db.query('select public.planner_set_historical_review_completed($1,false)',[archive[0].id]);
+  assert.equal((await db.query('select completed from private.planner_review_history where id=$1',[archive[0].id])).rows[0].completed,false);
+  await db.query('select public.planner_set_review_completed($1,7,true)',[changedId]);
+  await actor(ids.other);await assert.rejects(db.query('select public.planner_set_historical_review_completed($1,true)',[archive[0].id]),/Only students/);
+  await actor(ids.counselor);
+  const legacy=[...intact.filter(i=>i.subject!=='درس فردا'),item(2,'درس دیگر')];
+  await db.query(`select public.save_weekly_plan_v9($1,$2,$3,'ذخیرهٔ قدیمی',null,'published',$4::jsonb,$5::jsonb)`,[ids.plan,ids.student,date,JSON.stringify(legacy),JSON.stringify(routines)]);
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'old save endpoints archive a checked review instead of deleting it');
+  assert.equal((await db.query('select chapter from private.planner_review_history where review_offset=7')).rows[0].chapter,'فصل جدید');
+  console.log('PASS: real save chain, atomic metadata, review transfer and preserved review history');
 })().catch(error => { console.error(error); process.exitCode = 1; });

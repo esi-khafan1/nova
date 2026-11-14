@@ -8,6 +8,7 @@ declare
   draft private.planner_working_drafts%rowtype;
   current_updated_at timestamptz;
   saved_id uuid;
+  review_transfer jsonb;
 begin
   perform private.require_planner_draft_access(target_student_id);
   if target_week_start is null or expected_revision is null or expected_revision !~ '^[1-9][0-9]{0,18}$' then
@@ -50,6 +51,7 @@ begin
      or jsonb_typeof(draft.snapshot->'routines') is distinct from 'array' then
     raise exception 'Draft is incomplete' using errcode='22023';
   end if;
+  review_transfer := private.planner_stage_review_transfer(draft.plan_id,draft.snapshot->'items',draft.snapshot->'extras');
   saved_id := public.save_weekly_plan_v9(
     draft.plan_id, target_student_id, target_week_start,
     draft.snapshot->>'title', draft.snapshot->>'notes', 'published'::public.content_status,
@@ -60,6 +62,7 @@ begin
   if draft.snapshot ? 'extras' then
     perform private.planner_persist_published_extras(saved_id,draft.snapshot->'items',draft.snapshot->'extras');
   end if;
+  perform private.planner_restore_review_transfer(saved_id,review_transfer);
   delete from private.planner_working_drafts d where d.counselor_id=me and d.student_id=target_student_id
     and d.week_start=target_week_start and d.revision::text=expected_revision;
   if not found then raise exception 'Draft has changed' using errcode='40001'; end if;

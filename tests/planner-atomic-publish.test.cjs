@@ -22,6 +22,10 @@ const fs=require('node:fs');const assert=require('node:assert/strict');
      if jsonb_array_length(items)=0 then raise exception 'missing items';end if;
      insert into public.weekly_plans(id,counselor_id,student_id,week_start,title,status) values(saved,auth.uid(),sid,start,title,status)
      on conflict(id) do update set title=excluded.title,status=excluded.status,updated_at=now();return saved;end$$;
+   -- This minimal fixture isolates publication/CAS; the real transfer functions
+   -- and save chain are exercised in the published-item and PostgreSQL tests.
+   create function private.planner_stage_review_transfer(uuid,jsonb,jsonb) returns jsonb language sql as $$select '[]'::jsonb$$;
+   create function private.planner_restore_review_transfer(uuid,jsonb) returns void language sql as $$select$$;
   `);
   await db.exec(fs.readFileSync('supabase/migrations/118_planner_private_drafts.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/119_planner_atomic_publish.sql','utf8'));

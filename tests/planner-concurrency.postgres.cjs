@@ -41,6 +41,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await setup.query(migration('119_planner_atomic_publish'));
   await setup.query(migration('121_planner_reviews'));
   await setup.query(migration('122_planner_published_extras'));
+  await setup.query(migration('123_planner_review_history'));
   const counselor=randomUUID(),student=randomUUID(),plan=randomUUID();
   const week=(await setup.query("select timezone('Asia/Tehran',now())::date::text as today")).rows[0].today;
   await setup.query("insert into public.profiles values($1,'counselor','active',null,null),($2,'student','active',10,'experimental_sciences')",[counselor,student]);
@@ -93,6 +94,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   assert.equal((await readDraft(b)).rows[0].x.revision,'1');
   assert.equal((await setup.query('select details from public.weekly_plan_items where id=$1',[todayItem])).rows[0].details,null);
   assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=$1',[todayItem])).rows[0].n,1);
-  console.log('PASS: real save chain and multi-session publication, CAS conflicts, stale plans and concurrent student progress');
+  await b.query('select public.planner_discard_working_draft($1,$2,$3)',[student,week,'1']);
+  const futureId=(await setup.query('select id from public.weekly_plan_items where plan_id=$1 and day_of_week=1',[plan])).rows[0].id;
+  const reviewDraft={...snapshot,items:[{...snapshot.items[0],sourceItemId:futureId},{...snapshot.items[0],id:todayItem,dayOfWeek:0,details:''}],extras:{week:{},items:[snapshot.extras.items[0],null]}};
+  await save(b,null,reviewDraft);await a.query('set role authenticated');await a.query('begin');
+  await a.query('select public.planner_set_review_completed($1,1,true)',[futureId]);
+  await assert.rejects(publish(b),err=>err.code==='40001'&&/busy/.test(err.message));await a.query('commit');
+  await publish(b);const replacement=(await setup.query('select id from public.weekly_plan_items where plan_id=$1 and day_of_week=1',[plan])).rows[0].id;
+  assert.notEqual(replacement,futureId);
+  assert.equal((await setup.query('select count(*)::int n from private.planner_review_completions where item_id=$1 and review_offset=1',[replacement])).rows[0].n,1,'concurrent review follows the unchanged replaced activity');
+  assert.equal((await setup.query('select count(*)::int n from private.planner_review_history')).rows[0].n,0);
+  console.log('PASS: real save chain and multi-session publication, CAS conflicts, stale plans, progress and review ticks');
  } finally {for(const c of clients)await c.end().catch(()=>{});if(started)await db.stop().catch(()=>{});fs.rmSync(dir,{recursive:true,force:true})}
 })().catch(error=>{console.error(error);process.exitCode=1});

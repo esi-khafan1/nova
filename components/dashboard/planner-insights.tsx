@@ -2,6 +2,7 @@
 
 import { analyzePlannerWeek } from "@/lib/planner-analysis";
 import { reviewsForWeek, type PlannerGrid, type ReviewSource } from "@/lib/planner-grid";
+import type { HistoricalReviewRecord } from "@/lib/planner-review-records";
 import { addDays, formatPersianWeekday, parseIsoDate, persianMonthNames, persianNumber, persianParts, toIsoDate } from "@/lib/persian-date";
 import styles from "./planner-insights.module.css";
 
@@ -41,13 +42,19 @@ export function PlannerAnalysis({ weekStart, grid }: { weekStart: string; grid: 
   </section>;
 }
 
-export function PlannerReviews({weekStart, sources, completed, onToggle}: {
+export function PlannerReviews({weekStart, sources, completed, onToggle, historical = [], onHistoricalToggle}: {
   weekStart: string;
   sources: ReviewSource[];
   completed: ReadonlySet<string>;
   onToggle: (key: string, checked: boolean) => void;
+  historical?: HistoricalReviewRecord[];
+  onHistoricalToggle?: (archiveId: string, checked: boolean) => void;
 }) {
-  const reviews = reviewsForWeek(weekStart, sources);
+  const weekEnd = toIsoDate(addDays(parseIsoDate(weekStart), 6));
+  const reviews = [
+    ...reviewsForWeek(weekStart, sources).map(review => ({...review, historical: false as const, checked: completed.has(review.key)})),
+    ...historical.filter(review => review.date >= weekStart && review.date <= weekEnd).map(review => ({...review, key:`archive:${review.archiveId}`, historical:true as const, checked:review.completed})),
+  ].sort((a,b) => a.date.localeCompare(b.date) || a.subject.localeCompare(b.subject,"fa") || a.key.localeCompare(b.key));
   return <section className={styles.panel} aria-label="جدول مرور این هفته">
     <h2>جدول مرور این هفته <small>({number(reviews.length)} مرور)</small></h2>
     <p>پیش از مطالعهٔ مبحث جدید همان درس، مطالب قبلی را با کتاب و جزوه مرور کن.</p>
@@ -60,8 +67,8 @@ export function PlannerReviews({weekStart, sources, completed, onToggle}: {
         return <section className={styles.reviewDay} key={iso}>
           <h3>{dayHeading(weekStart, day)}</h3>
           {daily.map(review => <label className={styles.review} key={review.key}>
-            <input type="checkbox" checked={completed.has(review.key)} onChange={event => onToggle(review.key, event.target.checked)} />
-            <span><strong>{review.subject}</strong> · {review.chapter || "مبحث آزاد"}{review.topics.length ? ` · ${review.topics.map(topic => topic.title).join("، ")}` : ""}</span>
+            <input type="checkbox" checked={review.checked} disabled={review.historical && !onHistoricalToggle} onChange={event => review.historical ? onHistoricalToggle?.(review.archiveId, event.target.checked) : onToggle(review.key, event.target.checked)} />
+            <span><strong>{review.subject}</strong> · {review.chapter || "مبحث آزاد"}{review.topics.length ? ` · ${review.topics.map(topic => topic.title).join("، ")}` : ""}{review.historical && <small className={styles.historyLabel}> · مرور ثبت‌شده از فعالیت تغییرکرده</small>}</span>
             <small>مرور {number(review.offset)} روز بعد</small>
           </label>)}
         </section>;
