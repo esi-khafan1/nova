@@ -1,0 +1,36 @@
+// Disposable PostgreSQL; no live project or accounts are used.
+const {PGlite}=require('@electric-sql/pglite');const {randomUUID}=require('node:crypto');
+const fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+ create type public.app_role as enum('student','counselor','admin');
+ create table public.profiles(id uuid primary key,role public.app_role);
+ create table public.counselor_profiles(user_id uuid primary key,approval_status text);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
+ grant usage on schema public,private,auth to authenticated,anon;`);
+ await db.exec(fs.readFileSync('supabase/migrations/120_planner_personal_presets.sql','utf8'));
+ const first=randomUUID(),second=randomUUID(),pending=randomUUID(),student=randomUUID();
+ await db.query("insert into public.profiles values($1,'counselor'),($2,'counselor'),($3,'counselor'),($4,'student')",[first,second,pending,student]);
+ await db.query("insert into public.counselor_profiles values($1,'approved'),($2,'approved'),($3,'pending')",[first,second,pending]);
+ const actor=async(id,role='authenticated')=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id||'']);await db.exec(`set role ${role}`)};
+ const save=async(id,kind,name,payload,pinned,rev)=>(await db.query('select public.planner_save_preset($1,$2,$3,$4::jsonb,$5,$6) v',[id,kind,name,JSON.stringify(payload),pinned,rev])).rows[0].v;
+ const list=async kind=>(await db.query('select public.planner_list_presets($1) v',[kind])).rows[0].v;
+ const remove=(id,rev)=>db.query('select public.planner_delete_preset($1,$2)',[id,rev]);
+ await actor(first);await assert.rejects(()=>db.query('select * from private.planner_personal_presets'),/permission denied/);
+ const week=await save(null,'week',' آزمون ',{days:[1,2]},false,null);assert.equal(week.revision,'1');
+ const block=await save(null,'block','زیست',{subject:'زیست'},false,null);assert.equal((await list('week'))[0].name,'آزمون');assert.equal((await list('block'))[0].id,block.id);
+ await assert.rejects(()=>save(week.id,'block','bad',{},false,'1'),/not available or changed/);
+ await assert.rejects(()=>save(week.id,'week','bad',{},false,'2'),/not available or changed/);
+ const renamed=await save(week.id,'week','نام جدید',{days:[3]},true,'1');assert.equal(renamed.revision,'2');
+ assert.equal((await list('week'))[0].pinned,true);assert.equal((await list('week'))[0].payload.days[0],3);
+ await assert.rejects(()=>remove(week.id,'1'),/not available or changed/);
+ await actor(second);assert.deepEqual(await list('week'),[]);await assert.rejects(()=>remove(week.id,'2'),/not available or changed/);
+ await assert.rejects(()=>save(week.id,'week','steal',{},false,'2'),/not available or changed/);
+ await actor(pending);await assert.rejects(()=>list('week'),/Approved counselor required/);
+ await actor(student);await assert.rejects(()=>list('week'),/Approved counselor required/);
+ await actor(null,'anon');await assert.rejects(()=>list('week'),/permission denied/);
+ await actor(first);for(const [kind,name,payload] of [['x','x',{}],['week','   ',{}],['week','x',[]],['week','x',{x:'x'.repeat(200001)}]])await assert.rejects(()=>save(null,kind,name,payload,false,null),/Invalid preset/);
+ await remove(week.id,'2');assert.deepEqual(await list('week'),[]);assert.equal((await list('block')).length,1);
+ console.log('PASS: private per-counselor presets, pin/rename, optimistic revisions and access guards');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});

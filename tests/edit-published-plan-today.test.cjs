@@ -150,5 +150,27 @@ const item = (day, subject, options = {}) => ({
   await assert.rejects(saveV9([...initial.filter(i=>i.id!==ids.linked),{...makeupToday,id:makeupId,durationMinutes:90}]),/Completed plan activity cannot be changed/);
   await actor(ids.other);
   await assert.rejects(save(initial),/Only counselors can save plans|Student not assigned/);
-  console.log('PASS: completed boxes immutable; linked boxes removable without deleting exams; past and progress stay protected');
+  // Exercise draft publication through the real v9→v3 chain, rather than a stub.
+  await db.exec(`alter table public.profiles add column registration_status text default 'active';
+    create table public.counselor_profiles(user_id uuid primary key,approval_status text);
+    insert into public.counselor_profiles values ('${ids.counselor}','approved');
+    alter table public.weekly_plans add column updated_at timestamptz not null default now();
+    create function public.touch_fixture_plan() returns trigger language plpgsql as $$begin new.updated_at=clock_timestamp();return new;end$$;
+    create trigger touch_fixture_plan before update on public.weekly_plans for each row execute function public.touch_fixture_plan();`);
+  await db.exec(fs.readFileSync('supabase/migrations/118_planner_private_drafts.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/119_planner_atomic_publish.sql','utf8'));
+  await actor(ids.counselor);
+  const intact=[...initial.filter(i=>i.id!==ids.linked),{...makeupToday,id:makeupId}];
+  const payload=list=>({title:'برنامهٔ تازه',notes:'',items:list,routines:[]});
+  const saveDraft=(list,rev)=>db.query('select public.planner_save_working_draft($1,$2,$3,$4::jsonb,$5)',[ids.student,date,ids.plan,JSON.stringify(payload(list)),rev]);
+  const publishDraft=rev=>db.query('select public.planner_publish_working_draft($1,$2,$3)',[ids.student,date,rev]);
+  await saveDraft(intact.map(i=>i.id===ids.completed?{...i,details:'نباید تغییر کند'}:i),null);
+  const draftBefore=await signature();
+  await assert.rejects(publishDraft('1'),/Completed plan activity cannot be changed/);
+  assert.deepEqual(await signature(),draftBefore,'failed atomic publish leaves live items untouched');
+  assert.ok((await db.query('select public.planner_get_working_draft($1,$2) d',[ids.student,date])).rows[0].d,'draft is retained after rejection');
+  await saveDraft(intact,'1');await publishDraft('2');
+  assert.equal((await db.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=any($1::uuid[])',[[ids.completed,makeupId]])).rows[0].n,2,'real publish keeps completed test and makeup progress');
+  assert.equal((await db.query('select public.planner_get_working_draft($1,$2) d',[ids.student,date])).rows[0].d,null);
+  console.log('PASS: completed boxes immutable; linked boxes removable without deleting exams; past and progress stay protected; atomic draft publish delegates to real save chain');
 })().catch(error => { console.error(error); process.exitCode = 1; });
