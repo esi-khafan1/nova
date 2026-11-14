@@ -1,0 +1,40 @@
+// Isolated PostgreSQL with synthetic users and plans, never production data.
+const {PGlite}=require('@electric-sql/pglite'),{randomUUID}=require('node:crypto');
+const fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+ create type public.app_role as enum('student','counselor','admin');
+ create type public.content_status as enum('draft','published');
+ create type public.study_activity_type as enum('lesson','exam','simulation_exam','external_simulation_exam','makeup');
+ create table public.profiles(id uuid primary key,role public.app_role,registration_status text);
+ create table public.counselor_profiles(user_id uuid primary key,approval_status text);
+ create table public.counselor_students(counselor_id uuid,student_id uuid);
+ create table public.weekly_plans(id uuid primary key,student_id uuid,week_start date,status public.content_status);
+ create table public.weekly_plan_items(id uuid primary key,plan_id uuid references public.weekly_plans(id),day_of_week smallint,activity_type public.study_activity_type,subject text,chapter text);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
+ grant usage on schema public,private,auth to authenticated,anon;`);
+ await db.exec(fs.readFileSync('supabase/migrations/121_planner_reviews.sql','utf8'));
+ const student=randomUUID(),other=randomUUID(),counselor=randomUUID(),former=randomUUID(),pending=randomUUID(),admin=randomUUID(),plan=randomUUID(),draft=randomUUID();
+ const item=randomUUID(),exam=randomUUID(),makeup=randomUUID(),draftItem=randomUUID();
+ await db.query("insert into public.profiles values($1,'student','active'),($2,'student','active'),($3,'counselor','active'),($4,'counselor','active'),($5,'counselor','active'),($6,'admin','active')",[student,other,counselor,former,pending,admin]);
+ await db.query("insert into public.counselor_profiles values($1,'approved'),($2,'approved'),($3,'pending')",[counselor,former,pending]);
+ await db.query('insert into public.counselor_students values($1,$2),($3,$2)',[counselor,student,pending]);
+ await db.query("insert into public.weekly_plans values($1,$3,timezone('Asia/Tehran',now())::date-7,'published'),($2,$3,timezone('Asia/Tehran',now())::date-7,'draft')",[plan,draft,student]);
+ await db.query("insert into public.weekly_plan_items values($1,$5,6,'lesson','زیست','گفتار یک'),($2,$5,6,'exam','آزمون',''),($3,$5,6,'makeup','جبرانی',''),($4,$6,6,'lesson','خصوصی','')",[item,exam,makeup,draftItem,plan,draft]);
+ const actor=async(id,role='authenticated')=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id||'']);await db.exec(`set role ${role}`)};
+ const list=async sid=>(await db.query("select public.planner_review_week($1,timezone('Asia/Tehran',now())::date) v",[sid])).rows[0].v;
+ const toggle=(id,offset,value)=>db.query('select public.planner_set_review_completed($1,$2,$3)',[id,offset,value]);
+ await actor(student);await assert.rejects(()=>db.query('select * from private.planner_review_completions'),/permission denied/);
+ const original=await list(student);assert.equal(original.length,3);assert.deepEqual(original.map(x=>x.offset),[1,3,7]);assert.equal(original[0].completed,false);assert.equal(original[0].chapter,'گفتار یک');
+ await toggle(item,1,true);await toggle(item,1,true);assert.equal((await list(student))[0].completed,true);
+ await toggle(item,3,true);assert.equal((await list(student))[1].completed,true);await assert.rejects(()=>toggle(item,2,true),/Invalid review/);
+ await assert.rejects(()=>toggle(exam,1,true),/Review not available/);await assert.rejects(()=>toggle(makeup,1,true),/Review not available/);await assert.rejects(()=>toggle(draftItem,1,true),/Review not available/);
+ await actor(counselor);assert.equal((await list(student))[0].completed,true);await assert.rejects(()=>toggle(item,1,true),/Only students/);
+ for(const id of [other,former,pending,admin,null]){await actor(id);await assert.rejects(()=>list(student),/Student not available/);}
+ await actor(null,'anon');await assert.rejects(()=>list(student),/permission denied/);
+ await actor(student);await toggle(item,1,false);assert.equal((await list(student))[0].completed,false);
+ await toggle(item,1,true);await db.exec('reset role');await db.query('delete from public.weekly_plan_items where id=$1',[item]);assert.equal((await db.query('select count(*)::int n from private.planner_review_completions')).rows[0].n,0,'deletion cascades without orphaning checkmarks');
+ await db.query("update public.profiles set registration_status='disabled' where id=$1",[student]);await actor(student);await assert.rejects(()=>list(student),/Student not available/);
+ console.log('PASS: private review schedule and checkmarks, cross-week offsets, roles and publication guards');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});

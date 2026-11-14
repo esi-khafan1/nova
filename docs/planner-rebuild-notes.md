@@ -4,13 +4,13 @@ The counselor approved the light Nova-style mockup in `planner-preview/` and req
 
 ## Current status
 
-The new planner is **not connected to the app or ready for use**. `lib/planner-grid.ts`, `lib/planner-autosave.ts` and `components/dashboard/planner-week-grid.tsx` are isolated components/helpers. Migration `118_planner_private_drafts.sql` provides a private working-copy store; `119_planner_atomic_publish.sql` delegates publication to the existing save chain after checking draft revision and base plan; `120_planner_personal_presets.sql` stores counselor-owned presets. These migrations have **not been applied to any project**. No old plan is rewritten. The prototype images are static design references, not functional screens.
+The new planner is **not connected to the app or ready for use**. The grid, autosave, analysis, review and topic suggestion modules are isolated components/helpers. Migration `118_planner_private_drafts.sql` provides a private working-copy store; `119_planner_atomic_publish.sql` delegates publication to the existing save chain after checking draft revision and base plan; `120_planner_personal_presets.sql` stores counselor-owned presets; `121_planner_reviews.sql` provides published-item review checkmarks. These migrations have **not been applied to any project**. No old plan is rewritten. The prototype images are static design references, not functional screens.
 
 ## Required before release
 
 - Connect a responsive seven-day editor to the existing student selection, planning data and print/report paths; retain all existing subject, exam, simulation, makeup, routine, completion and protected-day behavior.
 - Integrate draft loading, the serialized autosave queue, existing server-side validation and the atomic publication RPC. Ensure the UI handles changed live plans and progress since editing began. Never clear or publish a draft after a failed or conflicting save.
-- Connect preset storage and implement ready-block, personal-pattern and week-template interfaces, progress suggestions and review completion with appropriate ownership and RLS. Carry prior-week reviews into the selected date range; exclude exam and makeup activities from automatically generated study reviews.
+- Connect preset storage and implement ready-block, personal-pattern and week-template interfaces. Connect topic suggestions and review completion (including the published-history RPC and draft previews). Carry prior-week reviews into the selected date range; exclude exam and makeup activities from automatically generated study reviews.
 - Implement keyboard and touch-accessible movement, day copying, undo, editing and responsive desktop/mobile layouts, without bypassing locks on completed or past activities.
 - Implement the three selectable print sections and preserve the existing student/print data and routine behavior. Verify paper output with real PDF/print rendering, including large weeks and long text.
 - Construct and verify the full topic/page bank by book edition. Do not fabricate missing topics or page ranges, and do not redistribute copyrighted book files. Document source, edition and verification for each entry.

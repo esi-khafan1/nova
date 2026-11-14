@@ -70,7 +70,7 @@ export function applyPlannerTemplate<T extends PlannerBlock>(
 ): Array<Array<T | null>> {
   if (target.length !== 7 || source.length !== 7) throw new RangeError("A planner needs seven days");
   if (mode !== "empty" && mode !== "replace") throw new Error("Invalid template mode");
-  if (mode === "replace" && target.some(day => day.some(block => block && (block.completed || block.locked)))) throw new Error("Protected block cannot be replaced");
+  if (mode === "replace" && target.some(day => day.some(block => block && (block.completed || block.locked || block.linkedExamId)))) throw new Error("Protected block cannot be replaced");
   const result = mode === "replace" ? Array.from({ length: 7 }, () => [] as Array<T | null>) : clonePlannerGrid(target);
   const keys = new Set(target.flatMap(day => day.flatMap(block => block ? [block.key] : [])));
   for (let day = 0; day < 7; day++) {
