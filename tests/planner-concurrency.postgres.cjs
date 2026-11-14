@@ -20,6 +20,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
    create table public.weekly_plans(id uuid primary key default gen_random_uuid(),counselor_id uuid,student_id uuid,week_start date,updated_at timestamptz default clock_timestamp(),title text,notes text,status public.content_status,routines jsonb default '[]'::jsonb);
    create table public.exams(id uuid primary key,counselor_id uuid,explicit_students boolean,template_version text);
    create table public.exam_students(exam_id uuid,student_id uuid);
+   create table public.exam_booklets(exam_id uuid,sort_order integer,explanation_pdf_url text);
    create function private.save_designer_exam_with_window(uuid,text,text,text,timestamptz,public.content_status,jsonb,text,timestamptz) returns uuid language sql as $$select $1$$;
    create table public.weekly_plan_items(id uuid primary key default gen_random_uuid(),plan_id uuid references public.weekly_plans(id) on delete cascade,day_of_week smallint,start_time time,duration_minutes smallint,subject text,chapter text,activity_type public.study_activity_type,target_test_count smallint,details text,sort_order smallint,source_grade smallint,preparation_track text default 'konkur',exam_year smallint,linked_exam_id uuid references public.exams(id));
    create table public.weekly_plan_item_completions(item_id uuid primary key references public.weekly_plan_items(id) on delete cascade,student_id uuid,completed_at timestamptz,checked_at timestamptz,completed_test_count smallint);
@@ -35,7 +36,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await setup.query('create or replace function public.save_weekly_plan_v5('+v5);
   await setup.query(migration('085_konkur_recommended_publisher').split('-- Re-issue the student RPC')[0]);
   await setup.query(migration('091_completed_boxes_and_linked_exam_removal'));
-  await setup.query(migration('081_exam_box_edit_validation'));
+  // Use the latest designer save function (084), including explanation PDFs.
+  const designerSave=migration('084_designer_assigned_student_picker').split('create or replace function public.save_designer_exam(')[1].split('revoke all on function public.save_designer_exam(')[0];
+  await setup.query('create or replace function public.save_designer_exam('+designerSave);
   await setup.query(migration('103_external_simulation_provider_plan_boxes'));
   await setup.query(migration('109_makeup_plan_boxes'));
   await setup.query('create or replace function public.save_weekly_plan_v4'+migration('100_grade_nine_planning_and_exam_troubleshooting').split('create or replace function public.save_weekly_plan_v4')[1]);
@@ -133,6 +136,53 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   await a.query('commit');assert.equal((await design).rows[0].x,exam);
   assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_items where linked_exam_id=$1',[exam])).rows[0].n,0,'known race: designer success without its selected box');
   assert.equal((await setup.query("select count(*)::int n from public.weekly_plan_items where plan_id=$1 and subject='آزمون فیزیک'",[plan])).rows[0].n,1,'plan still has a replacement box');
-  console.log('PASS: transaction protections; reproduced designer/plan race, so publisher must remain disabled');
+  // Apply the candidate guard only inside the disposable DB. Repeat the same
+  // ordering: after the plan commits the designer must get an error, not a
+  // false success. Its original exam state must roll back atomically.
+  await setup.query(migration('125_plan_exam_concurrency_guard'));
+  // A direct legacy v5 save must not wait with a plan row while another
+  // transaction holds the student lock (older clients lock student first).
+  await a.query('begin');await a.query('select pg_advisory_xact_lock(hashtextextended($1,73033))',[student]);
+  await assert.rejects(b.query("select public.save_weekly_plan_v5($1,$2,$3,'old','', 'published',$4::jsonb,$5::jsonb)",[plan,student,week,JSON.stringify(snapshot.items),JSON.stringify(snapshot.routines)]),err=>err.code==='40001'&&/busy/.test(err.message));
+  await a.query('commit');
+  const getExamBox=async()=>(await setup.query("select id from public.weekly_plan_items where plan_id=$1 and subject='آزمون فیزیک'",[plan])).rows[0].id;
+  const latestLesson=async()=>(await setup.query("select id from public.weekly_plan_items where plan_id=$1 and day_of_week=1",[plan])).rows[0].id;
+  const currentDraft=async()=>({...examDraft,items:[{...reviewDraft.items[0],sourceItemId:await latestLesson()},reviewDraft.items[1],{...examItem,sourceItemId:await getExamBox()}]});
+  let box=await getExamBox();await save(b,null,await currentDraft());
+  await a.query('begin');await a.query('select id from public.exams where id=$1 for update',[exam]);
+  let guardSettled=false;
+  const guarded=designerClient.query("select public.save_designer_exam($1,'exam','',$2::uuid[],now(),'published','[]'::jsonb,null,null,$3::uuid[]) x",[exam,[],[box]]).then(value=>({value}),error=>({error})).finally(()=>{guardSettled=true});
+  await new Promise(resolve=>setTimeout(resolve,150));assert.equal(guardSettled,false);
+  assert.ok((await setup.query('select cardinality(pg_blocking_pids($1)) n',[designerPid])).rows[0].n>0);
+  await publish(b);await a.query('commit');
+  const rejected=await guarded;assert.match(rejected.error?.message||'',/Invalid exam boxes/,'stale box must fail, not silently lose the link');
+  assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_items where linked_exam_id=$1',[exam])).rows[0].n,0);
+  // Opposite ordering: the designer attaches the box first and keeps the
+  // transaction open. The plan must wait and carry that link to its new ID.
+  box=await getExamBox();await save(b,null,await currentDraft());
+  await designerClient.query('begin');
+  assert.equal((await designerClient.query("select public.save_designer_exam($1,'exam','',$2::uuid[],now(),'published','[]'::jsonb,null,null,$3::uuid[]) x",[exam,[],[box]])).rows[0].x,exam);
+  let planSettled=false;const planned=publish(b).then(value=>({value}),error=>({error})).finally(()=>{planSettled=true});
+  await new Promise(resolve=>setTimeout(resolve,150));assert.equal(planSettled,false,'plan waits for the designer box transaction');
+  await designerClient.query('commit');const planResult=await planned;assert.equal(planResult.error,undefined);assert.equal(planResult.value.rows[0].x,plan);
+  let linked=(await setup.query('select id,linked_exam_id from public.weekly_plan_items where plan_id=$1 and linked_exam_id=$2',[plan,exam])).rows;
+  assert.equal(linked.length,1);assert.notEqual(linked[0].id,box,'link survives replacement of the original box');
+  // Cached legacy clients still call v5 directly and submit future items only.
+  // Their snapshot must also wait for the designer's transaction.
+  await designerClient.query('begin');
+  assert.equal((await designerClient.query("select public.save_designer_exam($1,'exam','',$2::uuid[],now(),'published','[]'::jsonb,null,null,$3::uuid[]) x",[exam,[],[linked[0].id]])).rows[0].x,exam);
+  let legacySettled=false;
+  const legacy=b.query("select public.save_weekly_plan_v5($1,$2,$3,'legacy','', 'published',$4::jsonb,$5::jsonb) x",[plan,student,week,JSON.stringify([snapshot.items[0],examItem]),JSON.stringify(snapshot.routines)]).then(value=>({value}),error=>({error})).finally(()=>{legacySettled=true});
+  await new Promise(resolve=>setTimeout(resolve,150));assert.equal(legacySettled,false,'legacy save waits for exam box');
+  await designerClient.query('commit');const legacyResult=await legacy;assert.equal(legacyResult.error,undefined);assert.equal(legacyResult.value.rows[0].x,plan);
+  linked=(await setup.query('select id,linked_exam_id from public.weekly_plan_items where plan_id=$1 and linked_exam_id=$2',[plan,exam])).rows;assert.equal(linked.length,1,'legacy save keeps the exam link');
+  // The designer must fail immediately if the plan already holds a box row;
+  // otherwise exam-lock / box-lock ordering could deadlock both operations.
+  await a.query('begin');await a.query('select id from public.weekly_plan_items where id=$1 for update',[linked[0].id]);
+  await assert.rejects(designerClient.query("select public.save_designer_exam($1,'exam','',$2::uuid[],now(),'published','[]'::jsonb,null,null,$3::uuid[])",[exam,[],[linked[0].id]]),err=>err.code==='40001'&&/being updated/.test(err.message));
+  await a.query('commit');
+  assert.equal((await setup.query('select linked_exam_id from public.weekly_plan_items where id=$1',[linked[0].id])).rows[0].linked_exam_id,exam,'busy rejection leaves prior link intact');
+  assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=$1',[todayItem])).rows[0].n,1,'today progress survives both race orders');
+  console.log('PASS: reproduced race on 084; guarded both orderings with actual v9 chain and preserved progress/link');
  } finally {for(const c of clients)await c.end().catch(()=>{});if(started)await db.stop().catch(()=>{});fs.rmSync(dir,{recursive:true,force:true})}
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -168,6 +168,7 @@ const item = (day, subject, options = {}) => ({
   await db.exec(fs.readFileSync('supabase/migrations/121_planner_reviews.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/122_planner_published_extras.sql','utf8'));
   await db.exec(fs.readFileSync('supabase/migrations/123_planner_review_history.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/125_plan_exam_concurrency_guard.sql','utf8'));
   await actor(ids.counselor);
   const intact=[...initial.filter(i=>i.id!==ids.linked),{...makeupToday,id:makeupId}];
   const routines=Array.from({length:7},(_,dayOfWeek)=>({dayOfWeek,subject:'',details:'',secondSubject:'',secondDetails:''}));

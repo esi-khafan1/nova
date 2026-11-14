@@ -1,6 +1,7 @@
 const messages: Record<string, string> = {
   students: "فقط دانش‌آموزان دارای مشاور قابل انتخاب‌اند؛ برای انتشار حداقل یک دانش‌آموز واجد شرایط یا یک باکس آزمون انتخاب کن.",
   boxes: "باکس‌های آزمون انتخاب‌شده معتبر نیستند؛ فقط باکس‌های آزمون برنامه‌ریزی‌شدهٔ امروز یا آینده قابل اتصال هستند.",
+  boxes_busy: "برنامهٔ یکی از باکس‌های انتخاب‌شده هم‌زمان در حال تغییر است. صفحه را تازه کن و دوباره تلاش کن.",
   template: "ساختار الگوی کنکور ثابت است و قابل تغییر نیست. الگو را دوباره انتخاب کن.",
   window: "پایان بازهٔ شروع باید بعد از شروع بازه و در همان روز باشد؛ ساعت‌ها به وقت تهران هستند.",
   started_exam: "آزمونی که دانش‌آموز شروع کرده است قابل ویرایش نیست؛ برای تغییرات، آزمون جدید بساز.",
@@ -24,6 +25,7 @@ export function examSaveErrorCode(error: { message: string; code?: string }): st
   const message = error.message.toLowerCase();
   if (message.includes("template")) return "template";
   if (message.includes("selected students")) return "students";
+  if (error.code === "40001" && message.includes("exam boxes are being updated")) return "boxes_busy";
   if (message.includes("exam boxes")) return "boxes";
   if (message.includes("only exam designers")) return "permission";
   if (message.includes("floating start window")) return "window";

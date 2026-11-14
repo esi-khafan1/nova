@@ -103,7 +103,6 @@ const stubs = {
   "@/components/dashboard/exam-builder": `function ExamBuilder(){return null;}module.exports={ExamBuilder};`,
   "@/components/dashboard/exam-box-picker": `function boxLabel(){throw new Error('Attempted to call boxLabel() from the server but boxLabel is on the client.');}function ExamBoxPicker(){return null;}module.exports={boxLabel,ExamBoxPicker};`,
   "@/lib/exams": `function formatExamSchedule(value){return String(value);}module.exports={formatExamSchedule};`,
-  "@/lib/exam-save-errors": `function examSaveErrorMessage(value){return String(value);}module.exports={examSaveErrorMessage};`,
   "@/lib/auth": `const box=${JSON.stringify(box)};const supabase={from(){return {select(){return {eq(){return {order:async()=>({data:[{id:'exam-1',title:'آزمون نمونه',status:'draft',starts_at:'2026-11-01T09:00:00Z',duration_minutes:90}],error:null})};}}}};},rpc:async()=>({data:[box],error:null})};module.exports={requireProfile:async()=>({supabase,profile:{id:'designer-1',full_name:'طراح آزمون',role:'exam_designer'}})};`,
 };
 
@@ -152,7 +151,12 @@ const stubs = {
   assert.ok(html.includes("آبان"), "server-side boxLabel formatted the Persian date");
   assert.ok(!html.includes(box.box_date), "raw ISO date was not printed instead of the label");
   assert.ok(html.includes("آزمون نمونه"), "designer's own exams rendered");
-  console.log("PASS: exam designer Server Component renders without client-reference calls");
+  const busyElement = await compiled.exports.ExamDesignerPage({ searchParams: Promise.resolve({error:'boxes_busy'}) });
+  const busyHtml = renderToStaticMarkup(busyElement);
+  assert.match(busyHtml, /portal-alert error/);
+  assert.ok(busyHtml.includes('هم‌زمان در حال تغییر است'), 'concurrency warning tells the designer why saving failed');
+  assert.ok(busyHtml.includes('صفحه را تازه کن'), 'warning gives a retry action');
+  console.log("PASS: exam designer Server Component and safe conflict notice");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

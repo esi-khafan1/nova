@@ -111,6 +111,8 @@ const uuid=v=>`'${v}'::uuid`;
  await db.exec(editFix);
  await db.exec(explanationSave);
  await db.exec(assignedPicker);
+ // Apply the candidate concurrency guard and retain all legacy exam behavior.
+ await db.exec(fs.readFileSync('supabase/migrations/125_plan_exam_concurrency_guard.sql','utf8'));
 
  const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const boxes=async()=>(await db.query('select * from public.designer_exam_boxes()')).rows;
