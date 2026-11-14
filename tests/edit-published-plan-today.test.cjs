@@ -239,6 +239,46 @@ const item = (day, subject, options = {}) => ({
   await db.query(`select public.save_weekly_plan_v9($1,$2,$3,'ذخیرهٔ قدیمی',null,'published',$4::jsonb,$5::jsonb)`,[ids.plan,ids.student,date,JSON.stringify(legacy),JSON.stringify(routines)]);
   assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'old save endpoints archive a checked review instead of deleting it');
   assert.equal((await db.query('select chapter from private.planner_review_history where review_offset=7')).rows[0].chapter,'فصل جدید');
+  // Convert the real fixture's published plan and metadata into the new grid,
+  // then save its generated snapshot through the actual v9 publication chain.
+  // The permission was explicitly granted only inside this disposable test.
+  const bundled=await require('esbuild').build({entryPoints:['lib/planner-plan-adapter.ts'],bundle:true,platform:'node',format:'cjs',write:false});
+  const bridge={exports:{}};new Function('module','exports',bundled.outputFiles[0].text)(bridge,bridge.exports);
+  const sourcePlan=(await db.query("select id,student_id,to_char(week_start,'YYYY-MM-DD') week_start,title,notes,status,routines from public.weekly_plans where id=$1",[ids.plan])).rows[0];
+  sourcePlan.weekly_plan_items=(await db.query('select id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order,source_grade,preparation_track,recommended_publisher,exam_year,linked_exam_id from public.weekly_plan_items where plan_id=$1',[ids.plan])).rows;
+  const sourceExtras=await publicExtras();const today=(await db.query("select timezone('Asia/Tehran',now())::date::text d")).rows[0].d;
+  const editorGrid=bridge.exports.plannerGridFromPlan(sourcePlan,new Set([ids.completed,makeupId]),sourceExtras,today);
+  const generated=bridge.exports.plannerSnapshotFromEditor({title:sourcePlan.title,notes:sourcePlan.notes??'',weekStart:date,today,planStatus:'published',grid:editorGrid,routines:sourcePlan.routines,weekExtra:sourceExtras.week});
+  const pastBefore=(await db.query('select * from public.weekly_plan_items where id=$1',[ids.past])).rows[0];
+  // Exercise the real session and RPC adapter, backed by this temporary DB.
+  // No draft write may modify the existing published plan before publish.
+  const sessionBundle=await require('esbuild').build({entryPoints:['lib/planner-draft-session.ts','lib/planner-draft-transport.ts'],bundle:true,platform:'node',format:'cjs',write:false,outdir:'/tmp/plan-session-test'});
+  const load=out=>{const mod={exports:{}};new Function('module','exports',out.text)(mod,mod.exports);return mod.exports};
+  const {createPlannerDraftSession}=load(sessionBundle.outputFiles.find(f=>f.path.endsWith('/planner-draft-session.js')));
+  const {createPlannerDraftTransport}=load(sessionBundle.outputFiles.find(f=>f.path.endsWith('/planner-draft-transport.js')));
+  const client={rpc:async(name,args)=>{
+    const queries={
+      planner_get_working_draft:['select public.planner_get_working_draft($1,$2) d',[args.target_student_id,args.target_week_start]],
+      planner_save_working_draft:['select public.planner_save_working_draft($1,$2,$3,$4::jsonb,$5) d',[args.target_student_id,args.target_week_start,args.target_plan_id,JSON.stringify(args.target_snapshot),args.expected_revision]],
+      planner_publish_working_draft:['select public.planner_publish_working_draft($1,$2,$3) d',[args.target_student_id,args.target_week_start,args.expected_revision]],
+    };
+    if(!queries[name])throw new Error('Unexpected RPC');
+    try{return {data:(await db.query(...queries[name])).rows[0].d,error:null}}catch(error){return {data:null,error}};
+  }};
+  const transport=createPlannerDraftTransport(client,value=>value);
+  const events=[],ctx={studentId:ids.student,weekStart:date,planId:ids.plan};
+  const first=createPlannerDraftSession({transport,onEvent:event=>events.push(event),delayMs:10000});
+  assert.equal(await first.open(ctx,generated),true);first.update({...generated,title:'پیش‌نویس خصوصی'});assert.equal(await first.flush(),true);
+  assert.equal((await db.query('select title from public.weekly_plans where id=$1',[ids.plan])).rows[0].title,sourcePlan.title,'autosave never changes the live plan');
+  first.dispose();const restoredEvents=[];
+  const restored=createPlannerDraftSession({transport,onEvent:event=>restoredEvents.push(event)});
+  assert.equal(await restored.open(ctx,generated),true);assert.equal(restoredEvents.find(event=>event.type==='opened').restored,true);
+  assert.equal(restoredEvents.find(event=>event.type==='opened').snapshot.title,'پیش‌نویس خصوصی');
+  assert.equal(await restored.publish(),ids.plan);restored.dispose();
+  assert.equal((await db.query('select title from public.weekly_plans where id=$1',[ids.plan])).rows[0].title,'پیش‌نویس خصوصی');
+  assert.deepEqual((await db.query('select * from public.weekly_plan_items where id=$1',[ids.past])).rows[0],pastBefore,'adapter publication preserves the locked past');
+  assert.equal((await db.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=any($1::uuid[])',[[ids.completed,makeupId]])).rows[0].n,2,'adapter publication preserves completed items');
+  assert.equal((await db.query('select count(*)::int n from private.planner_review_history')).rows[0].n,3,'adapter publication preserves review history');
   // Gate the unfinished publisher while leaving the actual old v9 chain usable.
   await saveDraft(legacy,null);const beforeGate=await signature();
   await db.exec('reset role');await db.exec(fs.readFileSync('supabase/migrations/124_planner_publish_safety_gate.sql','utf8'));await actor(ids.counselor);

@@ -3,6 +3,9 @@ export type PlannerTopic = { title: string; pageStart?: number | null; pageEnd?:
 export type PlannerBlock = {
   key: string;
   id?: string | null;
+  /** The original published item, including when v9 replaces future IDs. */
+  sourceItemId?: string | null;
+  sourceDayOfWeek?: number | null;
   dayOfWeek: number;
   subject: string;
   chapter: string;
@@ -32,9 +35,39 @@ function checkPosition(grid: PlannerGrid, position: GridPosition, allowEnd = fal
   if (grid.length !== 7 || !Number.isInteger(position.index) || position.index < 0 || position.index >= grid[position.day].length + (allowEnd ? 1 : 0)) throw new RangeError("Invalid grid position");
 }
 function cloneBlock<T extends PlannerBlock>(block: T): T {
-  return { ...block, topics: block.topics?.map(topic => ({ ...topic })) };
+  // Editor blocks can contain additional nested metadata beyond topics. Copy
+  // the complete value so undo, templates and drafts never share references.
+  return structuredClone(block);
 }
 export function emptyPlannerGrid(): PlannerGrid { return Array.from({ length: 7 }, () => []); }
+
+/** Group existing editor activities without dropping their extra fields or IDs. */
+export function plannerItemsToGrid<T extends PlannerBlock>(items: readonly T[]): Array<Array<T | null>> {
+  const grid: Array<Array<T | null>> = Array.from({length: 7}, () => []);
+  const keys = new Set<string>();
+  for (const item of items) {
+    checkDay(item.dayOfWeek);
+    if (!item.key || keys.has(item.key)) throw new Error("Duplicate or empty block key");
+    keys.add(item.key);
+    grid[item.dayOfWeek].push(cloneBlock(item));
+  }
+  return grid;
+}
+
+/** Flatten by day then position; empty slots are layout, not plan activities. */
+export function plannerGridToItems<T extends PlannerBlock>(grid: Array<Array<T | null>>): T[] {
+  if (grid.length !== 7) throw new RangeError("A planner needs seven days");
+  const result: T[] = [];
+  const keys = new Set<string>();
+  for (let day = 0; day < 7; day++) for (const item of grid[day]) {
+    if (!item) continue;
+    if (item.dayOfWeek !== day || !item.key || keys.has(item.key)) throw new Error("Invalid grid block identity");
+    keys.add(item.key);
+    result.push(cloneBlock(item));
+  }
+  return result;
+}
+
 export function clonePlannerGrid<T extends PlannerBlock>(grid: Array<Array<T | null>>): Array<Array<T | null>> {
   if (grid.length !== 7) throw new RangeError("A planner needs seven days");
   return grid.map(day => day.map(block => block ? cloneBlock(block) : null));
@@ -45,7 +78,7 @@ export function movePlannerBlock<T extends PlannerBlock>(grid: Array<Array<T | n
   checkPosition(grid, from); checkPosition(grid, to, true);
   const block = grid[from.day][from.index];
   if (!block) throw new Error("No block at source");
-  if (block.completed || block.locked) throw new Error("Protected block cannot be moved");
+  if (block.completed || block.locked || block.linkedExamId) throw new Error("Protected block cannot be moved");
   if (from.day === to.day && (from.index === to.index || from.index + 1 === to.index)) return clonePlannerGrid(grid);
   const result = clonePlannerGrid(grid);
   result[from.day].splice(from.index, 1);
@@ -58,7 +91,7 @@ export function movePlannerBlock<T extends PlannerBlock>(grid: Array<Array<T | n
 export function copyPlannerBlock<T extends PlannerBlock>(block: T, day: number, newKey: string): T {
   checkDay(day);
   if (!newKey || newKey === block.key) throw new Error("A copy needs a new key");
-  return { ...cloneBlock(block), key: newKey, id: null, dayOfWeek: day, linkedExamId: null, completed: false, locked: false };
+  return { ...cloneBlock(block), key: newKey, id: null, sourceItemId: null, sourceDayOfWeek: null, dayOfWeek: day, linkedExamId: null, completed: false, locked: false };
 }
 
 /** Apply a snapshot without mutating its source or carrying IDs between students. */

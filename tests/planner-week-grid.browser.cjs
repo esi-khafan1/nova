@@ -5,7 +5,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
  const names=[...new Set([...css.matchAll(/\.([A-Za-z][A-Za-z0-9]*)/g)].map(m=>m[1]))];
  const font=fs.readFileSync('public/fonts/estedad-arabic-wght-normal.woff2').toString('base64');
  const code=(await esbuild.build({stdin:{contents:`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import {PlannerWeekGrid} from './components/dashboard/planner-week-grid';
- const box=(key,day,extra={})=>({key,dayOfWeek:day,id:'db-'+key,subject:key==='b'?'شیمی':'زیست',chapter:'فصل یک',activityType:'lesson',durationMinutes:90,targetTestCount:20,details:'',...extra});
+ const box=(key,day,extra={})=>({key,dayOfWeek:day,id:'db-'+key,sourceItemId:'db-'+key,sourceDayOfWeek:day,extra:{topics:[{title:'گفتار یک'}]},subject:key==='b'?'شیمی':'زیست',chapter:'فصل یک',activityType:'lesson',durationMinutes:90,targetTestCount:20,details:'',...extra});
  function App(){const [grid,setGrid]=useState([[box('a',0),box('locked',0,{completed:true})],[box('b',1)],[],[],[],[],[]]);window.current=grid;return <PlannerWeekGrid weekStart="2026-11-03" grid={grid} lockedDays={[false,false,false,false,false,false,true]} onChange={setGrid} onEdit={b=>window.edited.push(b.key)} onAdd={d=>window.added.push(d)}/>};createRoot(document.getElementById('root')).render(<App/>);`,loader:'tsx',resolveDir:process.cwd()},bundle:true,format:'iife',platform:'browser',jsx:'automatic',write:false,plugins:[{name:'css-module',setup(b){b.onResolve({filter:/planner-week-grid\.module\.css$/},()=>({path:'css',namespace:'fake'}));b.onLoad({filter:/.*/,namespace:'fake'},()=>({loader:'js',contents:`export default ${JSON.stringify(Object.fromEntries(names.map(n=>[n,n])))};`}));}}]})).outputFiles[0].text;
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
  try{for(const width of [320,390,768,1440]){
@@ -19,9 +19,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   await a.focus();await page.keyboard.press('Control+c');await page.keyboard.press('Control+d');
   await page.waitForFunction(()=>window.current[1].length===2);assert.equal((await page.evaluate(()=>window.current[1][1])).id,null);
   assert.equal((await page.evaluate(()=>window.current[1][1])).linkedExamId,null);
+  assert.equal((await page.evaluate(()=>window.current[1][1])).sourceItemId,null);
+  assert.equal((await page.evaluate(()=>window.current[1][1])).sourceDayOfWeek,null);
+  assert.equal(await page.evaluate(()=>window.current[1][1].extra.topics[0].title),'گفتار یک');
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();assert.equal(await page.evaluate(()=>window.current[1].length),1);
   await a.focus();await page.keyboard.press('Alt+ArrowLeft');await page.waitForFunction(()=>window.current[1].some(b=>b&&b.key==='a'));
-  assert.equal(await page.evaluate(()=>window.current[1][0].id),'db-a');
+  assert.equal(await page.evaluate(()=>window.current[1][0].id),'db-a');assert.equal(await page.evaluate(()=>window.current[1][0].sourceItemId),'db-a');assert.equal(await page.evaluate(()=>window.current[1][0].sourceDayOfWeek),0);
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();assert.equal(await page.evaluate(()=>window.current[0][0].key),'a');
   const protectedBlock=page.locator('.block').filter({hasText:'محافظت‌شده'});await protectedBlock.focus();await page.keyboard.press('Delete');assert.equal(await page.evaluate(()=>window.current[0][1].key),'locked');
   await page.locator('.day').first().getByRole('button',{name:'کپی روز'}).click();await page.locator('.day').nth(2).getByRole('button',{name:'چسباندن روز'}).click();
