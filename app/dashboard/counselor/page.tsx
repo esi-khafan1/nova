@@ -23,7 +23,7 @@ export default async function CounselorDashboard() {
           {c?.is_accepting ? "پذیرش فعال" : "پذیرش غیرفعال"}
         </span>
       </section>
-      <section className="portal-card cp-report-cta"><div><span className="sp-eyebrow">تصویر کامل مسیر دانش‌آموز</span><h2>برنامه، گزارش و مسیر مطالعه</h2><p>گزارش روزها و هفته‌های قبل، ساعت مطالعه، تعداد تست و زمان تیک هر فعالیت را ببین.</p></div><Link className="button" href="/dashboard/counselor/students">دانش‌آموزان و گزارش‌ها</Link></section>
+      <section className="portal-card cp-report-cta"><h2>دانش‌آموزان من</h2><Link className="button" href="/dashboard/counselor/students">برنامه و گزارش دانش‌آموزان</Link></section>
       <div className="portal-stats">
         <article>
           <span>درخواست‌های مشاوره</span>
@@ -38,19 +38,6 @@ export default async function CounselorDashboard() {
           <strong>{count(plans)}</strong>
         </article>
       </div>
-      <section className="portal-card admin-role-card">
-        <div>
-          <span>ابزار اصلی مشاور</span>
-          <h2>برنامه هفتگی دانش‌آموز را بساز</h2>
-          <p>
-            دانش‌آموز را انتخاب کن و برای هر روز، مدت، درس، فصل و نوع فعالیت را
-            مشخص کن.
-          </p>
-        </div>
-        <Link className="button" href="/dashboard/counselor/plans">
-          ورود به برنامه‌ریز
-        </Link>
-      </section>
       <section className="portal-card portal-wide portal-empty counselor-secondary">
         <div className="portal-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg></div>
         <h2>{count(resources)} محتوای آموزشی</h2>

@@ -1,7 +1,7 @@
 "use client";
 
 import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
-import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
@@ -191,6 +191,7 @@ export function WeeklyPlanBuilder({
   counselorId?: string;
 }) {
   const completedIdSet = new Set(completedItemIds);
+  const formId = useId();
   const selectedStudentIndex = Math.max(0, students.findIndex(s => s.student_id === initialStudentId));
   const [studentIndex, setStudentIndex] = useState(selectedStudentIndex);
   const selectedStudentId = students[selectedStudentIndex]?.student_id;
@@ -370,32 +371,20 @@ export function WeeklyPlanBuilder({
     return (
       <section className="portal-card portal-empty plan-empty">
         <div className="portal-empty-icon">✦</div>
-        <h2>اول یک دانش‌آموز انتخاب کن</h2>
-        <p>
-          منتظر تخصیص دانش‌آموز توسط ادمین باش تا بتوانی
-          برنامه هفتگی او را بسازی.
-        </p>
+        <h2>هنوز دانش‌آموزی به شما اختصاص داده نشده است</h2>
       </section>
     );
   }
 
   return (
     <>
-    <CounselorStudentStudyEditor key={student.student_id} student={student} />
-    <form action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder">
-      <section className="portal-card plan-basics">
-        <div className="portal-card-title">
-          <div>
-            <span>تنظیمات برنامه · برنامهٔ {faNumber(selectedNumber)} این دانش‌آموز</span>
-            <h2>برنامهٔ هفت‌روزه از چه روزی شروع شود؟</h2>
-          </div>
-        </div>
-        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();setWeekStart(start);loadPlan(student.student_id,start);}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
-        <div className="plan-basics-grid">
-          <label>
+      <section className="portal-card counselor-plan-student">
+        <div className="counselor-plan-student-row">
+          <label className="portal-form">
             دانش‌آموز
             <select
               name="student_id"
+              form={formId}
               value={student?.student_id ?? ""}
               onChange={(event) => {
                 const nextIndex = students.findIndex(
@@ -413,6 +402,23 @@ export function WeeklyPlanBuilder({
               ))}
             </select>
           </label>
+          <Link className="button button-secondary" href={`/dashboard/counselor/students/${student.student_id}`}>گزارش دانش‌آموز</Link>
+        </div>
+        <details className="counselor-study-details">
+          <summary>ویرایش پایه و رشته</summary>
+          <CounselorStudentStudyEditor key={student.student_id} student={student} />
+        </details>
+      </section>
+    <form id={formId} action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder">
+      <section className="portal-card plan-basics">
+        <div className="portal-card-title">
+          <div>
+            <span>تنظیمات برنامه · برنامهٔ {faNumber(selectedNumber)} این دانش‌آموز</span>
+            <h2>برنامهٔ هفت‌روزه</h2>
+          </div>
+        </div>
+        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();setWeekStart(start);loadPlan(student.student_id,start);}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
+        <div className="plan-basics-grid">
           <label>
             شروع برنامهٔ هفت‌روزه
             <PersianDatePicker
@@ -448,9 +454,9 @@ export function WeeklyPlanBuilder({
               ? studyFieldLabels[student.study_field]
               : "ثبت نشده"}
           </span>
-          {(!student?.study_field || !student?.grade) && (
+          {(!student?.grade || (student.grade !== 9 && !student.study_field)) && (
             <strong>
-              برای پیشنهاد درس و فصل، پایه و رشته را در بخش اطلاعات تحصیلی بالا ثبت کن.
+              برای انتخاب درس و فصل، پایه و رشته را ثبت کن.
             </strong>
           )}
         </div>

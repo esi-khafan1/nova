@@ -25,7 +25,6 @@ export function CounselorStudentStudyEditor({ student }: { student: Student }) {
   }
   return <section className="portal-card plan-basics portal-form">
     <div className="portal-card-title"><div><span>اطلاعات تحصیلی</span><h2>پایه و رشتهٔ {student.full_name || "دانش‌آموز"}</h2></div></div>
-    <p>پایه و (از دهم به بعد) رشته را ثبت یا اصلاح کن تا انتخاب درس‌ها برای برنامه‌ریزی آسان‌تر شود. برنامه‌ها و گزارش‌های قبلی تغییر نمی‌کنند.</p>
     <div className="plan-basics-grid">
       <label htmlFor={`${id}-grade`}>پایه<select id={`${id}-grade`} value={grade} disabled={pending} onChange={e => { setGrade(e.target.value); if(e.target.value === "9") setField(""); setMessage({}); }}>
         <option value="">انتخاب پایه</option>{[9,10,11,12].map(g => <option key={g} value={g}>{({9:"نهم",10:"دهم",11:"یازدهم",12:"دوازدهم"})[g as 9|10|11|12]}</option>)}

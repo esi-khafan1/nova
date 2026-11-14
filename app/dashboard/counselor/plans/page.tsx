@@ -1,13 +1,12 @@
 import {loadCounselorEditorPage, type CounselorPlanHistory} from "@/lib/load-counselor-plans";
 import {getRequestClient} from "@/lib/supabase/request-auth";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import Link from "next/link";
 import {
   WeeklyPlanBuilder,
   type CounselorWeeklyPlan,
 } from "@/components/dashboard/weekly-plan-builder";
 import { requireProfile } from "@/lib/auth";
-import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
+import type { StudyField } from "@/lib/study-catalog";
 
 type StudentDirectoryRow = {
   student_id: string;
@@ -42,23 +41,12 @@ export default async function CounselorPlansPage({
   const recentPlans = [...new Map([...loadedHistory.data.plans,...counselorPlans.filter(plan=>plan.status==="published"||plan.status==="draft").map(plan=>({...plan,counselor_id:profile.id}))].map(plan=>[plan.id,plan])).values()]
     .sort((a,b)=>b.week_start.localeCompare(a.week_start)||a.id.localeCompare(b.id));
   const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
-  const requestedProgressStudent = params.progress_student;
-  const progressStudent =
-    selectedStudents.find(
-      (student) => student.student_id === requestedProgressStudent,
-    ) ?? selectedStudents[0];
-
 
   return (
     <DashboardShell role="counselor" name={profile.full_name}>
       <section className="portal-heading">
         <div>
-          <span>برنامه‌ریزی هفتگی</span>
-          <h1>برنامه هر دانش‌آموز را دقیق بچین</h1>
-          <p>
-            زمان، درس، فصل و نوع فعالیت را مثل برگه برنامه هفتگی در یک مسیر روشن
-            ثبت کن.
-          </p>
+          <h1>برنامه‌ریزی هفتگی</h1>
         </div>
       </section>
 
@@ -80,71 +68,15 @@ export default async function CounselorPlansPage({
         </div>
       )}
 
-      <section className="portal-card student-picker">
-        <div className="portal-card-title">
-          <div>
-            <span>انتخاب دانش‌آموز</span>
-            <h2>دانش‌آموزان تحت مشاوره</h2>
-          </div>
-          <strong>{selectedStudents.length} نفر</strong>
-        </div>
-
-        {selectedStudents.length > 0 && (
-          <div className="selected-students">
-            {selectedStudents.map((student) => (
-              <article key={student.student_id}>
-                <span>{(student.full_name || "ن").slice(0, 1)}</span>
-                <div>
-                  <strong>{student.full_name || "دانش‌آموز نووا"}</strong>
-                  <small>
-                    {student.grade
-                      ? `پایه ${student.grade.toLocaleString("fa-IR")}`
-                      : "پایه نامشخص"}
-                    {" · "}
-                    {student.study_field
-                      ? studyFieldLabels[student.study_field]
-                      : student.grade === 9 ? "بدون رشته" : "رشته نامشخص"}
-                  </small>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-
-        {!selectedStudents.length&&<p className="all-students-selected">هنوز دانش‌آموزی توسط ادمین به شما اختصاص داده نشده است.</p>}
-      </section>
-
-      {progressStudent && (
-        <section className="counselor-progress-section">
-          <form className="counselor-progress-picker">
-            <label>
-              گزارش کدام دانش‌آموز؟
-              <select
-                name="progress_student"
-                defaultValue={progressStudent.student_id}
-              >
-                {selectedStudents.map((student) => (
-                  <option key={student.student_id} value={student.student_id}>
-                    {student.full_name || "دانش‌آموز نووا"}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="button">نمایش گزارش</button>
-          </form>
-          <div className="portal-card cp-report-cta"><div><h2>گزارش {progressStudent.full_name}</h2><p>روزانه، هفتگی، سوابق هفته‌ها و مسیر مطالعه به تفکیک درس و فصل</p></div><Link className="button" href={`/dashboard/counselor/students/${progressStudent.student_id}`}>نمایش گزارش کامل</Link></div>
-        </section>
-      )}
-
       <WeeklyPlanBuilder
-        key={[params.student, params.plan, params.week_start, params.error, params.saved, ...completedItemIds].join(":")}
+        key={[params.student, params.progress_student, params.plan, params.week_start, params.error, params.saved, ...completedItemIds].join(":")}
         students={selectedStudents}
         plans={counselorPlans}
         numberingPlans={recentPlans}
         overlapPlans={recentPlans}
         recentPlans={recentPlans}
         counselorId={profile.id}
-        initialStudentId={params.student}
+        initialStudentId={params.student ?? params.progress_student}
         initialPlanId={params.plan}
         initialWeekStart={params.week_start}
         initialSaved={params.saved}
