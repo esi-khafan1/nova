@@ -12,22 +12,25 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  create function private.current_user_role() returns public.app_role language sql stable as $$select current_setting('test.role')::public.app_role$$;
  create function private.require_planner_preset_access() returns void language plpgsql as $$begin if current_setting('test.approved')<>'yes' then raise exception 'Approved counselor required';end if;end$$;
  grant usage on schema public,private to authenticated,anon;`);
- for(const number of ['128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','140_planner_chapter_natural_order'])await db.exec(fs.readFileSync(`supabase/migrations/${number}.sql`,'utf8'));
- const entries=(await db.query('select * from private.planner_topic_bank')).rows;assert.equal(entries.length,1881);
+ for(const number of ['128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','140_planner_chapter_natural_order','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics'])await db.exec(fs.readFileSync(`supabase/migrations/${number}.sql`,'utf8'));
+ const entries=(await db.query('select * from private.planner_topic_bank')).rows;assert.equal(entries.length,2109);
  for(const row of entries){
   const book=mod.exports.curriculumBooks(row.study_field==='all'?null:row.study_field,Number(row.grade),row.preparation_track).find(x=>x.subject===row.subject);
   assert.ok(book,`missing subject ${row.study_field} ${row.subject} ${row.grade} ${row.preparation_track}`);
   if(book.chapters.length)assert.ok(book.chapters.includes(row.chapter),`missing chapter ${row.subject} ${row.chapter}`);
  }
- const seeds=['131_planner_biology12_1405_topics','132_planner_verified_topics','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics'];
+ const seeds=['131_planner_biology12_1405_topics','132_planner_verified_topics','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics'];
  const edited=entries.find(row=>row.subject==='فارسی ۳');
  const recent=entries.find(row=>row.subject==='روان‌شناسی'&&row.chapter==='درس ۸');
+ const sociology12=entries.find(row=>row.subject==='جامعه‌شناسی ۳'&&row.chapter==='درس ۱۰');
+ await db.query("update private.planner_topic_bank set title='ویرایش جامعه‌شناسی',revision=revision+1 where id=$1",[sociology12.id]);
  await db.query("update private.planner_topic_bank set title='ویرایش تازه',revision=revision+1 where id=$1",[recent.id]);
  await db.query("update private.planner_topic_bank set title='ویرایش مدیر',revision=revision+1 where id=$1",[edited.id]);
  for(const file of seeds)await db.exec(fs.readFileSync(`supabase/migrations/${file}.sql`,'utf8'));
- assert.equal((await db.query('select count(*)::int n from private.planner_topic_bank')).rows[0].n,1881);
+ assert.equal((await db.query('select count(*)::int n from private.planner_topic_bank')).rows[0].n,2109);
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[edited.id])).rows[0].title,'ویرایش مدیر');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[recent.id])).rows[0].title,'ویرایش تازه');
+ assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[sociology12.id])).rows[0].title,'ویرایش جامعه‌شناسی');
  const actor=async(role,approved='yes')=>{await db.exec('reset role');await db.query("select set_config('test.role',$1,false),set_config('test.approved',$2,false)",[role,approved]);await db.exec('set role authenticated')};
  const chapters=(field,grade,track,subject)=>db.query('select public.planner_list_topic_chapters($1,$2,$3,$4,$5) result',['1405',field,grade,track,subject]);
  await actor('counselor');const media=(await chapters('humanities','10','final_exam','تفکر و سواد رسانه‌ای')).rows[0].result;assert.equal(media.length,6);assert.equal(media[0],'فصل ۱: ما و رسانه‌ها');
@@ -57,6 +60,12 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  const health=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','experimental_sciences','12','final_exam','سلامت و بهداشت','درس‌ها'])).rows[0].result;
  assert.equal(health.length,14);assert.ok(health.every(x=>x.pageStart===null&&x.pageEnd===null));
  for(const track of ['konkur','final_exam']){
+  assert.equal((await chapters('humanities','10',track,'اقتصاد')).rows[0].result.length,14);
+  assert.equal((await chapters('humanities','12',track,'جامعه‌شناسی ۳')).rows[0].result.length,10);
+  const soc12=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','12',track,'جامعه‌شناسی ۳','درس ۱۰'])).rows[0].result;
+  assert.equal(soc12.length,3);assert.ok(soc12.every(x=>x.pageStart===null&&x.pageEnd===null));
+  const lastEconomics=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','10',track,'اقتصاد','درس ۱۴'])).rows[0].result;
+  assert.equal(lastEconomics.length,4);assert.ok(lastEconomics.every(x=>x.pageStart===null&&x.pageEnd===null));
   const socBook=mod.exports.curriculumBooks('humanities',10,track).find(x=>x.subject==='جامعه‌شناسی ۱');
   assert.equal(socBook.chapters.length,16);assert.ok(socBook.chapters.includes('درس ۱۶'));
   assert.equal(mod.exports.curriculumBooks('humanities',12,track).find(x=>x.subject==='فلسفه ۲').chapters.length,12);
@@ -64,6 +73,10 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
   assert.deepEqual(last.map(x=>x.title),['رابطه جمعیت جامعه با هویت آن','هویت اقتصادی جامعه']);
   assert.equal((await chapters('humanities','10',track,'منطق')).rows[0].result.length,10);
   assert.equal((await chapters('humanities','11',track,'روان‌شناسی')).rows[0].result.length,8);
+ }
+ for(const track of ['konkur','final_exam'])for(const [grade,subject,chapter,expected] of [['11','جامعه‌شناسی ۲','درس ۲',4],['12','جامعه‌شناسی ۳','درس ۱',4],['12','فلسفه ۲','درس ۳',4],['10','اقتصاد','درس ۲',4]]){
+  const rows=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities',grade,track,subject,chapter])).rows[0].result;
+  assert.equal(rows.length,expected);assert.ok(rows.every(x=>x.pageStart===null&&x.pageEnd===null));
  }
  const science=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','all','9','final_exam','علوم تجربی','فصل ۱: مواد و نقش آنها در زندگی'])).rows[0].result;
  assert.equal(science.length,5);assert.ok(science.every(x=>x.pageStart===null&&x.pageEnd===null));
@@ -76,5 +89,5 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  const noPages=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','mathematics','11','final_exam','شیمی ۲','فصل ۱: قدر هدایای زمینی را بدانیم'])).rows[0].result;
  assert.ok(noPages.every(x=>x.pageStart===null&&x.pageEnd===null));
  await actor('student');await assert.rejects(()=>chapters('all','9','final_exam','ریاضی'),/required/);await actor('counselor','no');await assert.rejects(()=>chapters('all','9','final_exam','ریاضی'),/Approved counselor/);
- console.log('PASS: 1881 topic rows mapped to real curriculum, safe rerun, chapter discovery and authorization');
+ console.log('PASS: 2109 topic rows mapped to real curriculum, safe rerun, chapter discovery and authorization');
  }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});
