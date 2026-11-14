@@ -1,20 +1,20 @@
 import { createDraftSaveQueue, type DraftSaveQueue, type DraftSaveState } from "./planner-autosave";
 
 export type PlannerDraftContext = { studentId: string; weekStart: string; planId: string | null };
-export type LoadedPlannerDraft<T> = { planId: string | null; revision: string; snapshot: T };
+export type LoadedPlannerDraft<T> = { planId: string | null; basePlanUpdatedAt: string | null; revision: string; snapshot: T };
 export type PlannerDraftTransport<T, Published> = {
   load: (context: PlannerDraftContext) => Promise<LoadedPlannerDraft<T> | null>;
-  save: (context: PlannerDraftContext, snapshot: T, expectedRevision: string | null) => Promise<{ revision: string }>;
+  save: (context: PlannerDraftContext, snapshot: T, expectedRevision: string | null) => Promise<{ revision: string; basePlanUpdatedAt: string | null }>;
   publish: (context: PlannerDraftContext, expectedRevision: string) => Promise<Published>;
 };
 export type PlannerDraftEvent<T> =
-  | { type: "opened"; context: PlannerDraftContext; snapshot: T; restored: boolean }
+  | { type: "opened"; context: PlannerDraftContext; snapshot: T; restored: boolean; basePlanUpdatedAt: string | null }
   | { type: "save-state"; context: PlannerDraftContext; state: DraftSaveState; error?: unknown }
   | { type: "busy"; operation: "open" | "publish" | null }
   | { type: "error"; operation: "open" | "publish"; error: unknown }
   | { type: "published"; context: PlannerDraftContext };
 
-type Active<T> = { context: PlannerDraftContext; queue: DraftSaveQueue<T>; revision: string | null; snapshot: T; saveState: DraftSaveState };
+type Active<T> = { context: PlannerDraftContext; queue: DraftSaveQueue<T>; revision: string | null; basePlanUpdatedAt: string | null; snapshot: T; saveState: DraftSaveState };
 
 /**
  * Coordinates one editor instance. A context switch flushes the previous draft
@@ -25,6 +25,8 @@ type Active<T> = { context: PlannerDraftContext; queue: DraftSaveQueue<T>; revis
 export function createPlannerDraftSession<T, Published>(options: {
   transport: PlannerDraftTransport<T, Published>;
   onEvent: (event: PlannerDraftEvent<T>) => void;
+  /** Optional UI preflight against freshly loaded data; not server authorization. */
+  preparePublication?: (context: PlannerDraftContext, snapshot: T, basePlanUpdatedAt: string | null) => Promise<{snapshot: T; blocked: boolean; message?: string}>;
   delayMs?: number;
   clone?: (snapshot: T) => T;
 }) {
@@ -47,10 +49,12 @@ export function createPlannerDraftSession<T, Published>(options: {
       if (active && !(await active.queue.flush())) return false;
       const loaded = await options.transport.load({...context});
       if (disposed) return false;
-      if (loaded && (loaded.planId !== context.planId || !/^[1-9][0-9]*$/.test(loaded.revision))) throw new Error("Draft does not match this plan");
+      if (loaded && (loaded.planId !== context.planId || !/^[1-9][0-9]*$/.test(loaded.revision) ||
+          ((loaded.planId === null) !== (loaded.basePlanUpdatedAt === null)) ||
+          (loaded.basePlanUpdatedAt !== null && (typeof loaded.basePlanUpdatedAt !== "string" || !Number.isFinite(Date.parse(loaded.basePlanUpdatedAt)))))) throw new Error("Draft does not match this plan");
       const selected: Active<T> = {
         context: {...context}, snapshot: clone(loaded ? loaded.snapshot : initial),
-        revision: loaded?.revision ?? null, saveState: "idle", queue: null as unknown as DraftSaveQueue<T>,
+        revision: loaded?.revision ?? null, basePlanUpdatedAt: loaded?.basePlanUpdatedAt ?? null, saveState: "idle", queue: null as unknown as DraftSaveQueue<T>,
       };
       selected.queue = createDraftSaveQueue<T>({
         revision: selected.revision,
@@ -58,8 +62,11 @@ export function createPlannerDraftSession<T, Published>(options: {
         clone,
         save: async (snapshot, revision) => {
           const result = await options.transport.save({...selected.context}, snapshot, revision);
-          if (!/^[1-9][0-9]*$/.test(result.revision)) throw new Error("Invalid saved revision");
+          if (!/^[1-9][0-9]*$/.test(result.revision) ||
+              ((selected.context.planId === null) !== (result.basePlanUpdatedAt === null)) ||
+              (result.basePlanUpdatedAt !== null && !Number.isFinite(Date.parse(result.basePlanUpdatedAt)))) throw new Error("Invalid saved revision");
           selected.revision = result.revision;
+          selected.basePlanUpdatedAt = result.basePlanUpdatedAt;
           return result;
         },
         onState: (state, error) => {
@@ -69,7 +76,7 @@ export function createPlannerDraftSession<T, Published>(options: {
       });
       active?.queue.dispose();
       active = selected;
-      emit({type:"opened", context:{...selected.context}, snapshot:clone(selected.snapshot), restored:Boolean(loaded)});
+      emit({type:"opened", context:{...selected.context}, snapshot:clone(selected.snapshot), restored:Boolean(loaded), basePlanUpdatedAt:loaded?.basePlanUpdatedAt ?? null});
       return true;
     } catch (error) {
       emit({type:"error", operation:"open", error});
@@ -101,6 +108,16 @@ export function createPlannerDraftSession<T, Published>(options: {
       // An untouched new plan still requires a durable, revisioned snapshot.
       if (selected.revision === null) selected.queue.update(selected.snapshot);
       if (!(await selected.queue.flush()) || disposed || !selected.revision) return null;
+      if (options.preparePublication) {
+        const prepared = await options.preparePublication({...selected.context}, clone(selected.snapshot), selected.basePlanUpdatedAt);
+        if (disposed) return null;
+        if (prepared.blocked) throw new Error(prepared.message || "Draft conflicts with the current plan");
+        // Recomputed dates, protection flags and payload must themselves be
+        // durable before publishing the exact new revision.
+        selected.snapshot = clone(prepared.snapshot);
+        selected.queue.update(selected.snapshot);
+        if (!(await selected.queue.flush()) || disposed || !selected.revision) return null;
+      }
       const published = await options.transport.publish({...selected.context}, selected.revision);
       if (disposed) return null;
       selected.queue.dispose(); active = null;

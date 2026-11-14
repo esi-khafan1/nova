@@ -252,7 +252,7 @@ const item = (day, subject, options = {}) => ({
   const pastBefore=(await db.query('select * from public.weekly_plan_items where id=$1',[ids.past])).rows[0];
   // Exercise the real session and RPC adapter, backed by this temporary DB.
   // No draft write may modify the existing published plan before publish.
-  const sessionBundle=await require('esbuild').build({entryPoints:['lib/planner-draft-session.ts','lib/planner-draft-transport.ts'],bundle:true,platform:'node',format:'cjs',write:false,outdir:'/tmp/plan-session-test'});
+  const sessionBundle=await require('esbuild').build({entryPoints:['lib/planner-draft-session.ts','lib/planner-draft-transport.ts','lib/planner-publication-preflight.ts'],bundle:true,platform:'node',format:'cjs',write:false,outdir:'/tmp/plan-session-test'});
   const load=out=>{const mod={exports:{}};new Function('module','exports',out.text)(mod,mod.exports);return mod.exports};
   const {createPlannerDraftSession}=load(sessionBundle.outputFiles.find(f=>f.path.endsWith('/planner-draft-session.js')));
   const {createPlannerDraftTransport}=load(sessionBundle.outputFiles.find(f=>f.path.endsWith('/planner-draft-transport.js')));
@@ -271,8 +271,16 @@ const item = (day, subject, options = {}) => ({
   assert.equal(await first.open(ctx,generated),true);first.update({...generated,title:'پیش‌نویس خصوصی'});assert.equal(await first.flush(),true);
   assert.equal((await db.query('select title from public.weekly_plans where id=$1',[ids.plan])).rows[0].title,sourcePlan.title,'autosave never changes the live plan');
   first.dispose();const restoredEvents=[];
-  const restored=createPlannerDraftSession({transport,onEvent:event=>restoredEvents.push(event)});
+  const {createPlannerPublicationPreflight}=load(sessionBundle.outputFiles.find(f=>f.path.endsWith('/planner-publication-preflight.js')));
+  const loadFresh=async()=>{
+    const p=(await db.query("select id,student_id,to_char(week_start,'YYYY-MM-DD') week_start,title,notes,status,routines,to_jsonb(updated_at)#>>'{}' updated from public.weekly_plans where id=$1",[ids.plan])).rows[0];
+    p.weekly_plan_items=(await db.query('select id,day_of_week,duration_minutes,subject,chapter,activity_type,target_test_count,details,sort_order,source_grade,preparation_track,recommended_publisher,exam_year,linked_exam_id from public.weekly_plan_items where plan_id=$1',[ids.plan])).rows;
+    const marked=(await db.query('select item_id from public.weekly_plan_item_completions where student_id=$1',[ids.student])).rows;
+    return {plan:p,planUpdatedAt:p.updated,today,completed:new Set(marked.map(row=>row.item_id)),extras:await publicExtras()};
+  };
+  const restored=createPlannerDraftSession({transport,onEvent:event=>restoredEvents.push(event),preparePublication:createPlannerPublicationPreflight(loadFresh)});
   assert.equal(await restored.open(ctx,generated),true);assert.equal(restoredEvents.find(event=>event.type==='opened').restored,true);
+  assert.ok(restoredEvents.find(event=>event.type==='opened').basePlanUpdatedAt,'base version is available for safe restore');
   assert.equal(restoredEvents.find(event=>event.type==='opened').snapshot.title,'پیش‌نویس خصوصی');
   assert.equal(await restored.publish(),ids.plan);restored.dispose();
   assert.equal((await db.query('select title from public.weekly_plans where id=$1',[ids.plan])).rows[0].title,'پیش‌نویس خصوصی');

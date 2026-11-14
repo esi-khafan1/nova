@@ -9,7 +9,7 @@ const assert=require('node:assert/strict'),esbuild=require('esbuild');
  const key=c=>`${c.studentId}:${c.weekStart}`;
  const transport={
   load:async c=>{calls.push(['load',c.studentId]);if(failLoad)throw new Error('load failed');return cache.get(key(c))??null},
-  save:async(c,snapshot,rev)=>{calls.push(['save',c.studentId,rev,snapshot.title]);if(hold)await hold;if(failSave)throw new Error('save failed');const old=cache.get(key(c));if((old?.revision??null)!==rev)throw new Error('conflict');const next={planId:c.planId,revision:String(Number(rev??0)+1),snapshot};cache.set(key(c),next);return {revision:next.revision}},
+  save:async(c,snapshot,rev)=>{calls.push(['save',c.studentId,rev,snapshot.title]);if(hold)await hold;if(failSave)throw new Error('save failed');const old=cache.get(key(c));if((old?.revision??null)!==rev)throw new Error('conflict');const next={planId:c.planId,basePlanUpdatedAt:c.planId?'2026-11-01T10:00:00Z':null,revision:String(Number(rev??0)+1),snapshot};cache.set(key(c),next);return {revision:next.revision,basePlanUpdatedAt:next.basePlanUpdatedAt}},
   publish:async(c,rev)=>{calls.push(['publish',c.studentId,rev]);if(failPublish)throw new Error('publish failed');const draft=cache.get(key(c));assert.equal(draft.revision,rev);cache.delete(key(c));return {published:draft.snapshot}},
  };
  const session=createPlannerDraftSession({transport,onEvent:event=>events.push(event),delayMs:100000});
