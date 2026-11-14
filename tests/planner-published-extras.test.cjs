@@ -1,0 +1,41 @@
+// Private published metadata security and mapping tests, using an isolated DB.
+const {PGlite}=require('@electric-sql/pglite'),{randomUUID}=require('node:crypto');const fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+ create type public.app_role as enum('student','counselor','admin');create type public.content_status as enum('draft','published');
+ create table public.profiles(id uuid primary key,role public.app_role,registration_status text);
+ create table public.counselor_profiles(user_id uuid primary key,approval_status text);
+ create table public.counselor_students(counselor_id uuid,student_id uuid);
+ create table public.weekly_plans(id uuid primary key,counselor_id uuid,student_id uuid,status public.content_status,week_start date);
+ create table public.weekly_plan_items(id uuid primary key,plan_id uuid references public.weekly_plans(id) on delete cascade,day_of_week smallint,sort_order smallint,subject text,chapter text,activity_type text);
+ create table public.weekly_plan_item_completions(item_id uuid primary key references public.weekly_plan_items(id) on delete cascade);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
+ grant usage on schema public,auth,private to authenticated,anon;`);
+ await db.exec(fs.readFileSync('supabase/migrations/121_planner_reviews.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/122_planner_published_extras.sql','utf8'));
+ const student=randomUUID(),other=randomUUID(),counselor=randomUUID(),former=randomUUID(),plan=randomUUID(),draft=randomUUID(),item=randomUUID(),past=randomUUID();
+ await db.query("insert into public.profiles values($1,'student','active'),($2,'student','active'),($3,'counselor','active'),($4,'counselor','active')",[student,other,counselor,former]);
+ await db.query("insert into public.counselor_profiles values($1,'approved'),($2,'approved')",[counselor,former]);
+ await db.query('insert into public.counselor_students values($1,$2)',[counselor,student]);
+ await db.query("insert into public.weekly_plans values($1,$3,$4,'published','2026-11-03'),($2,$3,$4,'draft','2026-11-10')",[plan,draft,counselor,student]);
+ await db.query("insert into public.weekly_plan_items values($1,$3,1,0,'زیست','فصل یک','lesson'),($2,$3,0,0,'ریاضی','فصل یک','lesson')",[item,past,plan]);
+ const actor=async(id,role='authenticated')=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id||'']);await db.exec(`set role ${role}`)};
+ const get=async id=>(await db.query('select public.planner_get_published_extras($1) v',[id])).rows[0].v;
+ const persist=(items,extras)=>db.query('select private.planner_persist_published_extras($1,$2::jsonb,$3::jsonb)',[plan,JSON.stringify(items),JSON.stringify(extras)]);
+ const input=[{dayOfWeek:1}],extras={week:{goal:'هدف هفته'},items:[{topics:[{title:'گفتار یک'}]}]};
+ await actor(counselor);assert.deepEqual(await get(plan),{week:{},items:{}});await assert.rejects(()=>persist(input,extras),/permission denied/);
+ await assert.rejects(()=>db.query('select * from private.planner_item_extras'),/permission denied/);await assert.rejects(()=>get(draft),/Plan not available/);
+ await db.exec('reset role');await persist(input,extras);await actor(student);const data=await get(plan);assert.equal(data.week.goal,'هدف هفته');assert.equal(data.items[item].topics[0].title,'گفتار یک');assert.equal(Object.hasOwn(data.items,past),false,'other days with the same sort order are not confused');
+ for(const who of [other,former,null]){await actor(who);await assert.rejects(()=>get(plan),/Student not available/)}
+ await actor(null,'anon');await assert.rejects(()=>get(plan),/permission denied/);
+ await actor(counselor);await db.exec('reset role');await assert.rejects(()=>persist(input,{week:{},items:[]}),/Invalid plan extras/);
+ await assert.rejects(()=>persist(input,{week:{},items:['invalid']}),/Invalid item extras/);
+ const duplicate=randomUUID();await db.query("insert into public.weekly_plan_items values($1,$2,1,0,'شیمی','','lesson')",[duplicate,plan]);
+ await assert.rejects(()=>persist(input,extras),/Cannot match published activity extras/);await db.query('delete from public.weekly_plan_items where id=$1',[duplicate]);
+ await db.query('insert into public.weekly_plan_item_completions values($1)',[item]);
+ await assert.rejects(()=>persist(input,{week:{},items:[{topics:[]}]}),/Completed plan activity cannot be changed/);
+ await persist(input,extras);await db.query('delete from public.weekly_plan_item_completions where item_id=$1',[item]);
+ await db.query('update public.weekly_plan_items set chapter=$1 where id=$2',['تغییر',item]);await actor(student);assert.deepEqual((await get(plan)).items,{});
+ console.log('PASS: published extras ownership, draft isolation, precise mapping and completed-item protection');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});

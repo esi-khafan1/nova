@@ -1,0 +1,121 @@
+import { createDraftSaveQueue, type DraftSaveQueue, type DraftSaveState } from "./planner-autosave";
+
+export type PlannerDraftContext = { studentId: string; weekStart: string; planId: string | null };
+export type LoadedPlannerDraft<T> = { planId: string | null; revision: string; snapshot: T };
+export type PlannerDraftTransport<T, Published> = {
+  load: (context: PlannerDraftContext) => Promise<LoadedPlannerDraft<T> | null>;
+  save: (context: PlannerDraftContext, snapshot: T, expectedRevision: string | null) => Promise<{ revision: string }>;
+  publish: (context: PlannerDraftContext, expectedRevision: string) => Promise<Published>;
+};
+export type PlannerDraftEvent<T> =
+  | { type: "opened"; context: PlannerDraftContext; snapshot: T; restored: boolean }
+  | { type: "save-state"; context: PlannerDraftContext; state: DraftSaveState; error?: unknown }
+  | { type: "busy"; operation: "open" | "publish" | null }
+  | { type: "error"; operation: "open" | "publish"; error: unknown }
+  | { type: "published"; context: PlannerDraftContext };
+
+type Active<T> = { context: PlannerDraftContext; queue: DraftSaveQueue<T>; revision: string | null; snapshot: T; saveState: DraftSaveState };
+
+/**
+ * Coordinates one editor instance. A context switch flushes the previous draft
+ * before loading the next; a failed flush/load never discards the current one.
+ * Publication freezes edits, flushes, and uses that exact saved revision.
+ * The transport is responsible for authenticated RPCs and server validation.
+ */
+export function createPlannerDraftSession<T, Published>(options: {
+  transport: PlannerDraftTransport<T, Published>;
+  onEvent: (event: PlannerDraftEvent<T>) => void;
+  delayMs?: number;
+  clone?: (snapshot: T) => T;
+}) {
+  const clone = options.clone ?? ((value: T) => structuredClone(value));
+  let active: Active<T> | null = null;
+  let busy: "open" | "publish" | null = null;
+  let disposed = false;
+  const emit = (event: PlannerDraftEvent<T>) => { if (!disposed) options.onEvent(event); };
+  const setBusy = (operation: typeof busy) => { busy = operation; emit({type: "busy", operation}); };
+  const requireIdle = () => {
+    if (disposed) throw new Error("Draft session is closed");
+    if (busy) throw new Error("Draft session is busy");
+  };
+  const sameContext = (a: PlannerDraftContext, b: PlannerDraftContext) => a.studentId === b.studentId && a.weekStart === b.weekStart && a.planId === b.planId;
+  const open = async (context: PlannerDraftContext, initial: T): Promise<boolean> => {
+    requireIdle();
+    if (active && sameContext(active.context, context)) return true;
+    setBusy("open");
+    try {
+      if (active && !(await active.queue.flush())) return false;
+      const loaded = await options.transport.load({...context});
+      if (disposed) return false;
+      if (loaded && (loaded.planId !== context.planId || !/^[1-9][0-9]*$/.test(loaded.revision))) throw new Error("Draft does not match this plan");
+      const selected: Active<T> = {
+        context: {...context}, snapshot: clone(loaded ? loaded.snapshot : initial),
+        revision: loaded?.revision ?? null, saveState: "idle", queue: null as unknown as DraftSaveQueue<T>,
+      };
+      selected.queue = createDraftSaveQueue<T>({
+        revision: selected.revision,
+        delayMs: options.delayMs,
+        clone,
+        save: async (snapshot, revision) => {
+          const result = await options.transport.save({...selected.context}, snapshot, revision);
+          if (!/^[1-9][0-9]*$/.test(result.revision)) throw new Error("Invalid saved revision");
+          selected.revision = result.revision;
+          return result;
+        },
+        onState: (state, error) => {
+          selected.saveState = state;
+          emit({type:"save-state", context:{...selected.context}, state, error});
+        },
+      });
+      active?.queue.dispose();
+      active = selected;
+      emit({type:"opened", context:{...selected.context}, snapshot:clone(selected.snapshot), restored:Boolean(loaded)});
+      return true;
+    } catch (error) {
+      emit({type:"error", operation:"open", error});
+      return false;
+    } finally { setBusy(null); }
+  };
+  const update = (snapshot: T) => {
+    requireIdle();
+    if (!active) throw new Error("No draft is open");
+    active.snapshot = clone(snapshot);
+    active.queue.update(active.snapshot);
+  };
+  const flush = async () => {
+    requireIdle();
+    if (!active) throw new Error("No draft is open");
+    return active.queue.flush();
+  };
+  const retry = async () => {
+    requireIdle();
+    if (!active) throw new Error("No draft is open");
+    return active.queue.retry();
+  };
+  const publish = async (): Promise<Published | null> => {
+    requireIdle();
+    if (!active) throw new Error("No draft is open");
+    const selected = active;
+    setBusy("publish");
+    try {
+      // An untouched new plan still requires a durable, revisioned snapshot.
+      if (selected.revision === null) selected.queue.update(selected.snapshot);
+      if (!(await selected.queue.flush()) || disposed || !selected.revision) return null;
+      const published = await options.transport.publish({...selected.context}, selected.revision);
+      if (disposed) return null;
+      selected.queue.dispose(); active = null;
+      emit({type:"published", context:{...selected.context}});
+      return published;
+    } catch (error) {
+      emit({type:"error", operation:"publish", error});
+      return null;
+    } finally { setBusy(null); }
+  };
+  return {
+    open, update, flush, retry, publish,
+    /** Used by the UI's navigation / beforeunload guard. */
+    hasPendingWork() { return Boolean(busy || (active && ["dirty", "saving", "error"].includes(active.saveState))); },
+    /** Call flush before disposing when navigation can be delayed. */
+    dispose() { disposed = true; active?.queue.dispose(); active = null; },
+  };
+}

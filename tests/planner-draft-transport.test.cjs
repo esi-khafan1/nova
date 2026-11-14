@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict'),esbuild=require('esbuild');
+(async()=>{
+ const out=await esbuild.build({entryPoints:['lib/planner-draft-transport.ts'],bundle:true,platform:'node',format:'cjs',write:false});
+ const mod={exports:{}};new Function('module','exports',out.outputFiles[0].text)(mod,mod.exports);
+ const calls=[];let reply={data:null,error:null};const client={rpc:async(name,args)=>{calls.push({name,args});return reply}};
+ const transport=mod.exports.createPlannerDraftTransport(client,value=>{if(!value||typeof value.title!=='string')throw Error('bad snapshot');return value});
+ const context={studentId:'student',weekStart:'2026-11-03',planId:'plan'};
+ assert.equal(await transport.load(context),null);
+ assert.deepEqual(calls.at(-1),{name:'planner_get_working_draft',args:{target_student_id:'student',target_week_start:'2026-11-03'}});
+ reply={data:{plan_id:'plan',revision:'4',snapshot:{title:'draft'}},error:null};assert.deepEqual(await transport.load(context),{planId:'plan',revision:'4',snapshot:{title:'draft'}});
+ reply={data:{plan_id:'plan',revision:'4',snapshot:{}},error:null};await assert.rejects(()=>transport.load(context),/bad snapshot/);
+ reply={data:{plan_id:'plan',revision:4,snapshot:{}},error:null};await assert.rejects(()=>transport.load(context),/Invalid draft response/);
+ reply={data:{revision:'5'},error:null};assert.deepEqual(await transport.save(context,{title:'new'},'4'),{revision:'5'});
+ assert.deepEqual(calls.at(-1),{name:'planner_save_working_draft',args:{target_student_id:'student',target_week_start:'2026-11-03',target_plan_id:'plan',target_snapshot:{title:'new'},expected_revision:'4'}});
+ reply={data:'published-id',error:null};assert.equal(await transport.publish(context,'5'),'published-id');
+ assert.deepEqual(calls.at(-1),{name:'planner_publish_working_draft',args:{target_student_id:'student',target_week_start:'2026-11-03',expected_revision:'5'}});
+ reply={data:null,error:{code:'40001',message:'conflict'}};await assert.rejects(()=>transport.publish(context,'5'),err=>err.code==='40001');
+ reply={data:null,error:null};await assert.rejects(()=>transport.save(context,{},null),/Invalid saved/);await assert.rejects(()=>transport.publish(context,'5'),/Invalid published/);
+ console.log('PASS: exact authenticated draft RPC parameters and malformed/error responses');
+})().catch(e=>{console.error(e);process.exitCode=1});

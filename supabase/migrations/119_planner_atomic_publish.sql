@@ -55,6 +55,11 @@ begin
     draft.snapshot->>'title', draft.snapshot->>'notes', 'published'::public.content_status,
     draft.snapshot->'items', draft.snapshot->'routines'
   );
+  -- Optional rich metadata is installed in migration 122. Store it in the same
+  -- transaction as the legacy plan; any mapping/validation failure rolls both back.
+  if draft.snapshot ? 'extras' then
+    perform private.planner_persist_published_extras(saved_id,draft.snapshot->'items',draft.snapshot->'extras');
+  end if;
   delete from private.planner_working_drafts d where d.counselor_id=me and d.student_id=target_student_id
     and d.week_start=target_week_start and d.revision::text=expected_revision;
   if not found then raise exception 'Draft has changed' using errcode='40001'; end if;
