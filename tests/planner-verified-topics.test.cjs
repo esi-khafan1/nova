@@ -12,14 +12,15 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  create function private.current_user_role() returns public.app_role language sql stable as $$select current_setting('test.role')::public.app_role$$;
  create function private.require_planner_preset_access() returns void language plpgsql as $$begin if current_setting('test.approved')<>'yes' then raise exception 'Approved counselor required';end if;end$$;
  grant usage on schema public,private to authenticated,anon;`);
- for(const number of ['128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','140_planner_chapter_natural_order','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics','150_planner_history12_topics','151_planner_grade9_topics'])await db.exec(fs.readFileSync(`supabase/migrations/${number}.sql`,'utf8'));
- const entries=(await db.query('select * from private.planner_topic_bank')).rows;assert.equal(entries.length,2929);
+ for(const number of ['128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','140_planner_chapter_natural_order','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics','150_planner_history12_topics','151_planner_grade9_topics','152_planner_geology_history_topics'])await db.exec(fs.readFileSync(`supabase/migrations/${number}.sql`,'utf8'));
+ const entries=(await db.query('select * from private.planner_topic_bank')).rows;assert.equal(entries.length,3150);
  for(const row of entries){
   const book=mod.exports.curriculumBooks(row.study_field==='all'?null:row.study_field,Number(row.grade),row.preparation_track).find(x=>x.subject===row.subject);
   assert.ok(book,`missing subject ${row.study_field} ${row.subject} ${row.grade} ${row.preparation_track}`);
   if(book.chapters.length)assert.ok(book.chapters.includes(row.chapter),`missing chapter ${row.subject} ${row.chapter}`);
  }
- const seeds=['131_planner_biology12_1405_topics','132_planner_verified_topics','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics','150_planner_history12_topics','151_planner_grade9_topics'];
+ const seeds=['131_planner_biology12_1405_topics','132_planner_verified_topics','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics','150_planner_history12_topics','151_planner_grade9_topics','152_planner_geology_history_topics'];
+ const geologyEdited=entries.find(row=>row.subject==='زمین‌شناسی'&&row.chapter==='فصل ۴: پویایی زمین');await db.query("update private.planner_topic_bank set title='ویرایش زمین',revision=revision+1 where id=$1",[geologyEdited.id]);
  const grade9Edited=entries.find(row=>row.subject==='آموزش قرآن'&&row.chapter==='درس ۱۱');await db.query("update private.planner_topic_bank set title='ویرایش قرآن',revision=revision+1 where id=$1",[grade9Edited.id]);
  const history12Edited=entries.find(row=>row.subject==='تاریخ ۳'&&row.chapter==='درس ۱۲');
  await db.query("update private.planner_topic_bank set title='ویرایش تاریخ',revision=revision+1 where id=$1",[history12Edited.id]);
@@ -38,7 +39,8 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  await db.query("update private.planner_topic_bank set title='ویرایش تازه',revision=revision+1 where id=$1",[recent.id]);
  await db.query("update private.planner_topic_bank set title='ویرایش مدیر',revision=revision+1 where id=$1",[edited.id]);
  for(const file of seeds)await db.exec(fs.readFileSync(`supabase/migrations/${file}.sql`,'utf8'));
- assert.equal((await db.query('select count(*)::int n from private.planner_topic_bank')).rows[0].n,2929);
+ assert.equal((await db.query('select count(*)::int n from private.planner_topic_bank')).rows[0].n,3150);
+ assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[geologyEdited.id])).rows[0].title,'ویرایش زمین');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[grade9Edited.id])).rows[0].title,'ویرایش قرآن');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[history12Edited.id])).rows[0].title,'ویرایش تاریخ');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[arabic12Edited.id])).rows[0].title,'ویرایش عربی');
@@ -51,6 +53,11 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  const chapters=(field,grade,track,subject)=>db.query('select public.planner_list_topic_chapters($1,$2,$3,$4,$5) result',['1405',field,grade,track,subject]);
  await actor('counselor');const media=(await chapters('humanities','10','final_exam','تفکر و سواد رسانه‌ای')).rows[0].result;assert.equal(media.length,6);assert.equal(media[0],'فصل ۱: ما و رسانه‌ها');
  assert.equal((await chapters('all','9','final_exam','ریاضی')).rows[0].result.length,8);
+ for(const [field,track] of [['experimental_sciences','konkur'],['experimental_sciences','final_exam'],['mathematics','final_exam']]){const list=(await chapters(field,'11',track,'زمین‌شناسی')).rows[0].result;assert.equal(list.length,7);assert.equal(list[3],'فصل ۴: پویایی زمین');assert.equal(list[5],'فصل ۶: زمین‌شناسی و سازه‌های مهندسی');}
+ for(const grade of ['10','11'])for(const track of ['konkur','final_exam'])assert.equal((await chapters('humanities',grade,track,grade==='10'?'تاریخ ۱':'تاریخ ۲')).rows[0].result.length,16);
+ for(const field of ['mathematics','experimental_sciences']){assert.equal((await chapters(field,'11','final_exam','تاریخ معاصر ایران')).rows[0].result.length,26);const recent=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405',field,'11','final_exam','تاریخ معاصر ایران','درس ۴'])).rows[0].result;assert.equal(recent[0].title,'کل درس: آغاز حرکت مردم علیه استبداد داخلی و استعمار خارجی');assert.equal(recent[0].pageStart,null);}
+ const history11=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','11','konkur','تاریخ ۲','درس ۱۴'])).rows[0].result;assert.deepEqual([history11[0].pageStart,history11[0].pageEnd],[162,172]);
+ const history10=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','10','final_exam','تاریخ ۱','درس ۱۴'])).rows[0].result;assert.deepEqual([history10[0].pageStart,history10[0].pageEnd],[null,null]);
  for(const [subject,count] of [['مطالعات اجتماعی',12],['عربی',10],['آموزش قرآن',11]])assert.equal((await chapters('all','9','final_exam',subject)).rows[0].result.length,count);
  const social9=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','all','9','final_exam','مطالعات اجتماعی','فصل ۵: عصر یکپارچگی و شکوفایی'])).rows[0].result;
  assert.deepEqual(social9.map(x=>[x.pageStart,x.pageEnd]),[[54,59],[60,66]]);
@@ -135,5 +142,5 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  const noPages=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','mathematics','11','final_exam','شیمی ۲','فصل ۱: قدر هدایای زمینی را بدانیم'])).rows[0].result;
  assert.ok(noPages.every(x=>x.pageStart===null&&x.pageEnd===null));
  await actor('student');await assert.rejects(()=>chapters('all','9','final_exam','ریاضی'),/required/);await actor('counselor','no');await assert.rejects(()=>chapters('all','9','final_exam','ریاضی'),/Approved counselor/);
- console.log('PASS: 2929 topic rows mapped to real curriculum, safe rerun, chapter discovery and authorization');
+ console.log('PASS: 3150 topic rows mapped to real curriculum, safe rerun, chapter discovery and authorization');
  }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});
