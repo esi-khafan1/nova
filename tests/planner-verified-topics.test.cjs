@@ -12,14 +12,16 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  create function private.current_user_role() returns public.app_role language sql stable as $$select current_setting('test.role')::public.app_role$$;
  create function private.require_planner_preset_access() returns void language plpgsql as $$begin if current_setting('test.approved')<>'yes' then raise exception 'Approved counselor required';end if;end$$;
  grant usage on schema public,private to authenticated,anon;`);
- for(const number of ['128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','140_planner_chapter_natural_order','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics'])await db.exec(fs.readFileSync(`supabase/migrations/${number}.sql`,'utf8'));
- const entries=(await db.query('select * from private.planner_topic_bank')).rows;assert.equal(entries.length,2715);
+ for(const number of ['128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','140_planner_chapter_natural_order','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics'])await db.exec(fs.readFileSync(`supabase/migrations/${number}.sql`,'utf8'));
+ const entries=(await db.query('select * from private.planner_topic_bank')).rows;assert.equal(entries.length,2769);
  for(const row of entries){
   const book=mod.exports.curriculumBooks(row.study_field==='all'?null:row.study_field,Number(row.grade),row.preparation_track).find(x=>x.subject===row.subject);
   assert.ok(book,`missing subject ${row.study_field} ${row.subject} ${row.grade} ${row.preparation_track}`);
   if(book.chapters.length)assert.ok(book.chapters.includes(row.chapter),`missing chapter ${row.subject} ${row.chapter}`);
  }
- const seeds=['131_planner_biology12_1405_topics','132_planner_verified_topics','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics'];
+ const seeds=['131_planner_biology12_1405_topics','132_planner_verified_topics','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','146_planner_geography10_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics'];
+ const arabic12Edited=entries.find(row=>row.subject==='عربی ۳ تخصصی'&&row.chapter==='درس ۵');
+ await db.query("update private.planner_topic_bank set title='ویرایش عربی',revision=revision+1 where id=$1",[arabic12Edited.id]);
  const geography10=entries.find(row=>row.subject==='جغرافیای ایران'&&row.chapter==='درس ۱۰');
  const arabic10=entries.find(row=>row.subject==='عربی ۱ تخصصی'&&row.chapter==='درس ۸');
  await db.query("update private.planner_topic_bank set title='ویرایش محفوظ',revision=revision+1 where id in ($1,$2)",[geography10.id,arabic10.id]);
@@ -33,7 +35,8 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  await db.query("update private.planner_topic_bank set title='ویرایش تازه',revision=revision+1 where id=$1",[recent.id]);
  await db.query("update private.planner_topic_bank set title='ویرایش مدیر',revision=revision+1 where id=$1",[edited.id]);
  for(const file of seeds)await db.exec(fs.readFileSync(`supabase/migrations/${file}.sql`,'utf8'));
- assert.equal((await db.query('select count(*)::int n from private.planner_topic_bank')).rows[0].n,2715);
+ assert.equal((await db.query('select count(*)::int n from private.planner_topic_bank')).rows[0].n,2769);
+ assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[arabic12Edited.id])).rows[0].title,'ویرایش عربی');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[edited.id])).rows[0].title,'ویرایش مدیر');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[recent.id])).rows[0].title,'ویرایش تازه');
  assert.equal((await db.query('select title from private.planner_topic_bank where id=$1',[sociology12.id])).rows[0].title,'ویرایش جامعه‌شناسی');
@@ -46,7 +49,7 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  for(const field of ['humanities','experimental_sciences','mathematics'])for(const [grade,subject] of [['10','فارسی ۱'],['11','فارسی ۲'],['12','فارسی ۳']])assert.equal((await chapters(field,grade,'final_exam',subject)).rows[0].result.length,8);
  assert.equal((await chapters('all','9','final_exam','فارسی')).rows[0].result.length,8);
  for(const field of ['mathematics','experimental_sciences'])for(const track of ['konkur','final_exam'])assert.equal((await chapters(field,'11',track,'شیمی ۲')).rows[0].result.length,3);
- for(const field of ['mathematics','experimental_sciences']){assert.equal((await chapters(field,'11','final_exam','عربی زبان قرآن ۲')).rows[0].result.length,7);assert.equal((await chapters(field,'11','konkur','عربی زبان قرآن ۲')).rows[0].result.length,0);assert.equal((await chapters(field,'10','final_exam','عربی زبان قرآن ۱')).rows[0].result.length,8);assert.equal((await chapters(field,'10','konkur','عربی زبان قرآن ۱')).rows[0].result.length,0);assert.equal((await chapters(field,'10','final_exam','جغرافیای ایران')).rows[0].result.length,10);assert.equal((await chapters(field,'10','konkur','جغرافیای ایران')).rows[0].result.length,0);}
+ for(const field of ['mathematics','experimental_sciences']){assert.equal((await chapters(field,'12','final_exam','عربی زبان قرآن ۳')).rows[0].result.length,4);assert.equal((await chapters(field,'12','konkur','عربی زبان قرآن ۳')).rows[0].result.length,0);assert.equal((await chapters(field,'11','final_exam','عربی زبان قرآن ۲')).rows[0].result.length,7);assert.equal((await chapters(field,'11','konkur','عربی زبان قرآن ۲')).rows[0].result.length,0);assert.equal((await chapters(field,'10','final_exam','عربی زبان قرآن ۱')).rows[0].result.length,8);assert.equal((await chapters(field,'10','konkur','عربی زبان قرآن ۱')).rows[0].result.length,0);assert.equal((await chapters(field,'10','final_exam','جغرافیای ایران')).rows[0].result.length,10);assert.equal((await chapters(field,'10','konkur','جغرافیای ایران')).rows[0].result.length,0);}
  assert.equal((await chapters('humanities','10','konkur','تفکر و سواد رسانه‌ای')).rows[0].result.length,0);
  const topic=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','10','final_exam','تفکر و سواد رسانه‌ای',media[0]])).rows[0].result;assert.deepEqual(topic.map(x=>[x.pageStart,x.pageEnd]),[[12,18],[19,23],[24,30]]);
  const persian=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','11','final_exam','فارسی ۲','فصل ۲: ادبیات پایداری'])).rows[0].result;
@@ -73,6 +76,9 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
   assert.equal((await chapters('humanities','10',track,'جغرافیای ایران')).rows[0].result.length,10);
   assert.equal((await chapters('humanities','10',track,'عربی ۱ تخصصی')).rows[0].result.length,8);
   assert.equal((await chapters('humanities','11',track,'عربی ۲ تخصصی')).rows[0].result.length,7);
+  assert.equal((await chapters('humanities','12',track,'عربی ۳ تخصصی')).rows[0].result.length,5);
+  const arabic12=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','humanities','12',track,'عربی ۳ تخصصی','درس ۵'])).rows[0].result;
+  assert.ok(['متن و واژگان: یا إلهی','ویرایش عربی'].includes(arabic12[0].title));assert.deepEqual(arabic12.slice(1).map(x=>x.title),['قواعد: ندا','تمرین‌های درس']);assert.ok(arabic12.every(x=>x.pageStart===null&&x.pageEnd===null));
   assert.equal((await chapters('humanities','11',track,'جغرافیا ۲')).rows[0].result.length,11);
   assert.equal((await chapters('humanities','12',track,'جغرافیا ۳')).rows[0].result.length,6);
   assert.equal(mod.exports.curriculumBooks('humanities',12,track).find(x=>x.subject==='جغرافیا ۳').chapters.length,6);
@@ -118,5 +124,5 @@ const mod=new Module('test-planning-curriculum',module);mod.filename=require('no
  const noPages=(await db.query('select public.planner_list_topics($1,$2,$3,$4,$5,$6) result',['1405','mathematics','11','final_exam','شیمی ۲','فصل ۱: قدر هدایای زمینی را بدانیم'])).rows[0].result;
  assert.ok(noPages.every(x=>x.pageStart===null&&x.pageEnd===null));
  await actor('student');await assert.rejects(()=>chapters('all','9','final_exam','ریاضی'),/required/);await actor('counselor','no');await assert.rejects(()=>chapters('all','9','final_exam','ریاضی'),/Approved counselor/);
- console.log('PASS: 2715 topic rows mapped to real curriculum, safe rerun, chapter discovery and authorization');
+ console.log('PASS: 2769 topic rows mapped to real curriculum, safe rerun, chapter discovery and authorization');
  }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});
