@@ -134,8 +134,18 @@ export function createPlannerDraftSession<T, Published>(options: {
     if (!active || !options.transport.discard) throw new Error("Draft cannot be discarded");
     const selected=active;setBusy("discard");
     try {
-      // Flush first so a failed or conflicting save is never silently erased.
-      if (!(await selected.queue.flush()) || disposed) return false;
+      // Wait for any in-flight write before deleting: otherwise a late save
+      // could recreate the draft after the user has discarded it. A failed
+      // flush need not trap a user who explicitly confirmed discard: delete
+      // only the last revision we actually observed, using the server's CAS.
+      // If an unacknowledged first save might have succeeded, check the server.
+      // Never guess a revision or erase a draft that could belong to another tab.
+      const flushed = await selected.queue.flush();
+      if (disposed) return false;
+      if (!flushed && !selected.revision) {
+        const remote = await options.transport.load({...selected.context});
+        if (disposed || remote) return false;
+      }
       if (selected.revision) await options.transport.discard({...selected.context},selected.revision);
       if (disposed) return false;
       selected.queue.dispose();active=null;return true;

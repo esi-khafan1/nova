@@ -52,11 +52,15 @@ export function usePlannerWorkingCopy(props:Props) {
     const restored=loaded?restorePlannerDraft({snapshot:loaded.snapshot,context,today:fresh.today,freshPlan:fresh.plan,freshPlanUpdatedAt:fresh.planUpdatedAt,basePlanUpdatedAt:loaded.basePlanUpdatedAt,completed:fresh.completed,publishedExtras:fresh.extras}):null;
     // Reuse the already-loaded value; a second network load could observe a
     // different revision. CAS still rejects concurrent changes after this read.
-    const oneShotTransport={...transport,load:async()=>loaded};
+    let firstLoad=true;
+    const oneShotTransport={...transport,load:async(c:PlannerDraftContext)=>{if(firstLoad){firstLoad=false;return loaded;}return transport.load(c);}};
     const real=createPlannerDraftSession<PlannerEditorSnapshot,string>({transport:oneShotTransport,preparePublication:createPlannerPublicationPreflight(c=>loadFreshPlannerState(client,c,counselorId)),onEvent:event=>{
      if(cancelled)return;
      if(event.type==='opened')opened=event;
-     if(event.type==='save-state')setStatus(event.state==='saved'?'پیش‌نویس خصوصی ذخیره شد.':event.state==='saving'?'در حال ذخیرهٔ پیش‌نویس...':event.state==='dirty'?'تغییرات در انتظار ذخیره است.':event.state==='error'?'ذخیرهٔ پیش‌نویس انجام نشد.':'');
+     if(event.type==='save-state') {
+      setStatus(event.state==='saved'?'پیش‌نویس خصوصی ذخیره شد.':event.state==='saving'?'در حال ذخیرهٔ پیش‌نویس...':event.state==='dirty'?'تغییرات در انتظار ذخیره است.':event.state==='error'?'ذخیرهٔ پیش‌نویس انجام نشد.':'');
+      if(event.state==='error')setWarning('تغییرات هنوز در این صفحه هستند، اما ذخیره نشده‌اند. دوباره تلاش کن یا پس از بررسی، پیش‌نویس را حذف کن.');
+     }
      if(event.type==='error')setWarning(event.error instanceof Error?event.error.message:'عملیات انجام نشد؛ پیش‌نویس حفظ شده است.');
     }});
     draft=real;session.current=real;

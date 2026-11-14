@@ -27,3 +27,7 @@ Migration 125 is a candidate fix: it rechecks selected boxes under row locks, us
 ## Source investigation
 
 A web search found a copy of [Chemistry 3, book code 112210](https://iranarze.ir/blog/wp-content/uploads/2025/02/shimi-12.pdf). Its publication page identifies it as the ninth printing, 1405. Only the initial pages were inspected; the file states that its contents are protected. This is not a complete, validated topic bank. Search results also identify download pages for biology and other books, but their actual edition, completeness and printed page numbers still require verification.
+
+## Draft discard after a failed autosave
+
+The private editor now exposes an explicit, confirmed discard/reload action when autosave fails. It waits for any in-flight save, deletes only the last acknowledged revision with the server's compare-and-swap, and refuses to delete a newer remote draft. If the first save was not acknowledged, it checks the server and only allows local discard when no remote draft exists; a failed check or an existing remote draft leaves the editor intact. This is still behind the release gate and does not activate the publisher.

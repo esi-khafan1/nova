@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require('esbuild'),{chromium}=require('playwright-core');
 (async()=>{
- for(const [migration,grade,subject,chapter,bookIndex=0] of [['149_planner_arabic12_topics',12,'عربی ۳ تخصصی','درس ۵',0],['144_planner_sociology11_topics',11,'جامعه‌شناسی ۲','درس ۱۵'],['145_planner_philosophy12_topics',12,'فلسفه ۲','درس ۱۲'],['148_planner_arabic_geography_topics',11,'عربی ۲ تخصصی','درس ۷',0],['148_planner_arabic_geography_topics',11,'جغرافیا ۲','درس ۱۱',2],['148_planner_arabic_geography_topics',12,'جغرافیا ۳','درس ۶',3]]){
+ for(const [migration,grade,subject,chapter,bookIndex=0] of [['150_planner_history12_topics',12,'تاریخ ۳','درس ۱۲',0],['149_planner_arabic12_topics',12,'عربی ۳ تخصصی','درس ۵',0],['144_planner_sociology11_topics',11,'جامعه‌شناسی ۲','درس ۱۵'],['145_planner_philosophy12_topics',12,'فلسفه ۲','درس ۱۲'],['148_planner_arabic_geography_topics',11,'عربی ۲ تخصصی','درس ۷',0],['148_planner_arabic_geography_topics',11,'جغرافیا ۲','درس ۱۱',2],['148_planner_arabic_geography_topics',12,'جغرافیا ۳','درس ۶',3]]){
  const sql=fs.readFileSync(`supabase/migrations/${migration}.sql`,'utf8');
  const books=JSON.parse(sql.split('$books$')[1]);const lesson=books[bookIndex].chapters.find(c=>c.chapter===chapter);
  const records=lesson.topics.map((t,i)=>({id:`seed-${i}`,grade:String(grade),track:'konkur',subject,chapter,title:t.title,pageStart:null,pageEnd:null,order:i}));

@@ -465,7 +465,7 @@ export function WeeklyPlanBuilder({
         {workingCopy.warning && <p role="alert">{workingCopy.warning}</p>}
         {workingCopy.phase==='ready' && <div className="plan-publish-buttons">
           <button type="button" className="button button-secondary" onClick={()=>void workingCopy.retry()}>تلاش دوباره برای ذخیره</button>
-          {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
+          {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی و تغییرات ذخیره‌نشدهٔ این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
         </div>}
       </div>}
       <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>

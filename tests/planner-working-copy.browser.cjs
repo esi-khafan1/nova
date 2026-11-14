@@ -11,12 +11,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
  try{for(const width of [320,390,768,1200]){
   const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setContent(`<html dir="rtl"><head><style>${css}\n${componentCss}</style></head><body><main class="counselor-portal" style="max-width:1100px;margin:auto;padding:16px"><div id="root"></div></main></body></html>`);
-  await page.evaluate(()=>{window.draft=null;window.completed=[];window.reviews=[];window.reviewFailure=false;window.publishes=0;window.rpc=async(name,args)=>{
+  await page.evaluate(()=>{window.draft=null;window.completed=[];window.reviews=[];window.reviewFailure=false;window.saveFailure=false;window.discardArgs=null;window.publishes=0;window.rpc=async(name,args)=>{
    if(name==='counselor_plan_editor_page')return {data:{counselor_id:'counselor',plans:[structuredClone(window.live)],has_more:false},error:null};
    if(name==='counselor_completed_plan_item_ids')return {data:window.completed.map(item_id=>({item_id})),error:null};
    if(name==='planner_get_published_extras')return {data:{week:{goal:'هدف منتشرشده'},items:{}},error:null};
    if(name==='planner_get_working_draft')return {data:structuredClone(window.draft),error:null};
-   if(name==='planner_save_working_draft_checked'){if(args.expected_revision!==(window.draft?.revision??null))return {error:{code:'40001'}};window.draft={plan_id:'plan',base_plan_updated_at:window.live.updated_at,revision:String(Number(args.expected_revision??0)+1),snapshot:structuredClone(args.target_snapshot)};return {data:{revision:window.draft.revision,base_plan_updated_at:window.draft.base_plan_updated_at},error:null}}
+   if(name==='planner_save_working_draft_checked'){if(window.saveFailure)return {data:null,error:{code:'network'}};if(args.expected_revision!==(window.draft?.revision??null))return {error:{code:'40001'}};window.draft={plan_id:'plan',base_plan_updated_at:window.live.updated_at,revision:String(Number(args.expected_revision??0)+1),snapshot:structuredClone(args.target_snapshot)};return {data:{revision:window.draft.revision,base_plan_updated_at:window.draft.base_plan_updated_at},error:null}}
+   if(name==='planner_discard_working_draft'){window.discardArgs=args;return new Promise(()=>{});}
    if(name==='planner_publish_working_draft'){window.publishes++;return {data:'plan',error:null}}
    if(name==='planner_review_week')return window.reviewFailure?{data:null,error:{code:'network'}}:{data:window.reviews,error:null};
    if(name==='planner_list_presets'||name==='planner_list_topics'||name==='planner_topic_history')return {data:[],error:null};throw Error(name);
@@ -36,6 +37,13 @@ await page.getByRole('heading',{name:'پیش‌نمایش چاپ'}).waitFor();as
   await page.getByLabel('مدت (دقیقه)').selectOption('90');await page.waitForFunction(()=>window.draft?.snapshot.editor.grid[0][0].durationMinutes===90);
   await page.evaluate(()=>{window.completed=['item']});await page.getByRole('button',{name:'انتشار دوباره تغییرات'}).click();await page.getByText('برنامه یا وضعیت فعالیت‌ها تغییر کرده است. پیش‌نویس حفظ شد؛ تغییرات را بررسی کن.').waitFor();
   assert.equal(await page.evaluate(()=>window.publishes),0);assert.equal(await page.evaluate(()=>window.draft.snapshot.editor.grid[0][0].durationMinutes),90);
+  // A failed autosave exposes recovery, and confirmed discard uses the last
+  // acknowledged revision rather than retrying the failed write forever.
+  const lastRevision=await page.evaluate(()=>window.draft.revision);await page.evaluate(()=>{window.saveFailure=true});
+  await page.getByLabel('عنوان برنامه').fill('ویرایش ذخیره‌نشده');await page.getByText(/تغییرات هنوز در این صفحه هستند/).waitFor();
+  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'حذف پیش‌نویس و بارگذاری دوباره'}).click();
+  await page.waitForFunction(()=>window.discardArgs!==null);assert.equal(await page.evaluate(()=>window.discardArgs.expected_revision),lastRevision);
+  assert.equal(await page.evaluate(()=>window.publishes),0);assert.equal(await page.evaluate(()=>window.live.title),'برنامهٔ منتشرشده');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`overflow ${width}`);if(process.env.TEST_SCREENSHOT)await page.screenshot({path:`${process.env.TEST_SCREENSHOT}-${width}.png`});assert.deepEqual(errors,[]);await page.close();
  }}finally{await browser.close()}const pdfjs=require('pdfjs-dist/legacy/build/pdf.js');const pdf=await pdfjs.getDocument({data:new Uint8Array(fs.readFileSync('/tmp/planner-draft-preview.pdf')),disableFontFace:true}).promise;assert.equal(pdf.numPages,3,'draft print must contain three pages without dashboard');console.log('PASS: real builder private autosave, restore, protected-progress preflight and four widths');
 })().catch(e=>{console.error(e);process.exitCode=1});
