@@ -79,11 +79,14 @@
 .counselor-portal .counselor-plan-student-row label{display:grid;gap:6px;flex:1 1 220px;max-width:420px;min-width:0;font-weight:700}
 .counselor-portal .counselor-plan-student-row select{width:100%;min-width:0}
 .counselor-portal .counselor-plan-student-row .button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
-.counselor-portal .counselor-study-details{margin-top:16px}
+.counselor-portal .counselor-study-details{width:100%;min-width:0}
 .counselor-portal .counselor-study-details summary{cursor:pointer;color:#1e5faf;font-weight:700;min-height:44px;display:flex;align-items:center;gap:8px}
 .counselor-portal .counselor-study-details summary::before{content:'＋'}
 .counselor-portal .counselor-study-details[open] summary::before{content:'−'}
-.counselor-portal .counselor-study-details .portal-card{margin:8px 0 0}
+.counselor-portal .counselor-study-details .portal-card{margin:8px 0 0;padding:16px;box-shadow:none;background:#f5f9ff}
+.counselor-portal .counselor-study-details .plan-basics-grid{grid-template-columns:1fr;min-width:0}
+.counselor-portal .counselor-study-details .portal-form .button{width:100%}
 .counselor-portal .cp-student-actions{display:flex;flex-wrap:wrap;gap:8px}
 .counselor-portal .cp-student-actions .button{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 @media(max-width:600px){.counselor-portal .counselor-plan-student-row label{max-width:none}.counselor-portal .counselor-plan-student-row .button{width:100%}}
+.counselor-portal .student-study-meta strong a{font-size:14px;color:#1e5faf;text-decoration:underline}

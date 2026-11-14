@@ -14,9 +14,9 @@ const data=(overrides={})=>{const fd=new FormData();for(const [key,value]of Obje
  fail=true;assert.ok((await save(data())).error);assert.equal(invalidations.length,0);
  fail=false;assert.equal((await save(data())).success,true);assert.equal(invalidations[0].join(','),'/dashboard,layout');
  denied=true;await assert.rejects(()=>save(data()),/denied/);assert.equal(rpcCalls,2);assert.equal(authCalls,8);
- const builder=fs.readFileSync('components/dashboard/weekly-plan-builder.tsx','utf8'),editor=fs.readFileSync('components/dashboard/counselor-student-study-editor.tsx','utf8');
- assert.ok(builder.indexOf('<CounselorStudentStudyEditor')<builder.indexOf('<form action={saveWeeklyPlan}'));
- assert.match(builder,/key=\{student.student_id\} student=\{student\}/);assert.match(builder,/curriculumBooks\(student\?\.study_field/);
- assert.match(editor,/type="button"/);assert.match(editor,/disabled=\{pending \|\| !grade \|\| !field\}/);assert.match(editor,/aria-live="polite"/);
+ const builder=fs.readFileSync('components/dashboard/weekly-plan-builder.tsx','utf8'),editor=fs.readFileSync('components/dashboard/counselor-student-study-editor.tsx','utf8'),card=fs.readFileSync('components/dashboard/counselor-student-card.tsx','utf8'),directory=fs.readFileSync('app/dashboard/counselor/students/page.tsx','utf8');
+ assert.doesNotMatch(builder,/<CounselorStudentStudyEditor/);assert.match(builder,/curriculumBooks\(student\?\.study_field/);
+ assert.match(directory,/filter\(s=>s.is_selected\)/);assert.match(directory,/<CounselorStudentCard key=\{s.student_id\} student=\{s\}/);assert.match(card,/<CounselorStudentStudyEditor student=\{student\} compact/);
+ assert.match(editor,/type="button"/);assert.match(editor,/grade !== "9" && !field/);assert.match(editor,/aria-live="polite"/);
  console.log('Study server action: fresh counselor guard, invalid/tampered input rejection, RPC error handling, successful dashboard invalidation; selected-student editor and preserved plan form wiring passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,6 +1,5 @@
 "use client";
 
-import { CounselorStudentStudyEditor } from "@/components/dashboard/counselor-student-study-editor";
 import { startTransition, useActionState, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -404,10 +403,6 @@ export function WeeklyPlanBuilder({
           </label>
           <Link className="button button-secondary" href={`/dashboard/counselor/students/${student.student_id}`}>گزارش دانش‌آموز</Link>
         </div>
-        <details className="counselor-study-details">
-          <summary>ویرایش پایه و رشته</summary>
-          <CounselorStudentStudyEditor key={student.student_id} student={student} />
-        </details>
       </section>
     <form id={formId} action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder">
       <section className="portal-card plan-basics">
@@ -456,7 +451,7 @@ export function WeeklyPlanBuilder({
           </span>
           {(!student?.grade || (student.grade !== 9 && !student.study_field)) && (
             <strong>
-              برای انتخاب درس و فصل، پایه و رشته را ثبت کن.
+              <Link href={`/dashboard/counselor/students#student-${student.student_id}`}>ثبت پایه و رشته در فهرست دانش‌آموزان</Link>
             </strong>
           )}
         </div>

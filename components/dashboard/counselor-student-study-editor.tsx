@@ -6,7 +6,7 @@ import { studyFieldLabels, type StudyField } from "@/lib/study-catalog";
 
 type Student = { student_id: string; full_name: string; grade: number | null; study_field: StudyField | null };
 
-export function CounselorStudentStudyEditor({ student }: { student: Student }) {
+export function CounselorStudentStudyEditor({ student, compact = false }: { student: Student; compact?: boolean }) {
   const id = useId();
   const [grade, setGrade] = useState(String(student.grade ?? ""));
   const [field, setField] = useState(student.study_field ?? "");
@@ -24,7 +24,7 @@ export function CounselorStudentStudyEditor({ student }: { student: Student }) {
     });
   }
   return <section className="portal-card plan-basics portal-form">
-    <div className="portal-card-title"><div><span>اطلاعات تحصیلی</span><h2>پایه و رشتهٔ {student.full_name || "دانش‌آموز"}</h2></div></div>
+    {!compact && <div className="portal-card-title"><div><span>اطلاعات تحصیلی</span><h2>پایه و رشتهٔ {student.full_name || "دانش‌آموز"}</h2></div></div>}
     <div className="plan-basics-grid">
       <label htmlFor={`${id}-grade`}>پایه<select id={`${id}-grade`} value={grade} disabled={pending} onChange={e => { setGrade(e.target.value); if(e.target.value === "9") setField(""); setMessage({}); }}>
         <option value="">انتخاب پایه</option>{[9,10,11,12].map(g => <option key={g} value={g}>{({9:"نهم",10:"دهم",11:"یازدهم",12:"دوازدهم"})[g as 9|10|11|12]}</option>)}
