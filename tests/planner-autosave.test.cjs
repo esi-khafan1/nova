@@ -1,0 +1,27 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+const Module = require('node:module');
+const path = require('node:path');
+const filename = path.join(process.cwd(), 'virtual-planner-autosave.cjs');
+const mod = new Module(filename, module); mod.filename = filename; mod.paths = Module._nodeModulePaths(process.cwd());
+mod._compile(ts.transpileModule(fs.readFileSync('lib/planner-autosave.ts','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText, filename);
+const { createDraftSaveQueue } = mod.exports;
+const deferred = () => { let resolve, reject; const promise = new Promise((a,b)=>{resolve=a;reject=b}); return {promise,resolve,reject}; };
+const tick = () => new Promise(resolve=>setTimeout(resolve,0));
+(async()=>{
+ const calls=[], states=[];
+ const queue=createDraftSaveQueue({revision:'r0',delayMs:10000,onState:s=>states.push(s),save:(value,revision)=>{const wait=deferred();calls.push({value,revision,...wait});return wait.promise;}});
+ const input={blocks:[1]};queue.update(input);input.blocks.push(99);
+ const first=queue.flush();assert.equal(calls.length,1);assert.deepEqual(calls[0].value,{blocks:[1]});assert.equal(calls[0].revision,'r0');
+ queue.update({blocks:[2]});queue.update({blocks:[3]});assert.equal(calls.length,1,'saves do not race');
+ calls[0].resolve({revision:'r1'});await tick();assert.equal(calls.length,2);assert.equal(calls[1].revision,'r1');assert.deepEqual(calls[1].value,{blocks:[3]});
+ calls[1].resolve({revision:'r2'});assert.equal(await first,true);assert.equal(states.at(-1),'saved');
+ queue.update({blocks:[4]});const failed=queue.flush();calls[2].reject(new Error('conflict'));assert.equal(await failed,false);assert.equal(states.at(-1),'error');
+ queue.update({blocks:[5]});assert.equal(await queue.flush(),false,'errors are not silently ignored');assert.equal(calls.length,3);
+ const retry=queue.retry();assert.equal(calls[3].revision,'r2');assert.deepEqual(calls[3].value,{blocks:[5]});calls[3].resolve({revision:'r3'});assert.equal(await retry,true);
+ queue.dispose();assert.throws(()=>queue.update({blocks:[]}),/disposed/);
+ const wait=deferred(),states2=[], q2=createDraftSaveQueue({revision:null,delayMs:10000,onState:s=>states2.push(s),save:()=>wait.promise});q2.update({x:1});const inFlight=q2.flush();q2.dispose();wait.resolve({revision:'r'});assert.equal(await inFlight,false);assert.notEqual(states2.at(-1),'saved');
+ let q3, count=0;const again=deferred();q3=createDraftSaveQueue({revision:null,delayMs:0,onState:s=>{if(s==='saved' && count===1)q3.update({x:2})},save:async()=>{count++;if(count===2)again.resolve();return {revision:`r${count}`}}});q3.update({x:1});assert.equal(await q3.flush(),true);await again.promise;assert.equal(count,2,'a new edit in the saved callback is not lost');q3.dispose();
+ console.log('PASS: autosave serialization, latest snapshot, CAS revision chain, error/retry, dispose and callback races');
+})().catch(error=>{console.error(error);process.exitCode=1});
