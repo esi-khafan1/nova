@@ -1,0 +1,29 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),{PGlite}=require('@electric-sql/pglite'),{buildSync}=require('esbuild');
+const read=n=>fs.readFileSync(`supabase/migrations/${n}.sql`,'utf8');
+const curriculum=buildSync({entryPoints:['lib/planning-curriculum.ts'],bundle:true,platform:'node',format:'cjs',write:false,alias:{'@':process.cwd()}}).outputFiles[0].text,mod={exports:{}};new Function('module','exports','require',curriculum)(mod,mod.exports,require);
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema private;create table private.planner_topic_bank(id uuid primary key,edition text not null,study_field text not null,grade text not null,preparation_track text not null,subject text not null,chapter text not null,title text not null,page_start integer,page_end integer,position integer not null,revision bigint not null default 1,updated_at timestamptz not null default now(),check((page_start is null and page_end is null) or (page_start is not null and page_end>=page_start)));create table published_snapshot(content jsonb);insert into published_snapshot values ('{"plan":"p1","exam":"e1","ticks":[true,false],"page":55}');`);
+ for(const n of ['132_planner_verified_topics','135_planner_science_humanities_topics','138_planner_remaining_topics','167_planner_english9_1405_pages'])await db.exec(read(n));
+ for(const {file,field,grade,subject,tracks,count,fixCount,chapters} of [
+  {file:'201_planner_logic_1405',field:'humanities',grade:'10',subject:'منطق',tracks:['konkur','final_exam'],count:90,fixCount:26,chapters:10},
+  {file:'202_planner_math9_1405',field:'all',grade:'9',subject:'ریاضی',tracks:['final_exam'],count:242,fixCount:28,chapters:8},
+  {file:'203_planner_geometry2_1405',field:'mathematics',grade:'11',subject:'هندسه ۲',tracks:['konkur','final_exam'],count:46,fixCount:9,chapters:3},
+ ]){
+  const sql=read(file),topics=JSON.parse(sql.split('$topics$')[1]),fixes=JSON.parse(sql.split('$fixes$')[1]);assert.equal(topics.length,count);assert.equal(fixes.length,fixCount);
+  for(const track of tracks)assert.ok(mod.exports.curriculumBooks(field==='all'?null:field,Number(grade),track).some(b=>b.subject===subject));
+  const original=(await db.query('select * from private.planner_topic_bank where study_field=$1 and grade=$2 and subject=$3 order by id',[field,grade,subject])).rows;assert.equal(original.length,fixCount*tracks.length);
+  const protectedRows=[];
+  for(const track of tracks){const sample=original.filter(r=>r.preparation_track===track);const [edited,deleted]=sample;await db.query("update private.planner_topic_bank set title='ویرایش مدیر',chapter='فصل مدیر',revision=2 where id=$1",[edited.id]);await db.query('delete from private.planner_topic_bank where id=$1',[deleted.id]);protectedRows.push([edited.id,deleted.id,(await db.query('select to_jsonb(t) v from private.planner_topic_bank t where id=$1',[edited.id])).rows[0].v]);}
+  await db.exec(sql);
+  for(const [edited,deleted,state] of protectedRows){assert.deepEqual((await db.query('select to_jsonb(t) v from private.planner_topic_bank t where id=$1',[edited])).rows[0].v,state);assert.equal((await db.query('select id from private.planner_topic_bank where id=$1',[deleted])).rows.length,0);}
+  if(subject==='هندسه ۲'){const catalog=mod.exports.curriculumBooks('mathematics',11,'konkur').find(b=>b.subject===subject);assert.equal(catalog.chapters.length,4);assert.ok(catalog.chapters.some(c=>c.includes('تجسم فضایی')));assert.ok(!topics.some(p=>p.chapter.includes('تجسم فضایی')));}
+  assert.equal(new Set(topics.map(p=>p.chapter)).size,chapters);assert.equal(new Set(topics.map(p=>JSON.stringify([p.chapter,p.position]))).size,topics.length);
+  for(const track of tracks){
+   for(const p of topics){assert.ok(p.start>0&&p.end>=p.start);const rows=(await db.query('select title,page_start,page_end from private.planner_topic_bank where study_field=$1 and grade=$2 and preparation_track=$3 and subject=$4 and chapter=$5 and position=$6',[field,grade,track,subject,p.chapter,p.position])).rows;assert.deepEqual(rows,[{title:p.title,page_start:p.start,page_end:p.end}]);}
+   for(const p of fixes){const x=original.find(r=>r.preparation_track===track&&r.chapter===p.chapter&&r.position===p.position);assert.ok(x);if(protectedRows.some(([edit,del])=>x.id===edit||x.id===del))continue;const row=(await db.query('select page_start,page_end,revision from private.planner_topic_bank where id=$1',[x.id])).rows[0];assert.deepEqual([row.page_start,row.page_end,Number(row.revision)],[p.start,p.end,2]);}
+   for(const chapter of new Set(topics.map(p=>p.chapter))){assert.ok(topics.some(p=>p.chapter===chapter&&p.position===400));assert.ok(topics.some(p=>p.chapter===chapter&&p.position>=450&&p.position<700));assert.ok(fixes.some(p=>p.chapter===chapter));}
+  }
+  const sample=(await db.query('select id from private.planner_topic_bank where subject=$1 and position>=400 order by id limit 2',[subject])).rows;await db.query('delete from private.planner_topic_bank where id=$1',[sample[0].id]);await db.query("update private.planner_topic_bank set title='ویرایش',revision=2 where id=$1",[sample[1].id]);const state=(await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t')).rows[0].v;
+  await db.exec(sql);assert.deepEqual((await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t')).rows[0].v,state);assert.deepEqual((await db.query('select content from published_snapshot')).rows[0].content,{plan:'p1',exam:'e1',ticks:[true,false],page:55});console.log(`PASS ${file}: ${tracks.length} contexts, ${count*tracks.length} new rows, chapters, guarded repairs, edit/delete, rerun and simulated snapshot`);
+ }
+}finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});
