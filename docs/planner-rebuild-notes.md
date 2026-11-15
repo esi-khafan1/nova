@@ -31,3 +31,9 @@ A web search found a copy of [Chemistry 3, book code 112210](https://iranarze.ir
 ## Draft discard after a failed autosave
 
 The private editor now exposes an explicit, confirmed discard/reload action when autosave fails. It waits for any in-flight save, deletes only the last acknowledged revision with the server's compare-and-swap, and refuses to delete a newer remote draft. If the first save was not acknowledged, it checks the server and only allows local discard when no remote draft exists; a failed check or an existing remote draft leaves the editor intact. This is still behind the release gate and does not activate the publisher.
+
+### دسترسی مدیریت بانک مباحث
+
+مدیریت بانک مباحث و صفحه‌های کتاب فقط برای سوپرادمین است. صفحهٔ مدیریت و کارت آن برای ادمین عادی باز نیست؛ migration 192 نیز RPCهای درج، ویرایش و حذف را با `private.is_super_admin()` کنترل می‌کند، نه صرفاً با مخفی‌سازی رابط. خواندن فهرست برای مشاورِ تأییدشده جهت برنامه‌ریزی باقی می‌ماند و ادمین عادی از RPCهای فهرست بانک هم رد می‌شود. داده‌های برنامه و snapshotها تغییر نمی‌کنند.
+
+بانک برنامه‌ریز و RPCهایش هنوز در Supabase فعال فعلی وجود ندارند؛ migration 192 باید همراه پیش‌نیازهای برنامه‌ریز و پیش از دسترس‌پذیر شدن مدیریت بانک اعمال شود. اعمال کد رابط به‌تنهایی جایگزین محدودسازی سمت پایگاه داده نیست. در آزمون‌های مجزا حساب‌های ساختگی، دسترسی مستقیم RPC و جدول، لغو مجوز سوپرادمین، وضعیت مشاور، و حفاظت snapshot بررسی شده‌اند.
