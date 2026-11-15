@@ -1,0 +1,20 @@
+const { PGlite }=require('@electric-sql/pglite');
+const fs=require('node:fs'), assert=require('node:assert/strict');
+const load=(f)=>fs.readFileSync(`supabase/migrations/${f}.sql`,'utf8');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema private;create table private.planner_topic_bank(id uuid primary key,edition text not null,study_field text not null,grade text not null,preparation_track text not null,subject text not null,chapter text not null,title text not null,page_start int,page_end int,position int not null,revision bigint not null default 1,updated_at timestamptz not null default now(),check((page_start is null and page_end is null) or (page_start is not null and page_end>=page_start)));create table published_snapshot(content jsonb);insert into published_snapshot values ('{"done":true,"examId":"exam-1","pageStart":10}');`);
+ await db.exec(load('136_planner_physics_writing_topics'));await db.exec(load('152_planner_geology_history_topics'));await db.exec(load('164_planner_history10_1405_topics'));
+ const get=async(subject,track,chapter,pos)=>(await db.query('select * from private.planner_topic_bank where subject=$1 and preparation_track=$2 and chapter=$3 and position=$4',[subject,track,chapter,pos])).rows[0];
+ const edit=await get('زبان انگلیسی','final_exam','درس‌ها',1),moved=await get('زبان انگلیسی','final_exam','درس‌ها',2),deleted=await get('زبان انگلیسی','final_exam','درس‌ها',3);
+ await db.query('update private.planner_topic_bank set page_start=10,page_end=11,revision=2 where id=$1',[edit.id]);await db.query("update private.planner_topic_bank set chapter='مدیر' where id=$1",[moved.id]);await db.query('delete from private.planner_topic_bank where id=$1',[deleted.id]);
+ const eng=load('167_planner_english9_1405_pages'),hist=load('168_planner_history10_finer_1405');await db.exec(eng);await db.exec(hist);
+ const getid=async id=>(await db.query('select * from private.planner_topic_bank where id=$1',[id])).rows[0];assert.deepEqual([(await getid(edit.id)).page_start,(await getid(edit.id)).page_end],[10,11]);assert.equal((await getid(moved.id)).chapter,'مدیر');assert.equal(await getid(deleted.id),undefined);
+ for(const p of JSON.parse(eng.split('$lessons$')[1]).slice(3)){const r=await get('زبان انگلیسی','final_exam','درس‌ها',p.position);assert.deepEqual([r.page_start,r.page_end],[p.start,p.end]);}
+ const topics=JSON.parse(eng.split('$topics$')[1]);assert.equal(topics.length,76);
+ for(const p of topics){const r=await get('زبان انگلیسی','final_exam','درس‌ها',p.position);assert.deepEqual([r.title,r.page_start,r.page_end],[p.title,p.start,p.end]);}
+ for(const [a,b] of [[16,27],[30,41],[50,61],[64,75],[82,93],[96,107],[42,47],[76,79],[108,111],[113,133]])for(let n=a;n<=b;n++)assert.ok(topics.some(p=>p.start<=n&&p.end>=n),`page ${n}`);
+ const hs=JSON.parse(hist.split('$topics$')[1]);assert.equal(hs.length,18);for(const p of hs)for(const track of ['konkur','final_exam']){const r=await get('تاریخ ۱',track,p.chapter,p.position);assert.deepEqual([r.title,r.page_start,r.page_end],[p.title,p.start,p.end]);}
+ const custom=await get('تاریخ ۱','konkur','درس ۱',201);await db.query("update private.planner_topic_bank set title='ویرایش مدیر',revision=2 where id=$1",[custom.id]);const gone=await get('زبان انگلیسی','final_exam','درس‌ها',111);await db.query('delete from private.planner_topic_bank where id=$1',[gone.id]);
+ const before=(await db.query('select jsonb_agg(to_jsonb(t) order by id) x from private.planner_topic_bank t')).rows[0].x;await db.exec(eng);await db.exec(hist);assert.deepEqual((await db.query('select jsonb_agg(to_jsonb(t) order by id) x from private.planner_topic_bank t')).rows[0].x,before);assert.deepEqual((await db.query('select content from published_snapshot')).rows[0].content,{done:true,examId:'exam-1',pageStart:10});
+ console.log('PASS: English 9 sections and review page coverage; history details in both tracks; CAS, edits, deletes, snapshots, rerun');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});
