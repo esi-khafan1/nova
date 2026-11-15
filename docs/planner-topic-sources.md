@@ -175,3 +175,18 @@ All updates match original seeded IDs, context, original title, position, pages 
 ### Entrepreneurship section boundaries (migration 159)
 
 The first 17 entries of the [1405 book's actual contents](https://dl.daneshchi.ir/file/chap-school/KargahKarAfarini-10_Daneshchi.iR.pdf) have ambiguous OCR glyphs. The sequence is identical to the OCR rendering of the [1403 PDF](https://dl.heyvagroup.com/admin/Files/upload/2034271514kargahe%20karafarine%20v%20tolid_dahom_ensane.pdf); its independently indexed text renders the starts of sections 6–18 as 21, 27, 31, 35, 41, 47, 51, 55, 59, 65, 69, 75 and 79. Section 6 also begins on page 21 of the 1405 text, and a [separate lesson resource](https://magerta.ir/business/startup-entrepreneurship/entrepreneurship-workshop-grade-10-part-6-answers/) covers pages 21–26. Migration 159 sets the 12 *whole-section* ranges in all three fields; it does not assert the exact pages of the finer groupings or exhaustive completion of the book. As with 157–158, it only changes a matching, unedited initial seed row, bumps its revision, and leaves published snapshots and admin edits untouched. The other three books still require further page-by-page verification.
+
+### کارگاه کارآفرینی و تولید دهم — تطبیق با کتاب ارسالی (migration 160)
+
+کتاب کامل ارسالی کاربر، کد ۱۱۰۲۲۴، چاپ دهم ۱۴۰۵، ۱۳۷ صفحه PDF و
+۱۲۷ صفحهٔ شماره‌دار متن (SHA-256: `ce9a2d54482fecb9b6e88d344c40db7f9b55edf5be403813202ada7eea80dbf0`).
+شماره‌های migration شمارهٔ چاپی کتاب‌اند؛ بخش‌های ۱ تا ۳۲ و عناوین و
+فعالیت‌های ریزمباحث با متن صفحه‌های مربوط تطبیق داده شده‌اند. بازه‌ها
+شامل ابتدا و انتها هستند و برای گروه‌بندی‌های آموزشی، نه الزاماً عنوان
+عین کتاب، ممکن است هم‌پوشانی داشته باشند. پنج ریزمبحث مستقل برای نیم‌کره‌های مغز، تفکر
+همگرا، کشش مسئله، شش کلاه تفکر، و طراحی و ارزیابی نوآوری اضافه شده‌اند.
+۷۰ گروه موجود در سه رشته فقط در صورت تطابق کامل با seed اولیهٔ دست‌نخورده
+به‌روزرسانی می‌شوند؛ اسنپ‌شات‌های انتشار و ویرایش‌های مدیر تغییر نمی‌کنند.
+این نتیجه فقط کتاب کارآفرینی در سه context رشته‌های ریاضی، تجربی و انسانی
+و مسیر امتحان نهایی را پوشش می‌دهد، نه سایر کتاب‌ها یا سایر مسیرها. اجرای
+migration در پایگاه داده و فعال شدن قابلیت انتشار به‌صورت جداگانه لازم است.
