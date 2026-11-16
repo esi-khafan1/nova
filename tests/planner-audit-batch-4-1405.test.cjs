@@ -54,15 +54,16 @@ const count=async(db,where,params=[])=>Number((await db.query(`select count(*) n
  assert.equal(await count(db,`subject='حسابان ۲' and preparation_track='konkur'`),77);
  assert.equal(await count(db,`subject='جامعه‌شناسی ۳' and preparation_track='konkur'`),81);
  assert.equal(await count(db,`subject='جامعه‌شناسی ۲' and preparation_track='konkur'`),116);
- // Catalog chapters for every audited book; the هندسه ۲ catalog chapter 4 is
- // not in the PDF, so it must have no rows (unresolved catalog discrepancy).
+ // Catalog chapters for every audited book; the هندسه ۲ catalog chapter 4
+ // («فصل ۴: تجسم فضایی») is not in the PDF, so follow-up 1 removed it from
+ // the selector and it must have no rows.
  for(const track of ['konkur','final_exam']){
   for(const [field,grade,subj] of [['mathematics','11','فیزیک ۲'],['experimental_sciences','11','فیزیک ۲'],['mathematics','12','ریاضیات گسسته'],['mathematics','10','هندسه ۱'],['mathematics','12','هندسه ۳'],['mathematics','11','هندسه ۲'],['mathematics','11','حسابان ۱'],['mathematics','12','حسابان ۲'],['humanities','12','جامعه‌شناسی ۳'],['humanities','11','جامعه‌شناسی ۲']]){
    const book=mod.exports.curriculumBooks(field,Number(grade),track).find(x=>x.subject===subj);assert.ok(book,`${field} ${grade} ${subj}`);
    for(const p of topics.filter(t=>t.subject===subj&&t.field===field))assert.ok(book.chapters.includes(p.chapter),`${subj} chapter ${p.chapter} not in catalog`);
   }
   const g2=mod.exports.curriculumBooks('mathematics',11,track).find(x=>x.subject==='هندسه ۲');
-  assert.deepEqual(g2.chapters,['فصل ۱: دایره','فصل ۲: تبدیل‌های هندسی و کاربردها','فصل ۳: روابط طولی در مثلث','فصل ۴: تجسم فضایی']);
+  assert.deepEqual(g2.chapters,['فصل ۱: دایره','فصل ۲: تبدیل‌های هندسی و کاربردها','فصل ۳: روابط طولی در مثلث']);
   assert.equal(await count(db,`subject='هندسه ۲' and chapter='فصل ۴: تجسم فضایی'`),0);
  }
  // Spot checks on the audited values.
