@@ -1,0 +1,20 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),{PGlite}=require('@electric-sql/pglite'),{buildSync}=require('esbuild');
+const sql=n=>fs.readFileSync('supabase/migrations/'+n+'.sql','utf8');
+const migration=sql('215_planner_philosophy11_finer_1405'),topics=JSON.parse(migration.split('$topics$')[1]);
+const code=buildSync({entryPoints:['lib/planning-curriculum.ts'],bundle:true,platform:'node',format:'cjs',write:false,alias:{'@':process.cwd()}}).outputFiles[0].text,mod={exports:{}};new Function('module','exports','require',code)(mod,mod.exports,require);
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create schema private;create table private.planner_seed_installations(seed_key text primary key);create table private.planner_topic_bank(id uuid primary key,edition text not null,study_field text not null,grade text not null,preparation_track text not null,subject text not null,chapter text not null,title text not null,page_start int,page_end int,position int not null,revision bigint not null default 1,updated_at timestamptz not null default now());create table published_snapshot(content jsonb);insert into published_snapshot values ('{"plan":"p","exam":"e","ticks":[true,false]}');`);
+ await db.exec(sql('181_planner_philosophy11_12_1405_pages'));const prior=(await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t')).rows[0].v;
+ await db.exec(migration);assert.equal(topics.length,77);assert.equal(new Set(topics.map(t=>t.chapter)).size,11);
+ const legacy=JSON.parse(sql('181_planner_philosophy11_12_1405_pages').split('$topics$')[1]).filter(t=>t.grade==='11');const whole=legacy.filter(t=>t.title==='کل درس');
+ for(const track of ['konkur','final_exam']){
+  const book=mod.exports.curriculumBooks('humanities',11,track).find(x=>x.subject==='فلسفه ۱');assert.ok(book);
+  if(track==='konkur')assert.deepEqual(new Set(topics.map(t=>t.chapter)),new Set(book.chapters));
+  for(const p of topics){const chapter=whole.find(w=>w.chapter===p.chapter);assert.ok(chapter&&p.start>=chapter.start&&p.end<=chapter.end&&p.start<=p.end);assert.deepEqual((await db.query("select title,page_start,page_end from private.planner_topic_bank where subject='فلسفه ۱' and grade='11' and study_field='humanities' and preparation_track=$1 and chapter=$2 and position=$3",[track,p.chapter,p.position])).rows,[{title:p.title,page_start:p.start,page_end:p.end}]);}
+  for(const lesson of whole)for(let n=lesson.start;n<=lesson.end;n++)assert.ok([...topics,...legacy.filter(p=>p.title!=='کل درس')].some(p=>p.chapter===lesson.chapter&&p.start<=n&&n<=p.end),`${lesson.chapter} page ${n}`);
+ }
+ assert.deepEqual((await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t where position<700')).rows[0].v,prior);
+ for(const [title,start,end] of [['تالس و مبدأ آب؛ فیثاغورس و اعداد',31,31],['روش سقراطی و پرسش و پاسخ',38,38],['سهروردی و معرفت شهودی',62,62],['ماتریالیسم و دیدگاه‌های داروینیستی',74,75],['کانت و وجدان اخلاقی',88,88]]){const p=topics.find(p=>p.title===title);assert.ok(p);assert.deepEqual([p.start,p.end],[start,end]);}
+ const ids=(await db.query("select id from private.planner_topic_bank where subject='فلسفه ۱' and position>=700 order by id limit 2")).rows;await db.query('delete from private.planner_topic_bank where id=$1',[ids[0].id]);await db.query("update private.planner_topic_bank set title='ویرایش مدیر',revision=2 where id=$1",[ids[1].id]);const before=(await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t')).rows[0].v;await db.exec(migration);assert.deepEqual((await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t')).rows[0].v,before);assert.deepEqual((await db.query('select content from published_snapshot')).rows[0].content,{plan:'p',exam:'e',ticks:[true,false]});
+ console.log('PASS: Philosophy 11: all 11 lesson ranges covered, 77 topics in both tracks; legacy, edits, deletes, rerun and simulated snapshot');
+ }finally{await db.close()}})().catch(e=>{console.error(e);process.exitCode=1});
