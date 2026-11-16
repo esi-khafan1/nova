@@ -2,7 +2,7 @@
 const {PGlite}=require('@electric-sql/pglite'),{randomUUID}=require('node:crypto'),fs=require('node:fs'),assert=require('node:assert/strict'),esbuild=require('esbuild');
 (async()=>{
  const sql=fs.readFileSync('supabase/migrations/126_planner_publish_validation.sql','utf8');
- const correction=fs.readFileSync('supabase/migrations/226_planner_grade9_catalog_1405.sql','utf8');
+ const correction=fs.readFileSync('supabase/migrations/244_planner_followup_lab_math_publish_1405.sql','utf8'); // latest re-issue of the validator; re-point when a newer re-issue lands
  const embedded=JSON.parse(correction.match(/\$catalog\$(.*?)\$catalog\$/s)[1]);
  const bundle=await esbuild.build({entryPoints:['lib/planning-curriculum.ts'],bundle:true,platform:'node',format:'cjs',write:false});const mod={exports:{}};new Function('module','exports',bundle.outputFiles[0].text)(mod,mod.exports);
  for(const field of [null,'mathematics','experimental_sciences','humanities','arts','foreign_languages']) for(const grade of [9,10,11,12]){
