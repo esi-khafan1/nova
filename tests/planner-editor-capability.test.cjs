@@ -11,7 +11,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=requir
   const sql=fs.readFileSync('supabase/migrations/130_planner_editor_capability.sql','utf8');const signatures=[...sql.matchAll(/'public\.(planner_[a-z_]+\([^']*\))'/g)].map(m=>m[1]);assert.equal(signatures.length,15);
   for(const sig of signatures){await db.exec(`create function public.${sig} returns void language sql as 'select'; revoke all on function public.${sig} from public,anon,authenticated; grant execute on function public.${sig} to authenticated;`)}
   await db.exec('revoke execute on function public.planner_publish_working_draft(uuid,date,text) from authenticated; set role authenticated');assert.equal(await available(),false,'unreviewed publisher remains disabled');
-  await db.exec('reset role; grant execute on function public.planner_publish_working_draft(uuid,date,text) to authenticated; set role authenticated');assert.equal(await available(),true);
+  await db.exec(`reset role;
+   create function private.planner_publish_working_draft_unvalidated(uuid,date,text) returns void language sql as 'select';
+   create function private.planner_validate_publication(uuid,uuid,date,jsonb) returns void language sql as 'select';
+   revoke all on function private.planner_publish_working_draft_unvalidated(uuid,date,text) from public,anon,authenticated;
+   revoke all on function private.planner_validate_publication(uuid,uuid,date,jsonb) from public,anon,authenticated;`);
+  const release=fs.readFileSync('supabase/migrations/249_planner_enable_reviewed_publication.sql','utf8');
+  await db.exec('grant execute on function private.planner_publish_working_draft_unvalidated(uuid,date,text) to authenticated');
+  await assert.rejects(db.exec(release),/Planner publication privileges are unsafe/);
+  await db.exec('revoke all on function private.planner_publish_working_draft_unvalidated(uuid,date,text) from authenticated');
+  await db.exec(release);await db.exec('set role authenticated');assert.equal(await available(),true);
   await db.query("select set_config('test.approved','no',false)");await assert.rejects(available,/Approved counselor required/);
   await db.exec('reset role; set role anon');await assert.rejects(available,/permission denied/);
  }finally{await db.close()}

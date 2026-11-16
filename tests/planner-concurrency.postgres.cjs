@@ -197,6 +197,47 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
   const freshBase=(await setup.query("select to_jsonb(updated_at)#>>'{}' version from public.weekly_plans where id=$1",[plan])).rows[0].version;
   await b.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,null,$5)',[student,week,plan,JSON.stringify({title:'fresh draft'}),freshBase]);
   assert.equal((await setup.query('select snapshot->>\'title\' title from private.planner_working_drafts')).rows[0].title,'fresh draft');
-  console.log('PASS: designer/plan races, checked first autosave race and preserved progress/link');
+  // Exercise the actual validated release wrapper and grant over the same
+  // real save chain. All identities and records here are disposable fixtures.
+  await setup.query(migration('126_planner_publish_validation'));
+  await setup.query(migration('244_planner_followup_lab_math_publish_1405'));
+  await setup.query(migration('249_planner_enable_reviewed_publication'));
+  assert.equal((await setup.query("select has_function_privilege('authenticated','public.planner_publish_working_draft(uuid,date,text)','execute') allowed")).rows[0].allowed,true);
+  assert.equal((await setup.query("select has_function_privilege('anon','public.planner_publish_working_draft(uuid,date,text)','execute') allowed")).rows[0].allowed,false);
+  assert.equal((await setup.query("select has_function_privilege('authenticated','private.planner_publish_working_draft_unvalidated(uuid,date,text)','execute') allowed")).rows[0].allowed,false);
+  const releaseStudent=randomUUID(),stranger=randomUUID();
+  await setup.query("insert into public.profiles values($1,'student','active',10,'experimental_sciences'),($2,'counselor','active',null,null)",[releaseStudent,stranger]);
+  await setup.query("insert into public.counselor_profiles values($1,'approved')",[stranger]);
+  await setup.query('insert into public.counselor_students values($1,$2)',[counselor,releaseStudent]);
+  const releaseSnapshot={...snapshot,title:'نسخه جدید',items:[{...snapshot.items[0],subject:'زیست‌شناسی ۱',examYear:null}],extras:{week:{goal:'هدف'},items:[{topics:[{title:'گفتار یک',pageStart:5,pageEnd:6}]}]}};
+  await b.query('select public.planner_save_working_draft_checked($1,$2,null,$3::jsonb,null,null)',[releaseStudent,week,JSON.stringify(releaseSnapshot)]);
+  await c.query("select set_config('request.jwt.claim.sub',$1,false)",[stranger]);
+  await assert.rejects(c.query('select public.planner_publish_working_draft($1,$2,$3)',[releaseStudent,week,'1']),/Student not available/);
+  await assert.rejects(b.query('select public.planner_publish_working_draft($1,$2,$3)',[releaseStudent,week,'2']),/Draft has changed/);
+  const published=(await b.query('select public.planner_publish_working_draft($1,$2,$3) id',[releaseStudent,week,'1'])).rows[0].id;
+  assert.ok(published);
+  assert.equal((await b.query('select public.planner_get_working_draft($1,$2) x',[releaseStudent,week])).rows[0].x,null);
+  const item=(await setup.query('select i.id,e.data from public.weekly_plan_items i join private.planner_item_extras e on e.item_id=i.id where i.plan_id=$1',[published])).rows[0];
+  assert.equal(item.data.topics[0].title,'گفتار یک');
+  assert.equal(item.data.topics[0].pageStart,5);
+  // Failed validation must leave both the published plan and the draft intact.
+  const version=(await setup.query("select to_jsonb(updated_at)#>>'{}' version from public.weekly_plans where id=$1",[published])).rows[0].version;
+  const invalid={...releaseSnapshot,title:'نامعتبر',items:[{...releaseSnapshot.items[0],durationMinutes:1}]};
+  await b.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,null,$5)',[releaseStudent,week,published,JSON.stringify(invalid),version]);
+  await assert.rejects(b.query('select public.planner_publish_working_draft($1,$2,$3)',[releaseStudent,week,'1']),/Invalid planner activity/);
+  assert.equal((await b.query('select public.planner_get_working_draft($1,$2) x',[releaseStudent,week])).rows[0].x.snapshot.title,'نامعتبر');
+  assert.equal((await setup.query('select title from public.weekly_plans where id=$1',[published])).rows[0].title,'نسخه جدید');
+  await b.query('select public.planner_discard_working_draft($1,$2,$3)',[releaseStudent,week,'1']);
+  const checked=randomUUID();
+  await setup.query("insert into public.weekly_plan_items(id,plan_id,day_of_week,duration_minutes,subject,chapter,activity_type,details,sort_order,source_grade,preparation_track) values($1,$2,0,60,'زیست‌شناسی ۱','فصل یک','lesson',null,0,10,'konkur')",[checked,published]);
+  await setup.query('insert into public.weekly_plan_item_completions values($1,$2,now(),now(),null)',[checked,releaseStudent]);
+  const latestVersion=(await setup.query("select to_jsonb(updated_at)#>>'{}' version from public.weekly_plans where id=$1",[published])).rows[0].version;
+  const checkedEdit={...releaseSnapshot,items:[{...releaseSnapshot.items[0],id:checked,sourceItemId:checked,dayOfWeek:0,details:'تغییر غیرمجاز'},releaseSnapshot.items[0]],extras:{week:{},items:[null,releaseSnapshot.extras.items[0]]}};
+  await b.query('select public.planner_save_working_draft_checked($1,$2,$3,$4::jsonb,null,$5)',[releaseStudent,week,published,JSON.stringify(checkedEdit),latestVersion]);
+  await assert.rejects(b.query('select public.planner_publish_working_draft($1,$2,$3)',[releaseStudent,week,'1']),/Completed plan activity/);
+  assert.equal((await setup.query('select details from public.weekly_plan_items where id=$1',[checked])).rows[0].details,null);
+  assert.equal((await setup.query('select count(*)::int n from public.weekly_plan_item_completions where item_id=$1',[checked])).rows[0].n,1);
+  assert.equal((await b.query('select public.planner_get_working_draft($1,$2) x',[releaseStudent,week])).rows[0].x.revision,'1');
+  console.log('PASS: designer/plan races, validated released publication, access guards and preserved progress/link');
  } finally {for(const c of clients)await c.end().catch(()=>{});if(started)await db.stop().catch(()=>{});fs.rmSync(dir,{recursive:true,force:true})}
 })().catch(error=>{console.error(error);process.exitCode=1});
