@@ -5,11 +5,11 @@ import { curriculumBooks, type Grade, type PreparationTrack } from '@/lib/planni
 import { PlannerBankChapterInput } from '@/components/dashboard/planner-bank-chapter-input';
 import { studyFieldLabels, type StudyField } from '@/lib/study-catalog';
 import styles from './planner-week-templates.module.css';
-type Topic={id:string;revision:string;title:string;pageStart:number|null;pageEnd:number|null;order:number};
+type Topic={id:string;revision:string;title:string;pageStart:number|null;pageEnd:number|null;order:number;hiddenFromSelection:boolean};
 const fields:StudyField[]=['mathematics','experimental_sciences','humanities','arts','foreign_languages'];
 function parse(value:unknown):Topic[]{
  if(!Array.isArray(value))throw Error('Invalid topics');
- return value.map(x=>{if(!x||typeof x!=='object'||typeof x.id!=='string'||typeof x.revision!=='string'||!/^[1-9][0-9]*$/.test(x.revision)||typeof x.title!=='string'||!Number.isInteger(x.order)||!(x.pageStart===null||Number.isInteger(x.pageStart))||!(x.pageEnd===null||Number.isInteger(x.pageEnd)))throw Error('Invalid topic');return {id:x.id,revision:x.revision,title:x.title,pageStart:x.pageStart,pageEnd:x.pageEnd,order:x.order}});
+ return value.map(x=>{if(!x||typeof x!=='object'||typeof x.id!=='string'||typeof x.revision!=='string'||!/^[1-9][0-9]*$/.test(x.revision)||typeof x.title!=='string'||!Number.isInteger(x.order)||!(x.pageStart===null||Number.isInteger(x.pageStart))||!(x.pageEnd===null||Number.isInteger(x.pageEnd))||(x.hiddenFromSelection!==undefined&&typeof x.hiddenFromSelection!=='boolean'))throw Error('Invalid topic');return {id:x.id,revision:x.revision,title:x.title,pageStart:x.pageStart,pageEnd:x.pageEnd,order:x.order,hiddenFromSelection:x.hiddenFromSelection===true}});
 }
 export function PlannerTopicBankManager(){
  const [field,setField]=useState<StudyField>('experimental_sciences'),[grade,setGrade]=useState<Grade>(12),[track,setTrack]=useState<PreparationTrack>('konkur'),[subject,setSubject]=useState(''),[chapter,setChapter]=useState('');
@@ -17,9 +17,9 @@ export function PlannerTopicBankManager(){
  const [editing,setEditing]=useState<Topic|null>(null),[title,setTitle]=useState(''),[start,setStart]=useState(''),[end,setEnd]=useState(''),[position,setPosition]=useState('0');
  const books=curriculumBooks(grade===9?null:field,grade,track),chapters=books.find(x=>x.subject===subject)?.chapters??[];
  const load=useCallback(async()=>{
-  if(!subject||!chapter){setTopics(null);return;}
-  setLoading(true);setError('');try{const {data,error}=await createClient().rpc('planner_list_topics',{target_edition:'1405',target_field:grade===9?'all':field,target_grade:String(grade),target_track:track,target_subject:subject,target_chapter:chapter});if(error)throw error;setTopics(parse(data));}
-  catch{setTopics(null);setError('دریافت بانک مباحث انجام نشد.');}finally{setLoading(false)}
+  if(!subject||!chapter){setTopics(null);return false;}
+  setLoading(true);setError('');try{const {data,error}=await createClient().rpc('planner_list_topics',{target_edition:'1405',target_field:grade===9?'all':field,target_grade:String(grade),target_track:track,target_subject:subject,target_chapter:chapter});if(error)throw error;setTopics(parse(data));return true;}
+  catch{setTopics(null);setError('دریافت بانک مباحث انجام نشد.');return false;}finally{setLoading(false)}
  },[field,grade,track,subject,chapter]);
  useEffect(()=>{let cancelled=false;if(!subject||!chapter){setTopics(null);return;}
   setTopics(null);setError('');setLoading(true);
@@ -37,6 +37,9 @@ export function PlannerTopicBankManager(){
  };
  const remove=async(topic:Topic)=>{if(loading||!window.confirm(`مبحث «${topic.title}» از بانک حذف شود؟ برنامه‌های قبلی حذف نمی‌شوند.`))return;setLoading(true);setError('');
   try{const {error}=await createClient().rpc('planner_delete_topic',{target_id:topic.id,expected_revision:topic.revision});if(error)throw error;await load();setNotice('مبحث از بانک حذف شد.');}catch{setError('حذف انجام نشد؛ فهرست را تازه کن.')}finally{setLoading(false)}};
+ const restore=async(topic:Topic)=>{if(loading||editing)return;setLoading(true);setError('');setNotice('');
+  try{const {error}=await createClient().rpc('planner_restore_hidden_topic',{target_id:topic.id,expected_revision:topic.revision});if(error)throw error;if(await load())setNotice('مبحث دوباره در انتخابگر نمایش داده می‌شود.');}
+  catch{setError('نمایش دوباره انجام نشد؛ ممکن است مبحث تغییر کرده باشد. فهرست را تازه کن.')}finally{setLoading(false)}};
  return <section className={`portal-card ${styles.wrap}`}>
   <p className={styles.intro}>فقط اطلاعاتی را وارد کن که برای چاپ ۱۴۰۵ راستی‌آزمایی شده‌اند؛ صفحه‌های نامعلوم را خالی بگذار.</p>
   <div className={styles.form}>
@@ -55,6 +58,6 @@ export function PlannerTopicBankManager(){
    <button type="button" className={styles.button} disabled={loading} onClick={()=>void load()}>تازه‌سازی</button>
   </div>
   {topics?.length===0&&<p className={styles.intro}>برای این فصل هنوز مبحثی ثبت نشده است.</p>}
-  <div className={styles.list}>{topics?.map(topic=><article className={styles.card} key={topic.id}><div className={styles.cardHeader}><span className={styles.title}>{topic.title} {topic.pageStart!==null?`· صفحهٔ ${topic.pageStart.toLocaleString('fa-IR')} تا ${topic.pageEnd?.toLocaleString('fa-IR')}`:''}</span><div className={styles.actions}><button type="button" className={styles.button} disabled={loading} onClick={()=>{setEditing(topic);setTitle(topic.title);setStart(topic.pageStart?.toString()??'');setEnd(topic.pageEnd?.toString()??'');setPosition(String(topic.order))}}>ویرایش</button><button type="button" className={styles.button} disabled={loading} onClick={()=>void remove(topic)}>حذف</button></div></div></article>)}</div></>}
+  <div className={styles.list}>{topics?.map(topic=><article className={styles.card} key={topic.id}><div className={styles.cardHeader}><span className={styles.title}>{topic.title} {topic.pageStart!==null?`· صفحهٔ ${topic.pageStart.toLocaleString('fa-IR')} تا ${topic.pageEnd?.toLocaleString('fa-IR')}`:''}{topic.hiddenFromSelection&&' · پنهان از انتخابگر'}</span><div className={styles.actions}>{topic.hiddenFromSelection&&<button type="button" className={styles.button} disabled={loading||editing!==null} onClick={()=>void restore(topic)}>نمایش دوباره</button>}<button type="button" className={styles.button} disabled={loading} onClick={()=>{setEditing(topic);setTitle(topic.title);setStart(topic.pageStart?.toString()??'');setEnd(topic.pageEnd?.toString()??'');setPosition(String(topic.order))}}>ویرایش</button><button type="button" className={styles.button} disabled={loading} onClick={()=>void remove(topic)}>حذف</button></div></div></article>)}</div></>}
  </section>;
 }

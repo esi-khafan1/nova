@@ -17,8 +17,8 @@ create table private.planner_seed_installations(seed_key text primary key);
 create table public.profiles(id uuid primary key);create table public.weekly_plans(id uuid primary key);
 -- Minimal FK targets for 118 (drafts table references profiles/weekly_plans).
 create table published_snapshot(content jsonb);insert into published_snapshot values ('{"plan":"p1","ticks":[true,false],"exam":"e1","topics":[{"title":"old","pageStart":12}]}');`;
-// All migration files 128-247 present on disk, in numeric order.
-const ALL=fs.readdirSync('supabase/migrations').filter(f=>{const n=parseInt(f.split('_')[0],10);return n>=128&&n<=247}).sort((a,b)=>parseInt(a.split('_')[0],10)-parseInt(b.split('_')[0],10));
+// All migration files 128-248 present on disk, in numeric order.
+const ALL=fs.readdirSync('supabase/migrations').filter(f=>{const n=parseInt(f.split('_')[0],10);return n>=128&&n<=248}).sort((a,b)=>parseInt(a.split('_')[0],10)-parseInt(b.split('_')[0],10));
 // Audit-relevant chain: 128 + the union of the dependency migrations of audit
 // batches 1-8 + the eight audit migrations, in numeric order.
 const AUDIT_CHAIN=['118_planner_private_drafts','119_planner_atomic_publish','126_planner_publish_validation','128_planner_topic_bank','131_planner_biology12_1405_topics','132_planner_verified_topics','133_planner_topic_chapters','134_planner_more_textbook_topics','135_planner_science_humanities_topics','136_planner_physics_writing_topics','137_planner_humanities_school_topics','138_planner_remaining_topics','139_planner_science9_topics','141_planner_humanities_topics','142_planner_economics_topics','143_planner_sociology12_topics','144_planner_sociology11_topics','145_planner_philosophy12_topics','147_planner_arabic10_topics','148_planner_arabic_geography_topics','149_planner_arabic12_topics','150_planner_history12_topics','151_planner_grade9_topics','153_planner_religion12_topics','154_planner_shared_school_topics','155_planner_shared_school_detail','156_planner_shared_school_more_details','161_planner_three_1405_books','163_planner_religion12_1405_pages','167_planner_english9_1405_pages','169_planner_english_1405_details','172_planner_writing_1405_pages','173_planner_environment_1405_pages','174_planner_health_1405_pages','175_planner_logic_1405_pages','177_planner_media_1405_pages','178_planner_geography10_1405_pages','180_planner_geography11_12_independent_1405','181_planner_philosophy11_12_1405_pages','182_planner_psychology11_1405_pages','183_planner_legacy_exact_1405_pages','184_planner_philosophy_psychology_legacy_1405_pages','187_planner_chemistry_1405_pages','188_planner_arabic12_1405_pages','189_planner_arabic11_1405_pages','190_planner_persian11_12_1405_pages','191_planner_arabic10_1405_pages','192_planner_topic_super_admin','193_planner_biology_1405_pages','194_planner_physics_1405_pages','195_planner_math_geometry_1405','196_planner_physics_finer_1405','197_planner_economics_1405_pages','198_planner_society_statistics_1405','199_planner_calculus_discrete_1405','200_planner_literary_studies_1405','201_planner_logic_1405','202_planner_math9_1405','203_planner_geometry2_1405','204_planner_sociology_1405','205_planner_history12_1405','206_planner_labs_1405','207_planner_defense9_1405','208_planner_messages9_1405','209_planner_religion10_1405','210_planner_persian10_1405','211_planner_science9_1405','212_planner_religion12_humanities_1405','213_planner_religion11_humanities_1405','214_planner_work_technology9_1405','215_planner_philosophy11_finer_1405','216_planner_philosophy12_finer_1405','217_planner_psychology11_finer_1405','218_planner_family12_versions_1405','219_planner_culture_art9_1405','220_planner_writing9_1405','221_planner_quran9_1405','222_planner_arabic9_1405','223_planner_workbook9_audit_1405','224_planner_persian9_1405','225_planner_workbook9_subparts_1405','226_planner_grade9_catalog_1405','227_planner_vision_exercises_1405','228_planner_writing_finer_1405','229_planner_geography_activities_1405','230_planner_geography_skills_1405','231_planner_audit_batch1_1405','232_planner_audit_batch2_1405','233_planner_audit_batch3_1405','234_planner_audit_batch4_1405','235_planner_audit_batch5_1405','236_planner_audit_batch6_1405','237_planner_audit_batch7_1405','238_planner_audit_batch8_1405'];
@@ -48,9 +48,9 @@ const EXPECTED_MARKERS=AUDIT.map((_,i)=>`audit-batch${i+1}-1405-v23${i+1}`);
 const snap=async db=>(await db.query('select jsonb_agg(to_jsonb(t) order by id) v from private.planner_topic_bank t')).rows[0].v||[];
 const count=async(db,q,args=[])=>(await db.query(q,args)).rows[0].c;
 (async()=>{
- // --- Phase 1: full chain 128-247, recording (never silently skipping) failures. ---
- assert.equal(ALL.length,120,'migrations 128-247 must be exactly 120 files on disk');
- assert.deepEqual(ALL.map(f=>parseInt(f.split('_')[0],10)),Array.from({length:120},(_,i)=>128+i),'migration numbers 128-247 must be contiguous');
+ // --- Phase 1: full chain 128-248, recording (never silently skipping) failures. ---
+ assert.equal(ALL.length,121,'migrations 128-248 must be exactly 121 files on disk');
+ assert.deepEqual(ALL.map(f=>parseInt(f.split('_')[0],10)),Array.from({length:121},(_,i)=>128+i),'migration numbers 128-248 must be contiguous');
  const chainDb=new PGlite(),failures=[];
  try{
   await chainDb.exec(STUBS);
@@ -97,9 +97,9 @@ const count=async(db,q,args=[])=>(await db.query(q,args)).rows[0].c;
    assert.deepEqual(fullFuMarkers,[...EXPECTED_FOLLOWUP_MARKERS,...EXPECTED_PHASE3_MARKERS].sort(),'full-chain follow-up install markers');
   }
  }finally{await chainDb.close();}
- if(failures.length===0)console.log('FULL CHAIN 128-247: all 120 migrations applied cleanly in PGlite (no skipped migration).');
+ if(failures.length===0)console.log('FULL CHAIN 128-248: all 121 migrations applied cleanly in PGlite (no skipped migration).');
  else{
-  console.log(`FULL CHAIN 128-247: INCOMPLETE — ${failures.length} migration(s) could not apply in PGlite (recorded, not skipped silently):`);
+  console.log(`FULL CHAIN 128-248: INCOMPLETE — ${failures.length} migration(s) could not apply in PGlite (recorded, not skipped silently):`);
   for(const f of failures)console.log(`  SKIPPED ${f.migration}: ${f.error}`);
   console.log('Continuing with the maximal chain that does run; the audit-relevant chain below is asserted cleanly.');
  }
@@ -234,6 +234,6 @@ const count=async(db,q,args=[])=>(await db.query(q,args)).rows[0].c;
   for(const n of [...AUDIT,...FOLLOWUP,...PHASE3])await db.exec(sql(n));
   assert.deepEqual(await snap(db),current,'re-run after edit/delete: edit intact, deleted row not resurrected');
   assert.deepEqual((await db.query('select content from published_snapshot')).rows[0].content,{plan:'p1',ticks:[true,false],exam:'e1',topics:[{title:'old',pageStart:12}]},'simulated published_snapshot unchanged');
-  console.log(`PASS: Full-chain audit 1405: 120 migrations 128-247 applied in PGlite (${failures.length} skipped); audit chain ${AUDIT_CHAIN.length} migrations; 1411 new rows (17+1+52+112+203+34+224+23+21+90+0+18+186+0+0+0+430), 77 pattern-B page-fills in the audit chain (8+65+4; 80 incl. full-chain phase-3 246), 13 markers, 18 page-less worksheet rows by design, rerun/edit/delete/snapshot all hold`);
+  console.log(`PASS: Full-chain audit 1405: 121 migrations 128-248 applied in PGlite (${failures.length} skipped); audit chain ${AUDIT_CHAIN.length} migrations; 1411 new rows (17+1+52+112+203+34+224+23+21+90+0+18+186+0+0+0+430), 77 pattern-B page-fills in the audit chain (8+65+4; 80 incl. full-chain phase-3 246), 13 markers, 18 page-less worksheet rows by design, rerun/edit/delete/snapshot all hold`);
  }finally{await db.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
