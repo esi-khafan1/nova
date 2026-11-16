@@ -25,7 +25,7 @@ export function schoolBooks(field:StudyField|null,grade:9|10|11|12):StudyBook[]{
  const specialist=studyCatalog[field][grade]??[];
  const shared=sharedSchoolSubjects(field,grade);
  const commonExtras=field==="humanities"?[]:grade===11?["تاریخ معاصر ایران",...(field==="mathematics"?["زمین‌شناسی"]:[])]:grade===12?["علوم اجتماعی"]:[];
- const labExtras=field==="experimental_sciences"?(grade===10?["آزمایشگاه علوم تجربی ۱"]:grade===11?["آزمایشگاه علوم تجربی ۲"]:[]):[];
+ const labExtras=["experimental_sciences","mathematics"].includes(field)?(grade===10?["آزمایشگاه علوم تجربی ۱"]:grade===11?["آزمایشگاه علوم تجربی ۲"]:[]):[];
  const extras=[...commonExtras,...labExtras];
  return [...new Set([...specialist.map(book=>book.subject),...shared,...extras])].map(subject=>({subject,chapters:specialist.find(book=>book.subject===subject)?.chapters??[]}));
 }
