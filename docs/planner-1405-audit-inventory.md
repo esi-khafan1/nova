@@ -5,8 +5,8 @@
 ## نتیجه و روش شمارش
 
 - فایل‌های موجود در پوشه: **۷۹**؛ همه PDF و نام‌هایشان یکتا هستند.
-- تعداد فایل‌های دارای گواهی کامل مطابق معیار درخواست (تطبیق همهٔ درس‌ها، ریزمباحث و فعالیت‌های لازم با متن و صفحات چاپی و تست عملکرد/حفاظت برای همهٔ مسیرهای مربوط): **۰ فایل دارای گواهی قابل اتکا در مستندات موجود**. این عدد به معنی اثبات نادرستی یا ناقص‌بودن تک‌تک ۷۹ کتاب نیست؛ یعنی هیچ‌کدام با شواهد موجود اجازهٔ بستن پرونده ندارند.
-- در نتیجه **۷۹ فایل برای ممیزی نهایی و هر اصلاح لازم در صف هستند**؛ تعداد فایل‌هایی که واقعاً نیاز به تغییر داده دارند و تعداد نقایصشان هنوز معلوم نیست.
+- تعداد فایل‌های دارای گواهی کامل مطابق معیار درخواست (تطبیق همهٔ درس‌ها، ریزمباحث و فعالیت‌های لازم با متن و صفحات چاپی و تست عملکرد/حفاظت برای همهٔ مسیرهای مربوط): **۷۵ فایل از ۷۹ کامل (COMPLETE)** و **۴ فایل ناقص (INCOMPLETE)** با دلیل ثبت‌شده در جدول زیر. ممیزی هر ۸ نوبت انجام و ثبت شده است؛ شواهد هر نوبت در `docs/planner-1405-audit/batch-N-evidence.md` و اصلاحات داده در مهاجرت‌های ۲۳۱ تا ۲۳۸ آمده است.
+- در نتیجه **۴ فایل ناقص باقی مانده‌اند** (شماره‌های ۳۶، ۴۰، ۴۴ و ۵۰) که دلیل هر یک در جدول زیر آمده است؛ ۷۵ فایل دیگر پرونده‌شان با شواهد کامل بسته شده است.
 - حداقل برنامه‌ریزی با هدف ۱۰ فایل به‌طور کامل در هر نوبت: **۸ نوبت** (۷×۱۰ و نوبت آخر ۹). این فقط تقسیم تعداد صف است، نه وعده یا پیش‌بینی زمانی: تا ثبت خروجی کامل یک نوبت، ظرفیت واقعی ثابت نشده است. امکانات برنامه‌ریز، کتاب‌های خارج از این ۷۹ و بررسی production جدا هستند.
 
 ستون مهاجرت‌ها راهنمای محل داده‌های مرتبط در مخزن است، نه گواهی پوشش کامل یا اثبات انطباق نسخهٔ PDF، صفحات، تمام مسیرها، اعمال production یا حفظ همهٔ ویرایش‌ها در تمام seedهای قبلی. منابع و محدودیت‌های تفصیلی در `docs/planner-topic-sources.md` آمده است. برخی آزمون‌های قبلی صرفاً بخشی از متن یا ابتدا/انتهای بازه‌ها را می‌سنجند؛ از آنها مدرک پایان کامل استنباط نمی‌شود. هر سطر فقط با ثبت شواهد جداگانه از محدوده، مقایسهٔ مستقل کتاب، صفحات و تست‌ها می‌تواند به حالت تأییدشده تغییر کند.
@@ -15,85 +15,85 @@
 
 | شماره | PDF ارسالی | مهاجرت‌های مرتبط (شماره) | وضعیت نسبت به معیار کامل |
 |---:|---|---|---|
-| 1 | `amadegi-defai-9-915-1405.pdf` | 207 | نیازمند ممیزی نهایی |
-| 2 | `amar-ehtemal-11-111215-1405.pdf` | 198 | نیازمند ممیزی نهایی |
-| 3 | `amoozesh-quran-9-901-1405.pdf` | 151,221 | نیازمند ممیزی نهایی |
-| 4 | `arabi-1-10-110206-riazi-1405.pdf` | 191 | نیازمند ممیزی نهایی |
-| 5 | `arabi-12-112206-1405.pdf` | 188 | نیازمند ممیزی نهایی |
-| 6 | `arabi-12-112207-1405.pdf` | 188 | نیازمند ممیزی نهایی |
-| 7 | `arabi-2-11-111206-1405.pdf` | 189 | نیازمند ممیزی نهایی |
-| 8 | `arabi-9-909-1405.pdf` | 151,222 | نیازمند ممیزی نهایی |
-| 9 | `arabi-ekhtesasi-2-11-111207-1405.pdf` | 189 | نیازمند ممیزی نهایی |
-| 10 | `arabi-zaban-quran-10-110207-1405.pdf` | 191 | نیازمند ممیزی نهایی |
-| 11 | `azmayeshgah-1-10-110217-1405.pdf` | 206 | نیازمند ممیزی نهایی |
-| 12 | `azmayeshgah-2-11-111217-1405.pdf` | 206 | نیازمند ممیزی نهایی |
-| 13 | `dini-1-10-110204-riazi-1405.pdf` | 209 | نیازمند ممیزی نهایی |
-| 14 | `dini-1-10-110205-ensani-1405.pdf` | 209 | نیازمند ممیزی نهایی |
-| 15 | `dini-12-112205-1405.pdf` | 212 | نیازمند ممیزی نهایی |
-| 16 | `dini-2-ensani-11-111205-1405-small.pdf` | 213 | نیازمند ممیزی نهایی |
-| 17 | `eghtesad-10-110221-1405.pdf` | 197 | نیازمند ممیزی نهایی |
-| 18 | `english-12-112230-1405.pdf` | 136,169,227 | نیازمند ممیزی نهایی |
-| 19 | `ensan-mohit-11-111268-1405.pdf` | 173 | نیازمند ممیزی نهایی |
-| 20 | `falsafe-1-11-111226-1405.pdf` | 181,215 | نیازمند ممیزی نهایی |
-| 21 | `falsafe-12-112226-1405.pdf` | 181,216 | نیازمند ممیزی نهایی |
-| 22 | `farhang-va-honar-9-908-1405-small.pdf` | 219 | نیازمند ممیزی نهایی |
-| 23 | `farsi-1-10-110201-1405-small.pdf` | 210 | نیازمند ممیزی نهایی |
-| 24 | `farsi-12-112201-1405.pdf` | 190 | نیازمند ممیزی نهایی |
-| 25 | `farsi-2-11-111201-1405.pdf` | 190 | نیازمند ممیزی نهایی |
-| 26 | `farsi-9-903-1405.pdf` | 224 | نیازمند ممیزی نهایی |
-| 27 | `fizik-1-10-110209-riazi-1405.pdf` | 194,196 | نیازمند ممیزی نهایی |
-| 28 | `fizik-1-10-110214-tajrobi-1405.pdf` | 194,196 | نیازمند ممیزی نهایی |
-| 29 | `fizik-12-112209-1405-riazi.pdf` | 194,196 | نیازمند ممیزی نهایی |
-| 30 | `fizik-12-112244-1405-tajrobi.pdf` | 194,196 | نیازمند ممیزی نهایی |
-| 31 | `fizik-2-riazi-11-111209-1405.pdf` | 194,196 | نیازمند ممیزی نهایی |
-| 32 | `fizik-2-tajrobi-11-111244-1405.pdf` | 194,196 | نیازمند ممیزی نهایی |
-| 33 | `gaseste-12-112215-1405.pdf` | 199 | نیازمند ممیزی نهایی |
-| 34 | `hendese-1-10-110213-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 35 | `hendese-12-112213-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 36 | `hendese-2-11-111213-1405.pdf` | 203 | نیازمند ممیزی نهایی |
-| 37 | `hesabaan-1-11-111214-1405.pdf` | 199 | نیازمند ممیزی نهایی |
-| 38 | `hesaban-12-112214-1405.pdf` | 199 | نیازمند ممیزی نهایی |
-| 39 | `jame-shenasi-12-112222-1405.pdf` | 204 | نیازمند ممیزی نهایی |
-| 40 | `jamee-2-11-111222-1405.pdf` | 204 | نیازمند ممیزی نهایی |
-| 41 | `jamee-shenasi-10-110220-1405.pdf` | 198 | نیازمند ممیزی نهایی |
-| 42 | `joghrafia-10-110218-1405.pdf` | 178,229 | نیازمند ممیزی نهایی |
-| 43 | `joghrafia-12-112218-1405.pdf` | 180,229,230 | نیازمند ممیزی نهایی |
-| 44 | `joghrafia-2-11-111218-1405.pdf` | 180,229,230 | نیازمند ممیزی نهایی |
-| 45 | `kar-va-fanavari-9-917-1405.pdf` | 214 | نیازمند ممیزی نهایی |
-| 46 | `ketab-kar-zaban-9-911-1405.pdf` | 169,223,225 | نیازمند ممیزی نهایی |
-| 47 | `manteq-10-110223-1405.pdf` | 175,201 | نیازمند ممیزی نهایی |
-| 48 | `modiriat-khanevade-12-112240-1405-dokhtaran.pdf` | 218 | نیازمند ممیزی نهایی |
-| 49 | `modiriat-khanevade-12-112245-1405-pesaran.pdf` | 218 | نیازمند ممیزی نهایی |
-| 50 | `motaleat-ejtemai-9-907-1405.pdf` | 151 | نیازمند ممیزی نهایی |
-| 51 | `negaresh-1-10-110202-1405.pdf` | 172,228 | نیازمند ممیزی نهایی |
-| 52 | `negaresh-12-112202-1405.pdf` | 172,228 | نیازمند ممیزی نهایی |
-| 53 | `negaresh-2-11-111202-1405.pdf` | 172,228 | نیازمند ممیزی نهایی |
-| 54 | `negaresh-9-904-1405-small.pdf` | 220 | نیازمند ممیزی نهایی |
-| 55 | `olom-fonun-2-11-111203-1405.pdf` | 200 | نیازمند ممیزی نهایی |
-| 56 | `olom-va-fonun-adabi-10-110203-1405.pdf` | 200 | نیازمند ممیزی نهایی |
-| 57 | `oloom-fonon-adabi-12-112203-1405.pdf` | 200 | نیازمند ممیزی نهایی |
-| 58 | `oloum-tajrobi-9-906-1405.pdf` | 211 | نیازمند ممیزی نهایی |
-| 59 | `payam-haye-aseman-9-902-1405.pdf` | 208 | نیازمند ممیزی نهایی |
-| 60 | `ravanshenasi-11-111224-1405.pdf` | 182,217 | نیازمند ممیزی نهایی |
-| 61 | `riazi-1-10-110211-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 62 | `riazi-2-tajrobi-11-111211-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 63 | `riazi-3-tajrobi-12-112211-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 64 | `riazi-9-905-1405.pdf` | 202 | نیازمند ممیزی نهایی |
-| 65 | `riazi-amar-12-112212-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 66 | `riazi-amar-2-11-111212-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 67 | `riazi-va-amar-10-110212-1405.pdf` | 195 | نیازمند ممیزی نهایی |
-| 68 | `salamat-va-behdasht-12-112268-1405.pdf` | 174 | نیازمند ممیزی نهایی |
-| 69 | `shimi-1-10-110210-1405.pdf` | 187 | نیازمند ممیزی نهایی |
-| 70 | `shimi-12-112210-1405.pdf` | 187 | نیازمند ممیزی نهایی |
-| 71 | `shimi-2-11-111210-1405.pdf` | 187 | نیازمند ممیزی نهایی |
-| 72 | `tafakor-10-110225-1405-small.pdf` | 177 | نیازمند ممیزی نهایی |
-| 73 | `tarikh-12-112219-1405.pdf` | 205 | نیازمند ممیزی نهایی |
-| 74 | `zaban-1-10-110230-1405.pdf` | 169,227 | نیازمند ممیزی نهایی |
-| 75 | `zaban-2-11-111230-1405.pdf` | 169,227 | نیازمند ممیزی نهایی |
-| 76 | `zaban-englisi-9-910-1405.pdf` | 167 | نیازمند ممیزی نهایی |
-| 77 | `zist-1-10-110216-1405.pdf` | 193 | نیازمند ممیزی نهایی |
-| 78 | `zist-12-112216-1405.pdf` | 193 | نیازمند ممیزی نهایی |
-| 79 | `zist-2-11-111216-1405.pdf` | 193 | نیازمند ممیزی نهایی |
+| 1 | `amadegi-defai-9-915-1405.pdf` | 207 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 2 | `amar-ehtemal-11-111215-1405.pdf` | 198 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 3 | `amoozesh-quran-9-901-1405.pdf` | 151,221 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 4 | `arabi-1-10-110206-riazi-1405.pdf` | 191 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 5 | `arabi-12-112206-1405.pdf` | 188 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 6 | `arabi-12-112207-1405.pdf` | 188 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 7 | `arabi-2-11-111206-1405.pdf` | 189 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 8 | `arabi-9-909-1405.pdf` | 151,222 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 9 | `arabi-ekhtesasi-2-11-111207-1405.pdf` | 189 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 10 | `arabi-zaban-quran-10-110207-1405.pdf` | 191 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-1-evidence.md`؛ مهاجرت 231) |
+| 11 | `azmayeshgah-1-10-110217-1405.pdf` | 206 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 12 | `azmayeshgah-2-11-111217-1405.pdf` | 206 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 13 | `dini-1-10-110204-riazi-1405.pdf` | 209 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 14 | `dini-1-10-110205-ensani-1405.pdf` | 209 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 15 | `dini-12-112205-1405.pdf` | 212 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 16 | `dini-2-ensani-11-111205-1405-small.pdf` | 213 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 17 | `eghtesad-10-110221-1405.pdf` | 197 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 18 | `english-12-112230-1405.pdf` | 136,169,227 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 19 | `ensan-mohit-11-111268-1405.pdf` | 173 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 20 | `falsafe-1-11-111226-1405.pdf` | 181,215 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-2-evidence.md`؛ مهاجرت 232) |
+| 21 | `falsafe-12-112226-1405.pdf` | 181,216 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 22 | `farhang-va-honar-9-908-1405-small.pdf` | 219 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 23 | `farsi-1-10-110201-1405-small.pdf` | 210 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 24 | `farsi-12-112201-1405.pdf` | 190 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 25 | `farsi-2-11-111201-1405.pdf` | 190 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 26 | `farsi-9-903-1405.pdf` | 224 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 27 | `fizik-1-10-110209-riazi-1405.pdf` | 194,196 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 28 | `fizik-1-10-110214-tajrobi-1405.pdf` | 194,196 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 29 | `fizik-12-112209-1405-riazi.pdf` | 194,196 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 30 | `fizik-12-112244-1405-tajrobi.pdf` | 194,196 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-3-evidence.md`؛ مهاجرت 233) |
+| 31 | `fizik-2-riazi-11-111209-1405.pdf` | 194,196 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 32 | `fizik-2-tajrobi-11-111244-1405.pdf` | 194,196 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 33 | `gaseste-12-112215-1405.pdf` | 199 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 34 | `hendese-1-10-110213-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 35 | `hendese-12-112213-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 36 | `hendese-2-11-111213-1405.pdf` | 203 | INCOMPLETE — «فصل ۴: تجسم فضایی» در PDF نیست (کتاب فقط ۳ فصل دارد)؛ محتوایی ساخته نشده؛ تست صفر ردیف بودن آن را اثبات می‌کند. (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 37 | `hesabaan-1-11-111214-1405.pdf` | 199 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 38 | `hesaban-12-112214-1405.pdf` | 199 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 39 | `jame-shenasi-12-112222-1405.pdf` | 204 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 40 | `jamee-2-11-111222-1405.pdf` | 204 | INCOMPLETE — دو ردیف v1 «انقلاب اسلامی در مقایسه با انقلاب‌های قرن بیستم» (درس ۱۵، هر دو مسیر) عمداً NULL مانده‌اند: متن مقایسه در درس ۱۴ است و ردیف با عنوان درست در درس ۱۴ وجود دارد. (شواهد: `docs/planner-1405-audit/batch-4-evidence.md`؛ مهاجرت 234) |
+| 41 | `jamee-shenasi-10-110220-1405.pdf` | 198 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 42 | `joghrafia-10-110218-1405.pdf` | 178,229 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 43 | `joghrafia-12-112218-1405.pdf` | 180,229,230 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 44 | `joghrafia-2-11-111218-1405.pdf` | 180,229,230 | INCOMPLETE — ردیف قدیمی درس ۱ «کانون و مرزهای ناحیه» اشتباه ثبت شده است (کتاب آن را در درس ۲، ص ۱۵–۱۷ می‌آموزد؛ ردیف درست در درس ۲ وجود دارد)؛ دست‌نخورده مانده و تکثیر نشده؛ نیازمند تصمیم محصول/مدیر است. (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 45 | `kar-va-fanavari-9-917-1405.pdf` | 214 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 46 | `ketab-kar-zaban-9-911-1405.pdf` | 169,223,225 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 47 | `manteq-10-110223-1405.pdf` | 175,201 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 48 | `modiriat-khanevade-12-112240-1405-dokhtaran.pdf` | 218 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 49 | `modiriat-khanevade-12-112245-1405-pesaran.pdf` | 218 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 50 | `motaleat-ejtemai-9-907-1405.pdf` | 151 | INCOMPLETE — هر ۲۴ درس و ریزمباحث پوشش داده شده‌اند، اما ۱۸ کاربرگه (صفحات PDF ۱۷۷–۱۹۸) شمارهٔ صفحهٔ چاپی ندارند، پس ردیف با بازهٔ صفحه نمی‌توان نوشت. (شواهد: `docs/planner-1405-audit/batch-5-evidence.md`؛ مهاجرت 235) |
+| 51 | `negaresh-1-10-110202-1405.pdf` | 172,228 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 52 | `negaresh-12-112202-1405.pdf` | 172,228 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 53 | `negaresh-2-11-111202-1405.pdf` | 172,228 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 54 | `negaresh-9-904-1405-small.pdf` | 220 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 55 | `olom-fonun-2-11-111203-1405.pdf` | 200 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 56 | `olom-va-fonun-adabi-10-110203-1405.pdf` | 200 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 57 | `oloom-fonon-adabi-12-112203-1405.pdf` | 200 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 58 | `oloum-tajrobi-9-906-1405.pdf` | 211 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 59 | `payam-haye-aseman-9-902-1405.pdf` | 208 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 60 | `ravanshenasi-11-111224-1405.pdf` | 182,217 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-6-evidence.md`؛ مهاجرت 236) |
+| 61 | `riazi-1-10-110211-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 62 | `riazi-2-tajrobi-11-111211-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 63 | `riazi-3-tajrobi-12-112211-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 64 | `riazi-9-905-1405.pdf` | 202 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 65 | `riazi-amar-12-112212-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 66 | `riazi-amar-2-11-111212-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 67 | `riazi-va-amar-10-110212-1405.pdf` | 195 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 68 | `salamat-va-behdasht-12-112268-1405.pdf` | 174 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 69 | `shimi-1-10-110210-1405.pdf` | 187 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 70 | `shimi-12-112210-1405.pdf` | 187 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-7-evidence.md`؛ مهاجرت 237) |
+| 71 | `shimi-2-11-111210-1405.pdf` | 187 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 72 | `tafakor-10-110225-1405-small.pdf` | 177 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 73 | `tarikh-12-112219-1405.pdf` | 205 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 74 | `zaban-1-10-110230-1405.pdf` | 169,227 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 75 | `zaban-2-11-111230-1405.pdf` | 169,227 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 76 | `zaban-englisi-9-910-1405.pdf` | 167 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 77 | `zist-1-10-110216-1405.pdf` | 193 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 78 | `zist-12-112216-1405.pdf` | 193 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
+| 79 | `zist-2-11-111216-1405.pdf` | 193 | COMPLETE (شواهد: `docs/planner-1405-audit/batch-8-evidence.md`؛ مهاجرت 238) |
 
 ## نمونهٔ علت باز ماندن پرونده
 
