@@ -446,7 +446,7 @@ export function WeeklyPlanBuilder({
                 if(!privateDrafts){change();return;}
                 void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});
               }}
-              disabled={privateDrafts && workingCopy.phase !== 'ready'}
+              disabled={privateDrafts && !['ready','error'].includes(workingCopy.phase)}
               required
             >
               {students.map((item) => (
@@ -469,7 +469,6 @@ export function WeeklyPlanBuilder({
           {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی و تغییرات ذخیره‌نشدهٔ این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
         </div>}
       </div>}
-      <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>
       <section className="portal-card plan-basics">
         <div className="portal-card-title">
           <div>
@@ -477,8 +476,9 @@ export function WeeklyPlanBuilder({
             <h2>برنامهٔ هفت‌روزه</h2>
           </div>
         </div>
-        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();const change=()=>{setWeekStart(start);loadPlan(student.student_id,start);};if(!privateDrafts){change();return;}void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
+        <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} disabled={privateDrafts && !['ready','error'].includes(workingCopy.phase)} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();const change=()=>{setWeekStart(start);loadPlan(student.student_id,start);};if(!privateDrafts){change();return;}void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
         <div className="plan-basics-grid">
+          <fieldset className="planner-working-fields" disabled={privateDrafts && !['ready','error'].includes(workingCopy.phase)}>
           <label>
             شروع برنامهٔ هفت‌روزه
             <PersianDatePicker
@@ -493,12 +493,14 @@ export function WeeklyPlanBuilder({
               }}
             />
           </label>
+          </fieldset>
           <label>
             عنوان برنامه
             <input
               name="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
+              disabled={privateDrafts && workingCopy.phase !== 'ready'}
               maxLength={120}
               required
             />
@@ -538,7 +540,8 @@ export function WeeklyPlanBuilder({
         )}
       </section>
 
-        {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
+        <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>
+      {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
       {privateDrafts && <section className="portal-card plan-basics">
         <div className="portal-card-title"><div><span>جزئیات هفته</span><h2>هدف و برنامهٔ روزانه</h2></div></div>
         <div className="plan-basics-grid">

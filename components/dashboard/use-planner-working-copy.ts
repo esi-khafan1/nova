@@ -15,6 +15,13 @@ type Value={title:string;notes:string;items:PlanItem[];routines:PlanRoutine[];we
 type Session=ReturnType<typeof createPlannerDraftSession<PlannerEditorSnapshot,string>>;
 type Props={enabled:boolean;context:PlannerDraftContext;counselorId:string;planStatus:'published'|'draft'|null;value:Value;onRestore:(value:Value,status:'published'|'draft'|null)=>void;onPublished:(id:string)=>void};
 const same=(a:PlannerDraftContext,b:PlannerDraftContext)=>a.studentId===b.studentId&&a.weekStart===b.weekStart&&a.planId===b.planId;
+// These operations are reads only. A stalled request must not leave the entire
+// editor permanently in its opening phase. Late responses cannot open a draft.
+async function withOpenTimeout<T>(operation:Promise<T>):Promise<T> {
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ try{return await Promise.race([operation,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('Planner read timed out')),15000);})]);}
+ finally{if(timer)clearTimeout(timer);}
+}
 function normalizeRoutines(routines:PlanRoutine[]|undefined):PlanRoutine[] {
  return Array.from({length:7},(_,dayOfWeek)=>{const r=routines?.find(x=>x.dayOfWeek===dayOfWeek);return {dayOfWeek,subject:r?.subject??'',details:r?.details??'',secondSubject:r?.secondSubject??'',secondDetails:r?.secondDetails??''};});
 }
@@ -41,7 +48,7 @@ export function usePlannerWorkingCopy(props:Props) {
     const client=createClient();
     const transport=createPlannerDraftTransport<PlannerEditorSnapshot>(client,value=>value as PlannerEditorSnapshot);
     stage='fresh';
-    const fresh=await loadFreshPlannerState(client,context,counselorId);
+    const fresh=await withOpenTimeout(loadFreshPlannerState(client,context,counselorId));
     if(cancelled)return;
     const current=latest.current.value;
     const grid=fresh.plan?plannerGridFromPlan(fresh.plan,fresh.completed,fresh.extras,fresh.today):null;
@@ -51,7 +58,7 @@ export function usePlannerWorkingCopy(props:Props) {
     // open emits synchronously after load; use a dedicated transport wrapper to
     // capture the response without ever writing over a stored draft on failure.
     stage='draft';
-    const loaded=await transport.load(context);
+    const loaded=await withOpenTimeout(transport.load(context));
     if(cancelled)return;
     stage='restore';
     const restored=loaded?restorePlannerDraft({snapshot:loaded.snapshot,context,today:fresh.today,freshPlan:fresh.plan,freshPlanUpdatedAt:fresh.planUpdatedAt,basePlanUpdatedAt:loaded.basePlanUpdatedAt,completed:fresh.completed,publishedExtras:fresh.extras}):null;
@@ -75,7 +82,7 @@ export function usePlannerWorkingCopy(props:Props) {
     baseline.current=JSON.stringify(value);active.current=context;latest.current.onRestore(value,fresh.plan?.status??null);setPhase('ready');setStatus(loaded?'پیش‌نویس خصوصی بازیابی شد.':'آمادهٔ ذخیرهٔ خصوصی تغییرات');
    }catch{if(!cancelled){
     const reason={config:'تنظیمات اتصال مرورگر در دسترس نیست.',fresh:'دریافت یا بررسی اطلاعات به‌روز برنامه و حساب انجام نشد.',draft:'دریافت پیش‌نویس خصوصی انجام نشد.',restore:'بازکردن اطلاعات برنامه یا پیش‌نویس انجام نشد.'}[stage];
-    setPhase('error');setStatus('');setWarning(`دریافت اطلاعات یا پیش‌نویس انجام نشد. ${reason} برای حفاظت از اطلاعات ویرایش موقتاً غیرفعال است؛ هیچ تغییری منتشر نشده است.`);
+    setPhase('error');setStatus('');setWarning(`دریافت اطلاعات یا پیش‌نویس انجام نشد. ${reason} برای حفاظت از اطلاعات ویرایش موقتاً غیرفعال است؛ می‌توانی دوباره تلاش کنی یا دانش‌آموز و هفتهٔ دیگری انتخاب کنی. هیچ تغییری منتشر نشده است.`);
    }}
   })();
   return()=>{cancelled=true;draft?.dispose();if(session.current===draft)session.current=null;active.current=null;};
@@ -108,6 +115,10 @@ export function usePlannerWorkingCopy(props:Props) {
  },[props.enabled]);
  const beforeSwitch=useCallback(async()=>{
   if(!latest.current.enabled)return true;
+  // An open failure cannot contain new edits: all previous contexts were
+  // flushed before switching. Allow choosing another context without writing
+  // or deleting the failed context's private draft.
+  if(phaseRef.current==='error')return true;
   if(phase!=='ready'||phaseRef.current!=='ready'||!session.current)return false;
   phaseRef.current='switching';setPhase('switching');
   try{
