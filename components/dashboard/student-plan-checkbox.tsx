@@ -143,7 +143,7 @@ export function StudentPlanCheckbox({
               }
             }} />
         </label>}
-        <small className="student-progress-optional">{isTestActivity ? "مدت به شکل ساعت:دقیقه است. تعداد خالی یعنی هدف کامل؛ مدت خالی یعنی صفر." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
+        <small className="student-progress-optional">{isTestActivity ? "مدت به شکل ساعت:دقیقه است. تعداد خالی یعنی هدف کامل؛ مدت خالی یعنی زمان کامل برنامه." : "اختیاری؛ اگر خالی بماند، زمان برنامه کامل حساب می‌شود."}</small>
         {hasError && <small role="alert">{isTestActivity ? "تعداد تست را بین ۱ تا ۵۰۰۰ وارد کن یا خالی بگذار." : "مدت را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار."}</small>}
         {hasTestDurationError && <small role="alert">مدت تست را به شکل ساعت:دقیقه، بین 00:01 و 24:00 وارد کن یا خالی بگذار.</small>}
         {saveFailed && <small role="alert">ثبت انجام نشد؛ دوباره تلاش کن.</small>}

@@ -19,7 +19,8 @@ export function activityRatio(item:StudyItem, completion?:StudyCompletion) {
 }
 export function studiedMinutes(item:StudyItem, completion?:StudyCompletion){
  if(!completion)return 0;
- if(item.activity_type==='practice_tests') return completion.completed_minutes??0;
+ // A checked box with no entered time uses the planned duration as an
+ // inferred value; null remains distinct from a recorded measurement.
  return completion.completed_minutes??item.duration_minutes;
 }
 export function summarizeItems(items:StudyItem[], completions:Map<string,StudyCompletion>) {
