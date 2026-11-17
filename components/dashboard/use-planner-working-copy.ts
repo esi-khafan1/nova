@@ -26,6 +26,7 @@ export function usePlannerWorkingCopy(props:Props) {
  const [phase,setPhase]=useState<'opening'|'ready'|'error'|'switching'|'publishing'>(props.enabled?'opening':'ready');
  const phaseRef=useRef(phase);phaseRef.current=phase;
  const [status,setStatus]=useState(''),[warning,setWarning]=useState('');
+ const [openAttempt,setOpenAttempt]=useState(0);
  const contextKey=JSON.stringify(props.context);
  useEffect(()=>{
   if(!props.enabled)return;
@@ -34,10 +35,12 @@ export function usePlannerWorkingCopy(props:Props) {
   let cancelled=false;
   setPhase('opening');setStatus('در حال دریافت پیش‌نویس خصوصی...');setWarning('');active.current=null;
   let draft:Session|null=null;
+  let stage: 'config'|'fresh'|'draft'|'restore' = 'config';
   void (async()=>{
    try{
     const client=createClient();
     const transport=createPlannerDraftTransport<PlannerEditorSnapshot>(client,value=>value as PlannerEditorSnapshot);
+    stage='fresh';
     const fresh=await loadFreshPlannerState(client,context,counselorId);
     if(cancelled)return;
     const current=latest.current.value;
@@ -47,8 +50,10 @@ export function usePlannerWorkingCopy(props:Props) {
     let opened:Extract<PlannerDraftEvent<PlannerEditorSnapshot>,{type:'opened'}>|null=null;
     // open emits synchronously after load; use a dedicated transport wrapper to
     // capture the response without ever writing over a stored draft on failure.
+    stage='draft';
     const loaded=await transport.load(context);
     if(cancelled)return;
+    stage='restore';
     const restored=loaded?restorePlannerDraft({snapshot:loaded.snapshot,context,today:fresh.today,freshPlan:fresh.plan,freshPlanUpdatedAt:fresh.planUpdatedAt,basePlanUpdatedAt:loaded.basePlanUpdatedAt,completed:fresh.completed,publishedExtras:fresh.extras}):null;
     // Reuse the already-loaded value; a second network load could observe a
     // different revision. CAS still rejects concurrent changes after this read.
@@ -68,10 +73,13 @@ export function usePlannerWorkingCopy(props:Props) {
     const value:Value=restored?{title:restored.title,notes:restored.notes,items:builderItems(restored.grid),routines:restored.routines,weekExtra:restored.weekExtra}:{title:initialSnapshot.title,notes:initialSnapshot.notes,items:builderItems(initialSnapshot.editor.grid),routines:initialSnapshot.routines,weekExtra:initialSnapshot.editor.weekExtra};
     if(restored?.conflicts.length)setWarning('برنامه یا وضعیت فعالیت‌ها تغییر کرده است. پیش‌نویس حفظ شد؛ پیش از انتشار تعارض‌ها را بررسی کن.');
     baseline.current=JSON.stringify(value);active.current=context;latest.current.onRestore(value,fresh.plan?.status??null);setPhase('ready');setStatus(loaded?'پیش‌نویس خصوصی بازیابی شد.':'آمادهٔ ذخیرهٔ خصوصی تغییرات');
-   }catch{if(!cancelled){setPhase('error');setStatus('');setWarning('دریافت اطلاعات یا پیش‌نویس انجام نشد. صفحه را تازه‌سازی کن؛ هیچ تغییری منتشر نشده است.');}}
+   }catch{if(!cancelled){
+    const reason={config:'تنظیمات اتصال مرورگر در دسترس نیست.',fresh:'دریافت یا بررسی اطلاعات به‌روز برنامه و حساب انجام نشد.',draft:'دریافت پیش‌نویس خصوصی انجام نشد.',restore:'بازکردن اطلاعات برنامه یا پیش‌نویس انجام نشد.'}[stage];
+    setPhase('error');setStatus('');setWarning(`دریافت اطلاعات یا پیش‌نویس انجام نشد. ${reason} برای حفاظت از اطلاعات ویرایش موقتاً غیرفعال است؛ هیچ تغییری منتشر نشده است.`);
+   }}
   })();
   return()=>{cancelled=true;draft?.dispose();if(session.current===draft)session.current=null;active.current=null;};
- },[props.enabled,contextKey,props.counselorId]);
+ },[props.enabled,contextKey,props.counselorId,openAttempt]);
  useEffect(()=>{
   if(!props.enabled||phase!=='ready'||!active.current||!same(active.current,props.context)||!session.current)return;
   const signature=JSON.stringify(props.value);if(signature===baseline.current)return;
@@ -108,6 +116,10 @@ export function usePlannerWorkingCopy(props:Props) {
    if(!ok)setWarning('تغییرات ذخیره نشده‌اند؛ ابتدا مشکل ذخیره را برطرف کن.');return ok;
   }catch{setPhase('ready');setWarning('تغییرات ذخیره نشده‌اند؛ دوباره تلاش کن.');return false;}
  },[phase]);
+ const retryOpen=useCallback(()=>{
+  if(phaseRef.current!=='error')return;
+  phaseRef.current='opening';setPhase('opening');setOpenAttempt(attempt=>attempt+1);
+ },[]);
  const retry=useCallback(async()=>{if(session.current){setWarning('');await session.current.retry();}},[]);
  const discard=useCallback(async()=>{
   if(!session.current||phaseRef.current!=='ready')return;
@@ -123,7 +135,7 @@ export function usePlannerWorkingCopy(props:Props) {
   phaseRef.current='publishing';setPhase('publishing');setWarning('');const id=await session.current.publish();
   if(id){setStatus('برنامه منتشر شد.');latest.current.onPublished(id);}else setPhase('ready');
  },[phase]);
- return {phase,status,warning,beforeSwitch,retry,publish,discard};
+ return {phase,status,warning,beforeSwitch,retryOpen,retry,publish,discard};
 }
 function latestSnapshot(value:Value,context:PlannerDraftContext,status:'published'|'draft'|null):PlannerEditorSnapshot {
  return builderSnapshot({...value,weekStart:context.weekStart,today:tehranToday(),planStatus:status});

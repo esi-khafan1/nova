@@ -463,6 +463,7 @@ export function WeeklyPlanBuilder({
       {privateDrafts && <div className="portal-card" aria-live="polite">
         <strong>پیش‌نویس خصوصی</strong><p>{workingCopy.status}</p>
         {workingCopy.warning && <p role="alert">{workingCopy.warning}</p>}
+        {workingCopy.phase==='error' && <button type="button" className="button button-secondary" onClick={workingCopy.retryOpen}>تلاش دوباره برای دریافت پیش‌نویس</button>}
         {workingCopy.phase==='ready' && <div className="plan-publish-buttons">
           <button type="button" className="button button-secondary" onClick={()=>void workingCopy.retry()}>تلاش دوباره برای ذخیره</button>
           {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی و تغییرات ذخیره‌نشدهٔ این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
@@ -547,6 +548,9 @@ export function WeeklyPlanBuilder({
           <label>محدودیت استفاده از موبایل<input value={typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''} maxLength={100} onChange={e=>setWeekExtra(current=>({...current,mobileLimit:e.target.value}))} placeholder="مثلاً روزی یک ساعت"/></label>
         </div>
       </section>}
+      {privateDrafts && workingCopy.phase !== 'ready' && <div className="portal-alert error" role="status">
+        {workingCopy.phase === 'error' ? <>{workingCopy.warning} برای تلاش دوباره به بخش «پیش‌نویس خصوصی» در بالای صفحه برو.</> : 'ویرایش گرید تا پایان دریافت یا ذخیرهٔ پیش‌نویس موقتاً غیرفعال است.'}
+      </div>}
       <PlannerWeekGrid
         key={`${student.student_id}:${weekStart}:${planId}`}
         weekStart={weekStart}
@@ -565,6 +569,7 @@ export function WeeklyPlanBuilder({
       {privateDrafts && <button type="button" className="button button-secondary" disabled={!analysisReady || workingCopy.phase!=="ready"} onClick={()=>setShowDraftPrint(true)}>پیش‌نمایش و چاپ پیش‌نویس</button>}
       {analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
       <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} />
+      <div className="portal-card"><strong>جزئیات فعالیت‌ها و روتین‌ها</strong><p>این بخش ویرایشگر همان باکس‌های گرید است، نه برنامه‌ای جداگانه. برای رفتن به جزئیات، روی باکس گرید بزن.</p></div>
       <div className="weekly-days">
         {weekDays.map((_, dayIndex) => {
           const dayIsLocked = isLockedDay(dayIndex);

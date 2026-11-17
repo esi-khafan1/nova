@@ -159,7 +159,7 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
             </div> : <div className={styles.empty} key={`empty-${index}`} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}} aria-hidden="true"/>)}
             {Array.from({length:Math.max(0,5-day.length)},(_,index)=><div className={styles.empty} key={`placeholder-${index}`} aria-hidden="true"/>)}
           </div>
-          <button type="button" className={styles.add} disabled={lockedDays[dayIndex]} onClick={()=>onAdd(dayIndex)}>+ افزودن</button>
+          <button type="button" className={styles.add} disabled={lockedDays[dayIndex]} title={lockedDays[dayIndex] ? 'روز گذشته قابل تغییر نیست.' : undefined} onClick={()=>onAdd(dayIndex)}>+ افزودن</button>
         </section>;
       })}
     </div></div>
