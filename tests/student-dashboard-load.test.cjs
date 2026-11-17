@@ -64,6 +64,7 @@ const {PGlite}=require('@electric-sql/pglite');const assert=require('node:assert
  let pages=[],calls=[];const moduleStub={exports:{}};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/load-student-dashboard.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module:moduleStub,exports:moduleStub.exports,require(name){
   if(name==='@/lib/load-daily-notes')return {loadDailyNotes:async()=>[{day:'2026-11-04',note:'یک نکته'}]};
+  if(name==='@/lib/load-routine-progress')return {loadRoutineProgress:async()=>[{plan_id:'plan',slot:1}]};
   assert.equal(name,'@/lib/supabase/request-auth');return {getRequestClient:async()=>({rpc:async(name,args)=>{assert.equal(name,'student_dashboard_page');calls.push(args.page_offset);return pages.shift();}})};
  }});
  const load=moduleStub.exports.loadStudentDashboard;

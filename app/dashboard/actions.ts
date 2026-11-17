@@ -254,7 +254,7 @@ async function saveWeeklyPlanCore(fd: FormData) {
     target_routines: safeRoutines,
   });
 
-  if (error) planError(error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : error.code === "PZ002" ? "exam-identity" : "plan");
+  if (error) planError(error.code === "23P01" ? "overlap" : error.code === "PZ001" ? "protected" : error.code === "PZ002" ? "exam-identity" : error.code === "PZ003" ? "routine-protected" : "plan");
   revalidatePath("/dashboard/counselor");
   revalidatePath("/dashboard/counselor/plans");
   revalidatePath("/dashboard/student");
@@ -308,6 +308,14 @@ export async function togglePlanItemCompletion(
   // The checkbox updates its local report immediately. Avoid invalidating and
   // refetching the entire dashboard (plans, account and exams) for one tick.
   return { ok: true };
+}
+
+export async function toggleRoutineCompletion(planId:string, day:number, slot:number, subject:string, details:string, completed:boolean) {
+  const {supabase} = await requireProfile(["student"]);
+  if (!uuidPattern.test(planId) || !Number.isInteger(day) || day<0 || day>6 || (slot!==1 && slot!==2) ||
+      typeof subject!=='string' || subject.length>100 || typeof details!=='string' || details.length>500 || typeof completed!=='boolean') return {ok:false};
+  const {error}=await supabase.rpc('set_weekly_routine_progress',{target_plan_id:planId,target_day:day,target_slot:slot,target_subject:subject,target_details:details,target_completed:completed});
+  return {ok:!error};
 }
 
 export async function saveStudentDailyNote(day: string, note: string) {

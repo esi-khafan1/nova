@@ -156,3 +156,6 @@
     width: min(100%, 460px);
   }
 }
+
+/* Published routines are separate from timed study activities. */
+.sp-routines{display:grid;gap:12px;margin:24px 0}.sp-routines>h3{margin:0}.sp-routine-task{display:flex;justify-content:space-between;align-items:center;gap:16px}.sp-routine-task p{margin:6px 0;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}.sp-routine-task>div:first-child{min-width:0}.sp-routine-task .sp-readonly{margin:0;border:0;padding:0}@media(max-width:600px){.sp-routine-task{align-items:flex-start;flex-direction:column}}

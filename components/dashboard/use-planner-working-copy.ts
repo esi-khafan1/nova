@@ -73,7 +73,7 @@ export function usePlannerWorkingCopy(props:Props) {
       setStatus(event.state==='saved'?'پیش‌نویس خصوصی ذخیره شد.':event.state==='saving'?'در حال ذخیرهٔ پیش‌نویس...':event.state==='dirty'?'تغییرات در انتظار ذخیره است.':event.state==='error'?'ذخیرهٔ پیش‌نویس انجام نشد.':'');
       if(event.state==='error')setWarning('تغییرات هنوز در این صفحه هستند، اما ذخیره نشده‌اند. دوباره تلاش کن یا پس از بررسی، پیش‌نویس را حذف کن.');
      }
-     if(event.type==='error')setWarning(event.error instanceof Error?event.error.message:'عملیات انجام نشد؛ پیش‌نویس حفظ شده است.');
+     if(event.type==='error')setWarning(event.error && typeof event.error==='object' && 'code' in event.error && event.error.code==='PZ003' ? 'روتین انجام‌شده محافظت می‌شود و تغییر آن یا پنهان‌کردنش با برنامهٔ جدید ممکن نیست؛ پیش‌نویس حفظ شد.' : event.error instanceof Error?event.error.message:'عملیات انجام نشد؛ پیش‌نویس حفظ شده است.');
     }});
     draft=real;session.current=real;
     if(!(await real.open(context,initialSnapshot,fresh.planUpdatedAt))||cancelled||!opened)throw new Error('دریافت پیش‌نویس انجام نشد.');

@@ -4,7 +4,8 @@ function load(path, deps) { const m = { exports: {} }; vm.runInNewContext(ts.tra
 const pagination = load('lib/collect-query-pages.ts', {});
 const counselor = load('lib/load-counselor-plans.ts', { '@/lib/collect-query-pages': pagination });
 const notes = load('lib/load-daily-notes.ts', { '@/lib/collect-query-pages': pagination });
-const reports = load('lib/load-study-report.ts', { '@/lib/collect-query-pages': pagination, '@/lib/load-daily-notes': notes });
+const routineProgress = load('lib/load-routine-progress.ts', { './collect-query-pages': pagination });
+const reports = load('lib/load-study-report.ts', { '@/lib/collect-query-pages': pagination, '@/lib/load-daily-notes': notes, '@/lib/load-routine-progress': routineProgress });
 (async () => {
     let release;
     const started = new Set();
@@ -30,6 +31,7 @@ const reports = load('lib/load-study-report.ts', { '@/lib/collect-query-pages': 
         assert.equal(data.plans.length, 201);
         assert.equal(data.completions.length, 501);
         assert.equal(data.dailyNotes.length, 501);
+        assert.equal(data.routineCompletions.length, 501);
     }
     finally {
         clearTimeout(timer);
