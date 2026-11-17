@@ -33,11 +33,11 @@ export function usePlannerWorkingCopy(props:Props) {
   if(!context.studentId||!counselorId)return;
   let cancelled=false;
   setPhase('opening');setStatus('در حال دریافت پیش‌نویس خصوصی...');setWarning('');active.current=null;
-  const client=createClient();
-  const transport=createPlannerDraftTransport<PlannerEditorSnapshot>(client,value=>value as PlannerEditorSnapshot);
   let draft:Session|null=null;
   void (async()=>{
    try{
+    const client=createClient();
+    const transport=createPlannerDraftTransport<PlannerEditorSnapshot>(client,value=>value as PlannerEditorSnapshot);
     const fresh=await loadFreshPlannerState(client,context,counselorId);
     if(cancelled)return;
     const current=latest.current.value;

@@ -23,9 +23,9 @@ export function PlannerTopicBankManager(){
  },[field,grade,track,subject,chapter]);
  useEffect(()=>{let cancelled=false;if(!subject||!chapter){setTopics(null);return;}
   setTopics(null);setError('');setLoading(true);
-  void createClient().rpc('planner_list_topics',{target_edition:'1405',target_field:grade===9?'all':field,target_grade:String(grade),target_track:track,target_subject:subject,target_chapter:chapter}).then(({data,error})=>{
+  void Promise.resolve().then(()=>createClient().rpc('planner_list_topics',{target_edition:'1405',target_field:grade===9?'all':field,target_grade:String(grade),target_track:track,target_subject:subject,target_chapter:chapter})).then(({data,error})=>{
    if(cancelled)return;try{if(error)throw error;setTopics(parse(data));}catch{setError('دریافت بانک مباحث انجام نشد.');}finally{setLoading(false)}
-  });return()=>{cancelled=true};
+  }).catch(()=>{if(!cancelled){setError('دریافت بانک مباحث انجام نشد.');setLoading(false)}});return()=>{cancelled=true};
  },[field,grade,track,subject,chapter]);
  const reset=()=>{setEditing(null);setTitle('');setStart('');setEnd('');setPosition(String(topics?.length??0));};
  const save=async()=>{
