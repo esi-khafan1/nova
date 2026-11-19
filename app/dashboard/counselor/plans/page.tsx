@@ -35,7 +35,7 @@ export default async function CounselorPlansPage({
     loadPlannerEditorCapability(supabase).then(data=>({data,failed:false}),()=>({data:false,failed:true})),
   ]);
   if(directoryError||!Array.isArray(directoryData)||loadedPlans.failed||loadedHistory.failed||!loadedPlans.data||!loadedHistory.data||
-    capability.failed||loadedPlans.data.counselorId!==profile.id||loadedHistory.data.counselorId!==profile.id||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name}><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
+    capability.failed||loadedPlans.data.counselorId!==profile.id||loadedHistory.data.counselorId!==profile.id||completedError||!Array.isArray(completedRows))return <DashboardShell role="counselor" name={profile.full_name} variant="counselor-planner"><section className="portal-card portal-alert error" role="alert"><h1>اطلاعات برنامه‌ها دریافت نشد</h1><p>برای جلوگیری از ذخیرهٔ ناقص، فرم فعلاً نمایش داده نمی‌شود. دوباره صفحه را باز کن.</p></section></DashboardShell>;
 
   const directory = directoryData as StudentDirectoryRow[];
   const selectedStudents = directory.filter((student) => student.is_selected);
@@ -45,7 +45,7 @@ export default async function CounselorPlansPage({
   const completedItemIds = [...new Set((completedRows as Array<{item_id:string}>).map(row => row.item_id))].sort();
 
   return (
-    <DashboardShell role="counselor" name={profile.full_name}>
+    <DashboardShell role="counselor" name={profile.full_name} variant="counselor-planner">
       <section className="portal-heading">
         <div>
           <h1>برنامه‌ریزی هفتگی</h1>
