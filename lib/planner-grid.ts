@@ -23,7 +23,7 @@ export type PlannerBlock = {
 };
 export type PlannerDay = Array<PlannerBlock | null>;
 export type PlannerGrid = PlannerDay[];
-export type PlannerRoutine = { dayOfWeek: number; subject: string; details: string; secondSubject?: string; secondDetails?: string };
+export type PlannerRoutine = { dayOfWeek: number; subject: string; details: string; secondSubject?: string; secondDetails?: string; durationMinutes?: number | null; secondDurationMinutes?: number | null };
 export type PlannerTemplate = { days: PlannerGrid; routines: PlannerRoutine[] };
 export type GridPosition = { day: number; index: number };
 

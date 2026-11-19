@@ -6,7 +6,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
  const font=fs.readFileSync('public/fonts/estedad-arabic-wght-normal.woff2').toString('base64');
  const code=(await esbuild.build({stdin:{contents:`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import {PlannerWeekGrid} from './components/dashboard/planner-week-grid';
  const box=(key,day,extra={})=>({key,dayOfWeek:day,id:'db-'+key,sourceItemId:'db-'+key,sourceDayOfWeek:day,extra:{topics:[{title:'گفتار یک'}]},subject:key==='b'?'شیمی':'زیست',chapter:'فصل یک',activityType:'lesson',durationMinutes:90,targetTestCount:20,details:'',...extra});
- function App(){const [grid,setGrid]=useState([[box('a',0),box('locked',0,{completed:true})],[box('b',1)],[],[],[],[],[]]);window.current=grid;return <PlannerWeekGrid weekStart="2026-11-03" grid={grid} lockedDays={[false,false,false,false,false,false,true]} onChange={setGrid} onEdit={b=>window.edited.push(b.key)} onAdd={d=>window.added.push(d)}/>};createRoot(document.getElementById('root')).render(<App/>);`,loader:'tsx',resolveDir:process.cwd()},bundle:true,format:'iife',platform:'browser',jsx:'automatic',write:false,plugins:[{name:'css-module',setup(b){b.onResolve({filter:/planner-week-grid\.module\.css$/},()=>({path:'css',namespace:'fake'}));b.onLoad({filter:/.*/,namespace:'fake'},()=>({loader:'js',contents:`export default ${JSON.stringify(Object.fromEntries(names.map(n=>[n,n])))};`}));}}]})).outputFiles[0].text;
+ function App(){const [grid,setGrid]=useState([[box('a',0),box('locked',0,{completed:true})],[box('b',1)],[],[],[],[],[]]);window.current=grid;window.setGrid=setGrid;return <PlannerWeekGrid weekStart="2026-11-03" grid={grid} lockedDays={[false,false,false,false,false,false,true]} onChange={setGrid} onEdit={b=>window.edited.push(b.key)} onAdd={d=>window.added.push(d)}/>};createRoot(document.getElementById('root')).render(<App/>);`,loader:'tsx',resolveDir:process.cwd()},bundle:true,format:'iife',platform:'browser',jsx:'automatic',write:false,plugins:[{name:'css-module',setup(b){b.onResolve({filter:/planner-week-grid\.module\.css$/},()=>({path:'css',namespace:'fake'}));b.onLoad({filter:/.*/,namespace:'fake'},()=>({loader:'js',contents:`export default ${JSON.stringify(Object.fromEntries(names.map(n=>[n,n])))};`}));}}]})).outputFiles[0].text;
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
  try{for(const width of [320,390,768,1440]){
   const page=await browser.newPage({viewport:{width,height:900}});page.on('pageerror',e=>console.error('PAGE ERROR',e));
@@ -15,6 +15,18 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   assert.equal(await page.locator('.day').count(),7);assert.ok(await page.locator('.day').first().getByText('سه‌شنبه').isVisible());
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`no page overflow ${width}`);
   const scroll=page.locator('.scroll');assert.equal(await scroll.evaluate(e=>e.scrollWidth>e.clientWidth),false);
+  if(width>700){
+   const original=await page.evaluate(()=>structuredClone(window.current));
+   await page.evaluate(()=>window.setGrid(Array.from({length:7},()=>[])));
+   await page.waitForFunction(()=>window.current.every(day=>day.length===0));
+   const emptyHeight=await page.locator('.items').first().evaluate(e=>e.getBoundingClientRect().height);
+   assert.ok(emptyHeight>=285,`empty desktop activity area remains tall: ${emptyHeight}`);
+   await page.evaluate(initial=>window.setGrid([Array.from({length:6},(_,i)=>({...initial[0][0],key:'many-'+i,subject:'درس طولانی'})),...initial.slice(1)]),original);
+   await page.waitForFunction(()=>window.current[0].length===6);
+   const grown=await page.locator('.items').first().evaluate(e=>({height:e.getBoundingClientRect().height,scroll:e.scrollHeight}));
+   assert.ok(grown.height>emptyHeight&&grown.scroll<=grown.height+1,'content grows without clipping');
+   await page.evaluate(initial=>window.setGrid(initial),original);await page.waitForFunction(()=>window.current[0][0].key==='a');
+  }
   const a=page.locator('.block').filter({hasText:'زیست'}).first();await a.click();assert.deepEqual(await page.evaluate(()=>window.edited),['a']);
   await a.focus();await page.keyboard.press('Control+c');await page.keyboard.press('Control+d');
   await page.waitForFunction(()=>window.current[1].length===2);assert.equal((await page.evaluate(()=>window.current[1][1])).id,null);

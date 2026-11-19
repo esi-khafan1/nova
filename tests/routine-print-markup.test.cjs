@@ -27,6 +27,8 @@ const plan = {
     details: "مرور فرمولها",
     secondSubject: "ریاضی",
     secondDetails: "حل تمرین",
+    durationMinutes: 25,
+    secondDurationMinutes: 40,
   })),
   weekly_plan_items: Array.from({ length: 35 }, (_, index) => {
     const isTest = index % 7 === 0;
@@ -113,6 +115,8 @@ const stubs = {
   assert.equal(routineTitles.length, 14, "two routines inside each of seven boxes");
   assert.equal((html.match(/درس: ریاضی/g) || []).length,7);
   assert.equal((html.match(/حل تمرین/g) || []).length,7);
+  assert.equal((html.match(/۲۵ دقیقه/g) || []).length,7);
+  assert.equal((html.match(/۴۰ دقیقه/g) || []).length,7);
   assert.equal((html.match(/class="print-day-column"/g) || []).length, 7, "seven day columns");
   assert.ok(!html.includes("روتین ·"), "routine title must not contain a static weekday");
   assert.ok(html.includes("۹۰ دقیقه"), "duration is written out in the third row");

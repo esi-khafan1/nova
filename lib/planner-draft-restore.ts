@@ -74,6 +74,7 @@ export function restorePlannerDraft(input: {
   if (routines.length!==7) throw new Error("Invalid routines");
   for (const r of routines) {
     if (!isRecord(r) || !Number.isInteger(r.dayOfWeek) || r.dayOfWeek<0 || r.dayOfWeek>6 || days.has(r.dayOfWeek) || typeof r.subject!=="string" || typeof r.details!=="string" || !(r.secondSubject===undefined || typeof r.secondSubject==="string") || !(r.secondDetails===undefined || typeof r.secondDetails==="string")) throw new Error("Invalid routines");
+    for(const value of [r.durationMinutes,r.secondDurationMinutes]) if(value!=null && (typeof value!=='number'||!Number.isInteger(value)||value<1||value>1440)) throw new Error('Invalid routine duration');
     days.add(r.dayOfWeek);
   }
   const weekExtra=structuredClone(snapshot.editor.weekExtra);

@@ -23,7 +23,7 @@ async function withOpenTimeout<T>(operation:Promise<T>):Promise<T> {
  finally{if(timer)clearTimeout(timer);}
 }
 function normalizeRoutines(routines:PlanRoutine[]|undefined):PlanRoutine[] {
- return Array.from({length:7},(_,dayOfWeek)=>{const r=routines?.find(x=>x.dayOfWeek===dayOfWeek);return {dayOfWeek,subject:r?.subject??'',details:r?.details??'',secondSubject:r?.secondSubject??'',secondDetails:r?.secondDetails??''};});
+ return Array.from({length:7},(_,dayOfWeek)=>{const r=routines?.find(x=>x.dayOfWeek===dayOfWeek);return {dayOfWeek,subject:r?.subject??'',details:r?.details??'',secondSubject:r?.secondSubject??'',secondDetails:r?.secondDetails??'',durationMinutes:r?.durationMinutes??null,secondDurationMinutes:r?.secondDurationMinutes??null};});
 }
 /** The legacy form is disabled while a working copy is opening. Context changes
  * must use beforeSwitch so an unsaved revision cannot be abandoned silently. */

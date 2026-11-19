@@ -13,7 +13,7 @@ type Props<T extends PlannerBlock> = {
   onChange: (grid: Array<Array<T | null>>) => void;
   onEdit: (block: T) => void;
   onAdd: (day: number) => void;
-  routines?: Array<{subject: string; details: string; secondSubject?: string; secondDetails?: string}>;
+  routines?: Array<{subject: string; details: string; secondSubject?: string; secondDetails?: string; durationMinutes?:number|null;secondDurationMinutes?:number|null}>;
   onEditRoutine?: (day: number) => void;
   selectedKey?: string | null;
 };
@@ -182,12 +182,12 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
           {routines?.[dayIndex] && <div className={styles.routines}>
             <button type="button" className={styles.routineTitle} aria-label={lockedDays[dayIndex] ? "مشاهدهٔ روتین‌ها" : "ویرایش روتین‌ها"} onClick={()=>{setSelected(null);onEditRoutine?.(dayIndex)}}><span>روتین‌ها</span><span aria-hidden="true">✎</span></button>
             {(() => {
-              const first={subject:routines[dayIndex].subject,details:routines[dayIndex].details};
-              const second={subject:routines[dayIndex].secondSubject ?? "",details:routines[dayIndex].secondDetails ?? ""};
+              const first={subject:routines[dayIndex].subject,details:routines[dayIndex].details,duration:routines[dayIndex].durationMinutes};
+              const second={subject:routines[dayIndex].secondSubject ?? "",details:routines[dayIndex].secondDetails ?? "",duration:routines[dayIndex].secondDurationMinutes};
               // Display a lone second routine as routine 1 without changing its stored slot.
               return !first.subject && !first.details && (second.subject || second.details) ? [second,first] : [first,second];
             })().map((routine,index)=><button type="button" className={`${styles.routine} ${!routine.subject && !routine.details ? styles.routineEmpty : ""}`} key={index} onClick={()=>{setSelected(null);onEditRoutine?.(dayIndex)}}>
-              {routine.subject || routine.details ? <><span><strong>روتین {persianNumber.format(index+1)} · </strong>{routine.subject || routine.details}</span>{routine.subject && routine.details && <small>{routine.details}</small>}</> : <span>{lockedDays[dayIndex] ? "ثبت نشده" : index===0 ? "+ افزودن روتین" : "+ روتین دوم"}</span>}
+              {routine.subject || routine.details ? <><span><strong>روتین {persianNumber.format(index+1)} · </strong>{routine.subject || routine.details}</span>{routine.subject && routine.details && <small>{routine.details}</small>}{routine.duration!=null&&<small>{persianNumber.format(routine.duration)} دقیقه</small>}</> : <span>{lockedDays[dayIndex] ? "ثبت نشده" : index===0 ? "+ افزودن روتین" : "+ روتین دوم"}</span>}
             </button>)}
           </div>}
         </section>;

@@ -29,7 +29,7 @@
 .plan-routine h3{margin:0 0 4px;font-size:16px;color:#9d3f06}
 .plan-routine > p{margin:0 0 12px;font-size:12px;color:#547191;line-height:1.8}
 .plan-routine label{display:grid;gap:6px;margin-bottom:10px;font-size:13px;font-weight:650;color:#12304d}
-.plan-routine select,.plan-routine textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid #c8daff;border-radius:8px;padding:10px;background:#fff;color:#12304d;font:inherit}
+.plan-routine select,.plan-routine textarea,.plan-routine input{width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid #c8daff;border-radius:8px;padding:10px;background:#fff;color:#12304d;font:inherit}
 .plan-routine textarea{min-height:64px;resize:vertical}
 .plan-routine-readonly{margin-top:12px;padding:12px;border:1px dashed #d99a6a;border-radius:10px;background:#fff8f2;color:#633014}
 .plan-routine-readonly strong,.plan-routine-readonly span,.plan-routine-readonly small{display:block}
@@ -153,3 +153,6 @@
 .counselor-portal.counselor-planner-portal .cp-identity{margin-bottom:4px}
 .counselor-portal .planner-student-report{display:inline-block;margin:4px 0 8px;color:#1e5faf;font-size:12px}
 @media(min-width:701px){.counselor-portal .planner-context .counselor-plan-student-row label{min-width:180px}}
+/* The optional minutes belong to the description of each independent routine. */
+.counselor-portal .planner-editor .plan-routine-fields{grid-template-columns:minmax(0,1fr) minmax(90px,105px);gap:10px}
+.counselor-portal .planner-editor .plan-routine-fields>label:first-child{grid-column:1/-1}

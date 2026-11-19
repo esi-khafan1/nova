@@ -70,6 +70,8 @@ export type PlanRoutine = {
   details: string;
   secondSubject?: string;
   secondDetails?: string;
+  durationMinutes?: number | null;
+  secondDurationMinutes?: number | null;
 };
 
 export type CounselorWeeklyPlan = {
@@ -133,7 +135,7 @@ const newItem = (
 const newStudentItem=(day:number,key:string|undefined,grade:number|null|undefined):PlanItem=>({...newItem(day,key),preparationTrack:grade===9?"final_exam":"konkur"});
 
 const defaultRoutines = (): PlanRoutine[] =>
-  weekDays.map((_, dayOfWeek) => ({ dayOfWeek, subject: "", details: "", secondSubject: "", secondDetails: "" }));
+  weekDays.map((_, dayOfWeek) => ({ dayOfWeek, subject: "", details: "", secondSubject: "", secondDetails: "", durationMinutes:null, secondDurationMinutes:null }));
 
 const planRoutines = (plan?: CounselorWeeklyPlan | null): PlanRoutine[] => {
   const source = Array.isArray(plan?.routines) ? plan!.routines : [];
@@ -145,6 +147,7 @@ const planRoutines = (plan?: CounselorWeeklyPlan | null): PlanRoutine[] => {
       details: typeof match?.details === "string" ? match.details : "",
       secondSubject: typeof match?.secondSubject === "string" ? match.secondSubject : "",
       secondDetails: typeof match?.secondDetails === "string" ? match.secondDetails : "",
+      durationMinutes: match?.durationMinutes ?? null, secondDurationMinutes: match?.secondDurationMinutes ?? null,
     };
   });
 };
@@ -621,10 +624,10 @@ export function WeeklyPlanBuilder({
                     return <article className="plan-routine-readonly" key={`routine-${dayIndex}`} hidden={editor?.kind !== "routine"}>
                       <strong>روتین ۱</strong>
                       <span>{routine.subject || "درس انتخاب نشده"}</span>
-                      {routine.details && <small>{routine.details}</small>}
+                      {routine.details && <small>{routine.details}</small>}{routine.durationMinutes!=null&&<small>{faNumber(routine.durationMinutes)} دقیقه</small>}
                       <strong>روتین ۲</strong>
                       <span>{routine.secondSubject || "درس انتخاب نشده"}</span>
-                      {routine.secondDetails && <small>{routine.secondDetails}</small>}
+                      {routine.secondDetails && <small>{routine.secondDetails}</small>}{routine.secondDurationMinutes!=null&&<small>{faNumber(routine.secondDurationMinutes)} دقیقه</small>}
                     </article>;
                   })()}
                 </div>
@@ -936,8 +939,8 @@ export function WeeklyPlanBuilder({
               {!dayIsLocked && (() => {
                 const routine = routines[dayIndex];
                 return <section className="plan-routine" hidden={editor?.kind !== "routine"} aria-label={`روتین ${realWeekday}`}>
-                  {[{number: 1, subject: routine.subject, details: routine.details, subjectKey: "subject", detailsKey: "details"},
-                    {number: 2, subject: routine.secondSubject ?? "", details: routine.secondDetails ?? "", subjectKey: "secondSubject", detailsKey: "secondDetails"}].map(entry => (
+                  {[{number: 1, subject: routine.subject, details: routine.details, duration:routine.durationMinutes, durationKey:"durationMinutes", subjectKey: "subject", detailsKey: "details"},
+                    {number: 2, subject: routine.secondSubject ?? "", details: routine.secondDetails ?? "", duration:routine.secondDurationMinutes, durationKey:"secondDurationMinutes", subjectKey: "secondSubject", detailsKey: "secondDetails"}].map(entry => (
                     <div className="plan-routine-entry" key={entry.number}>
                       <h3>روتین {faNumber(entry.number)}</h3>
                       <div className="plan-routine-fields">
@@ -950,6 +953,9 @@ export function WeeklyPlanBuilder({
                         </label>
                         <label>توضیح روتین {faNumber(entry.number)}
                           <textarea value={entry.details} maxLength={500} rows={2} onChange={event=>updateRoutine(dayIndex,entry.detailsKey as "details" | "secondDetails",event.target.value)} placeholder="مثلاً مرور فرمول‌های پرتکرار" />
+                        </label>
+                        <label>مدت روتین {faNumber(entry.number)} (دقیقه، اختیاری)
+                          <input type="number" min={1} max={1440} step={1} value={entry.duration ?? ""} onChange={event=>updateRoutine(dayIndex,entry.durationKey as "durationMinutes" | "secondDurationMinutes",event.target.value===""?null:Number(event.target.value))} />
                         </label>
                       </div>
                     </div>

@@ -56,6 +56,8 @@ type WeeklyPlanRoutineInput = {
   details: string;
   secondSubject?: string;
   secondDetails?: string;
+  durationMinutes?: number | null;
+  secondDurationMinutes?: number | null;
 };
 
 type WeeklyPlanItemInput = {
@@ -152,11 +154,14 @@ async function saveWeeklyPlanCore(fd: FormData) {
       details: clean(String(value?.details ?? "") as FormDataEntryValue, 500),
       ...(value && Object.hasOwn(value, "secondSubject") ? {secondSubject: clean(String(value.secondSubject ?? ""), 100)} : {}),
       ...(value && Object.hasOwn(value, "secondDetails") ? {secondDetails: clean(String(value.secondDetails ?? ""), 500)} : {}),
+      ...(value && Object.hasOwn(value, "durationMinutes") ? {durationMinutes:value.durationMinutes as number | null} : {}),
+      ...(value && Object.hasOwn(value, "secondDurationMinutes") ? {secondDurationMinutes:value.secondDurationMinutes as number | null} : {}),
     };
   });
   const routineDays = new Set(safeRoutines.map((routine) => routine.dayOfWeek));
   if (
     safeRoutines.some((routine) => !Number.isInteger(routine.dayOfWeek) || routine.dayOfWeek < 0 || routine.dayOfWeek > 6) ||
+    safeRoutines.some(routine=>[routine.durationMinutes,routine.secondDurationMinutes].some(v=>v!=null && (typeof v!=="number" || !Number.isInteger(v) || v<1 || v>1440))) ||
     routineDays.size !== 7
   ) {
     planError("routines");
@@ -310,11 +315,11 @@ export async function togglePlanItemCompletion(
   return { ok: true };
 }
 
-export async function toggleRoutineCompletion(planId:string, day:number, slot:number, subject:string, details:string, completed:boolean) {
+export async function toggleRoutineCompletion(planId:string, day:number, slot:number, subject:string, details:string, completed:boolean, duration:number|null = null) {
   const {supabase} = await requireProfile(["student"]);
   if (!uuidPattern.test(planId) || !Number.isInteger(day) || day<0 || day>6 || (slot!==1 && slot!==2) ||
-      typeof subject!=='string' || subject.length>100 || typeof details!=='string' || details.length>500 || typeof completed!=='boolean') return {ok:false};
-  const {error}=await supabase.rpc('set_weekly_routine_progress',{target_plan_id:planId,target_day:day,target_slot:slot,target_subject:subject,target_details:details,target_completed:completed});
+      typeof subject!=='string' || subject.length>100 || typeof details!=='string' || details.length>500 || typeof completed!=='boolean' || (duration!==null && (!Number.isInteger(duration)||duration<1||duration>1440))) return {ok:false};
+  const {error}=await supabase.rpc('set_weekly_routine_progress_v2',{target_plan_id:planId,target_day:day,target_slot:slot,target_subject:subject,target_details:details,target_completed:completed,target_duration:duration});
   return {ok:!error};
 }
 

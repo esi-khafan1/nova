@@ -30,7 +30,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
  await page.evaluate(()=>window.renderDense());await page.waitForFunction(()=>document.querySelectorAll('[aria-label="برنامهٔ هفتگی"] section').length===7);
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'dense week must not overflow');
  const visibleCards=table.locator('button:visible').filter({hasText:/زیست‌شناسی|ریاضی/});assert.ok(await visibleCards.count()>=3,'real activities remain visible');
- await page.getByRole('button',{name:'ویرایش روتین‌ها'}).first().click();assert.ok(await editor.locator('.plan-routine:visible').getByLabel('توضیح روتین ۱').isVisible());
+ await page.getByRole('button',{name:'ویرایش روتین‌ها'}).first().click();assert.ok(await editor.locator('.plan-routine:visible').getByLabel('توضیح روتین ۱').isVisible());const duration=editor.locator('.plan-routine:visible').getByLabel('مدت روتین ۱ (دقیقه، اختیاری)');assert.equal(await duration.inputValue(),'');await duration.fill('35');assert.match(await table.textContent(),/۳۵ دقیقه/);assert.equal(JSON.parse(await page.locator('input[name=routines]').inputValue())[0].durationMinutes,35);
  await page.evaluate(()=>window.renderNormal());await page.getByText('صفحهٔ عادی').waitFor();if(width>=1280)assert.ok((await main.boundingBox()).width<=1184,'other counselor pages retain their width');assert.deepEqual(errors,[]);await page.close();}
  }finally{await browser.close()}console.log('PASS: real planner shell uses desktop width; normal counselor pages and mobile layout stay unchanged');
 })().catch(e=>{console.error(e);process.exitCode=1});

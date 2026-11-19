@@ -1,12 +1,12 @@
 import { addDays, parseIsoDate, toIsoDate } from "@/lib/persian-date";
 export type StudyItem = { id:string; plan_id:string; day_of_week:number; duration_minutes:number; subject:string; chapter:string|null; activity_type:string; target_test_count:number|null; details:string|null; sort_order:number; source_grade?:9|10|11|12|null; preparation_track?:"konkur"|"final_exam"; exam_year?:number|null; recommended_publisher?:string|null; linked_exam_id?:string|null };
-export type StudyRoutine = {dayOfWeek:number;subject:string;details:string;secondSubject?:string;secondDetails?:string};
+export type StudyRoutine = {dayOfWeek:number;subject:string;details:string;secondSubject?:string;secondDetails?:string;durationMinutes?:number|null;secondDurationMinutes?:number|null};
 export type RoutineCompletion = {plan_id:string;student_id:string;day_of_week:number;slot:1|2;subject:string;details:string;checked_at:string};
 export type StudyPlan = { id:string; title:string; week_start:string; notes:string|null; routines?:StudyRoutine[]|null; weekly_plan_items:StudyItem[] };
 export function routineEntries(plan:StudyPlan|undefined, day:number) {
  const routine=plan?.routines?.find(r=>Number(r.dayOfWeek)===day);
  if (!routine) return [];
- return [{slot:1 as const,subject:routine.subject??'',details:routine.details??''},{slot:2 as const,subject:routine.secondSubject??'',details:routine.secondDetails??''}].filter(r=>r.subject.trim()||r.details.trim());
+ return [{slot:1 as const,subject:routine.subject??'',details:routine.details??'',duration:routine.durationMinutes??null},{slot:2 as const,subject:routine.secondSubject??'',details:routine.secondDetails??'',duration:routine.secondDurationMinutes??null}].filter(r=>r.subject.trim()||r.details.trim());
 }
 export type StudyCompletion = { item_id:string; completed_at:string; checked_at?:string|null; completed_test_count:number|null; completed_minutes?:number|null; test_duration_recorded?:boolean };
 export function tehranToday() { const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tehran",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const value=(type:string)=>parts.find(p=>p.type===type)?.value??"";return `${value("year")}-${value("month")}-${value("day")}`; }

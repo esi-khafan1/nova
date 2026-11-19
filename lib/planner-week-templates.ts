@@ -46,7 +46,8 @@ export function parseWeekTemplate(value:unknown):WeekTemplate {
  if(count>100)throw new Error('Invalid template');
  const routines=value.routines.map((raw:unknown,index:number):PlanRoutine=>{
   if(!record(raw)||raw.dayOfWeek!==index||!text(raw.subject,100)||!text(raw.details,500)||!text(raw.secondSubject,100)||!text(raw.secondDetails,500))throw new Error('Invalid template routine');
-  return {dayOfWeek:index,subject:raw.subject,details:raw.details,secondSubject:raw.secondSubject,secondDetails:raw.secondDetails};
+  const duration=(value:unknown)=>{if(value==null)return null;if(typeof value!=='number'||!Number.isInteger(value)||value<1||value>1440)throw new Error('Invalid routine duration');return value};
+  return {dayOfWeek:index,subject:raw.subject,details:raw.details,secondSubject:raw.secondSubject,secondDetails:raw.secondDetails,durationMinutes:duration(raw.durationMinutes),secondDurationMinutes:duration(raw.secondDurationMinutes)};
  });
  return {version:1,days,routines};
 }

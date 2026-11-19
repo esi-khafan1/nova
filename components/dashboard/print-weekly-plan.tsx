@@ -27,6 +27,8 @@ export type PrintablePlanRoutine = {
   details?: string | null;
   secondSubject?: string | null;
   secondDetails?: string | null;
+  durationMinutes?: number | null;
+  secondDurationMinutes?: number | null;
 };
 
 export type PrintablePlan = {
@@ -65,6 +67,7 @@ function normalizeRoutines(routines: PrintablePlan["routines"]) {
       details: typeof match?.details === "string" ? match.details : "",
       secondSubject: typeof match?.secondSubject === "string" ? match.secondSubject : "",
       secondDetails: typeof match?.secondDetails === "string" ? match.secondDetails : "",
+      durationMinutes:match?.durationMinutes??null, secondDurationMinutes:match?.secondDurationMinutes??null,
     };
   });
 }
@@ -156,8 +159,8 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
             // Printing is compacted independently of storage: a lone second
             // routine is shown in the first slot without changing the plan.
             const dailyRoutines = [
-              {subject: routines[dayIndex].subject, details: routines[dayIndex].details},
-              {subject: routines[dayIndex].secondSubject, details: routines[dayIndex].secondDetails},
+              {subject: routines[dayIndex].subject, details: routines[dayIndex].details,duration:routines[dayIndex].durationMinutes},
+              {subject: routines[dayIndex].secondSubject, details: routines[dayIndex].secondDetails,duration:routines[dayIndex].secondDurationMinutes},
             ].filter(routine => routine.subject.trim() || routine.details.trim());
             return (
               <section className="print-day-column" key={dayIndex}>
@@ -210,7 +213,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                   ))}
                   <article className="print-activity print-routine" key={`routine-${dayIndex}`} data-weekday={weekday}>
                     {Array.from({length: 2}, (_, index) => {
-                      const routine = dailyRoutines[index] ?? {subject: "", details: ""};
+                      const routine = dailyRoutines[index] ?? {subject: "", details: "",duration:null};
                       return <div className={`print-routine-entry${index ? " print-routine-entry--second" : ""}${dailyRoutines[index] ? "" : " print-routine-entry--empty"}`} key={index} aria-hidden={dailyRoutines[index] ? undefined : true}>
                         <div className="print-routine-heading">
                           <span aria-hidden="true">□</span>
@@ -220,7 +223,7 @@ export function PrintWeeklyPlan({plan,student,counselorName,backHref,visibleDays
                           {routine.subject ? `درس: ${routine.subject}` : "درس: انتخاب نشده"}
                         </FitText>
                         <FitText basePt={7} className="print-activity-last">
-                          {routine.details || "توضیحی ثبت نشده"}
+                          {[routine.details || "توضیحی ثبت نشده",routine.duration!=null?`${routine.duration.toLocaleString("fa-IR")} دقیقه`:""].filter(Boolean).join(" · ")}
                         </FitText>
                       </div>;
                     })}
