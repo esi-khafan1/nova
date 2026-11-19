@@ -8,6 +8,22 @@ export function routineEntries(plan:StudyPlan|undefined, day:number) {
  if (!routine) return [];
  return [{slot:1 as const,subject:routine.subject??'',details:routine.details??'',duration:routine.durationMinutes??null},{slot:2 as const,subject:routine.secondSubject??'',details:routine.secondDetails??'',duration:routine.secondDurationMinutes??null}].filter(r=>r.subject.trim()||r.details.trim());
 }
+/** Routine durations supplement study time, but do not change activity ratios
+ * or test counts. Match the protected slot and text, not merely a day. */
+export function summarizeRoutineMinutes(plan:StudyPlan|undefined, days:readonly number[], completions:readonly RoutineCompletion[]) {
+ let plannedMinutes=0,minutes=0;
+ if(!plan)return {plannedMinutes,minutes};
+ for(const day of new Set(days)) {
+  if(!Number.isInteger(day)||day<0||day>6)continue;
+  for(const routine of routineEntries(plan,day)) {
+   const duration=routine.duration;
+   if(typeof duration!=='number'||!Number.isInteger(duration)||duration<1||duration>1440)continue;
+   plannedMinutes+=duration;
+   if(completions.some(c=>c.plan_id===plan.id&&c.day_of_week===day&&c.slot===routine.slot&&c.subject===routine.subject&&c.details===routine.details))minutes+=duration;
+  }
+ }
+ return {plannedMinutes,minutes};
+}
 export type StudyCompletion = { item_id:string; completed_at:string; checked_at?:string|null; completed_test_count:number|null; completed_minutes?:number|null; test_duration_recorded?:boolean };
 export function tehranToday() { const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tehran",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const value=(type:string)=>parts.find(p=>p.type===type)?.value??"";return `${value("year")}-${value("month")}-${value("day")}`; }
 export const dayIso = (start:string, offset:number) => toIsoDate(addDays(parseIsoDate(start),offset));

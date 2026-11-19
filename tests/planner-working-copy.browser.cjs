@@ -28,7 +28,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   const gradeBox=await selected.locator('.plan-field-grade').boundingBox(),trackBox=await selected.locator('.plan-field-track').boundingBox();
   assert.ok(gradeBox && trackBox && Math.abs(gradeBox.y-trackBox.y)<2,'grade and track are side-by-side');
   assert.equal(await selected.locator('.plan-field-more').getAttribute('open'),null,'extra options start collapsed');
-  await selected.locator('.plan-field-more > summary').click();await selected.getByText('بلوک‌های آماده',{exact:true}).click();await selected.getByText('هنوز بلوک آماده‌ای ذخیره نشده است.').waitFor();await selected.locator('.plan-field-more > summary').click();
+  await selected.locator('.plan-field-more > summary').click();assert.equal(await selected.getByText('بلوک‌های آماده',{exact:true}).count(),0);await selected.getByText('الگوهای من',{exact:true}).click();await selected.getByText('هنوز الگویی ذخیره نشده است.').waitFor();await selected.locator('.plan-field-more > summary').click();
   if(process.env.ACTIVE_EDITOR_SCREENSHOT)await page.screenshot({path:`${process.env.ACTIVE_EDITOR_SCREENSHOT}-${width}.png`,fullPage:true});
   const topics=page.locator('details').filter({has:page.locator('summary').getByText('زیرمبحث و صفحه')});await topics.locator('summary').click();await topics.getByLabel('نام زیرمبحث').fill('اسیدهای چرب');await topics.getByLabel('از صفحه').fill('۵');await topics.getByLabel('تا صفحه').fill('۶');await topics.getByRole('button',{name:'افزودن مبحث'}).click();
   await page.waitForFunction(()=>window.draft?.snapshot.title==='عنوان خصوصی'&&window.draft.snapshot.editor.weekExtra.goal==='هدف خصوصی'&&window.draft.snapshot.editor.grid[0][0].topics?.[0].pageStart===5);

@@ -1,0 +1,81 @@
+const {PGlite}=require('@electric-sql/pglite'),assert=require('node:assert/strict'),fs=require('node:fs');
+(async()=>{
+ const db=new PGlite();
+ const student='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222',counselor='33333333-3333-4333-8333-333333333333',unassigned='44444444-4444-4444-8444-444444444444',plan='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+ await db.exec(`create role authenticated;create role anon;create schema private;create schema auth;
+ create type public.app_role as enum('student','counselor','admin');create type public.content_status as enum('published','draft');
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create table public.profiles(id uuid primary key,role public.app_role,registration_status text);
+ create function private.current_user_role() returns public.app_role language sql stable security definer as $$select role from public.profiles where id=auth.uid()$$;
+ create table public.counselor_students(student_id uuid,counselor_id uuid);
+ create table public.weekly_plans(id uuid primary key,student_id uuid,title text,week_start date,notes text,status public.content_status,routines jsonb not null default '[]');
+ create table public.weekly_plan_items(id uuid,plan_id uuid,day_of_week integer,duration_minutes integer,subject text,chapter text,activity_type text,target_test_count integer,details text,recommended_publisher text,sort_order integer,source_grade integer,preparation_track text,exam_year integer,linked_exam_id uuid);
+ create table public.weekly_plan_item_completions(item_id uuid,student_id uuid,completed_at timestamptz,completed_test_count integer,completed_minutes integer,test_duration_recorded boolean);
+ create table public.exams(id uuid,status text);
+ grant usage on schema public,private,auth to authenticated;grant select on public.profiles,public.counselor_students,public.weekly_plans,public.weekly_plan_items,public.weekly_plan_item_completions,public.exams to authenticated;
+ alter table public.weekly_plans enable row level security;create policy readable on public.weekly_plans for select to authenticated using(student_id=auth.uid() or exists(select 1 from public.counselor_students a where a.student_id=weekly_plans.student_id and a.counselor_id=auth.uid()));
+ `);
+ await db.query("insert into public.profiles values($1,'student','active'),($2,'student','active'),($3,'counselor','active'),($4,'counselor','active')",[student,other,counselor,unassigned]);
+ await db.query('insert into public.counselor_students values($1,$2)',[student,counselor]);
+ const routines=[{dayOfWeek:0,subject:'ریاضی',details:'تمرین',secondSubject:'فیزیک',secondDetails:'مرور'}];
+ await db.query("insert into public.weekly_plans values($1,$2,'برنامه',timezone('Asia/Tehran',now())::date,null,'published',$3)",[plan,student,JSON.stringify(routines)]);
+ const m111=fs.readFileSync('supabase/migrations/111_two_daily_routines.sql','utf8');await db.exec(m111.slice(m111.indexOf('create or replace function public.normalize_'),m111.indexOf('create or replace function public.save_weekly_plan_v5')));
+ const m125=fs.readFileSync('supabase/migrations/125_plan_exam_concurrency_guard.sql','utf8');await db.exec('create or replace function public.save_weekly_plan_v5('+m125.split('create or replace function public.save_weekly_plan_v5(')[1].split('revoke all on function public.save_weekly_plan_v5(')[0]);
+ await db.exec(fs.readFileSync('supabase/migrations/250_student_routine_progress.sql','utf8').replace(/^notify .*$/gim,''));
+ await db.exec(fs.readFileSync('docs/planner-rollouts/251-routine-duration-rollout.sql','utf8').replace(/^notify .*$/gim,''));
+ const canonical=fs.readFileSync('supabase/migrations/251_routine_duration.sql','utf8'),crypto=require('node:crypto');
+ for(const [signature,marker] of [
+  ['public.normalize_weekly_plan_routines(jsonb)','create or replace function public.normalize_weekly_plan_routines('],
+  ['public.save_weekly_plan_v5(uuid,uuid,date,text,text,public.content_status,jsonb,jsonb)','create or replace function public.save_weekly_plan_v5('],
+  ['private.protect_completed_routines()','create or replace function private.protect_completed_routines('],
+  ['private.set_weekly_routine_progress_internal(uuid,integer,integer,text,text,boolean)','create function private.set_weekly_routine_progress_internal('],
+  ['private.check_routine_duration(uuid,integer,integer,integer)','create function private.check_routine_duration('],
+  ['public.set_weekly_routine_progress(uuid,integer,integer,text,text,boolean)','create or replace function public.set_weekly_routine_progress('],
+  ['public.set_weekly_routine_progress_v2(uuid,integer,integer,text,text,boolean,integer)','create function public.set_weekly_routine_progress_v2('],
+ ]) {
+  const body=canonical.split(marker)[1].split('as $$')[1].split('$$;')[0];const hash=crypto.createHash('md5').update(body).digest('hex');
+  const row=(await db.query('select md5(prosrc) hash from pg_proc where oid=$1::regprocedure',[signature])).rows[0];assert.equal(row.hash,hash,signature+' body must match canonical migration');
+ }
+
+ const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
+ const tick=(id,day,slot,subject,details,done)=>db.query('select public.set_weekly_routine_progress($1,$2,$3,$4,$5,$6)',[id,day,slot,subject,details,done]);
+ const rows=async()=>(await db.query('select * from public.weekly_plan_routine_completions')).rows;
+ await actor(student);const page=(await db.query('select public.student_dashboard_page(0) as p')).rows[0].p;assert.equal(page.plans[0].routines[0].secondSubject,'فیزیک');
+ await assert.rejects(()=>tick(plan,1,1,'','',true),/Routine unavailable/);await assert.rejects(()=>tick(plan,0,1,'غلط','تمرین',true),/Routine changed/);
+ await tick(plan,0,1,'ریاضی','تمرین',true);await tick(plan,0,2,'فیزیک','مرور',true);await tick(plan,0,1,'ریاضی','تمرین',true);
+ assert.equal((await rows()).length,2);await assert.rejects(()=>db.query('delete from public.weekly_plan_routine_completions'),/permission denied/);
+ await actor(other);assert.equal((await rows()).length,0);await assert.rejects(()=>tick(plan,0,1,'ریاضی','تمرین',false),/Routine unavailable/);
+ await actor(counselor);assert.equal((await rows()).length,2);await assert.rejects(()=>tick(plan,0,1,'ریاضی','تمرین',false),/Active student/);
+ await actor(unassigned);assert.equal((await rows()).length,0);
+ await db.exec('reset role');await db.query("update public.profiles set registration_status='pending' where id=$1",[other]);
+ await actor(other);await assert.rejects(()=>tick(plan,0,1,'ریاضی','تمرین',true),/Active student/);
+ await db.exec('reset role');await db.query("update public.profiles set registration_status='active' where id=$1",[other]);
+ await db.exec('set role anon');await assert.rejects(()=>rows(),/permission denied/);await assert.rejects(()=>tick(plan,0,1,'ریاضی','تمرین',true),/permission denied/);
+ await db.exec('reset role');
+ const changed=[{...routines[0],subject:'شیمی'}];await assert.rejects(()=>db.query('update public.weekly_plans set routines=$1 where id=$2',[JSON.stringify(changed),plan]),/Completed routine is protected/);
+ await assert.rejects(()=>db.query('delete from public.weekly_plans where id=$1',[plan]),/Completed routine is protected/);
+ await db.query("update public.weekly_plans set title='تغییر عنوان' where id=$1",[plan]);
+ // Both slots protect time under a tick; old null and absent are equivalent.
+ await assert.rejects(()=>db.query('update public.weekly_plans set routines=$1 where id=$2',[JSON.stringify([{...routines[0],durationMinutes:20}]),plan]),/Completed routine is protected/);
+ await db.query('update public.weekly_plans set routines=$1 where id=$2',[JSON.stringify([{...routines[0],durationMinutes:null,secondDurationMinutes:null}]),plan]);
+ await actor(student);await tick(plan,0,1,'ریاضی','تمرین',false);assert.equal((await rows()).length,1);
+ await db.exec('reset role');await db.query('update public.weekly_plans set routines=$1 where id=$2',[JSON.stringify([{...routines[0],durationMinutes:20}]),plan]);
+ await actor(student);
+ await assert.rejects(()=>tick(plan,0,1,'ریاضی','تمرین',true),/Routine changed/);
+ const tick2=(duration,completed)=>db.query('select public.set_weekly_routine_progress_v2($1,0,1,$2,$3,$4,$5)',[plan,'ریاضی','تمرین',completed,duration]);
+ await assert.rejects(()=>tick2(10,true),/Routine changed/);await tick2(20,true);
+ await db.exec('reset role');await assert.rejects(()=>db.query('update public.weekly_plans set routines=$1 where id=$2',[JSON.stringify([{...routines[0],durationMinutes:25}]),plan]),/Completed routine is protected/);
+ await actor(student);await tick2(20,false);
+ await db.exec('reset role');await db.query('update public.weekly_plans set routines=$1 where id=$2',[JSON.stringify(changed),plan]);
+ await actor(student);await assert.rejects(()=>tick(plan,0,1,'ریاضی','تمرین',true),/Routine changed/);await tick(plan,0,1,'شیمی','تمرین',true);
+ await db.exec('reset role');await db.query("insert into public.weekly_plans values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',$1,'آینده',timezone('Asia/Tehran',now())::date-1,null,'published',$2)",[student,JSON.stringify([{dayOfWeek:1,subject:'درس',details:''}])]);
+ await actor(student);await assert.rejects(()=>tick('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',1,1,'درس','',true),/Routine superseded/);
+ // A draft does not replace visible routines; publication must not hide a tick.
+ const past='cccccccc-cccc-4ccc-8ccc-cccccccccccc',newer='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+ await db.exec('reset role');await db.query("insert into public.weekly_plans values($1,$2,'قبل',timezone('Asia/Tehran',now())::date-1,null,'published',$3),($4,$2,'پیش نویس',timezone('Asia/Tehran',now())::date,null,'draft','[]')",[past,other,JSON.stringify([{dayOfWeek:1,subject:'زبان',details:''}]),newer]);
+ await actor(other);await tick(past,1,1,'زبان','',true);
+ await db.exec('reset role');await assert.rejects(()=>db.query("update public.weekly_plans set status='published' where id=$1",[newer]),/completed routine would be hidden/);
+ await actor(other);await tick(past,1,1,'زبان','',false);
+ await db.exec('reset role');await db.query("update public.weekly_plans set status='published' where id=$1",[newer]);
+ await db.close();console.log('PASS: routine projection, ownership, dates, stale edits, tick isolation and completed-routine protection');
+})().catch(e=>{console.error(e);process.exitCode=1});

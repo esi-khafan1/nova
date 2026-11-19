@@ -910,13 +910,6 @@ export function WeeklyPlanBuilder({
                             ? {...next,key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
                             : existing));
                         }}/>}
-                        <PlannerReadyBlocks item={item} onApply={next=>{
-                          if(item.topics?.length && !window.confirm('زیرمبحث‌های فعلی با اطلاعات بلوک آماده جایگزین می‌شوند. ادامه می‌دهی؟'))return false;
-                          setSaveNotice(null);
-                          setItems(current=>current.map(existing=>existing.key===item.key && !existing.completed && !existing.linkedExamId && !existing.locked
-                            ? {...next,key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
-                            : existing));
-                        }}/>
                         </details>
                       </div>
                       <button
