@@ -22,7 +22,7 @@ export function PlannerWeekTemplates({weekStart,items,routines,lockedDays,onAppl
  const sequence=useRef(0),mutating=useRef(false);
  const load=useCallback(async()=>{
   const id=++sequence.current;setError('');
-  try{const {data,error}=await createClient().rpc('planner_list_presets',{target_kind:'week'});if(error)throw error;const result=parsePresets(data);if(id===sequence.current)setPresets(result);}
+  try{const {data,error}=await createClient({planner:true}).rpc('planner_list_presets',{target_kind:'week'});if(error)throw error;const result=parsePresets(data);if(id===sequence.current)setPresets(result);}
   catch{if(id===sequence.current){setPresets(null);setError('دریافت قالب‌ها انجام نشد؛ دوباره تلاش کن.');}}
  },[]);
  useEffect(()=>{const current=sequence;if(open)void load();return()=>{current.current++}},[open,load]);
@@ -36,12 +36,12 @@ export function PlannerWeekTemplates({weekStart,items,routines,lockedDays,onAppl
   try{
    const title=name.trim();if(!title||title.length>120)throw new Error('نام قالب را وارد کن.');
    const payload=makeWeekTemplate(items,routines);
-   void change(()=>createClient().rpc('planner_save_preset',{target_id:null,target_kind:'week',target_name:title,target_payload:payload,target_pinned:false,expected_revision:null}),'قالب هفته ذخیره شد.');
+   void change(()=>createClient({planner:true}).rpc('planner_save_preset',{target_id:null,target_kind:'week',target_name:title,target_payload:payload,target_pinned:false,expected_revision:null}),'قالب هفته ذخیره شد.');
   }catch(e){setError(e instanceof Error&&e.message==='نام قالب را وارد کن.'?e.message:'قالب ذخیره نشد؛ مقدار فعالیت‌ها را بررسی کن.');}
  };
  const update=(preset:Preset,patch:{name?:string;pinned?:boolean})=>{
   const title=(patch.name??preset.name).trim();if(!title||title.length>120){setError('نام قالب را وارد کن.');return;}
-  void change(()=>createClient().rpc('planner_save_preset',{target_id:preset.id,target_kind:'week',target_name:title,target_payload:preset.template,target_pinned:patch.pinned??preset.pinned,expected_revision:preset.revision}),'قالب به‌روز شد.');
+  void change(()=>createClient({planner:true}).rpc('planner_save_preset',{target_id:preset.id,target_kind:'week',target_name:title,target_payload:preset.template,target_pinned:patch.pinned??preset.pinned,expected_revision:preset.revision}),'قالب به‌روز شد.');
  };
  const apply=(preset:Preset)=>{
   try{if(!selected.some(Boolean))throw new Error('حداقل یک روز قابل ویرایش انتخاب کن.');
@@ -60,7 +60,7 @@ export function PlannerWeekTemplates({weekStart,items,routines,lockedDays,onAppl
   {presets===null&&!error&&<p className={styles.intro}>در حال دریافت قالب‌ها...</p>}
   {presets?.length===0&&<p className={styles.intro}>هنوز قالبی ذخیره نشده است.</p>}
   <div className={styles.list}>{presets?.map(preset=><article className={styles.card} key={preset.id}>
-   <div className={styles.cardHeader}><span className={styles.title}>{preset.name} {preset.pinned&&<span className={styles.pin}>سنجاق‌شده</span>}</span><div className={styles.actions}><button className={styles.button} type="button" disabled={busy} onClick={()=>apply(preset)}>اعمال روی هفته</button><button className={styles.button} type="button" disabled={busy} onClick={()=>update(preset,{pinned:!preset.pinned})}>{preset.pinned?'برداشتن سنجاق':'سنجاق کردن'}</button><button className={styles.button} type="button" disabled={busy} onClick={()=>{if(window.confirm(`قالب «${preset.name}» حذف شود؟`))void change(()=>createClient().rpc('planner_delete_preset',{target_id:preset.id,expected_revision:preset.revision}),'قالب حذف شد.')}}>حذف</button></div></div>
+   <div className={styles.cardHeader}><span className={styles.title}>{preset.name} {preset.pinned&&<span className={styles.pin}>سنجاق‌شده</span>}</span><div className={styles.actions}><button className={styles.button} type="button" disabled={busy} onClick={()=>apply(preset)}>اعمال روی هفته</button><button className={styles.button} type="button" disabled={busy} onClick={()=>update(preset,{pinned:!preset.pinned})}>{preset.pinned?'برداشتن سنجاق':'سنجاق کردن'}</button><button className={styles.button} type="button" disabled={busy} onClick={()=>{if(window.confirm(`قالب «${preset.name}» حذف شود؟`))void change(()=>createClient({planner:true}).rpc('planner_delete_preset',{target_id:preset.id,expected_revision:preset.revision}),'قالب حذف شد.')}}>حذف</button></div></div>
    <div className={styles.form}><label>تغییر نام<input className={styles.input} value={rename[preset.id]??preset.name} maxLength={120} onChange={e=>setRename(current=>({...current,[preset.id]:e.target.value}))} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();if(!busy)update(preset,{name:rename[preset.id]??preset.name})}}}/></label><button className={styles.button} type="button" disabled={busy} onClick={()=>update(preset,{name:rename[preset.id]??preset.name})}>ثبت نام</button></div>
   </article>)}</div>
  </details>;

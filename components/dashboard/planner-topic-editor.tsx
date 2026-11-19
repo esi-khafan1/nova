@@ -24,7 +24,7 @@ export function PlannerTopicEditor({topics,onChange,selection}:{topics:PlannerTo
  const reset=()=>{setEditing(null);setTitle('');setStart('');setEnd('');setBankId(null);setError('');};
  const {field,grade,track,subject,chapter}=selection;
  useEffect(()=>{if(!open||!subject||!chapter){setBank(null);return;}let cancelled=false;setBank(null);setHistory(null);setBankError(false);
-  void (async()=>{const client=createClient();const [listed,previous]=await Promise.all([
+  void (async()=>{const client=createClient({planner:true});const [listed,previous]=await Promise.all([
    client.rpc('planner_list_topics',{target_edition:'1405',target_field:field,target_grade:String(grade),target_track:track,target_subject:subject,target_chapter:chapter}),
    client.rpc('planner_topic_history',{target_student_id:selection.studentId,target_before:selection.weekStart,target_grade:grade,target_track:track,target_subject:subject,target_chapter:chapter}),
   ]);

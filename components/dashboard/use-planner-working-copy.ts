@@ -15,6 +15,9 @@ type Value={title:string;notes:string;items:PlanItem[];routines:PlanRoutine[];we
 type Session=ReturnType<typeof createPlannerDraftSession<PlannerEditorSnapshot,string>>;
 type Props={enabled:boolean;context:PlannerDraftContext;counselorId:string;planStatus:'published'|'draft'|null;value:Value;onRestore:(value:Value,status:'published'|'draft'|null)=>void;onPublished:(id:string)=>void};
 const same=(a:PlannerDraftContext,b:PlannerDraftContext)=>a.studentId===b.studentId&&a.weekStart===b.weekStart&&a.planId===b.planId;
+// Compare the same top-level shape for restored and rendered values. Object key
+// insertion order must not turn merely opening a draft into an autosave.
+const valueSignature=(value:Value)=>JSON.stringify({title:value.title,notes:value.notes,routines:value.routines,weekExtra:value.weekExtra,items:value.items});
 // These operations are reads only. A stalled request must not leave the entire
 // editor permanently in its opening phase. Late responses cannot open a draft.
 async function withOpenTimeout<T>(operation:Promise<T>):Promise<T> {
@@ -45,7 +48,7 @@ export function usePlannerWorkingCopy(props:Props) {
   let stage: 'config'|'fresh'|'draft'|'restore' = 'config';
   void (async()=>{
    try{
-    const client=createClient();
+    const client=createClient({planner:true});
     const transport=createPlannerDraftTransport<PlannerEditorSnapshot>(client,value=>value as PlannerEditorSnapshot);
     stage='fresh';
     const fresh=await withOpenTimeout(loadFreshPlannerState(client,context,counselorId));
@@ -79,7 +82,7 @@ export function usePlannerWorkingCopy(props:Props) {
     if(!(await real.open(context,initialSnapshot,fresh.planUpdatedAt))||cancelled||!opened)throw new Error('دریافت پیش‌نویس انجام نشد.');
     const value:Value=restored?{title:restored.title,notes:restored.notes,items:builderItems(restored.grid),routines:restored.routines,weekExtra:restored.weekExtra}:{title:initialSnapshot.title,notes:initialSnapshot.notes,items:builderItems(initialSnapshot.editor.grid),routines:initialSnapshot.routines,weekExtra:initialSnapshot.editor.weekExtra};
     if(restored?.conflicts.length)setWarning('برنامه یا وضعیت فعالیت‌ها تغییر کرده است. پیش‌نویس حفظ شد؛ پیش از انتشار تعارض‌ها را بررسی کن.');
-    baseline.current=JSON.stringify(value);active.current=context;latest.current.onRestore(value,fresh.plan?.status??null);setPhase('ready');setStatus(loaded?'پیش‌نویس خصوصی بازیابی شد.':'آمادهٔ ذخیرهٔ خصوصی تغییرات');
+    baseline.current=valueSignature(value);active.current=context;latest.current.onRestore(value,fresh.plan?.status??null);setPhase('ready');setStatus(loaded?'پیش‌نویس خصوصی بازیابی شد.':'آمادهٔ ذخیرهٔ خصوصی تغییرات');
    }catch{if(!cancelled){
     const reason={config:'تنظیمات اتصال مرورگر در دسترس نیست.',fresh:'دریافت یا بررسی اطلاعات به‌روز برنامه و حساب انجام نشد.',draft:'دریافت پیش‌نویس خصوصی انجام نشد.',restore:'بازکردن اطلاعات برنامه یا پیش‌نویس انجام نشد.'}[stage];
     setPhase('error');setStatus('');setWarning(`دریافت اطلاعات یا پیش‌نویس انجام نشد. ${reason} برای حفاظت از اطلاعات ویرایش موقتاً غیرفعال است؛ می‌توانی دوباره تلاش کنی یا دانش‌آموز و هفتهٔ دیگری انتخاب کنی. هیچ تغییری منتشر نشده است.`);
@@ -89,15 +92,15 @@ export function usePlannerWorkingCopy(props:Props) {
  },[props.enabled,contextKey,props.counselorId,openAttempt]);
  useEffect(()=>{
   if(!props.enabled||phase!=='ready'||!active.current||!same(active.current,props.context)||!session.current)return;
-  const signature=JSON.stringify(props.value);if(signature===baseline.current)return;
+  const signature=valueSignature(props.value);if(signature===baseline.current)return;
   try{const snapshot=latestSnapshot(props.value,props.context,props.planStatus);session.current.update(snapshot);baseline.current=signature;}
   catch{setWarning('ذخیرهٔ خودکار ممکن نشد؛ مقادیر برنامه را بررسی کن.');}
  },[props.enabled,props.value,props.context,props.planStatus,phase]);
  useEffect(()=>{
   if(!props.enabled)return;
-  const handler=(event:BeforeUnloadEvent)=>{if(session.current?.hasPendingWork()||JSON.stringify(latest.current.value)!==baseline.current){event.preventDefault();event.returnValue='';}};
+  const handler=(event:BeforeUnloadEvent)=>{if(session.current?.hasPendingWork()||valueSignature(latest.current.value)!==baseline.current){event.preventDefault();event.returnValue='';}};
   const navigate=(event:MouseEvent)=>{
-   if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||!session.current||(!session.current.hasPendingWork()&&JSON.stringify(latest.current.value)===baseline.current))return;
+   if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||!session.current||(!session.current.hasPendingWork()&&valueSignature(latest.current.value)===baseline.current))return;
    const link=event.target instanceof Element?event.target.closest('a[href]') as HTMLAnchorElement|null:null;
    if(!link||link.target&&link.target!=='_self'||link.hasAttribute('download'))return;
    const target=new URL(link.href,location.href);
@@ -106,7 +109,7 @@ export function usePlannerWorkingCopy(props:Props) {
    if(phaseRef.current!=='ready'){setWarning('ابتدا منتظر پایان عملیات بمان.');return;}
    const selected=session.current;phaseRef.current='switching';setPhase('switching');
    void Promise.resolve().then(()=>{
-    if(JSON.stringify(latest.current.value)!==baseline.current){selected.update(latestSnapshot(latest.current.value,latest.current.context,latest.current.planStatus));baseline.current=JSON.stringify(latest.current.value);}
+    if(valueSignature(latest.current.value)!==baseline.current){selected.update(latestSnapshot(latest.current.value,latest.current.context,latest.current.planStatus));baseline.current=valueSignature(latest.current.value);}
     return selected.flush();
    }).then(ok=>{if(ok)window.location.assign(target.href);else{setPhase('ready');setWarning('تغییرات ذخیره نشده‌اند؛ ابتدا مشکل ذخیره را برطرف کن.');}}).catch(()=>{setPhase('ready');setWarning('تغییرات ذخیره نشده‌اند؛ مقادیر برنامه را بررسی کن.');});
   };
@@ -122,7 +125,7 @@ export function usePlannerWorkingCopy(props:Props) {
   if(phase!=='ready'||phaseRef.current!=='ready'||!session.current)return false;
   phaseRef.current='switching';setPhase('switching');
   try{
-   if(JSON.stringify(latest.current.value)!==baseline.current){session.current.update(latestSnapshot(latest.current.value,latest.current.context,latest.current.planStatus));baseline.current=JSON.stringify(latest.current.value);}
+   if(valueSignature(latest.current.value)!==baseline.current){session.current.update(latestSnapshot(latest.current.value,latest.current.context,latest.current.planStatus));baseline.current=valueSignature(latest.current.value);}
    const ok=await session.current.flush();setPhase('ready');
    if(!ok)setWarning('تغییرات ذخیره نشده‌اند؛ ابتدا مشکل ذخیره را برطرف کن.');return ok;
   }catch{setPhase('ready');setWarning('تغییرات ذخیره نشده‌اند؛ دوباره تلاش کن.');return false;}
@@ -135,13 +138,13 @@ export function usePlannerWorkingCopy(props:Props) {
  const discard=useCallback(async()=>{
   if(!session.current||phaseRef.current!=='ready')return;
   phaseRef.current='switching';setPhase('switching');setWarning('');
-  try{if(await session.current.discard()){baseline.current=JSON.stringify(latest.current.value);window.location.reload();return;}}
+  try{if(await session.current.discard()){baseline.current=valueSignature(latest.current.value);window.location.reload();return;}}
   catch{/* Keep the editor and draft intact. */}
   setPhase('ready');setWarning('حذف پیش‌نویس انجام نشد؛ تغییرات حفظ شده‌اند.');
  },[]);
  const publish=useCallback(async()=>{
   if(!session.current||phase!=='ready'||phaseRef.current!=='ready')return;
-  try{session.current.update(latestSnapshot(latest.current.value,latest.current.context,latest.current.planStatus));baseline.current=JSON.stringify(latest.current.value);}
+  try{session.current.update(latestSnapshot(latest.current.value,latest.current.context,latest.current.planStatus));baseline.current=valueSignature(latest.current.value);}
   catch{setWarning('مقادیر برنامه برای ذخیره معتبر نیست.');return;}
   phaseRef.current='publishing';setPhase('publishing');setWarning('');const id=await session.current.publish();
   if(id){setStatus('برنامه منتشر شد.');latest.current.onPublished(id);}else setPhase('ready');

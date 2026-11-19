@@ -1,7 +1,9 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { parsePublicBrowserConfig, PUBLIC_SUPABASE_CONFIG_ID } from "./public-browser-config";
+import { createPlannerClient } from "@/lib/planner-api-client";
 
-export function createClient() {
+export function createClient(options?: {planner?: boolean}) {
+  if (options?.planner) return createPlannerClient();
   // Dashboard configuration is rendered from server runtime bindings. Public
   // variables baked into the browser bundle remain a fallback for other pages.
   const runtime = typeof document === 'undefined' ? null : parsePublicBrowserConfig(document.getElementById(PUBLIC_SUPABASE_CONFIG_ID)?.textContent);

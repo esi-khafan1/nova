@@ -8,7 +8,7 @@ export function PlannerBankChapterInput({field,grade,track,subject,value,disable
  const [chapters,setChapters]=useState<string[]>([]),[manual,setManual]=useState(false);
  useEffect(()=>{let cancelled=false;setChapters([]);setManual(false);
   if(!enabled||!subject)return;
-  void Promise.resolve().then(()=>createClient().rpc('planner_list_topic_chapters',{target_edition:'1405',target_field:field,target_grade:String(grade),target_track:track,target_subject:subject})).then(({data,error})=>{
+  void Promise.resolve().then(()=>createClient({planner:true}).rpc('planner_list_topic_chapters',{target_edition:'1405',target_field:field,target_grade:String(grade),target_track:track,target_subject:subject})).then(({data,error})=>{
    if(cancelled||error||!Array.isArray(data)||data.some(x=>typeof x!=='string'||!x.trim()||x.length>160))return;
    setChapters([...new Set(data)]);
   }).catch(()=>{});

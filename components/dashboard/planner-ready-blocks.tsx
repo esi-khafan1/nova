@@ -22,7 +22,7 @@ export function PlannerReadyBlocks({item,onApply,kind='block'}:{item:PlanItem;on
  const sequence=useRef(0),mutating=useRef(false);
  const load=useCallback(async()=>{
   const id=++sequence.current;setError('');
-  try{const {data,error}=await createClient().rpc('planner_list_presets',{target_kind:kind});if(error)throw error;const parsed=parseList(data);if(id===sequence.current)setBlocks(parsed);}
+  try{const {data,error}=await createClient({planner:true}).rpc('planner_list_presets',{target_kind:kind});if(error)throw error;const parsed=parseList(data);if(id===sequence.current)setBlocks(parsed);}
   catch{if(id===sequence.current){setBlocks(null);setError(`دریافت ${pattern?'الگوها':'بلوک‌های آماده'} انجام نشد؛ دوباره تلاش کن.`)}}
  },[kind,pattern]);
  useEffect(()=>{const current=sequence;if(open)void load();return()=>{current.current++}},[open,load]);
@@ -32,14 +32,14 @@ export function PlannerReadyBlocks({item,onApply,kind='block'}:{item:PlanItem;on
   try{if(!title||title.length>120)throw Error(`نام ${noun} را وارد کن.`);payload=makeReadyBlock(item);}
   catch(e){setError(e instanceof Error&&e.message===`نام ${noun} را وارد کن.`?e.message:'مقادیر فعالیت را بررسی کن.');return;}
   mutating.current=true;setBusy(true);setError('');setMessage('');
-  try{const result=await createClient().rpc('planner_save_preset',{target_id:null,target_kind:kind,target_name:title,target_payload:payload,target_pinned:false,expected_revision:null});if(result.error)throw result.error;await load();setMessage(`${noun} ذخیره شد.`);}
+  try{const result=await createClient({planner:true}).rpc('planner_save_preset',{target_id:null,target_kind:kind,target_name:title,target_payload:payload,target_pinned:false,expected_revision:null});if(result.error)throw result.error;await load();setMessage(`${noun} ذخیره شد.`);}
   catch{setError(`ذخیرهٔ ${noun} انجام نشد؛ دوباره تلاش کن.`);}
   finally{mutating.current=false;setBusy(false);}
  };
  const remove=async(block:ReadyBlock)=>{
   if(mutating.current||!window.confirm(`${noun} «${block.name}» حذف شود؟`))return;
   mutating.current=true;setBusy(true);setError('');setMessage('');
-  try{const result=await createClient().rpc('planner_delete_preset',{target_id:block.id,expected_revision:block.revision});if(result.error)throw result.error;await load();setMessage(`${noun} حذف شد.`);}
+  try{const result=await createClient({planner:true}).rpc('planner_delete_preset',{target_id:block.id,expected_revision:block.revision});if(result.error)throw result.error;await load();setMessage(`${noun} حذف شد.`);}
   catch{setError(`حذف ${noun} انجام نشد. فهرست را تازه‌سازی کن.`);}
   finally{mutating.current=false;setBusy(false);}
  };

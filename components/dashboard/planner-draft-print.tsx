@@ -19,7 +19,7 @@ export function PlannerDraftPrint({plan,student,counselorName,weekDetails,grid,o
  useEffect(()=>{if(!mounted)return;const before=document.activeElement instanceof HTMLElement?document.activeElement:null;overlay.current?.focus();const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();onBack()}};window.addEventListener('keydown',key);return()=>{window.removeEventListener('keydown',key);before?.focus()};},[mounted,onBack]);
  useEffect(()=>{let cancelled=false;setRows(null);setError(false);
   void (async()=>{try{
-   const {data,error}=await createClient().rpc("planner_review_week",{target_student_id:plan.student_id,target_week_start:plan.week_start});
+   const {data,error}=await createClient({planner:true}).rpc("planner_review_week",{target_student_id:plan.student_id,target_week_start:plan.week_start});
    if(error||!Array.isArray(data))throw error??new Error("Invalid reviews");
    const parsed=parsePrintableReviewRecords(data),end=new Date(Date.parse(`${plan.week_start}T00:00:00Z`)+6*86400000).toISOString().slice(0,10);
    if(parsed.some(row=>row.date<plan.week_start||row.date>end))throw Error("Invalid review dates");

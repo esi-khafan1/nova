@@ -20,7 +20,7 @@ export function PlannerPublishedReviews({studentId,weekStart,canToggle}:{student
     setRows(null);setError("");setMissing(false);setPending(false);running.current=false;
     (async () => {
       try {
-        const {data,error:err} = await createClient().rpc("planner_review_week",{target_student_id:studentId,target_week_start:weekStart});
+        const {data,error:err} = await createClient({planner:true}).rpc("planner_review_week",{target_student_id:studentId,target_week_start:weekStart});
         if (cancelled) return;
         if (err && (err.code === "PGRST202" || err.code === "42883")) {setMissing(true);return;}
         if (err) throw err;
@@ -36,7 +36,7 @@ export function PlannerPublishedReviews({studentId,weekStart,canToggle}:{student
     if (!canToggle || running.current) return;
     running.current=true;setPending(true);setError("");
     try {
-      const client=createClient();
+      const client=createClient({planner:true});
       const result=row.historical
         ? await client.rpc("planner_set_historical_review_completed",{target_archive_id:row.archiveId,target_completed:checked})
         : await client.rpc("planner_set_review_completed",{target_item_id:row.itemId,target_offset:row.offset,target_completed:checked});

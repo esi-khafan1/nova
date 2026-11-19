@@ -14,7 +14,7 @@ function parse(value:unknown):Details {
 export function PlannerPublishedWeekDetails({planId}:{planId:string}){
  const [data,setData]=useState<Details|null>(null),[failed,setFailed]=useState(false);
  useEffect(()=>{let cancelled=false;setData(null);setFailed(false);
-  void (async()=>{try{const result=await createClient().rpc('planner_get_published_extras',{target_plan_id:planId});
+  void (async()=>{try{const result=await createClient({planner:true}).rpc('planner_get_published_extras',{target_plan_id:planId});
    if(result.error){if(result.error.code==='PGRST202'||result.error.code==='42883')return;throw result.error;}
    if(!result.data||typeof result.data!=='object'||Array.isArray(result.data))throw Error('Invalid response');
    const value=parse(result.data.week);if(!cancelled)setData(value);
