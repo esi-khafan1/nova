@@ -344,7 +344,7 @@ export function WeeklyPlanBuilder({
   const changeCurriculum=(key:string,grade:Grade,track:PreparationTrack)=>setItems(current=>current.map(item=>item.key===key?{...item,sourceGrade:grade,preparationTrack:track==='final_exam'&&!curriculumBooks(student?.study_field??null,grade,track).length?'konkur':track,subject:"",chapter:"",topics:[],recommendedPublisher:track==='konkur'?item.recommendedPublisher:null,otherPublisher:track==='konkur'&&item.otherPublisher}:item));
 
   const durationField=(item:PlanItem)=>(
-      <label>
+      <label className="plan-field-duration">
         مدت (دقیقه)
         <select
           value={item.durationMinutes}
@@ -468,7 +468,6 @@ export function WeeklyPlanBuilder({
               ))}
             </select>
           </label>
-          <Link className="button button-secondary" href={`/dashboard/counselor/students/${student.student_id}`}>گزارش دانش‌آموز</Link>
         </div>
       </section>
       <div className="plan-basics planner-context-fields">
@@ -490,6 +489,7 @@ export function WeeklyPlanBuilder({
           </label>
           </fieldset>
         <details className="planner-settings"><summary>تنظیمات برنامه</summary>
+          <Link className="planner-student-report" href={`/dashboard/counselor/students/${student.student_id}`}>گزارش دانش‌آموز</Link>
           <label>
             عنوان برنامه
             <input
@@ -536,6 +536,7 @@ export function WeeklyPlanBuilder({
         </details>
       </div>
       <div className="planner-context-actions">
+        {privateDrafts && <button type="button" className="button button-secondary" disabled={!analysisReady || workingCopy.phase!=="ready"} onClick={()=>setShowDraftPrint(true)}>پیش‌نمایش و چاپ پیش‌نویس</button>}
         {privateDrafts ? <span role="status">{workingCopy.status}</span> : <PlanSaveFeedback notice={saveNotice} saving={savingCurrent} matchesSubmission={Boolean(saveContext && saveContext.studentId === student?.student_id && saveContext.weekStart === weekStart && saveContext.planId === planId)} />}
         <button type="button" className="button" onClick={event=>event.currentTarget.form?.requestSubmit(publishButton.current ?? undefined)} disabled={savingCurrent || periodEnded || hasOverlap || (!editableItems.length && !planId) || (privateDrafts && workingCopy.phase !== 'ready')}>{planStatus === "published" ? "انتشار دوباره تغییرات" : "انتشار برای دانش‌آموز"}</button>
       </div>
@@ -653,7 +654,7 @@ export function WeeklyPlanBuilder({
                           </p>
                         )}
                         {item.activityType === makeupActivity ? <>
-                          <label>باکس
+                          <label className="plan-field-makeup">باکس
                             <select aria-label="نوع باکس" value="__makeup__" onChange={event=>{
                               if(event.target.value==="__external_simulation__") chooseExternalSimulation(item.key);
                               else leaveMakeup(item.key,event.target.value);
@@ -706,10 +707,9 @@ export function WeeklyPlanBuilder({
                             />
                           </label>}
                         </> : <>
-                        <label>پایهٔ درس (مستقل از پایهٔ دانش‌آموز)<select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>{if(confirmTopicScope(item))changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
-                        <label>مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>{if(confirmTopicScope(item))changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
-                        {durationField(item)}
-                        <label>
+                        <label className="plan-field-grade" title="پایهٔ درس می‌تواند مستقل از پایهٔ دانش‌آموز باشد">پایهٔ درس<span className="planner-sr-only"> (مستقل از پایهٔ دانش‌آموز)</span><select value={itemGrade(item)??""} disabled={Boolean(item.linkedExamId)} onChange={e=>{if(confirmTopicScope(item))changeCurriculum(item.key,Number(e.target.value) as Grade,Number(e.target.value)===9?"final_exam":item.preparationTrack)}}>{planningGrades.map(g=><option value={g} key={g}>پایه {faNumber(g)}</option>)}</select></label>
+                        <label className="plan-field-track">مسیر آمادگی<select value={item.preparationTrack} disabled={Boolean(item.linkedExamId)} onChange={e=>{if(confirmTopicScope(item))changeCurriculum(item.key,itemGrade(item),e.target.value as PreparationTrack)}}><option value="konkur">{itemGrade(item)===9?"هوش و استعداد تحلیلی":"کنکور"}</option><option value="final_exam" disabled={!curriculumBooks(student?.study_field??null,itemGrade(item),'final_exam').length}>دروس مدرسه</option></select></label>
+                        <label className="plan-field-subject">
                           درس
                           {itemBooks(item).length ? (
                             <select
@@ -756,7 +756,7 @@ export function WeeklyPlanBuilder({
                           )}
                           {!itemBooks(item).length && <datalist id={`subjects-${item.key}`}><option value={externalSimulationTitle}/><option value={makeupTitle}/></datalist>}
                         </label>
-                        <label>
+                        <label className="plan-field-chapter">
                           فصل یا مبحث
                           {chapters(item).length ? (
                             <select
@@ -792,7 +792,7 @@ export function WeeklyPlanBuilder({
                             />
                           )}
                         </label>
-                        <label>
+                        <label className="plan-field-activity">
                           نوع فعالیت
                           <select
                             value={item.activityType}
@@ -822,9 +822,10 @@ export function WeeklyPlanBuilder({
                             ))}
                           </select>
                         </label>
+                        {durationField(item)}
                         {itemGrade(item)!==9 && canRecommendPublisher(item.preparationTrack, item.activityType) && (
                           <>
-                            <label>منبع پیشنهادی کنکور (اختیاری)
+                            <label className="plan-field-publisher">منبع پیشنهادی (اختیاری)
                               <select
                                 aria-label="ناشر پیشنهادی کنکور"
                                 value={item.otherPublisher ? "other" : item.recommendedPublisher ?? ""}
@@ -835,10 +836,11 @@ export function WeeklyPlanBuilder({
                                     : currentItem));
                                 }}
                               >
-                                <option value="">بدون منبع پیشنهادی</option>
+                                <option value="">بدون منبع</option>
                                 {recommendedPublishers.map(publisher => <option key={publisher} value={publisher}>{publisher}</option>)}
                                 <option value="other">ناشر دیگر</option>
                               </select>
+                              {item.recommendedPublisher && !item.otherPublisher && <small className="plan-selected-publisher">{item.recommendedPublisher}</small>}
                             </label>
                             {item.otherPublisher && <label>نام ناشر دیگر
                               <input
@@ -859,7 +861,7 @@ export function WeeklyPlanBuilder({
                           </p>
                         )}
                         {item.activityType === "practice_tests" && (
-                          <label>
+                          <label className="plan-field-test-count">
                             تعداد تست هدف
                             <input
                               type="number"
@@ -881,6 +883,7 @@ export function WeeklyPlanBuilder({
                           </label>
                         )}
                         </>}
+                        {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <div className="plan-field-topics"><PlannerTopicEditor key={`${item.key}:${item.subject}:${item.chapter}`} topics={item.topics??[]} onChange={topics=>updateItem(item.key,'topics',topics)} selection={{studentId:student.student_id,field:itemGrade(item)===9?'all':student.study_field??'all',grade:itemGrade(item),track:item.preparationTrack,subject:item.subject,chapter:item.chapter,weekStart,date:dayIso(weekStart,item.dayOfWeek),order:index*2+1,uses:items.map((other)=>({studentId:student.student_id,subject:other.subject,grade:itemGrade(other),chapter:other.chapter,date:dayIso(weekStart,other.dayOfWeek),order:items.filter(x=>x.dayOfWeek===other.dayOfWeek).findIndex(x=>x.key===other.key)*2,topicIds:(other.topics??[]).flatMap(topic=>topic.bankId?[topic.bankId]:[])}))}}/></div>}
                         {item.activityType !== makeupActivity && <label className="plan-details">
                           {item.activityType==="exam"?"راهنمای طراح آزمون (فقط برای طراح)":"توضیح تکمیلی"}
                           <input
@@ -896,7 +899,7 @@ export function WeeklyPlanBuilder({
                             maxLength={500}
                           />
                         </label>}
-                        {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <PlannerTopicEditor key={`${item.key}:${item.subject}:${item.chapter}`} topics={item.topics??[]} onChange={topics=>updateItem(item.key,'topics',topics)} selection={{studentId:student.student_id,field:itemGrade(item)===9?'all':student.study_field??'all',grade:itemGrade(item),track:item.preparationTrack,subject:item.subject,chapter:item.chapter,weekStart,date:dayIso(weekStart,item.dayOfWeek),order:index*2+1,uses:items.map((other)=>({studentId:student.student_id,subject:other.subject,grade:itemGrade(other),chapter:other.chapter,date:dayIso(weekStart,other.dayOfWeek),order:items.filter(x=>x.dayOfWeek===other.dayOfWeek).findIndex(x=>x.key===other.key)*2,topicIds:(other.topics??[]).flatMap(topic=>topic.bankId?[topic.bankId]:[])}))}}/>}
+                        <details className="plan-field-more"><summary>گزینه‌های بیشتر</summary>
                         {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <PlannerReadyBlocks kind="pattern" item={item} onApply={next=>{
                           if(item.topics?.length && !window.confirm('زیرمبحث‌های فعلی با اطلاعات الگو جایگزین می‌شوند. ادامه می‌دهی؟'))return false;
                           setSaveNotice(null);
@@ -911,6 +914,7 @@ export function WeeklyPlanBuilder({
                             ? {...next,key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
                             : existing));
                         }}/>
+                        </details>
                       </div>
                       <button
                         type="button"
@@ -958,6 +962,7 @@ export function WeeklyPlanBuilder({
       </div>
       </aside>
       </div>
+      <div className="planner-tools">
       {privateDrafts && <details className="portal-card plan-basics planner-fold"><summary>جزئیات هفته و هدف روزانه</summary>
         <div className="plan-basics-grid">
           <label>هدف هفته<input value={typeof weekExtra.goal==='string'?weekExtra.goal:''} maxLength={300} onChange={e=>setWeekExtra(current=>({...current,goal:e.target.value}))}/></label>
@@ -967,13 +972,13 @@ export function WeeklyPlanBuilder({
         </div>
       </details>}
       <details className="portal-card planner-fold"><summary>قالب‌های هفته</summary><PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);setItems(nextItems);setRoutines(nextRoutines);setEditor(null)}} /></details>
-      {privateDrafts && <button type="button" className="button button-secondary" disabled={!analysisReady || workingCopy.phase!=="ready"} onClick={()=>setShowDraftPrint(true)}>پیش‌نمایش و چاپ پیش‌نویس</button>}
       <details className="portal-card planner-fold"><summary>تحلیل و مرورها</summary>{analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
       <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} /></details>
+      </div>
 
       <section className="portal-card plan-publish">
         <input type="hidden" name="plan_id" value={planId} />
-        <label>
+        <details className="planner-note"><summary>یادداشت کلی برای دانش‌آموز</summary><label>
           یادداشت کلی برای دانش‌آموز
           <textarea
             name="notes"
@@ -983,7 +988,7 @@ export function WeeklyPlanBuilder({
             onChange={(event) => setNotes(event.target.value)}
             placeholder="هدف هفته، نکات اجرایی یا روتین ثابت را بنویس..."
           />
-        </label>
+        </label></details>
         <input
           type="hidden"
           name="items"

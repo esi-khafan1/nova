@@ -103,6 +103,7 @@
 .counselor-portal .planner-draft-notice{padding:10px 14px;margin:0}.counselor-portal .planner-draft-notice p{display:inline;margin:0 8px;font-size:12px}.counselor-portal .planner-draft-notice .plan-publish-buttons{display:inline-flex;margin:4px;gap:6px}.counselor-portal .planner-draft-notice .button{min-height:34px;font-size:11px;padding:5px 10px}
 .counselor-portal .planner-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,350px);align-items:start;gap:12px;min-width:0}.counselor-portal .planner-editor{padding:12px;margin:0;min-width:0}.counselor-portal .planner-editor-heading{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;border-bottom:1px solid #e4edf5}.counselor-portal .planner-editor-heading button{border:0;background:transparent;font:inherit;font-size:24px;color:#69829a;cursor:pointer}.counselor-portal .planner-editor>p{font-size:12px;line-height:1.8;color:#69829a}.counselor-portal .planner-editor [hidden]{display:none!important}.counselor-portal .planner-editor .plan-day{padding:10px 0 0;border:0;box-shadow:none;margin:0;background:transparent}.counselor-portal .planner-editor .plan-day>header h2{font-size:14px}.counselor-portal .planner-editor .plan-day>header{margin-bottom:10px}.counselor-portal .planner-editor .plan-item-editor{display:grid;grid-template-columns:1fr;padding:10px;gap:8px}.counselor-portal .planner-editor .plan-item-number,.counselor-portal .planner-editor .plan-item-fields,.counselor-portal .planner-editor .plan-remove{grid-column:1;grid-row:auto}.counselor-portal .planner-editor .plan-item-fields{grid-template-columns:1fr;gap:10px}.counselor-portal .planner-editor .plan-item-fields>*{grid-column:1/-1;min-width:0}.counselor-portal .planner-editor .plan-routine-fields{grid-template-columns:1fr}.counselor-portal .planner-fold{margin:0;padding:2px 10px}.counselor-portal .planner-fold>summary{font-size:13px}.counselor-portal .planner-fold[open]{padding-bottom:14px}
 @media(max-width:1100px){.counselor-portal .planner-workspace{grid-template-columns:minmax(0,1fr)}}
+@media(min-width:1101px) and (max-width:1279px){.counselor-portal .planner-workspace{grid-template-columns:minmax(0,1fr) 290px}}
 @media(max-width:700px){.counselor-portal .planner-context{position:static;padding:9px;gap:8px}.counselor-portal .planner-context .counselor-plan-student{flex-basis:100%}.counselor-portal .planner-context-fields>label,.counselor-portal .planner-context-fields>fieldset>label{flex:1 1 130px;min-width:0}.counselor-portal .planner-context-actions{width:100%;justify-content:space-between}.counselor-portal .planner-workspace{grid-template-columns:minmax(0,1fr)}.counselor-portal .planner-editor .plan-item-fields{grid-template-columns:1fr}.counselor-portal .planner-context .counselor-plan-student-row .button{width:auto}}
 
 /* The planner is a workspace, not a narrow reading page. Keep this opt-in to
@@ -110,3 +111,45 @@
 @media (min-width:701px){
   .counselor-portal.counselor-planner-portal .student-portal-main{width:100%;max-width:none;padding-inline:clamp(16px,1.5vw,28px)}
 }
+
+/* Match the approved compact workspace without removing any editor controls. */
+.counselor-portal.counselor-planner-portal{background:#f4f7fb}
+.counselor-portal .planner-editor{border-color:#dce6f0;background:#fff;box-shadow:0 3px 12px #25476b0a}
+.counselor-portal .planner-editor .plan-day>header{margin-bottom:6px}
+.counselor-portal .planner-editor .plan-item-editor{border:0;background:#fff;box-shadow:none;padding:2px;gap:7px}
+.counselor-portal .planner-editor .plan-item-number{width:25px;height:25px;font-size:11px}
+.counselor-portal .planner-editor .plan-item-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.counselor-portal .planner-editor .plan-item-fields>*{grid-column:1/-1;order:9}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-grade{grid-column:span 1;order:1}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-track{grid-column:span 1;order:2}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-subject,.counselor-portal .planner-editor .plan-item-fields>.plan-field-makeup{order:3}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-chapter{order:4}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-activity{order:5}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-duration{grid-column:span 1;order:6}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-publisher{grid-column:span 1;order:7}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-test-count{order:8}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-topics{order:10}
+.counselor-portal .planner-editor .plan-item-fields>.plan-details{order:11}
+.counselor-portal .planner-editor .plan-item-fields>.plan-field-more{order:12}
+.counselor-portal .planner-editor .plan-item-fields--external>*{grid-column:1/-1;order:0}
+.counselor-portal .planner-editor .plan-item-fields label{font-size:12px;line-height:1.6;gap:4px}
+.counselor-portal .planner-editor .plan-item-fields :is(input,select){font-size:13px;min-height:39px;padding:7px 9px;border-color:#dbe5ef}
+.counselor-portal .planner-editor .plan-field-more>summary{font-size:12px;color:#316da6;padding:8px 2px;cursor:pointer}
+.counselor-portal .planner-editor .plan-remove{justify-self:start;min-height:34px;border:0;background:transparent;color:#bd6666;padding:5px 8px}
+.counselor-portal .planner-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:start}
+.counselor-portal .planner-tools .planner-fold{min-width:0;margin:0;box-shadow:none}
+.counselor-portal .plan-publish{margin:0;padding:10px 14px}
+.counselor-portal .planner-note>summary{font-size:13px;font-weight:700;color:#245b8e;cursor:pointer;padding:7px 0}
+.counselor-portal .planner-note>label{display:grid;gap:7px;color:#15324f;font-size:13px;font-weight:700}
+@media(max-width:700px){.counselor-portal .planner-editor .plan-item-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.counselor-portal .planner-tools{grid-template-columns:1fr}}
+@media(max-width:360px){.counselor-portal .planner-editor .plan-item-fields>.plan-field-duration,.counselor-portal .planner-editor .plan-item-fields>.plan-field-publisher{grid-column:1/-1}}
+.counselor-portal .planner-tools .planner-fold[open]{grid-column:1/-1}
+.counselor-portal .planner-editor .plan-selected-publisher{font-size:11px;line-height:1.6;color:#627d94;overflow-wrap:anywhere}
+.counselor-portal.counselor-planner-portal .student-portal-main{background:#f4f7fb}
+.counselor-portal .planner-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.counselor-portal.counselor-planner-portal .planner-navigation{margin-bottom:12px;color:#42637f}
+.counselor-portal.counselor-planner-portal .planner-navigation>summary{font-size:12px;cursor:pointer;font-weight:700;padding:4px 0;list-style-position:inside}
+.counselor-portal.counselor-planner-portal .planner-navigation .cp-tools{padding:8px 0 0}
+.counselor-portal.counselor-planner-portal .cp-identity{margin-bottom:4px}
+.counselor-portal .planner-student-report{display:inline-block;margin:4px 0 8px;color:#1e5faf;font-size:12px}
+@media(min-width:701px){.counselor-portal .planner-context .counselor-plan-student-row label{min-width:180px}}

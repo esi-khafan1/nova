@@ -27,7 +27,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   assert.equal(await page.evaluate(()=>window.current[1][0].id),'db-a');assert.equal(await page.evaluate(()=>window.current[1][0].sourceItemId),'db-a');assert.equal(await page.evaluate(()=>window.current[1][0].sourceDayOfWeek),0);
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();assert.equal(await page.evaluate(()=>window.current[0][0].key),'a');
   const protectedBlock=page.locator('.block').filter({hasText:'محافظت‌شده'});await protectedBlock.focus();await page.keyboard.press('Delete');assert.equal(await page.evaluate(()=>window.current[0][1].key),'locked');
-  await page.locator('.day').first().getByRole('button',{name:'کپی روز'}).click();if(width<=700)await page.getByRole('group',{name:'انتخاب روز'}).locator('button').nth(2).click();await page.locator('.day').nth(2).getByRole('button',{name:'چسباندن روز'}).click();
+  await page.locator('.day').first().getByRole('button',{name:/گزینه‌های روز/}).click();await page.locator('.day').first().getByRole('button',{name:'کپی روز'}).click();if(width<=700)await page.getByRole('group',{name:'انتخاب روز'}).locator('button').nth(2).click();await page.locator('.day').nth(2).getByRole('button',{name:/گزینه‌های روز/}).click();await page.locator('.day').nth(2).getByRole('button',{name:'چسباندن روز'}).click();
   assert.equal(await page.evaluate(()=>window.current[2].length),2);assert.ok(await page.evaluate(()=>window.current[2].every(x=>!x.id&&!x.completed)));
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();
   if(width>=1200){const source=page.locator('.day').nth(0).locator('.block').first(),target=page.locator('.day').nth(1).locator('.block').first();

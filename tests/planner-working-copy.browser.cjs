@@ -24,6 +24,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   }});
   await page.addScriptTag({content:js});await page.getByText('آمادهٔ ذخیرهٔ خصوصی تغییرات').waitFor();
   await page.getByText('تنظیمات برنامه',{exact:true}).click();await page.getByLabel('عنوان برنامه').fill('عنوان خصوصی');await page.getByText('جزئیات هفته و هدف روزانه',{exact:true}).click();await page.getByLabel('هدف هفته').fill('هدف خصوصی');await page.getByRole('region',{name:'برنامهٔ هفتگی'}).getByRole('button',{name:/زیست‌شناسی ۱/}).first().click();
+  const selected=page.locator('.planner-editor [data-plan-item-key="item"]');
+  const gradeBox=await selected.locator('.plan-field-grade').boundingBox(),trackBox=await selected.locator('.plan-field-track').boundingBox();
+  assert.ok(gradeBox && trackBox && Math.abs(gradeBox.y-trackBox.y)<2,'grade and track are side-by-side');
+  assert.equal(await selected.locator('.plan-field-more').getAttribute('open'),null,'extra options start collapsed');
+  await selected.locator('.plan-field-more > summary').click();await selected.getByText('بلوک‌های آماده',{exact:true}).click();await selected.getByText('هنوز بلوک آماده‌ای ذخیره نشده است.').waitFor();await selected.locator('.plan-field-more > summary').click();
+  if(process.env.ACTIVE_EDITOR_SCREENSHOT)await page.screenshot({path:`${process.env.ACTIVE_EDITOR_SCREENSHOT}-${width}.png`,fullPage:true});
   const topics=page.locator('details').filter({has:page.locator('summary').getByText('زیرمبحث و صفحه')});await topics.locator('summary').click();await topics.getByLabel('نام زیرمبحث').fill('اسیدهای چرب');await topics.getByLabel('از صفحه').fill('۵');await topics.getByLabel('تا صفحه').fill('۶');await topics.getByRole('button',{name:'افزودن مبحث'}).click();
   await page.waitForFunction(()=>window.draft?.snapshot.title==='عنوان خصوصی'&&window.draft.snapshot.editor.weekExtra.goal==='هدف خصوصی'&&window.draft.snapshot.editor.grid[0][0].topics?.[0].pageStart===5);
   assert.equal(await page.evaluate(()=>window.live.title),'برنامهٔ منتشرشده');assert.equal(await page.evaluate(()=>window.publishes),0);

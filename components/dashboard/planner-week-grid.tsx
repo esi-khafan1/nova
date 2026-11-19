@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { addDays, formatPersianWeekday, parseIsoDate, persianMonthNames, persianNumber, persianParts } from "@/lib/persian-date";
 import { clonePlannerGrid, copyPlannerBlock, movePlannerBlock, summarizePlannerGrid, type GridPosition, type PlannerBlock, type PlannerGrid } from "@/lib/planner-grid";
+import { activityTypes } from "@/lib/study-catalog";
 import styles from "./planner-week-grid.module.css";
 
 type Props<T extends PlannerBlock> = {
@@ -50,6 +51,7 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
   const [menu, setMenu] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<T | null>(null);
   const [dayClipboard, setDayClipboard] = useState<T[] | null>(null);
+  const [dayMenu, setDayMenu] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [canUndo, setCanUndo] = useState(false);
   const history = useRef<Array<Array<Array<T | null>>>>([]);
@@ -150,12 +152,18 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
       {grid.map((day,dayIndex)=>{
         const date=addDays(parseIsoDate(weekStart),dayIndex), parts=persianParts(date), weekday=formatPersianWeekday(date);
         return <section className={`${styles.day} ${mobileDay===dayIndex?styles.mobileActive:""}`} key={dayIndex} aria-label={weekday}>
-          <header className={styles.dayHeader}><div><strong>{weekday}</strong><small>{persianNumber.format(parts.day)} {persianMonthNames[parts.month-1]}</small></div><div><button type="button" className={styles.dayButton} disabled={!day.some(Boolean)} onClick={()=>{setDayClipboard(day.filter((block):block is T=>Boolean(block)));setMessage(`${weekday} کپی شد؛ در روز مقصد چسباندن را بزن.`)}}>کپی روز</button>
-          {dayClipboard && !lockedDays[dayIndex] && <button type="button" className={styles.dayButton} onClick={()=>pasteDay(dayIndex)}>چسباندن روز</button>}</div></header>
+          <header className={styles.dayHeader}><div><strong>{weekday}</strong><small>{persianNumber.format(parts.day)} {persianMonthNames[parts.month-1]}</small></div>
+            <div className={styles.dayActions}><button type="button" className={styles.dayTrigger} aria-label={`گزینه‌های روز ${weekday}`} aria-expanded={dayMenu===dayIndex} onClick={()=>setDayMenu(dayMenu===dayIndex?null:dayIndex)}>⋮</button>
+              {dayMenu===dayIndex && <div className={styles.dayMenu}>
+                <button type="button" disabled={!day.some(Boolean)} onClick={()=>{setDayClipboard(day.filter((block):block is T=>Boolean(block)));setDayMenu(null);setMessage(`${weekday} کپی شد؛ از منوی روز مقصد چسباندن را بزن.`)}}>کپی روز</button>
+                {dayClipboard && !lockedDays[dayIndex] && <button type="button" onClick={()=>{pasteDay(dayIndex);setDayMenu(null)}}>چسباندن روز</button>}
+              </div>}
+            </div>
+          </header>
           <div className={styles.items} onDragOver={e=>e.preventDefault()} onDrop={e=>drop(e,dayIndex,day.length)}>
             {day.map((block,index)=>block ? <div key={block.key} className={styles.slot} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}}>
               <button type="button" ref={element=>{if(element) buttons.current.set(block.key,element);else buttons.current.delete(block.key)}} className={`${styles.block} ${(selectedKey === undefined ? selected : selectedKey)===block.key?styles.selected:""}`} style={{borderInlineStartColor:subjectColor(block.subject)}} draggable={!protect(block,dayIndex)} onDragStart={()=>{dragKey.current=block.key;setSelected(block.key)}} onDragEnd={()=>{dragKey.current=null}} onFocus={()=>setSelected(block.key)} onClick={()=>{setSelected(block.key);setMobileDay(dayIndex);onEdit(block)}} onContextMenu={e=>{e.preventDefault();setSelected(block.key);setMenu(menu===block.key?null:block.key)}} onKeyDown={e=>keyDown(e,block.key)}>
-                <strong>{block.subject || "فعالیت جدید"}</strong><span>{block.chapter || "مبحث آزاد"}</span>{Boolean(block.topics?.length)&&<span>{block.topics?.map(topic=>`${topic.title}${topic.pageStart!=null&&topic.pageEnd!=null?` (${persianNumber.format(topic.pageStart)}–${persianNumber.format(topic.pageEnd)})`:""}`).join("، ")}</span>}<small>{displayMinutes(block.durationMinutes)}{block.targetTestCount!==null?` · ${persianNumber.format(block.targetTestCount)} تست`:""}</small>{protect(block,dayIndex)&&<small>محافظت‌شده</small>}
+                <strong>{block.subject || "فعالیت جدید"}</strong><span>{block.chapter || "مبحث آزاد"}{activityTypes.find(type=>type.value===block.activityType)?.label ? ` · ${activityTypes.find(type=>type.value===block.activityType)!.label}` : ""}</span>{Boolean(block.topics?.length)&&<span>{block.topics?.map(topic=>`${topic.title}${topic.pageStart!=null&&topic.pageEnd!=null?` (${persianNumber.format(topic.pageStart)}–${persianNumber.format(topic.pageEnd)})`:""}`).join("، ")}</span>}<small>{displayMinutes(block.durationMinutes)}{block.targetTestCount!==null?` · ${persianNumber.format(block.targetTestCount)} تست`:""}</small>{protect(block,dayIndex)&&<small>محافظت‌شده</small>}
               </button>
               <button type="button" className={styles.menuTrigger} aria-label={`گزینه‌های ${block.subject || "باکس"}`} aria-expanded={menu===block.key} onClick={()=>{setSelected(block.key);setMenu(menu===block.key?null:block.key)}}>⋮</button>
               {menu===block.key && <div className={styles.menu}>
@@ -168,22 +176,24 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
                 {!protect(block,dayIndex)&&<button type="button" onClick={()=>deleteBlock(block.key)}>حذف</button>}
               </div>}
             </div> : <div className={styles.empty} key={`empty-${index}`} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}} aria-hidden="true"/>)}
-            {Array.from({length:Math.max(0,3-day.length)},(_,index)=><div className={styles.empty} key={`placeholder-${index}`} aria-hidden="true"/>)}
+            {Array.from({length:Math.max(0,2-day.length)},(_,index)=><div className={styles.empty} key={`placeholder-${index}`} aria-hidden="true"/>)}
           </div>
           <button type="button" className={styles.add} disabled={lockedDays[dayIndex]} title={lockedDays[dayIndex] ? 'روز گذشته قابل تغییر نیست.' : undefined} onClick={()=>{setMobileDay(dayIndex);onAdd(dayIndex)}}>+ افزودن</button>
           {routines?.[dayIndex] && <div className={styles.routines}>
-            <button type="button" className={styles.routineTitle} onClick={()=>{setSelected(null);onEditRoutine?.(dayIndex)}}>{lockedDays[dayIndex] ? "مشاهدهٔ روتین‌ها" : "ویرایش روتین‌ها"}</button>
+            <button type="button" className={styles.routineTitle} aria-label={lockedDays[dayIndex] ? "مشاهدهٔ روتین‌ها" : "ویرایش روتین‌ها"} onClick={()=>{setSelected(null);onEditRoutine?.(dayIndex)}}><span>روتین‌ها</span><span aria-hidden="true">✎</span></button>
             {(() => {
               const first={subject:routines[dayIndex].subject,details:routines[dayIndex].details};
               const second={subject:routines[dayIndex].secondSubject ?? "",details:routines[dayIndex].secondDetails ?? ""};
               // Display a lone second routine as routine 1 without changing its stored slot.
               return !first.subject && !first.details && (second.subject || second.details) ? [second,first] : [first,second];
-            })().map((routine,index)=><div className={styles.routine} key={index}><strong>روتین {persianNumber.format(index+1)}</strong><span>{routine.subject || routine.details || "ثبت نشده"}</span>{routine.subject && routine.details && <small>{routine.details}</small>}</div>)}
+            })().map((routine,index)=><button type="button" className={`${styles.routine} ${!routine.subject && !routine.details ? styles.routineEmpty : ""}`} key={index} onClick={()=>{setSelected(null);onEditRoutine?.(dayIndex)}}>
+              {routine.subject || routine.details ? <><span><strong>روتین {persianNumber.format(index+1)} · </strong>{routine.subject || routine.details}</span>{routine.subject && routine.details && <small>{routine.details}</small>}</> : <span>{lockedDays[dayIndex] ? "ثبت نشده" : index===0 ? "+ افزودن روتین" : "+ روتین دوم"}</span>}
+            </button>)}
           </div>}
         </section>;
       })}
     </div></div>
-    <div className={styles.summary}><strong>خلاصهٔ هفته</strong>{summary ? <><span>{displayMinutes(summary.minutes)}</span><span>{persianNumber.format(summary.tests)} تست</span><span>{persianNumber.format(summary.blocks)} باکس</span><span>{persianNumber.format(summary.emptySlots)} جای خالی</span></> : <span>مقادیر فعالیت‌ها را کامل و معتبر کن.</span>}</div>
+    <div className={styles.summary}><strong>خلاصهٔ هفته</strong>{summary ? <><span>{displayMinutes(summary.minutes)}</span><span>{persianNumber.format(summary.tests)} تست</span><span>{persianNumber.format(summary.blocks)} باکس</span></> : <span>مقادیر فعالیت‌ها را کامل و معتبر کن.</span>}</div>
     <div className={styles.live} role="status" aria-live="polite">{message}</div>
   </section>;
 }
