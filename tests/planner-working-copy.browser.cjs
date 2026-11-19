@@ -25,13 +25,24 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   await page.addScriptTag({content:js});await page.getByText('آمادهٔ ذخیرهٔ خصوصی تغییرات').waitFor();
   await page.getByText('تنظیمات برنامه',{exact:true}).click();await page.getByLabel('عنوان برنامه').fill('عنوان خصوصی');await page.getByText('جزئیات هفته و هدف روزانه',{exact:true}).click();await page.getByLabel('هدف هفته').fill('هدف خصوصی');await page.getByRole('region',{name:'برنامهٔ هفتگی'}).getByRole('button',{name:/زیست‌شناسی ۱/}).first().click();
   const selected=page.locator('.planner-editor [data-plan-item-key="item"]');
+  // A private autosaved draft may contain an incomplete activity. Publication
+  // must reveal and focus the missing field without losing the draft.
+  await selected.locator('.plan-field-subject select').selectOption('');
+  await page.waitForFunction(()=>window.draft?.snapshot.editor.grid[0][0].subject==='');
+  await page.getByRole('button',{name:'بستن ویرایشگر'}).click();
+  await page.locator('.planner-context').getByRole('button',{name:'انتشار دوباره تغییرات'}).click();
+  const missing=selected.locator('.plan-field-subject select');await missing.waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.activeElement?.matches('.plan-field-subject select') && !document.activeElement.validity.valid);
+  assert.equal(await page.evaluate(()=>window.publishes),0);assert.equal(await page.evaluate(()=>window.draft.snapshot.editor.grid[0][0].subject),'');
+  assert.ok(await missing.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight}),'invalid field is scrolled into view');
+  await missing.selectOption('زیست‌شناسی ۱');await page.waitForFunction(()=>window.draft?.snapshot.editor.grid[0][0].subject==='زیست‌شناسی ۱');
   const gradeBox=await selected.locator('.plan-field-grade').boundingBox(),trackBox=await selected.locator('.plan-field-track').boundingBox();
   assert.ok(gradeBox && trackBox && Math.abs(gradeBox.y-trackBox.y)<2,'grade and track are side-by-side');
   assert.equal(await selected.locator('.plan-field-more').getAttribute('open'),null,'extra options start collapsed');
   await selected.locator('.plan-field-more > summary').click();assert.equal(await selected.getByText('بلوک‌های آماده',{exact:true}).count(),0);await selected.getByText('الگوهای من',{exact:true}).click();await selected.getByText('هنوز الگویی ذخیره نشده است.').waitFor();await selected.locator('.plan-field-more > summary').click();
   if(process.env.ACTIVE_EDITOR_SCREENSHOT)await page.screenshot({path:`${process.env.ACTIVE_EDITOR_SCREENSHOT}-${width}.png`,fullPage:true});
   const topics=page.locator('details').filter({has:page.locator('summary').getByText('زیرمبحث و صفحه')});await topics.locator('summary').click();await topics.getByLabel('نام زیرمبحث').fill('اسیدهای چرب');await topics.getByLabel('از صفحه').fill('۵');await topics.getByLabel('تا صفحه').fill('۶');await topics.getByRole('button',{name:'افزودن مبحث'}).click();
-  await page.waitForFunction(()=>window.draft?.snapshot.title==='عنوان خصوصی'&&window.draft.snapshot.editor.weekExtra.goal==='هدف خصوصی'&&window.draft.snapshot.editor.grid[0][0].topics?.[0].pageStart===5);
+  await page.waitForFunction(()=>window.draft?.snapshot.title==='عنوان خصوصی'&&window.draft.snapshot.editor.weekExtra.goal==='هدف خصوصی'&&window.draft.snapshot.editor.grid[0][0].topics?.[0]?.pageStart===5);
   assert.equal(await page.evaluate(()=>window.live.title),'برنامهٔ منتشرشده');assert.equal(await page.evaluate(()=>window.publishes),0);
   await page.evaluate(()=>window.render());await page.waitForFunction(()=>document.querySelector('input[name=title]')?.value==='عنوان خصوصی');await page.getByText('تنظیمات برنامه',{exact:true}).click();await page.getByText('جزئیات هفته و هدف روزانه',{exact:true}).click();await page.getByRole('region',{name:'برنامهٔ هفتگی'}).getByRole('button',{name:/زیست‌شناسی ۱/}).first().click();assert.equal(await page.getByLabel('عنوان برنامه').inputValue(),'عنوان خصوصی');assert.equal(await page.getByLabel('هدف هفته').inputValue(),'هدف خصوصی');assert.ok(await page.getByRole('region',{name:'برنامهٔ هفتگی'}).getByText(/اسیدهای چرب/).isVisible());
   await page.evaluate(()=>{const due=new Date(Date.parse(window.today+'T00:00:00Z')+86400000).toISOString().slice(0,10);window.reviews=[{item_id:'item',plan_id:'plan',source_week_start:window.today,source_day:0,due_date:due,offset:1,subject:'زیست‌شناسی ۱',chapter:null,topics:[],completed:true,historical:false},{item_id:'item',plan_id:'plan',source_week_start:window.today,source_day:0,due_date:due,offset:3,subject:'زیست‌شناسی ۱',chapter:null,topics:[],completed:false,historical:false}];});

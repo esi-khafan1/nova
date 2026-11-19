@@ -278,9 +278,17 @@ export function WeeklyPlanBuilder({
       event.preventDefault();
       const item = invalid.closest<HTMLElement>("[data-plan-item-key]");
       if (item?.dataset.planItemKey) setEditor({kind:"item", key:item.dataset.planItemKey});
-      const details = invalid.closest("details");
-      if (details) details.open = true;
-      requestAnimationFrame(() => invalid.reportValidity());
+      // A required field may be inside multiple collapsed sections. Open them
+      // before React reveals the item, then bring the actual field into view.
+      for (let parent=invalid.parentElement; parent && parent!==form; parent=parent.parentElement) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      }
+      requestAnimationFrame(() => {
+        if (!invalid.isConnected || !form.contains(invalid) || !invalid.willValidate || invalid.validity.valid) return;
+        invalid.scrollIntoView?.({block:"center",inline:"nearest",behavior:"instant"});
+        invalid.focus({preventScroll:true});
+        invalid.reportValidity();
+      });
       return;
     }
     if (privateDrafts) {
