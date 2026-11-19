@@ -214,6 +214,7 @@ export function WeeklyPlanBuilder({
 }) {
   const completedIdSet = new Set(completedItemIds);
   const formId = useId();
+  const publishButton = useRef<HTMLButtonElement>(null);
   const selectedStudentIndex = Math.max(0, students.findIndex(s => s.student_id === initialStudentId));
   const [studentIndex, setStudentIndex] = useState(selectedStudentIndex);
   const selectedStudentId = students[selectedStudentIndex]?.student_id;
@@ -229,6 +230,7 @@ export function WeeklyPlanBuilder({
   const [title, setTitle] = useState(initialPlan?.title ?? "برنامه هفتگی");
   const [notes, setNotes] = useState(initialPlan?.notes ?? "");
   const [showDraftPrint,setShowDraftPrint] = useState(false);
+  const [editor, setEditor] = useState<{kind: "item"; key: string} | {kind: "routine"; day: number} | null>(null);
   const closeDraftPrint = useCallback(()=>setShowDraftPrint(false),[]);
   const [weekExtra, setWeekExtra] = useState<Record<string, unknown>>({});
   const [routines, setRoutines] = useState<PlanRoutine[]>(() => planRoutines(initialPlan));
@@ -265,6 +267,19 @@ export function WeeklyPlanBuilder({
   }, [saveResult, plans, completedItemIds, student?.student_id, weekStart]);
   const currentUrlPlan = Boolean(initialSaved === "published" && planStatus === "published" && planId && planId===initialPlanId && student?.student_id===initialStudentId && weekStart===initialWeekStart);
   function submitCurrentPlan(event: FormEvent<HTMLFormElement>) {
+    // All editors stay mounted so an unselected activity cannot bypass required
+    // fields. Reveal the first invalid one before asking the browser to focus it.
+    const form = event.currentTarget;
+    const invalid = [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input, select, textarea")].find(input => input.willValidate && !input.validity.valid);
+    if (invalid) {
+      event.preventDefault();
+      const item = invalid.closest<HTMLElement>("[data-plan-item-key]");
+      if (item?.dataset.planItemKey) setEditor({kind:"item", key:item.dataset.planItemKey});
+      const details = invalid.closest("details");
+      if (details) details.open = true;
+      requestAnimationFrame(() => invalid.reportValidity());
+      return;
+    }
     if (privateDrafts) {
       event.preventDefault();
       if (workingCopy.phase === 'ready' && event.currentTarget.reportValidity()) void workingCopy.publish();
@@ -287,7 +302,6 @@ export function WeeklyPlanBuilder({
   }
   const numbers = planNumbers(numberingPlans.length ? numberingPlans : plans);
   const studentRecentPlans = recentPlans.filter(plan => plan.student_id === student?.student_id).slice(0, 8);
-  const selectedNumber = planId ? numbers.get(planId) ?? 1 : nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart);
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([9,10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
   const workingCopy=usePlannerWorkingCopy({
     enabled:privateDrafts && Boolean(student?.student_id && counselorId),
@@ -355,6 +369,7 @@ export function WeeklyPlanBuilder({
 
   const loadPlan = (studentId: string, nextWeek: string) => {
     setSaveNotice(null);
+    setEditor(null);
     setWeekExtra({});
     const plan = plans.find(
       (item) => item.student_id === studentId && item.week_start === nextWeek,
@@ -385,13 +400,8 @@ export function WeeklyPlanBuilder({
   const weekGrid = useMemo(()=>plannerItemsToGrid(items),[items]);
   const analysisReady = items.every(item => Number.isFinite(item.durationMinutes) && item.durationMinutes >= 0 &&
     (item.targetTestCount === null || (Number.isFinite(item.targetTestCount) && item.targetTestCount >= 0)));
-  const focusPlanItem = (key: string) => {
-    requestAnimationFrame(() => {
-      const item = [...document.querySelectorAll<HTMLElement>("[data-plan-item-key]")].find(element => element.dataset.planItemKey === key);
-      item?.scrollIntoView({block: "center", behavior: "smooth"});
-      item?.focus({preventScroll: true});
-    });
-  };
+  const focusPlanItem = (key: string) => setEditor({kind:"item",key});
+  const editorDay = editor?.kind === "routine" ? editor.day : editor?.kind === "item" ? items.find(item=>item.key===editor.key)?.dayOfWeek : undefined;
 
   const updateRoutine = <K extends keyof PlanRoutine>(
     dayOfWeek: number,
@@ -432,6 +442,8 @@ export function WeeklyPlanBuilder({
   return (
     <>
       {showDraftPrint && <PlannerDraftPrint plan={{id:planId,student_id:student.student_id,week_start:weekStart,title,notes,status:"draft",routines,weekly_plan_items:items.map((item,index)=>({id:item.key,day_of_week:item.dayOfWeek,duration_minutes:item.durationMinutes,subject:item.subject,chapter:item.chapter,activity_type:item.activityType,target_test_count:item.targetTestCount,details:item.details,sort_order:index,topics:item.topics}))}} student={student} counselorName={counselorName} weekDetails={{goal:typeof weekExtra.goal==='string'?weekExtra.goal:'',wakeTime:typeof weekExtra.wakeTime==='string'?weekExtra.wakeTime:'',sleepTime:typeof weekExtra.sleepTime==='string'?weekExtra.sleepTime:'',mobileLimit:typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''}} grid={weekGrid} onBack={closeDraftPrint}/>}
+    <form id={formId} action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder" noValidate>
+      <div className="planner-context">
       <section className="portal-card counselor-plan-student">
         <div className="counselor-plan-student-row">
           <label className="portal-form">
@@ -459,25 +471,8 @@ export function WeeklyPlanBuilder({
           <Link className="button button-secondary" href={`/dashboard/counselor/students/${student.student_id}`}>گزارش دانش‌آموز</Link>
         </div>
       </section>
-    <form id={formId} action={currentUrlPlan ? saveCurrentAction : saveWeeklyPlan} onSubmit={submitCurrentPlan} onChange={() => setSaveNotice(null)} className="weekly-builder">
-      {privateDrafts && <div className="portal-card" aria-live="polite">
-        <strong>پیش‌نویس خصوصی</strong><p>{workingCopy.status}</p>
-        {workingCopy.warning && <p role="alert">{workingCopy.warning}</p>}
-        {workingCopy.phase==='error' && <button type="button" className="button button-secondary" onClick={workingCopy.retryOpen}>تلاش دوباره برای دریافت پیش‌نویس</button>}
-        {workingCopy.phase==='ready' && <div className="plan-publish-buttons">
-          <button type="button" className="button button-secondary" onClick={()=>void workingCopy.retry()}>تلاش دوباره برای ذخیره</button>
-          {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی و تغییرات ذخیره‌نشدهٔ این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
-        </div>}
-      </div>}
-      <section className="portal-card plan-basics">
-        <div className="portal-card-title">
-          <div>
-            <span>تنظیمات برنامه · برنامهٔ {faNumber(selectedNumber)} این دانش‌آموز</span>
-            <h2>برنامهٔ هفت‌روزه</h2>
-          </div>
-        </div>
+      <div className="plan-basics planner-context-fields">
         <label>ادامه یا ویرایش برنامهٔ موجود<select aria-label="انتخاب برنامهٔ موجود" value={planId} disabled={privateDrafts && !['ready','error'].includes(workingCopy.phase)} onChange={event=>{const chosen=plans.find(p=>p.id===event.target.value);const start=chosen?.week_start??tehranToday();const change=()=>{setWeekStart(start);loadPlan(student.student_id,start);};if(!privateDrafts){change();return;}void workingCopy.beforeSwitch().then(ok=>{if(ok)change();});}}><option value="">ساخت برنامهٔ {faNumber(nextPlanNumber(numberingPlans.length ? numberingPlans : plans, student?.student_id ?? "", weekStart))}</option>{plans.filter(p=>p.student_id===student?.student_id).map(p=><option key={p.id} value={p.id}>{numberedPlanTitle(p.title,numbers.get(p.id)??1)} · {formatPersianFullDate(parseIsoDate(p.week_start))}</option>)}</select></label>
-        <div className="plan-basics-grid">
           <fieldset className="planner-working-fields" disabled={privateDrafts && !['ready','error'].includes(workingCopy.phase)}>
           <label>
             شروع برنامهٔ هفت‌روزه
@@ -494,6 +489,7 @@ export function WeeklyPlanBuilder({
             />
           </label>
           </fieldset>
+        <details className="planner-settings"><summary>تنظیمات برنامه</summary>
           <label>
             عنوان برنامه
             <input
@@ -505,7 +501,6 @@ export function WeeklyPlanBuilder({
               required
             />
           </label>
-        </div>
         <div className="student-study-meta">
           <span>
             پایه:{" "}
@@ -538,28 +533,38 @@ export function WeeklyPlanBuilder({
             </span>
           </div>
         )}
-      </section>
+        </details>
+      </div>
+      <div className="planner-context-actions">
+        {privateDrafts ? <span role="status">{workingCopy.status}</span> : <PlanSaveFeedback notice={saveNotice} saving={savingCurrent} matchesSubmission={Boolean(saveContext && saveContext.studentId === student?.student_id && saveContext.weekStart === weekStart && saveContext.planId === planId)} />}
+        <button type="button" className="button" onClick={event=>event.currentTarget.form?.requestSubmit(publishButton.current ?? undefined)} disabled={savingCurrent || periodEnded || hasOverlap || (!editableItems.length && !planId) || (privateDrafts && workingCopy.phase !== 'ready')}>{planStatus === "published" ? "انتشار دوباره تغییرات" : "انتشار برای دانش‌آموز"}</button>
+      </div>
+      </div>
+      {privateDrafts && (workingCopy.warning || workingCopy.phase === 'error') && <div className="portal-card planner-draft-notice" aria-live="polite">
+        <strong>پیش‌نویس خصوصی</strong><p>{workingCopy.status}</p>
+        {workingCopy.warning && <p role="alert">{workingCopy.warning}</p>}
+        {workingCopy.phase==='error' && <button type="button" className="button button-secondary" onClick={workingCopy.retryOpen}>تلاش دوباره برای دریافت پیش‌نویس</button>}
+        {workingCopy.phase==='ready' && <div className="plan-publish-buttons">
+          <button type="button" className="button button-secondary" onClick={()=>void workingCopy.retry()}>تلاش دوباره برای ذخیره</button>
+          {workingCopy.warning && <button type="button" className="button button-secondary" onClick={()=>{if(window.confirm('پیش‌نویس خصوصی و تغییرات ذخیره‌نشدهٔ این هفته حذف و آخرین برنامهٔ منتشرشده دوباره بارگذاری شود؟ این کار قابل بازگشت نیست.'))void workingCopy.discard();}}>حذف پیش‌نویس و بارگذاری دوباره</button>}
+        </div>}
+      </div>}
 
         <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>
       {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
-      {privateDrafts && <section className="portal-card plan-basics">
-        <div className="portal-card-title"><div><span>جزئیات هفته</span><h2>هدف و برنامهٔ روزانه</h2></div></div>
-        <div className="plan-basics-grid">
-          <label>هدف هفته<input value={typeof weekExtra.goal==='string'?weekExtra.goal:''} maxLength={300} onChange={e=>setWeekExtra(current=>({...current,goal:e.target.value}))}/></label>
-          <label>ساعت بیداری<input type="time" value={typeof weekExtra.wakeTime==='string'?weekExtra.wakeTime:''} onChange={e=>setWeekExtra(current=>({...current,wakeTime:e.target.value}))}/></label>
-          <label>ساعت خواب<input type="time" value={typeof weekExtra.sleepTime==='string'?weekExtra.sleepTime:''} onChange={e=>setWeekExtra(current=>({...current,sleepTime:e.target.value}))}/></label>
-          <label>محدودیت استفاده از موبایل<input value={typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''} maxLength={100} onChange={e=>setWeekExtra(current=>({...current,mobileLimit:e.target.value}))} placeholder="مثلاً روزی یک ساعت"/></label>
-        </div>
-      </section>}
       {privateDrafts && workingCopy.phase !== 'ready' && <div className="portal-alert error" role="status">
         {workingCopy.phase === 'error' ? <>{workingCopy.warning} برای تلاش دوباره به بخش «پیش‌نویس خصوصی» در بالای صفحه برو.</> : 'ویرایش گرید تا پایان دریافت یا ذخیرهٔ پیش‌نویس موقتاً غیرفعال است.'}
       </div>}
+      <div className="planner-workspace">
       <PlannerWeekGrid
         key={`${student.student_id}:${weekStart}:${planId}`}
         weekStart={weekStart}
         grid={weekGrid}
         lockedDays={weekDays.map((_, day) => isLockedDay(day))}
-        onChange={next => { setSaveNotice(null); setItems(plannerGridToItems(next)); }}
+        onChange={next => { setSaveNotice(null); setItems(plannerGridToItems(next)); if (editor?.kind === "item" && !next.flat().some(item => item?.key === editor.key)) setEditor(null); }}
+        routines={routines}
+        selectedKey={editor?.kind === "item" ? editor.key : null}
+        onEditRoutine={day => setEditor({kind:"routine", day})}
         onEdit={item => focusPlanItem(item.key)}
         onAdd={day => {
           const item = newStudentItem(day, undefined, student.grade);
@@ -568,11 +573,9 @@ export function WeeklyPlanBuilder({
           focusPlanItem(item.key);
         }}
       />
-      <PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);setItems(nextItems);setRoutines(nextRoutines)}} />
-      {privateDrafts && <button type="button" className="button button-secondary" disabled={!analysisReady || workingCopy.phase!=="ready"} onClick={()=>setShowDraftPrint(true)}>پیش‌نمایش و چاپ پیش‌نویس</button>}
-      {analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
-      <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} />
-      <div className="portal-card"><strong>جزئیات فعالیت‌ها و روتین‌ها</strong><p>این بخش ویرایشگر همان باکس‌های گرید است، نه برنامه‌ای جداگانه. برای رفتن به جزئیات، روی باکس گرید بزن.</p></div>
+      <aside className="portal-card planner-editor" aria-label="ویرایشگر برنامه">
+        <div className="planner-editor-heading"><strong>{editor?.kind === "routine" ? "روتین‌های روز" : "ویرایش فعالیت"}</strong>{editor && <button type="button" onClick={()=>setEditor(null)} aria-label="بستن ویرایشگر">×</button>}</div>
+        {!editor && <p>برای ویرایش، یک باکس یا روتین را از جدول انتخاب کن.</p>}
       <div className="weekly-days">
         {weekDays.map((_, dayIndex) => {
           const dayIsLocked = isLockedDay(dayIndex);
@@ -582,6 +585,7 @@ export function WeeklyPlanBuilder({
             <section
               className={`portal-card plan-day${dayIsLocked ? " past" : ""}`}
               key={dayIndex}
+              hidden={editorDay !== dayIndex}
               aria-label={realWeekday}
             >
               <header>
@@ -589,18 +593,7 @@ export function WeeklyPlanBuilder({
                   <span>روز {faNumber(dayIndex + 1)}</span>
                   <h2>{formatPersianFullDate(dayDate(weekStart, dayIndex))}</h2>
                 </div>
-                {!dayIsLocked && (
-                  <button
-                    type="button"
-                    className="plan-add"
-                    onClick={() => {
-                      setSaveNotice(null);
-                      setItems((current) => [...current, newStudentItem(dayIndex, undefined, student?.grade)]);
-                    }}
-                  >
-                    + افزودن فعالیت
-                  </button>
-                )}
+
               </header>
 
               {dayIsLocked ? (
@@ -609,7 +602,7 @@ export function WeeklyPlanBuilder({
                     این روز گذشته و دیگر قابل تغییر نیست.
                   </p>
                   {dayItems.map((item) => (
-                    <article className="plan-item-readonly" key={item.key} data-plan-item-key={item.key} tabIndex={-1}>
+                    <article className="plan-item-readonly" key={item.key} data-plan-item-key={item.key} hidden={editor?.kind !== "item" || editor.key !== item.key} tabIndex={-1}>
                       <strong>{item.subject}</strong>
                       <span>
                         {item.activityType === makeupActivity ? "" : item.activityType === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "ثبت نشده"} · ` : `${item.chapter || "بدون مبحث"} · `}{" "}
@@ -624,7 +617,7 @@ export function WeeklyPlanBuilder({
                   ))}
                   {(() => {
                     const routine = routines[dayIndex];
-                    return <article className="plan-routine-readonly" key={`routine-${dayIndex}`}>
+                    return <article className="plan-routine-readonly" key={`routine-${dayIndex}`} hidden={editor?.kind !== "routine"}>
                       <strong>روتین ۱</strong>
                       <span>{routine.subject || "درس انتخاب نشده"}</span>
                       {routine.details && <small>{routine.details}</small>}
@@ -635,11 +628,11 @@ export function WeeklyPlanBuilder({
                   })()}
                 </div>
               ) : dayItems.length === 0 ? (
-                <p className="plan-day-empty">برای این روز فعالیتی ثبت نشده.</p>
+                <p className="plan-day-empty" hidden={editor?.kind === "routine"}>برای این روز فعالیتی ثبت نشده.</p>
               ) : (
                 <div className="plan-item-list">
                   {dayItems.map((item, index) => item.completed ? (
-                    <article className="plan-item-readonly" key={item.key} data-plan-item-key={item.key} tabIndex={-1}>
+                    <article className="plan-item-readonly" key={item.key} data-plan-item-key={item.key} hidden={editor?.kind !== "item" || editor.key !== item.key} tabIndex={-1}>
                       <strong>{item.activityType === externalSimulationActivity ? externalSimulationTitle : item.subject}</strong>
                       <span>{item.activityType === makeupActivity ? "" : item.activityType === externalSimulationActivity ? `برگزارکننده: ${simulationProvider(item.subject) ?? "ثبت نشده"} · ` : `${item.chapter || "بدون مبحث"} · `}{faNumber(item.durationMinutes)} دقیقه
                         {item.activityType === "practice_tests" && item.targetTestCount && ` · هدف ${faNumber(item.targetTestCount)} تست`}
@@ -649,7 +642,7 @@ export function WeeklyPlanBuilder({
                       <p className="plan-exam-box-status" role="status">این باکس انجام شده و قابل تغییر یا حذف نیست.</p>
                     </article>
                   ) : (
-                    <article className="plan-item-editor" key={item.key} data-plan-item-key={item.key} tabIndex={-1}>
+                    <article className="plan-item-editor" key={item.key} data-plan-item-key={item.key} hidden={editor?.kind !== "item" || editor.key !== item.key} tabIndex={-1}>
                       <div className="plan-item-number">
                         {faNumber(index + 1)}
                       </div>
@@ -927,6 +920,7 @@ export function WeeklyPlanBuilder({
                           if (item.linkedExamId && !window.confirm("این باکس به آزمون متصل است. با حذف آن، دسترسی دانش‌آموز به آزمون از طریق این باکس قطع می‌شود. آزمون و پاسخ‌های ثبت‌شده حذف نمی‌شوند. آیا از حذف باکس مطمئنی؟")) return;
                           setSaveNotice(null);
                           setItems(current => current.filter(currentItem => currentItem.key !== item.key));
+                          setEditor(null);
                         }}
                       >
                         حذف
@@ -937,7 +931,7 @@ export function WeeklyPlanBuilder({
               )}
               {!dayIsLocked && (() => {
                 const routine = routines[dayIndex];
-                return <section className="plan-routine" aria-label={`روتین ${realWeekday}`}>
+                return <section className="plan-routine" hidden={editor?.kind !== "routine"} aria-label={`روتین ${realWeekday}`}>
                   {[{number: 1, subject: routine.subject, details: routine.details, subjectKey: "subject", detailsKey: "details"},
                     {number: 2, subject: routine.secondSubject ?? "", details: routine.secondDetails ?? "", subjectKey: "secondSubject", detailsKey: "secondDetails"}].map(entry => (
                     <div className="plan-routine-entry" key={entry.number}>
@@ -962,6 +956,20 @@ export function WeeklyPlanBuilder({
           );
         })}
       </div>
+      </aside>
+      </div>
+      {privateDrafts && <details className="portal-card plan-basics planner-fold"><summary>جزئیات هفته و هدف روزانه</summary>
+        <div className="plan-basics-grid">
+          <label>هدف هفته<input value={typeof weekExtra.goal==='string'?weekExtra.goal:''} maxLength={300} onChange={e=>setWeekExtra(current=>({...current,goal:e.target.value}))}/></label>
+          <label>ساعت بیداری<input type="time" value={typeof weekExtra.wakeTime==='string'?weekExtra.wakeTime:''} onChange={e=>setWeekExtra(current=>({...current,wakeTime:e.target.value}))}/></label>
+          <label>ساعت خواب<input type="time" value={typeof weekExtra.sleepTime==='string'?weekExtra.sleepTime:''} onChange={e=>setWeekExtra(current=>({...current,sleepTime:e.target.value}))}/></label>
+          <label>محدودیت استفاده از موبایل<input value={typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''} maxLength={100} onChange={e=>setWeekExtra(current=>({...current,mobileLimit:e.target.value}))} placeholder="مثلاً روزی یک ساعت"/></label>
+        </div>
+      </details>}
+      <details className="portal-card planner-fold"><summary>قالب‌های هفته</summary><PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);setItems(nextItems);setRoutines(nextRoutines);setEditor(null)}} /></details>
+      {privateDrafts && <button type="button" className="button button-secondary" disabled={!analysisReady || workingCopy.phase!=="ready"} onClick={()=>setShowDraftPrint(true)}>پیش‌نمایش و چاپ پیش‌نویس</button>}
+      <details className="portal-card planner-fold"><summary>تحلیل و مرورها</summary>{analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
+      <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} /></details>
 
       <section className="portal-card plan-publish">
         <input type="hidden" name="plan_id" value={planId} />
@@ -1011,6 +1019,7 @@ export function WeeklyPlanBuilder({
               </button>
             )}
             <button
+              ref={publishButton}
               className="button"
               name="status"
               value="published"

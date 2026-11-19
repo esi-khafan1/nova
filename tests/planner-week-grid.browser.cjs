@@ -14,7 +14,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   await page.addScriptTag({content:code});await page.evaluate(()=>document.fonts.ready);
   assert.equal(await page.locator('.day').count(),7);assert.ok(await page.locator('.day').first().getByText('سه‌شنبه').isVisible());
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`no page overflow ${width}`);
-  const scroll=page.locator('.scroll');assert.equal(await scroll.evaluate(e=>e.scrollWidth>e.clientWidth),width<1200);
+  const scroll=page.locator('.scroll');assert.equal(await scroll.evaluate(e=>e.scrollWidth>e.clientWidth),false);
   const a=page.locator('.block').filter({hasText:'زیست'}).first();await a.click();assert.deepEqual(await page.evaluate(()=>window.edited),['a']);
   await a.focus();await page.keyboard.press('Control+c');await page.keyboard.press('Control+d');
   await page.waitForFunction(()=>window.current[1].length===2);assert.equal((await page.evaluate(()=>window.current[1][1])).id,null);
@@ -27,16 +27,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),esbuild=require
   assert.equal(await page.evaluate(()=>window.current[1][0].id),'db-a');assert.equal(await page.evaluate(()=>window.current[1][0].sourceItemId),'db-a');assert.equal(await page.evaluate(()=>window.current[1][0].sourceDayOfWeek),0);
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();assert.equal(await page.evaluate(()=>window.current[0][0].key),'a');
   const protectedBlock=page.locator('.block').filter({hasText:'محافظت‌شده'});await protectedBlock.focus();await page.keyboard.press('Delete');assert.equal(await page.evaluate(()=>window.current[0][1].key),'locked');
-  await page.locator('.day').first().getByRole('button',{name:'کپی روز'}).click();await page.locator('.day').nth(2).getByRole('button',{name:'چسباندن روز'}).click();
+  await page.locator('.day').first().getByRole('button',{name:'کپی روز'}).click();if(width<=700)await page.getByRole('group',{name:'انتخاب روز'}).locator('button').nth(2).click();await page.locator('.day').nth(2).getByRole('button',{name:'چسباندن روز'}).click();
   assert.equal(await page.evaluate(()=>window.current[2].length),2);assert.ok(await page.evaluate(()=>window.current[2].every(x=>!x.id&&!x.completed)));
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();
   if(width>=1200){const source=page.locator('.day').nth(0).locator('.block').first(),target=page.locator('.day').nth(1).locator('.block').first();
   await source.dragTo(target);await page.waitForFunction(()=>window.current[1].some(b=>b&&b.key==='a'));assert.equal(await page.evaluate(()=>window.current[1][0].key),'a');
   await page.getByRole('button',{name:'بازگرداندن تغییر'}).click();}
-  await page.locator('.day').nth(0).getByRole('button',{name:'گزینه‌های زیست'}).first().click();
+  if(width<=700)await page.getByRole('group',{name:'انتخاب روز'}).locator('button').nth(0).click();if(process.env.TEST_SCREENSHOT)await page.screenshot({path:`${process.env.TEST_SCREENSHOT}-pre-${width}.png`});await page.locator('.day').nth(0).getByRole('button',{name:'گزینه‌های زیست'}).first().click();
   assert.ok(await page.getByRole('button',{name:'انتقال به روز بعد'}).isVisible());
   await page.getByRole('button',{name:'انتقال به روز بعد'}).click();assert.ok(await page.evaluate(()=>window.current[1].some(b=>b&&b.key==='a')));
-  assert.equal(await page.locator('.day').last().getByRole('button',{name:'+ افزودن'}).isDisabled(),true);
+  if(width<=700)await page.getByRole('group',{name:'انتخاب روز'}).locator('button').nth(6).click();assert.equal(await page.locator('.day').last().getByRole('button',{name:'+ افزودن'}).isDisabled(),true);
   if(process.env.TEST_SCREENSHOT)await page.screenshot({path:`${process.env.TEST_SCREENSHOT}-${width}.png`});
   await page.close();
  }}finally{await browser.close()}console.log('PASS: real grid visual layout, keyboard, drag, touch-accessible menu, copy, undo and locked days across viewport sizes');

@@ -12,6 +12,9 @@ type Props<T extends PlannerBlock> = {
   onChange: (grid: Array<Array<T | null>>) => void;
   onEdit: (block: T) => void;
   onAdd: (day: number) => void;
+  routines?: Array<{subject: string; details: string; secondSubject?: string; secondDetails?: string}>;
+  onEditRoutine?: (day: number) => void;
+  selectedKey?: string | null;
 };
 
 function subjectColor(subject: string) {
@@ -41,8 +44,9 @@ function locate(grid: PlannerGrid, key: string): GridPosition | null {
 }
 
 /** A controlled editor surface; persistence and authorization remain with its caller. */
-export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, lockedDays, onChange, onEdit, onAdd}: Props<T>) {
+export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, lockedDays, onChange, onEdit, onAdd, routines, onEditRoutine, selectedKey}: Props<T>) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [mobileDay, setMobileDay] = useState(0);
   const [menu, setMenu] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<T | null>(null);
   const [dayClipboard, setDayClipboard] = useState<T[] | null>(null);
@@ -54,6 +58,12 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
   const focusKey = useRef<string | null>(null);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const signature = JSON.stringify(grid);
+  useEffect(() => {
+    if (!selectedKey) return;
+    const position = locate(grid, selectedKey);
+    if (position) setMobileDay(position.day);
+  // Selection drives the active day; moving a selected block updates it too.
+  }, [selectedKey, signature]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (signature !== expected.current) { history.current = []; setCanUndo(false); expected.current = signature; }
     if (focusKey.current) { buttons.current.get(focusKey.current)?.focus(); focusKey.current = null; }
@@ -125,7 +135,7 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
       const day=event.key==="ArrowLeft"?Math.min(6,position.day+1):event.key==="ArrowRight"?Math.max(0,position.day-1):position.day;
       const index=event.key==="ArrowUp"?position.index-1:event.key==="ArrowDown"?position.index+1:position.index;
       const target=grid[day][Math.max(0,Math.min(index,grid[day].length-1))];
-      if(target) {event.preventDefault();setSelected(target.key);buttons.current.get(target.key)?.focus();}
+      if(target) {event.preventDefault();setSelected(target.key);setMobileDay(day);requestAnimationFrame(()=>buttons.current.get(target.key)?.focus());}
     }
   };
   const drop = (event: DragEvent, day: number, index: number) => {
@@ -135,20 +145,21 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
   return <section className={styles.wrap} aria-label="برنامهٔ هفتگی">
     <div className={styles.heading}><h2>برنامهٔ هفته</h2><button type="button" className={styles.utility} onClick={undo} disabled={!canUndo}>بازگرداندن تغییر</button></div>
     <p className={styles.shortcuts}>برای ویرایش روی باکس بزن. جابه‌جایی با کشیدن یا Alt و کلیدهای جهت؛ کپی Ctrl+C، چسباندن Ctrl+V، تکرار Ctrl+D.</p>
+    <div className={styles.mobileDays} role="group" aria-label="انتخاب روز">{grid.map((_, day) => { const date=addDays(parseIsoDate(weekStart),day); return <button type="button" key={day} aria-pressed={mobileDay===day} onClick={()=>setMobileDay(day)}>{formatPersianWeekday(date)}<small>{persianNumber.format(persianParts(date).day)}</small></button>; })}</div>
     <div className={styles.scroll}><div className={styles.grid}>
       {grid.map((day,dayIndex)=>{
         const date=addDays(parseIsoDate(weekStart),dayIndex), parts=persianParts(date), weekday=formatPersianWeekday(date);
-        return <section className={styles.day} key={dayIndex} aria-label={weekday}>
-          <header className={styles.dayHeader}><div><strong>{weekday}</strong><small>{persianNumber.format(parts.day)} {persianMonthNames[parts.month-1]}</small></div><button type="button" className={styles.dayButton} disabled={!day.some(Boolean)} onClick={()=>{setDayClipboard(day.filter((block):block is T=>Boolean(block)));setMessage(`${weekday} کپی شد؛ در روز مقصد چسباندن را بزن.`)}}>کپی روز</button></header>
-          {dayClipboard && !lockedDays[dayIndex] && <button type="button" className={styles.dayButton} onClick={()=>pasteDay(dayIndex)}>چسباندن روز</button>}
+        return <section className={`${styles.day} ${mobileDay===dayIndex?styles.mobileActive:""}`} key={dayIndex} aria-label={weekday}>
+          <header className={styles.dayHeader}><div><strong>{weekday}</strong><small>{persianNumber.format(parts.day)} {persianMonthNames[parts.month-1]}</small></div><div><button type="button" className={styles.dayButton} disabled={!day.some(Boolean)} onClick={()=>{setDayClipboard(day.filter((block):block is T=>Boolean(block)));setMessage(`${weekday} کپی شد؛ در روز مقصد چسباندن را بزن.`)}}>کپی روز</button>
+          {dayClipboard && !lockedDays[dayIndex] && <button type="button" className={styles.dayButton} onClick={()=>pasteDay(dayIndex)}>چسباندن روز</button>}</div></header>
           <div className={styles.items} onDragOver={e=>e.preventDefault()} onDrop={e=>drop(e,dayIndex,day.length)}>
             {day.map((block,index)=>block ? <div key={block.key} className={styles.slot} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}}>
-              <button type="button" ref={element=>{if(element) buttons.current.set(block.key,element);else buttons.current.delete(block.key)}} className={`${styles.block} ${selected===block.key?styles.selected:""}`} style={{borderInlineStartColor:subjectColor(block.subject)}} draggable={!protect(block,dayIndex)} onDragStart={()=>{dragKey.current=block.key;setSelected(block.key)}} onDragEnd={()=>{dragKey.current=null}} onFocus={()=>setSelected(block.key)} onClick={()=>{setSelected(block.key);onEdit(block)}} onContextMenu={e=>{e.preventDefault();setSelected(block.key);setMenu(menu===block.key?null:block.key)}} onKeyDown={e=>keyDown(e,block.key)}>
+              <button type="button" ref={element=>{if(element) buttons.current.set(block.key,element);else buttons.current.delete(block.key)}} className={`${styles.block} ${(selectedKey === undefined ? selected : selectedKey)===block.key?styles.selected:""}`} style={{borderInlineStartColor:subjectColor(block.subject)}} draggable={!protect(block,dayIndex)} onDragStart={()=>{dragKey.current=block.key;setSelected(block.key)}} onDragEnd={()=>{dragKey.current=null}} onFocus={()=>setSelected(block.key)} onClick={()=>{setSelected(block.key);setMobileDay(dayIndex);onEdit(block)}} onContextMenu={e=>{e.preventDefault();setSelected(block.key);setMenu(menu===block.key?null:block.key)}} onKeyDown={e=>keyDown(e,block.key)}>
                 <strong>{block.subject || "فعالیت جدید"}</strong><span>{block.chapter || "مبحث آزاد"}</span>{Boolean(block.topics?.length)&&<span>{block.topics?.map(topic=>`${topic.title}${topic.pageStart!=null&&topic.pageEnd!=null?` (${persianNumber.format(topic.pageStart)}–${persianNumber.format(topic.pageEnd)})`:""}`).join("، ")}</span>}<small>{displayMinutes(block.durationMinutes)}{block.targetTestCount!==null?` · ${persianNumber.format(block.targetTestCount)} تست`:""}</small>{protect(block,dayIndex)&&<small>محافظت‌شده</small>}
               </button>
               <button type="button" className={styles.menuTrigger} aria-label={`گزینه‌های ${block.subject || "باکس"}`} aria-expanded={menu===block.key} onClick={()=>{setSelected(block.key);setMenu(menu===block.key?null:block.key)}}>⋮</button>
               {menu===block.key && <div className={styles.menu}>
-                <button type="button" onClick={()=>{setMenu(null);onEdit(block)}}>ویرایش</button>
+                <button type="button" onClick={()=>{setSelected(block.key);setMenu(null);onEdit(block)}}>ویرایش</button>
                 <button type="button" onClick={()=>{setClipboard(block);setMenu(null);setMessage("باکس کپی شد.")}}>کپی</button>
                 {clipboard&&!lockedDays[dayIndex]&&<button type="button" onClick={()=>insertCopy(clipboard,dayIndex,index+1)}>چسباندن</button>}
                 {dayIndex<6&&!lockedDays[dayIndex+1]&&<button type="button" onClick={()=>insertCopy(block,dayIndex+1,grid[dayIndex+1].length)}>تکرار در روز بعد</button>}
@@ -157,9 +168,18 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
                 {!protect(block,dayIndex)&&<button type="button" onClick={()=>deleteBlock(block.key)}>حذف</button>}
               </div>}
             </div> : <div className={styles.empty} key={`empty-${index}`} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}} aria-hidden="true"/>)}
-            {Array.from({length:Math.max(0,5-day.length)},(_,index)=><div className={styles.empty} key={`placeholder-${index}`} aria-hidden="true"/>)}
+            {Array.from({length:Math.max(0,3-day.length)},(_,index)=><div className={styles.empty} key={`placeholder-${index}`} aria-hidden="true"/>)}
           </div>
-          <button type="button" className={styles.add} disabled={lockedDays[dayIndex]} title={lockedDays[dayIndex] ? 'روز گذشته قابل تغییر نیست.' : undefined} onClick={()=>onAdd(dayIndex)}>+ افزودن</button>
+          <button type="button" className={styles.add} disabled={lockedDays[dayIndex]} title={lockedDays[dayIndex] ? 'روز گذشته قابل تغییر نیست.' : undefined} onClick={()=>{setMobileDay(dayIndex);onAdd(dayIndex)}}>+ افزودن</button>
+          {routines?.[dayIndex] && <div className={styles.routines}>
+            <button type="button" className={styles.routineTitle} onClick={()=>{setSelected(null);onEditRoutine?.(dayIndex)}}>{lockedDays[dayIndex] ? "مشاهدهٔ روتین‌ها" : "ویرایش روتین‌ها"}</button>
+            {(() => {
+              const first={subject:routines[dayIndex].subject,details:routines[dayIndex].details};
+              const second={subject:routines[dayIndex].secondSubject ?? "",details:routines[dayIndex].secondDetails ?? ""};
+              // Display a lone second routine as routine 1 without changing its stored slot.
+              return !first.subject && !first.details && (second.subject || second.details) ? [second,first] : [first,second];
+            })().map((routine,index)=><div className={styles.routine} key={index}><strong>روتین {persianNumber.format(index+1)}</strong><span>{routine.subject || routine.details || "ثبت نشده"}</span>{routine.subject && routine.details && <small>{routine.details}</small>}</div>)}
+          </div>}
         </section>;
       })}
     </div></div>
