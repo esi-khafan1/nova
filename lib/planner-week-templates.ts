@@ -1,6 +1,7 @@
 import { activityTypes } from "./study-catalog";
 import { externalSimulationActivity } from "./external-simulation";
 import { makeupActivity } from "./makeup-plan-box";
+import { readReviewSetting } from "./planner-review-settings";
 import { copyPlannerBlock, plannerGridToItems, plannerItemsToGrid } from "./planner-grid";
 import type { PlanItem, PlanRoutine } from "../components/dashboard/weekly-plan-builder";
 
@@ -36,7 +37,9 @@ export function parseWeekTemplate(value:unknown):WeekTemplate {
      return {title:topic.title,pageStart:start as number|null,pageEnd:end as number|null,...(typeof topic.bankId==='string'?{bankId:topic.bankId}:{})};
     });
    }
-   return {key:`template-${index}-${n}`,dayOfWeek:index,subject:raw.subject,chapter:raw.chapter,details:raw.details,...(topics?{topics}:{}),
+   const review=record(raw.extra)&&raw.extra.review!==undefined?readReviewSetting(raw.extra.review):null;
+   if(record(raw.extra)&&raw.extra.review!==undefined&&!review)throw new Error('Invalid template review');
+   return {key:`template-${index}-${n}`,dayOfWeek:index,subject:raw.subject,chapter:raw.chapter,details:raw.details,...(topics?{topics}:{}),...(review?{extra:{review}}:{}),
     activityType:raw.activityType as PlanItem['activityType'],durationMinutes:raw.durationMinutes,targetTestCount:raw.targetTestCount,
     sourceGrade:raw.sourceGrade as PlanItem['sourceGrade'],preparationTrack:raw.preparationTrack,recommendedPublisher:raw.recommendedPublisher,
     otherPublisher:raw.otherPublisher,otherSimulationProvider:raw.otherSimulationProvider as boolean|undefined,
@@ -94,8 +97,10 @@ export function readReadyBlock(value:unknown):PlanItem {
 export function applyReadyBlock(target:PlanItem,value:unknown):PlanItem {
  if(target.completed||target.linkedExamId||target.locked)throw new Error('این فعالیت محافظت‌شده است و جایگزین نمی‌شود.');
  const block=readReadyBlock(value);
+ const extra=target.extra?structuredClone(target.extra):{};delete extra.review;
+ const review=readReviewSetting(block.extra?.review);if(review)extra.review=review;
  return {...block,key:target.key,id:target.id??null,sourceItemId:target.sourceItemId??null,sourceDayOfWeek:target.sourceDayOfWeek??null,
-  // Opaque metadata belongs to the target, not the preset or its source.
-  extra:target.extra?structuredClone(target.extra):null,topics:block.topics??[],
+  // Preserve opaque target metadata, while applying the preset's review choice.
+  extra:Object.keys(extra).length?extra:null,topics:block.topics??[],
   dayOfWeek:target.dayOfWeek,linkedExamId:null,completed:false,locked:false};
 }

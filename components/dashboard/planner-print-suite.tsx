@@ -6,6 +6,7 @@ import { PrintWeeklyPlan, type PrintablePlan, type PrintableWeekDetails } from "
 import { analyzePlannerWeek } from "@/lib/planner-analysis";
 import { reviewsForWeek, type PlannerGrid, type ReviewSource } from "@/lib/planner-grid";
 import type { HistoricalReviewRecord, PrintableReviewRecord } from "@/lib/planner-review-records";
+import { reviewDescription } from "@/lib/planner-review-settings";
 import type { StudyField } from "@/lib/study-catalog";
 import { addDays, formatPersianFullDate, formatPersianWeekday, parseIsoDate, persianNumber, toIsoDate } from "@/lib/persian-date";
 import styles from "./planner-print-suite.module.css";
@@ -70,12 +71,12 @@ export function PlannerPrintSuite({plan, student, counselorName, backHref, visib
     </article>}
     {sections.reviews && <article className={`${styles.page} ${styles.paper}`} data-section="reviews">
       <header className={styles.header}><div><strong>نووا</strong><h2>جدول مرور این هفته</h2></div><div>{student?.full_name||"دانش‌آموز نووا"} · {plan.title}{draftPreview&&" · پیش‌نویس"}</div></header>
-      <p className={styles.description}>پیش از مبحث جدید همان درس، مطالب قبلی را با کتاب و جزوه مرور کن. مرورها برای یک، سه و هفت روز بعد در نظر گرفته شده‌اند.{draftPreview && " مرورهای پیش‌نویس پیشنهادی‌اند؛ تیک‌های نسخهٔ منتشرشده جداگانه نمایش داده می‌شوند و تا انتشار تغییری نمی‌کنند."}</p>
+      <p className={styles.description}>فقط مرورهای سررسید امروز پس از اولین تیک فعالیت نمایش داده می‌شوند.{draftPreview && " تغییرات پیش‌نویس تا انتشار اثری روی مرورها ندارند."}</p>
       {!reviews.length?<p>برای این هفته مروری وجود ندارد.</p>:<div className={styles.reviewColumns}>{Array.from({length:7},(_,day)=>{
         const date=addDays(parseIsoDate(plan.week_start),day),iso=toIsoDate(date),items=reviews.filter(review=>review.date===iso);
         if(!items.length)return null;
         return <section className={styles.reviewDay} key={iso}><h3>{formatPersianFullDate(date)}</h3>{items.map(review=><div className={styles.reviewRow} key={review.key}>
-          <span className={styles.box} aria-label={review.checked?"انجام شده":"انجام نشده"}>{review.checked?"✓":""}</span><span><strong>{review.subject}</strong> · {review.chapter||"مبحث آزاد"}{review.topics.length?` · ${review.topics.map(topic=>topic.title).join("، ")}`:""}{review.historical?" (مرور ثبت‌شده از فعالیت تغییرکرده)":""}{"previewKind" in review&&review.previewKind==="draft"?" (پیش‌نویس)":"previewKind" in review&&review.previewKind==="published"?" (انجام‌شده در نسخهٔ منتشرشده)":""}</span><small>{formatNumber(review.offset)} روز بعد</small>
+          <span className={styles.box} aria-label={review.checked?"انجام شده":"انجام نشده"}>{review.checked?"✓":""}</span><span><strong>{review.subject}</strong> · {review.chapter||"مبحث آزاد"}{review.topics.length?` · ${review.topics.map(topic=>topic.title).join("، ")}`:""}{"setting" in review&&review.setting?` · ${reviewDescription(review.setting)}`:""}{review.historical?" (مرور ثبت‌شده از فعالیت تغییرکرده)":""}{"previewKind" in review&&review.previewKind==="draft"?" (پیش‌نویس)":"previewKind" in review&&review.previewKind==="published"?" (انجام‌شده در نسخهٔ منتشرشده)":""}</span><small>{formatNumber(review.offset)} روز بعد</small>
         </div>)}</section>;
       })}</div>}
     </article>}

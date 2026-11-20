@@ -1,13 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PrintablePlan, PrintableWeekDetails } from "@/components/dashboard/print-weekly-plan";
-import { parsePrintableReviewRecords } from "@/lib/planner-review-records";
+import { printableTodayReviews } from "@/lib/planner-review-today";
 import { parsePublishedTopics } from "@/lib/planner-published-topics";
 
 /** Load authorized published print extras. null means the project has not yet
  * installed the optional planner RPCs; permission/network errors fail closed. */
 export async function loadPublishedPlannerPrintData(supabase: SupabaseClient, plan: PrintablePlan) {
   const [reviews, extras] = await Promise.all([
-    supabase.rpc("planner_review_week", {target_student_id:plan.student_id,target_week_start:plan.week_start}),
+    supabase.rpc("planner_review_today_v2", {target_student_id:plan.student_id}),
     supabase.rpc("planner_get_published_extras", {target_plan_id:plan.id}),
   ]);
   const missing = (code: string | undefined) => code === "PGRST202" || code === "42883";
@@ -23,10 +23,9 @@ export async function loadPublishedPlannerPrintData(supabase: SupabaseClient, pl
     if (typeof raw[key] === "string") weekDetails[key] = raw[key];
   }
   const itemTopics = parsePublishedTopics(extras.data.items);
-  const reviewRows = parsePrintableReviewRecords(reviews.data);
+  const reviewRows = printableTodayReviews(reviews.data);
   const start = Date.parse(`${plan.week_start}T00:00:00Z`);
   if (!Number.isFinite(start) || new Date(start).toISOString().slice(0,10) !== plan.week_start) throw new Error("Invalid print week");
   const end = new Date(start + 6 * 86400000).toISOString().slice(0,10);
-  if (reviewRows.some(row => row.date < plan.week_start || row.date > end)) throw new Error("Invalid review date");
-  return {weekDetails,reviewRows,itemTopics};
+  return {weekDetails,reviewRows:reviewRows.filter(row=>row.date>=plan.week_start&&row.date<=end),itemTopics};
 }

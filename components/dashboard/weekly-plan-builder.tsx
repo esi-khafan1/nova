@@ -15,6 +15,8 @@ import { PlannerReadyBlocks } from "@/components/dashboard/planner-ready-blocks"
 import { PlannerDraftPrint } from "@/components/dashboard/planner-draft-print";
 import { PlannerTopicEditor } from "@/components/dashboard/planner-topic-editor";
 import { PlannerBankChapterInput } from "@/components/dashboard/planner-bank-chapter-input";
+import { PlannerReviewSettings } from "@/components/dashboard/planner-review-settings";
+import { normalizeReviewKind } from "@/lib/planner-review-settings";
 import { usePlannerWorkingCopy } from "@/components/dashboard/use-planner-working-copy";
 import { plannerGridToItems, plannerItemsToGrid, type PlannerTopic } from "@/lib/planner-grid";
 import {
@@ -435,6 +437,7 @@ export function WeeklyPlanBuilder({
         item.key === key ? {
           ...item, [property]: value,
           ...((property === 'subject' || property === 'chapter') && value!==item[property] ? {topics:[]} : {}),
+          ...(property === 'subject' && typeof value === 'string' && value ? {extra:normalizeReviewKind(item.extra,value,itemGrade({...item,subject:value}),student?.study_field??null)} : {}),
           ...(property === "activityType" && !canRecommendPublisher(item.preparationTrack, String(value))
             ? { recommendedPublisher: null, otherPublisher: false } : {}),
         } : item,
@@ -894,6 +897,7 @@ export function WeeklyPlanBuilder({
                           </label>
                         )}
                         </>}
+                        {privateDrafts && item.subject && ![externalSimulationActivity,makeupActivity].includes(item.activityType) && <PlannerReviewSettings subject={item.subject} grade={itemGrade(item)} field={student.study_field??null} extra={item.extra} onChange={extra=>updateItem(item.key,'extra',extra)}/>}
                         {privateDrafts && item.activityType!==makeupActivity && item.activityType!==externalSimulationActivity && <div className="plan-field-topics"><PlannerTopicEditor key={`${item.key}:${item.subject}:${item.chapter}`} topics={item.topics??[]} onChange={topics=>updateItem(item.key,'topics',topics)} selection={{studentId:student.student_id,field:itemGrade(item)===9?'all':student.study_field??'all',grade:itemGrade(item),track:item.preparationTrack,subject:item.subject,chapter:item.chapter,weekStart,date:dayIso(weekStart,item.dayOfWeek),order:index*2+1,uses:items.map((other)=>({studentId:student.student_id,subject:other.subject,grade:itemGrade(other),chapter:other.chapter,date:dayIso(weekStart,other.dayOfWeek),order:items.filter(x=>x.dayOfWeek===other.dayOfWeek).findIndex(x=>x.key===other.key)*2,topicIds:(other.topics??[]).flatMap(topic=>topic.bankId?[topic.bankId]:[])}))}}/></div>}
                         {item.activityType !== makeupActivity && <label className="plan-details">
                           {item.activityType==="exam"?"راهنمای طراح آزمون (فقط برای طراح)":"توضیح تکمیلی"}
@@ -915,7 +919,7 @@ export function WeeklyPlanBuilder({
                           if(item.topics?.length && !window.confirm('زیرمبحث‌های فعلی با اطلاعات الگو جایگزین می‌شوند. ادامه می‌دهی؟'))return false;
                           setSaveNotice(null);
                           setItems(current=>current.map(existing=>existing.key===item.key && !existing.completed && !existing.linkedExamId && !existing.locked
-                            ? {...next,key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
+                            ? {...next,extra:normalizeReviewKind(next.extra,next.subject,itemGrade(next),student.study_field??null),key:existing.key,id:existing.id,sourceItemId:existing.sourceItemId,sourceDayOfWeek:existing.sourceDayOfWeek,dayOfWeek:existing.dayOfWeek}
                             : existing));
                         }}/>}
                         </details>
@@ -978,7 +982,7 @@ export function WeeklyPlanBuilder({
           <label>محدودیت استفاده از موبایل<input value={typeof weekExtra.mobileLimit==='string'?weekExtra.mobileLimit:''} maxLength={100} onChange={e=>setWeekExtra(current=>({...current,mobileLimit:e.target.value}))} placeholder="مثلاً روزی یک ساعت"/></label>
         </div>
       </details>}
-      <details className="portal-card planner-fold"><summary>قالب‌های هفته</summary><PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);setItems(nextItems);setRoutines(nextRoutines);setEditor(null)}} /></details>
+      <details className="portal-card planner-fold"><summary>قالب‌های هفته</summary><PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);const existingKeys=new Set(items.map(item=>item.key));setItems(nextItems.map(item=>existingKeys.has(item.key)?item:{...item,extra:normalizeReviewKind(item.extra,item.subject,itemGrade(item),student.study_field??null)}));setRoutines(nextRoutines);setEditor(null)}} /></details>
       <details className="portal-card planner-fold"><summary>تحلیل و مرورها</summary>{analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
       <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} /></details>
       </div>
