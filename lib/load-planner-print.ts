@@ -11,11 +11,28 @@ export async function loadPublishedPlannerPrintData(supabase: SupabaseClient, pl
     supabase.rpc("planner_get_published_extras", {target_plan_id:plan.id}),
   ]);
   const missing = (code: string | undefined) => code === "PGRST202" || code === "42883";
-  if ((reviews.error && missing(reviews.error.code)) || (extras.error && missing(extras.error.code))) {
-    if ((reviews.error && !missing(reviews.error.code)) || (extras.error && !missing(extras.error.code))) throw new Error("Unable to load print data");
-    return null;
+  const failures = [
+    {rpc: "planner_review_today_v2", result: reviews},
+    {rpc: "planner_get_published_extras", result: extras},
+  ].filter(({result}) => result.error && !missing(result.error.code));
+  if (failures.length) {
+    for (const {rpc, result} of failures) {
+      // Never log the error message, details, request arguments, or returned data.
+      // Only known protocol error codes are safe to include in application logs.
+      const code = result.error?.code;
+      console.error("planner_print_rpc_failed", {
+        rpc,
+        code: typeof code === "string" && /^(?:PGRST\d{3}|[0-9A-Z]{5})$/.test(code) ? code : "unknown",
+        status: Number.isInteger(result.status) && result.status >= 100 && result.status <= 599 ? result.status : null,
+      });
+    }
+    throw new Error("Unable to load print data");
   }
-  if (reviews.error || extras.error || !extras.data || typeof extras.data !== "object" || Array.isArray(extras.data) || !extras.data.week || typeof extras.data.week !== "object" || Array.isArray(extras.data.week)) throw new Error("Unable to load print data");
+  if (reviews.error || extras.error) return null;
+  if (!extras.data || typeof extras.data !== "object" || Array.isArray(extras.data) || !extras.data.week || typeof extras.data.week !== "object" || Array.isArray(extras.data.week)) {
+    console.error("planner_print_invalid_response", {rpc: "planner_get_published_extras"});
+    throw new Error("Unable to load print data");
+  }
   const raw = extras.data.week as Record<string, unknown>;
   const weekDetails: PrintableWeekDetails = {};
   for (const key of ["goal", "wakeTime", "sleepTime", "mobileLimit"] as const) {
