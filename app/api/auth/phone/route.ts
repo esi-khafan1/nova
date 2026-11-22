@@ -48,17 +48,8 @@ export async function POST(request:NextRequest){
    if(typeof body.password!=='string'||body.password.length<8||body.password.length>128||!isEnglishPasswordInput(body.password))return reply(400,"رمز عبور باید بین ۸ تا ۱۲۸ کاراکتر و با صفحه‌کلید انگلیسی باشد.");
   }
   if(body.action==='signin'){
-   try {
-    const {error}=await client.auth.signInWithPassword(emailLogin?{email:email!,password:body.password}:{phone:phone!,password:body.password});
-    if(!error)return reply(200,"وارد شدی.");
-    // A failed fetch or Auth outage is not evidence of a bad password.
-    if(error.name==='AuthRetryableFetchError'||error.status===0||(typeof error.status==='number'&&error.status>=500))
-     return reply(503,"ارتباط با سرویس ورود برقرار نشد؛ کمی بعد دوباره تلاش کن.");
-    if(error.status===429)return reply(429,"تعداد تلاش‌ها زیاد است؛ کمی بعد دوباره تلاش کن.");
-    return reply(400,"اطلاعات ورود یا رمز عبور درست نیست.");
-   } catch {
-    return reply(503,"ارتباط با سرویس ورود برقرار نشد؛ کمی بعد دوباره تلاش کن.");
-   }
+   const {error}=await client.auth.signInWithPassword(emailLogin?{email:email!,password:body.password}:{phone:phone!,password:body.password});
+   return error?reply(400,"اطلاعات ورود یا رمز عبور درست نیست."):reply(200,"وارد شدی.");
   }
   if(!phone)return reply(400,'شماره تلفن همراه معتبر وارد کن.');
   let error;
