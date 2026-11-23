@@ -567,7 +567,7 @@ export function WeeklyPlanBuilder({
       </div>}
 
         <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>
-      {hasOverlap && <div className="portal-alert error" role="alert">{plannerOverlapMessage(weekStart, overlapPlans, student?.student_id ?? "", planId, items.map(item => item.dayOfWeek), tehranToday(), privateDrafts)}</div>}
+      {hasOverlap && <div className="portal-alert error" role="alert">{plannerOverlapMessage(weekStart, overlapPlans, student?.student_id ?? "", planId, items.map(item => item.dayOfWeek), tehranToday())}</div>}
       {privateDrafts && workingCopy.phase !== 'ready' && <div className="portal-alert error" role="status">
         {workingCopy.phase === 'error' ? <>{workingCopy.warning} برای تلاش دوباره به بخش «پیش‌نویس خصوصی» در بالای صفحه برو.</> : 'ویرایش گرید تا پایان دریافت یا ذخیرهٔ پیش‌نویس موقتاً غیرفعال است.'}
       </div>}
