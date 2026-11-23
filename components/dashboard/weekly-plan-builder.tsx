@@ -4,6 +4,7 @@ import { startTransition, useActionState, useCallback, useEffect, useId, useMemo
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { dayIso, tehranToday, overlapsWindow } from "@/lib/student-planning";
+import { plannerOverlapMessage } from "@/lib/planner-overlap-message";
 import { formatPersianFullDate, formatPersianWeekRange, formatPersianWeekday, parseIsoDate } from "@/lib/persian-date";
 import { saveCurrentWeeklyPlan, saveWeeklyPlan } from "@/app/dashboard/actions";
 import { PersianDatePicker } from "@/components/dashboard/persian-date-picker";
@@ -566,7 +567,7 @@ export function WeeklyPlanBuilder({
       </div>}
 
         <fieldset className="planner-working-fields" disabled={privateDrafts && workingCopy.phase !== 'ready'}>
-      {hasOverlap && <div className="portal-alert error" role="alert">این بازه با روزهای دارای فعالیتِ برنامهٔ دیگری هم‌پوشانی دارد.</div>}
+      {hasOverlap && <div className="portal-alert error" role="alert">{plannerOverlapMessage(weekStart, overlapPlans, student?.student_id ?? "", planId, items.map(item => item.dayOfWeek), tehranToday(), privateDrafts)}</div>}
       {privateDrafts && workingCopy.phase !== 'ready' && <div className="portal-alert error" role="status">
         {workingCopy.phase === 'error' ? <>{workingCopy.warning} برای تلاش دوباره به بخش «پیش‌نویس خصوصی» در بالای صفحه برو.</> : 'ویرایش گرید تا پایان دریافت یا ذخیرهٔ پیش‌نویس موقتاً غیرفعال است.'}
       </div>}

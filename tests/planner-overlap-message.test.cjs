@@ -1,0 +1,34 @@
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const Module=require('node:module');
+const path=require('node:path');
+(async()=>{
+ const built=await esbuild.build({entryPoints:['lib/planner-overlap-message.ts'],bundle:true,platform:'node',format:'cjs',write:false});
+ const file=path.join(process.cwd(),'virtual-overlap-message.cjs');const mod=new Module(file,module);mod.filename=file;mod.paths=Module._nodeModulePaths(process.cwd());mod._compile(built.outputFiles[0].text,file);
+ const {plannerOverlapMessage:message}=mod.exports;
+ const plan=(id,start,days,student='s')=>({id,student_id:student,week_start:start,status:'published',weekly_plan_items:days.map(day_of_week=>({day_of_week}))});
+ const prev=plan('previous','2026-11-17',[0,6]);
+ let text=message('2026-11-23',[prev],'s','',[0],'2026-11-23',true);
+ assert.match(text,/۲ آذر ۱۴۰۵/);assert.match(text,/۳ آذر ۱۴۰۵/);assert.match(text,/پیش‌نویس فعلی حذف نمی‌شود/);
+ const several=plan('previous','2026-11-20',[3,5,3]);
+ text=message('2026-11-23',[several],'s','',[0],'2026-11-23',true);
+ assert.match(text,/۲ آذر ۱۴۰۵/);assert.match(text,/۴ آذر ۱۴۰۵/);assert.match(text,/۵ آذر ۱۴۰۵/);
+ assert.equal((text.match(/۲ آذر ۱۴۰۵/g)||[]).length,1,'deduplicate activity dates');
+ // A suggestion must not point into a different plan, even one starting later.
+ const next=plan('next','2026-11-26',[0]);
+ text=message('2026-11-23',[several,next],'s','',[0],'2026-11-23',true);
+ assert.match(text,/۶ آذر ۱۴۰۵/);assert.doesNotMatch(text,/تاریخ شروع پنجشنبه، ۵ آذر ۱۴۰۵/);
+ const same=plan('same','2026-11-23',[]);
+ text=message('2026-11-23',[same],'s','',[0],'2026-11-23',true);
+ assert.match(text,/شروع یکسان/);assert.doesNotMatch(text,/قبلی در .* فعالیت دارد/);
+ const later=plan('later','2026-11-25',[]);
+ text=message('2026-11-23',[later],'s','',[2,3],'2026-11-23',true);
+ assert.match(text,/فعالیت‌های برنامهٔ فعلی/);assert.match(text,/۴ آذر ۱۴۰۵/);assert.match(text,/۵ آذر ۱۴۰۵/);
+ text=message('2026-11-23',[{...prev,weekly_plan_items:undefined}],'s','',[0],'2026-11-23',true);
+ assert.match(text,/اطلاعات روزهای برنامهٔ دیگر کامل دریافت نشده/);assert.doesNotMatch(text,/می‌توانی تاریخ شروع/);
+ text=message('2026-11-23',[prev],'s','',[0],'2026-11-23',false);
+ assert.match(text,/فرم دیگری باز می‌شود/);assert.doesNotMatch(text,/پیش‌نویس فعلی حذف نمی‌شود/);
+ text=message('2026-11-23',[prev],'s','editing',[0],'2026-11-23',true);
+ assert.doesNotMatch(text,/می‌توانی تاریخ شروع/,'do not suggest changing the date of an existing plan');
+ console.log('PASS: accurate overlap dates and safe suggestions for old, later, same-start, multiple and missing plan details');
+})().catch(e=>{console.error(e);process.exitCode=1});
