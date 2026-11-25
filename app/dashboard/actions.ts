@@ -9,6 +9,7 @@ import { activityTypes } from "@/lib/study-catalog";
 import { makeupActivity, makeupTitle } from "@/lib/makeup-plan-box";
 import { externalSimulationActivity, simulationProvider } from "@/lib/external-simulation";
 import { canRecommendPublisher, cleanRecommendedPublisher } from "@/lib/recommended-publishers";
+import { adminUserDirectoryUrl, adminUserSearch, parseAdminUserPage } from "@/lib/admin-user-pagination";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
   String(v ?? "")
     .trim()
@@ -338,25 +339,27 @@ export async function changeUserRole(fd: FormData) {
 
   const user_id = clean(fd.get("user_id"), 50);
   const target_role = clean(fd.get("target_role"), 20);
+  const search = adminUserSearch(fd.get("directory_search"));
+  const page = parseAdminUserPage(clean(fd.get("directory_page"), 12));
   if (
     !uuidPattern.test(user_id) ||
     !["student", "counselor", "exam_designer", "admin", "content_manager", "support_agent"].includes(target_role)
   )
-    redirect("/dashboard/admin/users?error=role");
+    redirect(adminUserDirectoryUrl(search,page,"error"));
 
   if (["admin", "content_manager"].includes(target_role)) {
     const { data: superAdmins, error: permissionError } = await s.rpc("admin_list_super_admins");
     if (permissionError || !(superAdmins ?? []).some((row: { user_id: string }) => row.user_id === user.id)) {
-      redirect("/dashboard/admin/users?error=role");
+      redirect(adminUserDirectoryUrl(search,page,"error"));
     }
   }
   const { error } = await s.rpc("admin_set_user_role", {
     target_user_id: user_id,
     target_role,
   });
-  if (error) redirect("/dashboard/admin/users?error=role");
+  if (error) redirect(adminUserDirectoryUrl(search,page,"error"));
 
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/users");
-  redirect("/dashboard/admin/users?updated=1");
+  redirect(adminUserDirectoryUrl(search,page,"updated"));
 }
