@@ -108,7 +108,12 @@ export function createPlannerDraftSession<T, Published>(options: {
     try {
       // An untouched new plan still requires a durable, revisioned snapshot.
       if (selected.revision === null) selected.queue.update(selected.snapshot);
-      if (!(await selected.queue.flush()) || disposed || !selected.revision) return null;
+      // A previous autosave failure leaves the queue deliberately latched. A
+      // fresh publication click is an explicit retry of the latest snapshot;
+      // the original revision is still checked by the server, so conflicts or
+      // a lost save acknowledgement cannot silently overwrite another draft.
+      const saved = selected.saveState === "error" ? await selected.queue.retry() : await selected.queue.flush();
+      if (!saved || disposed || !selected.revision) return null;
       if (options.preparePublication) {
         const prepared = await options.preparePublication({...selected.context}, clone(selected.snapshot), selected.basePlanUpdatedAt);
         if (disposed) return null;

@@ -65,5 +65,29 @@ const assert=require('node:assert/strict'),esbuild=require('esbuild');
  delayed.update({title:'saving'});let finish;hold=new Promise(resolve=>{finish=resolve});const pending=delayed.flush();const deleting=delayed.discard();
  assert.equal(calls.some(c=>c[0]==='discard'&&c[1]==='delayed'),false);finish();assert.equal(await pending,true);assert.equal(await deleting,true);hold=null;
  assert.equal(cache.has('delayed:2026-11-03'),false,'a late save cannot recreate a discarded draft');delayed.dispose();
+ // Pressing publish again after an autosave failure retries the latest editor
+ // snapshot, rather than silently returning from the latched queue.
+ const recover=createPlannerDraftSession({transport,onEvent:event=>events.push(event),delayMs:100000});
+ assert.equal(await recover.open(ctx('recover'),{title:'base'}),true);
+ recover.update({title:'first edit'});failSave=true;
+ assert.equal(await recover.publish(),null);assert.equal(cache.has('recover:2026-11-03'),false);
+ recover.update({title:'latest edit'});failSave=false;
+ const retried=await recover.publish();assert.equal(retried.published.title,'latest edit');
+ assert.equal(calls.filter(c=>c[0]==='publish'&&c[1]==='recover').length,1);
+ recover.dispose();
+ // Concurrent clicks never run two publishers, even while a retry is waiting.
+ const clicks=createPlannerDraftSession({transport,onEvent:()=>{},delayMs:100000});
+ assert.equal(await clicks.open(ctx('clicks'),{title:'base'}),true);clicks.update({title:'latest'});
+ let finishClick;hold=new Promise(resolve=>{finishClick=resolve});const firstClick=clicks.publish();
+ await assert.rejects(clicks.publish(),/busy/);finishClick();assert.equal((await firstClick).published.title,'latest');hold=null;
+ assert.equal(calls.filter(c=>c[0]==='publish'&&c[1]==='clicks').length,1);clicks.dispose();
+ // If a server accepted a save but its response was lost, a retry must not
+ // assume ownership of the new revision, nor overwrite a different editor.
+ const lost=createPlannerDraftSession({transport,onEvent:()=>{},delayMs:100000});
+ assert.equal(await lost.open(ctx('lost'),{title:'base'}),true);lost.update({title:'ours'});failSave=true;
+ assert.equal(await lost.publish(),null);failSave=false;
+ cache.set('lost:2026-11-03',{planId:null,basePlanUpdatedAt:null,revision:'1',snapshot:{title:'other or unacknowledged'}});
+ assert.equal(await lost.publish(),null);assert.equal(cache.get('lost:2026-11-03').snapshot.title,'other or unacknowledged');
+ assert.equal(calls.filter(c=>c[0]==='publish'&&c[1]==='lost').length,0);lost.dispose();
  console.log('PASS: draft save, context switches, stale plans, publish serialization and failure recovery');
 })().catch(e=>{console.error(e);process.exitCode=1});
