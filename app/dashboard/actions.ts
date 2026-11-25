@@ -9,7 +9,7 @@ import { activityTypes } from "@/lib/study-catalog";
 import { makeupActivity, makeupTitle } from "@/lib/makeup-plan-box";
 import { externalSimulationActivity, simulationProvider } from "@/lib/external-simulation";
 import { canRecommendPublisher, cleanRecommendedPublisher } from "@/lib/recommended-publishers";
-import { adminUserDirectoryUrl, adminUserSearch, parseAdminUserPage } from "@/lib/admin-user-pagination";
+import { adminUserDirectoryUrl, adminUserFilter, adminUserSearch, parseAdminUserPage } from "@/lib/admin-user-pagination";
 const clean = (v: FormDataEntryValue | null, max = 500) =>
   String(v ?? "")
     .trim()
@@ -341,25 +341,43 @@ export async function changeUserRole(fd: FormData) {
   const target_role = clean(fd.get("target_role"), 20);
   const search = adminUserSearch(fd.get("directory_search"));
   const page = parseAdminUserPage(clean(fd.get("directory_page"), 12));
+  const filter = adminUserFilter(fd.get("directory_filter"));
   if (
     !uuidPattern.test(user_id) ||
     !["student", "counselor", "exam_designer", "admin", "content_manager", "support_agent"].includes(target_role)
   )
-    redirect(adminUserDirectoryUrl(search,page,"error"));
+    redirect(adminUserDirectoryUrl(search,page,"error",filter));
 
   if (["admin", "content_manager"].includes(target_role)) {
     const { data: superAdmins, error: permissionError } = await s.rpc("admin_list_super_admins");
     if (permissionError || !(superAdmins ?? []).some((row: { user_id: string }) => row.user_id === user.id)) {
-      redirect(adminUserDirectoryUrl(search,page,"error"));
+      redirect(adminUserDirectoryUrl(search,page,"error",filter));
     }
   }
   const { error } = await s.rpc("admin_set_user_role", {
     target_user_id: user_id,
     target_role,
   });
-  if (error) redirect(adminUserDirectoryUrl(search,page,"error"));
+  if (error) redirect(adminUserDirectoryUrl(search,page,"error",filter));
 
   revalidatePath("/dashboard/admin");
   revalidatePath("/dashboard/admin/users");
-  redirect(adminUserDirectoryUrl(search,page,"updated"));
+  redirect(adminUserDirectoryUrl(search,page,"updated",filter));
+}
+
+export async function changeStudentAccountBlock(fd: FormData) {
+  const { supabase } = await requireProfile(["admin"]);
+  const userId = clean(fd.get("user_id"), 50);
+  const blocked = clean(fd.get("blocked"), 5);
+  const search = adminUserSearch(fd.get("directory_search"));
+  const page = parseAdminUserPage(clean(fd.get("directory_page"), 12));
+  const filter = adminUserFilter(fd.get("directory_filter"));
+  if (!uuidPattern.test(userId) || !["true", "false"].includes(blocked)) redirect(adminUserDirectoryUrl(search,page,"block-error",filter));
+  const { data, error } = await supabase.functions.invoke("student-account-block", {body:{target_id:userId,blocked:blocked === "true"}});
+  if (error || data?.ok !== true) redirect(adminUserDirectoryUrl(search,page,"block-error",filter));
+  revalidatePath("/dashboard/admin/users");
+  revalidatePath("/dashboard/admin/registrations");
+  revalidatePath("/dashboard/counselor/students");
+  revalidatePath("/dashboard/counselor/plans");
+  redirect(adminUserDirectoryUrl(search,page,blocked === "true" ? "blocked" : "unblocked",filter));
 }

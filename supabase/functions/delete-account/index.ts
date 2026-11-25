@@ -51,6 +51,11 @@ Deno.serve(async (req: Request) => {
 
     if (userError || !user) return json(req, { error: "Unauthorized" }, 401);
 
+    // This endpoint uses service_role below, so do not bypass a suspended
+    // user's Data API guard. A failed check is denied, never ignored.
+    const { data: blocked, error: blockError } = await userClient.rpc("own_account_blocked");
+    if (blockError || blocked !== false) return json(req, { error: "Unauthorized" }, 403);
+
     const admin = createClient(url, service);
     const { data: profile, error: profileError } = await admin
       .from("profiles")

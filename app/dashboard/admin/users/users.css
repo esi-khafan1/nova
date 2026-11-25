@@ -82,7 +82,7 @@
 .users-pagination a[aria-current=page]{background:#173e63;border-color:#173e63;color:#fff}
 
 /* Student account controls. The block button stays below the role form. */
-.user-state-actions{display:flex;justify-content:end}
+.user-state-actions{display:flex;justify-content:flex-end}
 .user-block-button{border:1px solid #dbbeb8;background:#fff;color:#98463a;min-height:33px;padding:4px 11px;border-radius:8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .user-block-button:hover{background:#fff4f2}
 .user-block-button.unblock{border-color:#b8d8c5;color:#276e4b;background:#f7fcf9}
@@ -91,11 +91,15 @@
 .user-block-dialog::backdrop{background:#0b1c2c80}
 .user-block-dialog h2{font-size:18px;margin:0 0 10px}
 .user-block-dialog p{color:#526b80;font-size:13px;margin:0 0 20px;line-height:2}
-.user-block-dialog-actions{display:flex;gap:8px;justify-content:end}
+.user-block-dialog-actions{display:flex;gap:8px;justify-content:flex-end}
 .user-block-dialog button{font:inherit;font-size:12px;border-radius:9px;padding:8px 15px;cursor:pointer}
 .user-block-confirm{background:#a43d31;border:1px solid #a43d31;color:white}
 .user-block-confirm:disabled{opacity:.65;cursor:wait}
 .user-block-cancel{border:1px solid #cad8e2;background:white;color:#24425e}
 .user-blocked-badge{display:inline-block;border:1px solid #e9c5c0;background:#fff3f1;color:#a3382b;font-size:10px;line-height:1.7;border-radius:99px;padding:2px 8px;white-space:nowrap;font-weight:750}
 .user-actions{display:grid;gap:7px;min-width:0}
-@media(max-width:760px){.user-state-actions{justify-content:start}.user-actions{width:100%}}
+@media(max-width:760px){.user-state-actions{justify-content:flex-start}.user-actions{width:100%}}
+
+.users-search select{min-height:44px;min-width:155px;border:1px solid #ccd7e0;border-radius:9px;background:#fff;color:#14263b;padding:8px 13px;font:inherit;font-size:13px}
+.users-list .user-actions .user-role-form{width:100%}
+.user-actions small{color:#8a4b32;font-size:11px}

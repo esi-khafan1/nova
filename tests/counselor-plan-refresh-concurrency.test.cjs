@@ -19,7 +19,7 @@ async function run({mismatch=false,fail=false,capability=false,capabilityFail=fa
  }});
  let settled=false;const result=mod.exports.default({searchParams:Promise.resolve({})}).then(x=>{settled=true;return x});
  await new Promise(r=>setImmediate(r));
- assert.deepEqual(events.sort(),['auth','counselor_completed_plan_item_ids','counselor_student_directory','history','plans','capability'].sort(),'all scoped reads start without waiting for Auth');
+ assert.deepEqual(events.sort(),['auth','counselor_blocked_student_ids','counselor_completed_plan_item_ids','counselor_student_directory','history','plans','capability'].sort(),'all scoped reads start without waiting for Auth');
  assert.equal(settled,false,'no page renders before verified Auth');releaseAuth();const root=await result;
  if(mismatch||fail||capabilityFail){assert.equal(find(root,Builder),null,'partial or identity-mismatched data must not render');assert.ok(find(root,'section'));}
  else {assert.ok(find(root,Builder));assert.equal(find(root,Builder).props.privateDrafts,capability);}

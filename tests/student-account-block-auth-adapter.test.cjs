@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+(async()=>{const {makeAuthBanSetter}=await import('../supabase/functions/student-account-block/handler.mjs');let current=null,calls=[];const until='2090-01-01T00:00:00.000Z';
+ const admin={auth:{admin:{getUserById:async()=>({data:{user:{banned_until:current}},error:null}),updateUserById:async(id,attrs)=>{calls.push([id,attrs]);current=attrs.ban_duration==='none'?null:until;return {data:{user:{banned_until:current}},error:null}}}}};
+ const set=makeAuthBanSetter(admin);
+ assert.equal(await set('student',true,null),until);assert.deepEqual(calls[0],['student',{ban_duration:'876000h'}]);
+ await assert.rejects(set('student',true,null),/Already banned/);assert.equal(calls.length,1);
+ await assert.rejects(set('student',false,'2089-01-01T00:00:00Z'),/no longer matches/);assert.equal(calls.length,1);
+ assert.equal(await set('student',false,until),null);assert.deepEqual(calls[1],['student',{ban_duration:'none'}]);
+ await assert.rejects(set('student',false,until),/no longer matches/);
+ console.log('PASS: Auth adapter preserves unrelated bans and validates Auth responses');
+})().catch(e=>{console.error(e);process.exitCode=1});
