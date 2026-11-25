@@ -80,3 +80,22 @@
 .users-pagination>div{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .users-pagination a{display:inline-flex;align-items:center;justify-content:center;min-width:38px;min-height:38px;padding:5px 10px;border:1px solid #d5dfe7;border-radius:8px;color:#234967;text-decoration:none}
 .users-pagination a[aria-current=page]{background:#173e63;border-color:#173e63;color:#fff}
+
+/* Student account controls. The block button stays below the role form. */
+.user-state-actions{display:flex;justify-content:end}
+.user-block-button{border:1px solid #dbbeb8;background:#fff;color:#98463a;min-height:33px;padding:4px 11px;border-radius:8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.user-block-button:hover{background:#fff4f2}
+.user-block-button.unblock{border-color:#b8d8c5;color:#276e4b;background:#f7fcf9}
+.user-block-button:focus-visible,.user-block-dialog button:focus-visible{outline:3px solid #1d6eb5;outline-offset:2px}
+.user-block-dialog{max-width:min(410px,calc(100% - 32px));padding:24px;border:1px solid #d3dce4;border-radius:14px;box-shadow:0 18px 50px #102a4333;color:#14263b;font:inherit}
+.user-block-dialog::backdrop{background:#0b1c2c80}
+.user-block-dialog h2{font-size:18px;margin:0 0 10px}
+.user-block-dialog p{color:#526b80;font-size:13px;margin:0 0 20px;line-height:2}
+.user-block-dialog-actions{display:flex;gap:8px;justify-content:end}
+.user-block-dialog button{font:inherit;font-size:12px;border-radius:9px;padding:8px 15px;cursor:pointer}
+.user-block-confirm{background:#a43d31;border:1px solid #a43d31;color:white}
+.user-block-confirm:disabled{opacity:.65;cursor:wait}
+.user-block-cancel{border:1px solid #cad8e2;background:white;color:#24425e}
+.user-blocked-badge{display:inline-block;border:1px solid #e9c5c0;background:#fff3f1;color:#a3382b;font-size:10px;line-height:1.7;border-radius:99px;padding:2px 8px;white-space:nowrap;font-weight:750}
+.user-actions{display:grid;gap:7px;min-width:0}
+@media(max-width:760px){.user-state-actions{justify-content:start}.user-actions{width:100%}}
