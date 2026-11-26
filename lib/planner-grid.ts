@@ -91,7 +91,18 @@ export function movePlannerBlock<T extends PlannerBlock>(grid: Array<Array<T | n
 export function copyPlannerBlock<T extends PlannerBlock>(block: T, day: number, newKey: string): T {
   checkDay(day);
   if (!newKey || newKey === block.key) throw new Error("A copy needs a new key");
-  return { ...cloneBlock(block), key: newKey, id: null, sourceItemId: null, sourceDayOfWeek: null, dayOfWeek: day, linkedExamId: null, completed: false, locked: false };
+  const copied=cloneBlock(block);
+  if ('extra' in copied && copied.extra && typeof copied.extra==='object' && !Array.isArray(copied.extra)) {
+    const extra=copied.extra as Record<string,unknown>,review=extra.review;
+    // A copied legacy single-offset setting is a new activity, not a rewrite
+    // of the original published schedule or its progress.
+    if(review && typeof review==='object' && !Array.isArray(review)) {
+      const r=review as Record<string,unknown>;
+      if([3,7,30].includes(r.offset as number) && (r.kind==='general'||r.kind==='specialist') && typeof r.reading==='boolean' && typeof r.practice==='boolean' && (r.reading||r.practice))
+        extra.review={schedule:'spaced4',kind:r.kind,reading:r.reading,practice:r.practice};
+    }
+  }
+  return { ...copied, key: newKey, id: null, sourceItemId: null, sourceDayOfWeek: null, dayOfWeek: day, linkedExamId: null, completed: false, locked: false };
 }
 
 /** Apply a snapshot without mutating its source or carrying IDs between students. */

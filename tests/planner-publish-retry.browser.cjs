@@ -29,7 +29,7 @@ const {chromium} = require('playwright-core');
     const {name,args}=JSON.parse(options.body); window.calls.push(name); let data=null;
     if(name==='current_user')data={id:'counselor'};
     else if(name==='counselor_plan_editor_page')data={counselor_id:'counselor',plans:[structuredClone(window.live)],has_more:false};
-    else if(name==='counselor_completed_plan_item_ids'||name==='planner_review_today_v2'||name==='planner_list_presets'||name==='planner_list_topics'||name==='planner_topic_history')data=[];
+    else if(name==='counselor_completed_plan_item_ids'||name==='planner_review_today_v2'||name==='planner_spaced_reviews_week'||name==='planner_list_presets'||name==='planner_list_topics'||name==='planner_topic_history')data=[];
     else if(name==='planner_get_published_extras')data={week:{},items:{}};
     else if(name==='planner_get_working_draft')data=window.draft;
     else if(name==='planner_save_working_draft_checked'){

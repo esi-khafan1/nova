@@ -18,6 +18,7 @@ import { PlannerTopicEditor } from "@/components/dashboard/planner-topic-editor"
 import { PlannerBankChapterInput } from "@/components/dashboard/planner-bank-chapter-input";
 import { PlannerReviewSettings } from "@/components/dashboard/planner-review-settings";
 import { normalizeReviewKind } from "@/lib/planner-review-settings";
+import { usePlannerSpacedReviews } from "@/components/dashboard/use-planner-spaced-reviews";
 import { usePlannerWorkingCopy } from "@/components/dashboard/use-planner-working-copy";
 import { plannerGridToItems, plannerItemsToGrid, type PlannerTopic } from "@/lib/planner-grid";
 import {
@@ -317,6 +318,7 @@ export function WeeklyPlanBuilder({
   const numbers = planNumbers(numberingPlans.length ? numberingPlans : plans);
   const studentRecentPlans = recentPlans.filter(plan => plan.student_id === student?.student_id).slice(0, 8);
   const itemGrade=(item:PlanItem):Grade=>item.sourceGrade??inferItemGrade({subject:item.subject,source_grade:null},student?.study_field??null,student?.grade??null)??([9,10,11,12].includes(student?.grade??0)?student.grade as Grade:10);
+  const spacedReviews=usePlannerSpacedReviews(student?.student_id??"",weekStart,Boolean(privateDrafts));
   const workingCopy=usePlannerWorkingCopy({
     enabled:privateDrafts && Boolean(student?.student_id && counselorId),
     context:{studentId:student?.student_id??'',weekStart,planId:planId||null},counselorId:counselorId??'',planStatus,
@@ -572,7 +574,11 @@ export function WeeklyPlanBuilder({
         {workingCopy.phase === 'error' ? <>{workingCopy.warning} برای تلاش دوباره به بخش «پیش‌نویس خصوصی» در بالای صفحه برو.</> : 'ویرایش گرید تا پایان دریافت یا ذخیرهٔ پیش‌نویس موقتاً غیرفعال است.'}
       </div>}
       <div className="planner-workspace">
+      {spacedReviews.error && <div className="portal-alert error" role="alert">{spacedReviews.error} <button type="button" onClick={spacedReviews.retry}>تلاش دوباره</button></div>}
       <PlannerWeekGrid
+        reviews={spacedReviews.rows}
+        reviewPending={spacedReviews.pending}
+        onDeleteReview={spacedReviews.remove}
         key={`${student.student_id}:${weekStart}:${planId}`}
         weekStart={weekStart}
         grid={weekGrid}
@@ -985,7 +991,7 @@ export function WeeklyPlanBuilder({
       </details>}
       <details className="portal-card planner-fold"><summary>قالب‌های هفته</summary><PlannerWeekTemplates key={`templates:${student.student_id}:${weekStart}:${planId}`} weekStart={weekStart} items={items} routines={routines} lockedDays={weekDays.map((_, day)=>isLockedDay(day))} onApply={(nextItems,nextRoutines)=>{setSaveNotice(null);const existingKeys=new Set(items.map(item=>item.key));setItems(nextItems.map(item=>existingKeys.has(item.key)?item:{...item,extra:normalizeReviewKind(item.extra,item.subject,itemGrade(item),student.study_field??null)}));setRoutines(nextRoutines);setEditor(null)}} /></details>
       <details className="portal-card planner-fold"><summary>تحلیل و مرورها</summary>{analysisReady ? <PlannerAnalysis weekStart={weekStart} grid={weekGrid} /> : <div className="portal-alert error" role="status">برای نمایش تحلیل، مقادیر فعالیت‌ها را معتبر کن.</div>}
-      <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} /></details>
+      <PlannerPublishedReviews key={`${student.student_id}:${weekStart}`} studentId={student.student_id} weekStart={weekStart} canToggle={false} includeSpaced={false} /></details>
       </div>
 
       <section className="portal-card plan-publish">

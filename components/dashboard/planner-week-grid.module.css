@@ -34,3 +34,6 @@
 .block{padding:6px 5px}
 .block strong{font-size:11px;word-break:normal;overflow-wrap:anywhere}
 .block span{font-size:10px;line-height:1.6}
+
+.reviewBlock{cursor:default;border-inline-start-color:#8c65b5;background:#f9f5fe}
+.reviewBlock small{padding-inline-end:0}.reviewBlock button{font:inherit;font-size:11px;border:1px solid #d8c6e9;background:#fff;color:#754693;border-radius:5px;min-height:32px;cursor:pointer}.reviewBlock button:disabled{opacity:.5}

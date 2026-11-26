@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import type { PlannerGrid } from "@/lib/planner-grid";
 import type { PrintableReviewRecord } from "@/lib/planner-review-records";
+import { printableSpacedReviews } from "@/lib/planner-spaced-reviews";
 import { printableTodayReviews } from "@/lib/planner-review-today";
 import type { StudyField } from "@/lib/study-catalog";
 import type { PrintablePlan, PrintableWeekDetails } from "./print-weekly-plan";
@@ -20,10 +21,11 @@ export function PlannerDraftPrint({plan,student,counselorName,weekDetails,onBack
  useEffect(()=>{if(!mounted)return;const before=document.activeElement instanceof HTMLElement?document.activeElement:null;overlay.current?.focus();const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();onBack()}};window.addEventListener('keydown',key);return()=>{window.removeEventListener('keydown',key);before?.focus()};},[mounted,onBack]);
  useEffect(()=>{let cancelled=false;setRows(null);setError(false);
   void (async()=>{try{
-   const {data,error}=await createClient({planner:true}).rpc("planner_review_today_v2",{target_student_id:plan.student_id});
-   if(error)throw error;
+   const client=createClient({planner:true});
+   const [legacy,spaced]=await Promise.all([client.rpc("planner_review_today_v2",{target_student_id:plan.student_id}),client.rpc("planner_spaced_reviews_week",{target_student_id:plan.student_id,target_week_start:plan.week_start})]);
+   if(legacy.error||spaced.error)throw legacy.error||spaced.error;
    const end=new Date(Date.parse(`${plan.week_start}T00:00:00Z`)+6*86400000).toISOString().slice(0,10);
-   const rows=printableTodayReviews(data).filter(row=>row.date>=plan.week_start&&row.date<=end);
+   const rows=[...printableTodayReviews(legacy.data),...printableSpacedReviews(spaced.data)].filter(row=>row.date>=plan.week_start&&row.date<=end);
    if(!cancelled)setRows(rows);
   }catch{if(!cancelled)setError(true)}})();return()=>{cancelled=true};
  },[plan.student_id,plan.week_start,attempt]);

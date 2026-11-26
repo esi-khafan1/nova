@@ -1,7 +1,7 @@
 import { activityTypes } from "./study-catalog";
 import { externalSimulationActivity } from "./external-simulation";
 import { makeupActivity } from "./makeup-plan-box";
-import { readReviewSetting } from "./planner-review-settings";
+import { readReviewSetting, reviewForNewActivity } from "./planner-review-settings";
 import { copyPlannerBlock, plannerGridToItems, plannerItemsToGrid } from "./planner-grid";
 import type { PlanItem, PlanRoutine } from "../components/dashboard/weekly-plan-builder";
 
@@ -98,7 +98,7 @@ export function applyReadyBlock(target:PlanItem,value:unknown):PlanItem {
  if(target.completed||target.linkedExamId||target.locked)throw new Error('این فعالیت محافظت‌شده است و جایگزین نمی‌شود.');
  const block=readReadyBlock(value);
  const extra=target.extra?structuredClone(target.extra):{};delete extra.review;
- const review=readReviewSetting(block.extra?.review);if(review)extra.review=review;
+ const review=readReviewSetting(block.extra?.review);if(review)extra.review=reviewForNewActivity(review);
  return {...block,key:target.key,id:target.id??null,sourceItemId:target.sourceItemId??null,sourceDayOfWeek:target.sourceDayOfWeek??null,
   // Preserve opaque target metadata, while applying the preset's review choice.
   extra:Object.keys(extra).length?extra:null,topics:block.topics??[],

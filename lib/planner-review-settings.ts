@@ -2,7 +2,8 @@ import { sharedSchoolSubjects } from './school-catalog';
 import type { StudyField } from './study-catalog';
 import type { Grade } from './planning-curriculum';
 
-export type ReviewSetting = {offset:3|7|30;kind:'general'|'specialist';reading:boolean;practice:boolean};
+type ReviewChoices = {kind:'general'|'specialist';reading:boolean;practice:boolean};
+export type ReviewSetting = ReviewChoices & ({offset:3|7|30; schedule?:never}|{schedule:'spaced4';offset?:never});
 export function reviewKind(subject:string,grade:Grade,field:StudyField|null):ReviewSetting['kind'] {
   if(grade===9)return ['ریاضی','علوم تجربی','هوش و استعداد تحلیلی'].includes(subject)?'specialist':'general';
   if(field!=='humanities' && ['تاریخ معاصر ایران','علوم اجتماعی'].includes(subject))return 'general';
@@ -11,8 +12,16 @@ export function reviewKind(subject:string,grade:Grade,field:StudyField|null):Rev
 export function readReviewSetting(value:unknown):ReviewSetting|null {
   if(!value||typeof value!=='object'||Array.isArray(value))return null;
   const v=value as Record<string,unknown>;
-  if(![3,7,30].includes(v.offset as number)||!(v.kind==='general'||v.kind==='specialist')||typeof v.reading!=='boolean'||typeof v.practice!=='boolean'||(!v.reading&&!v.practice))return null;
-  return {offset:v.offset as 3|7|30,kind:v.kind,reading:v.reading,practice:v.practice};
+  if(!(v.kind==='general'||v.kind==='specialist')||typeof v.reading!=='boolean'||typeof v.practice!=='boolean'||(!v.reading&&!v.practice))return null;
+  const choices:ReviewChoices={kind:v.kind,reading:v.reading,practice:v.practice};
+  if (v.schedule==='spaced4' && v.offset===undefined) return {...choices,schedule:'spaced4'};
+  if ([3,7,30].includes(v.offset as number) && v.schedule===undefined) return {...choices,offset:v.offset as 3|7|30};
+  return null;
+}
+/** New copies/presets use the current four-occurrence schedule; existing
+ * published records and saved legacy templates are not rewritten. */
+export function reviewForNewActivity(setting:ReviewSetting):ReviewSetting {
+ return {schedule:'spaced4',kind:setting.kind,reading:setting.reading,practice:setting.practice};
 }
 export function normalizeReviewKind(extra:Record<string,unknown>|null|undefined,subject:string,grade:Grade,field:StudyField|null):Record<string,unknown>|null|undefined {
  const review=readReviewSetting(extra?.review);

@@ -10,6 +10,7 @@ const operations = new Set([
   'planner_save_working_draft_checked', 'planner_discard_working_draft', 'planner_publish_working_draft',
   'planner_review_week', 'planner_set_historical_review_completed', 'planner_set_review_completed',
   'planner_review_today_v2', 'planner_set_review_today_v2',
+  'planner_spaced_reviews_week', 'planner_set_spaced_review_completed', 'planner_cancel_spaced_review',
   'planner_list_presets', 'planner_save_preset', 'planner_delete_preset',
   'planner_list_topics', 'planner_topic_history', 'planner_list_topic_chapters',
 ]);

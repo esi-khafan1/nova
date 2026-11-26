@@ -53,7 +53,7 @@ export function parsePlannerReviewRecords(value: unknown): { completed: Set<stri
 /** Exact authorized review rows for printing, without re-generating missing
  * occurrences or guessing completion from the current editor. */
 export type PrintableReviewRecord = {
-  key: string; date: string; offset: 1 | 3 | 7 | 30; subject: string; chapter: string;
+  key: string; date: string; offset: 1 | 3 | 7 | 30 | 90; subject: string; chapter: string;
   topics: PlannerTopic[]; checked: boolean; historical: boolean;
   setting?: import('./planner-review-settings').ReviewSetting;
   itemId: string; archiveId: string | null;

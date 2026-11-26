@@ -3,11 +3,17 @@
 import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { addDays, formatPersianWeekday, parseIsoDate, persianMonthNames, persianNumber, persianParts } from "@/lib/persian-date";
 import { clonePlannerGrid, copyPlannerBlock, movePlannerBlock, summarizePlannerGrid, type GridPosition, type PlannerBlock, type PlannerGrid } from "@/lib/planner-grid";
+import { reviewDescription } from "@/lib/planner-review-settings";
+import type { SpacedReview } from "@/lib/planner-spaced-reviews";
+import { dayIso, tehranToday } from "@/lib/student-planning";
 import { activityTypes } from "@/lib/study-catalog";
 import styles from "./planner-week-grid.module.css";
 
 type Props<T extends PlannerBlock> = {
   weekStart: string;
+  reviews?: SpacedReview[];
+  reviewPending?: boolean;
+  onDeleteReview?: (review:SpacedReview)=>void;
   grid: Array<Array<T | null>>;
   lockedDays: boolean[];
   onChange: (grid: Array<Array<T | null>>) => void;
@@ -45,7 +51,7 @@ function locate(grid: PlannerGrid, key: string): GridPosition | null {
 }
 
 /** A controlled editor surface; persistence and authorization remain with its caller. */
-export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, lockedDays, onChange, onEdit, onAdd, routines, onEditRoutine, selectedKey}: Props<T>) {
+export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, lockedDays, onChange, onEdit, onAdd, routines, onEditRoutine, selectedKey, reviews=[], reviewPending=false, onDeleteReview}: Props<T>) {
   const [selected, setSelected] = useState<string | null>(null);
   const [mobileDay, setMobileDay] = useState(0);
   const [menu, setMenu] = useState<string | null>(null);
@@ -176,6 +182,11 @@ export function PlannerWeekGrid<T extends PlannerBlock>({weekStart, grid, locked
                 {!protect(block,dayIndex)&&<button type="button" onClick={()=>deleteBlock(block.key)}>حذف</button>}
               </div>}
             </div> : <div className={styles.empty} key={`empty-${index}`} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.stopPropagation();drop(e,dayIndex,index)}} aria-hidden="true"/>)}
+            {reviews.filter(review=>review.date===dayIso(weekStart,dayIndex)).map(review=><article key={review.id} className={`${styles.block} ${styles.reviewBlock}`} aria-label={`مرور ${review.subject}`}>
+              <strong>مرور · {review.subject}</strong><span>{review.chapter||'مبحث آزاد'}</span>
+              <span>{reviewDescription(review.setting)}</span><small>{persianNumber.format(review.offset)} روز بعد {review.completed?'· انجام‌شده':''}</small>
+              {!review.completed && review.date>=tehranToday() && onDeleteReview && <button type="button" disabled={reviewPending} onClick={()=>onDeleteReview(review)}>حذف این مرور</button>}
+            </article>)}
             {Array.from({length:Math.max(0,2-day.length)},(_,index)=><div className={styles.empty} key={`placeholder-${index}`} aria-hidden="true"/>)}
           </div>
           <button type="button" className={styles.add} disabled={lockedDays[dayIndex]} title={lockedDays[dayIndex] ? 'روز گذشته قابل تغییر نیست.' : undefined} onClick={()=>{setMobileDay(dayIndex);onAdd(dayIndex)}}>+ افزودن</button>
