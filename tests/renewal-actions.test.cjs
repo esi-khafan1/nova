@@ -12,6 +12,7 @@ const assert=require('node:assert/strict'),esbuild=require('esbuild'),Module=req
  const result=await mod.exports.submitRenewal({},form());assert.ok(result.success);assert.equal(uploads.length,1);assert.equal(calls[1].name,'submit_student_renewal');assert.deepEqual(Object.keys(calls[1].args).sort(),['target_name','target_quote_id','target_receipt']);assert.ok(calls[1].args.target_receipt.startsWith('student-123/renewal/'));
  fail=true;const failure=await mod.exports.submitRenewal({},form());assert.ok(failure.error);assert.equal(removes.length,1);assert.equal(removes[0][0],uploads[1][0]);
  const full=form();full.set('quote_id','');full.set('expected_price','123');const before=uploads.length;const changed=await mod.exports.submitRenewal({},full);assert.match(changed.error,/قیمت دوره تغییر/);assert.equal(uploads.length,before);
- global.__renewalContext.profile.registration_status='pending';assert.ok((await mod.exports.submitRenewal({},form())).error);
+ fail=false;global.__renewalContext.profile.registration_status='disabled';assert.equal((await mod.exports.applyRenewalDiscount(selection,'SAMPLE')).quote.discount_percent,15);assert.ok((await mod.exports.submitRenewal({},form())).success);
+ global.__renewalContext.profile.registration_status='pending';assert.ok((await mod.exports.applyRenewalDiscount(selection,'SAMPLE')).error);assert.ok((await mod.exports.submitRenewal({},form())).error);
  console.log('PASS: server quote, no code in submission, immutable receipt upload and safe failure cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

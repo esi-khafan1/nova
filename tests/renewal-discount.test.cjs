@@ -21,16 +21,27 @@ const {PGlite}=require('@electric-sql/pglite'),{randomUUID}=require('node:crypto
  create policy own_remove on storage.objects for delete to authenticated using(split_part(name,'/',1)=auth.uid()::text);
  `);
  await db.exec(fs.readFileSync('supabase/migrations/257_renewal_discount.sql','utf8'));
- const a=randomUUID(),b=randomUUID(),admin=randomUUID(),inactive=randomUUID();
- for(const [id,role,status] of [[a,'student','active'],[b,'student','active'],[admin,'admin','active'],[inactive,'student','pending']]){
+ await db.exec(fs.readFileSync('supabase/migrations/258_disabled_student_renewal.sql','utf8'));
+ const a=randomUUID(),b=randomUUID(),admin=randomUUID(),inactive=randomUUID(),disabled=randomUUID(),unconfirmed=randomUUID();
+ for(const [id,role,status] of [[a,'student','active'],[b,'student','active'],[admin,'admin','active'],[inactive,'student','pending'],[disabled,'student','disabled'],[unconfirmed,'student','disabled']]){
   await db.query('insert into auth.users values($1,now(),null)',[id]);await db.query('insert into public.profiles values($1,$2,null,$3,$4)',[id,'Test user',role,status]);
  }
- await db.query("insert into public.student_registrations values($1,$2)",[a,`${a}/old.jpg`]);
+ await db.query("insert into public.student_registrations values($1,$2),($3,$4)",[a,`${a}/old.jpg`,disabled,`${disabled}/old.jpg`]);
+ await db.query('update auth.users set email_confirmed_at=null where id=$1',[unconfirmed]);
  // A deliberately unrelated fixture password; production material never appears in this test or repository.
  await db.query("insert into private.renewal_discount_secret(salt,digest) values(decode(repeat('ab',32),'hex'),sha256(decode(repeat('ab',32),'hex')||convert_to($1,'UTF8')))",['SAMPLE']);
  const actor=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id??'']);await db.exec('set role authenticated')};
  const quote=async code=>(await db.query("select public.quote_student_renewal(10::smallint,'humanities','base',3::smallint,$1) v",[code])).rows[0].v;
  await actor(inactive);await assert.rejects(()=>quote('SAMPLE'),/Renewal unavailable/);
+ await actor(unconfirmed);await assert.rejects(()=>quote('SAMPLE'),/Renewal unavailable/);
+ await actor(admin);await assert.rejects(()=>quote('SAMPLE'),/Renewal unavailable/);
+ await actor(disabled);const dq=await quote('SAMPLE');assert.equal(dq.discount_percent,15);assert.equal(dq.payable_price,6349500);
+ const dr=`${disabled}/renewal/${randomUUID()}.jpg`;await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['registration-receipts',dr]);
+ const did=(await db.query('select public.submit_student_renewal($1,$2,$3) v',[dq.quote_id,dr,'renewal.jpg'])).rows[0].v;
+ await actor(admin);const dlist=(await db.query('select public.admin_list_student_renewals() v')).rows[0].v;assert.equal(dlist.length,1);assert.equal(dlist[0].student_id,disabled);assert.equal((await db.query('select public.student_renewal_receipt($1) v',[did])).rows[0].v,dr);await db.query('select public.admin_review_student_renewal($1)',[did]);
+ await db.exec('reset role');assert.equal((await db.query('select registration_status from public.profiles where id=$1',[disabled])).rows[0].registration_status,'disabled');assert.equal((await db.query('select receipt_path from public.student_registrations where student_id=$1',[disabled])).rows[0].receipt_path,`${disabled}/old.jpg`);
+ await db.query('insert into private.student_account_blocks values($1)',[disabled]);await actor(disabled);await assert.rejects(()=>quote('SAMPLE'),/Renewal unavailable/);assert.equal((await db.query('select private.renewal_may_upload() v')).rows[0].v,false);
+ await db.exec('reset role');await db.query('delete from private.student_account_blocks where student_id=$1',[disabled]);
  await actor(a);await assert.rejects(()=>db.query('select * from private.renewal_discount_secret'),/permission denied/);
  for(let n=0;n<8;n++)assert.equal((await quote('wrong')).status,'invalid');assert.equal((await quote('SAMPLE')).status,'limited');
  await db.exec('reset role');await db.query("update private.renewal_discount_attempts set window_start=now()-interval '16 minutes' where student_id=$1",[a]);await actor(a);

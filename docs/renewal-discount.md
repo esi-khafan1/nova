@@ -1,10 +1,10 @@
 # Renewal discount operations
 
 The renewal workflow is separate from existing registrations and does not alter
-an active student's service, assignment or old receipt. An administrator must
+a student's service, assignment or old receipt. An administrator must
 review the newly submitted receipt and independently manage the service.
 The fixed percentage applies to the currently configured period price and is
-recorded in a 24-hour, single-use quote. Only active, unblocked students with a
+recorded in a 24-hour, single-use quote. Only active or service-disabled, unblocked students with a
 confirmed contact can request a quote; unsuccessful code checks are rate-limited.
 
 Migration 257 deliberately does not contain the secret. Before enabling the

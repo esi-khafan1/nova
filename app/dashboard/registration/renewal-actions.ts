@@ -21,12 +21,12 @@ async function quote(supabase:Awaited<ReturnType<typeof requireProfile>>['supaba
 export async function applyRenewalDiscount(selection:CourseSelection,code:string):Promise<QuoteResult>{
  const {supabase,profile}=await requireProfile(['student'],true);
  const parsed=parseCourseSelection(selection as unknown as Record<string,unknown>);
- if(profile.registration_status!=='active'||!parsed||typeof code!=='string'||!code.trim()||code.length>64)return {error:'کد را وارد کن.'};
+ if(!['active','disabled'].includes(profile.registration_status)||!parsed||typeof code!=='string'||!code.trim()||code.length>64)return {error:'کد را وارد کن.'};
  return quote(supabase,parsed,code);
 }
 export async function submitRenewal(_state:{error?:string;success?:string},fd:FormData):Promise<{error?:string;success?:string}>{
  const {supabase,profile}=await requireProfile(['student'],true);
- if(profile.registration_status!=='active')return {error:'امکان ارسال درخواست در این حساب وجود ندارد.'};
+ if(!['active','disabled'].includes(profile.registration_status))return {error:'امکان ارسال درخواست در این حساب وجود ندارد.'};
  const selection=parseCourseSelection({grade:fd.get('grade'),field:fd.get('field'),course:fd.get('course'),months:fd.get('months')});
  if(!selection||!['base','progress'].includes(selection.course))return {error:'دورهٔ انتخابی معتبر نیست.'};
  let id=String(fd.get('quote_id')??'');

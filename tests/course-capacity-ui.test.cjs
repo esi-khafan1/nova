@@ -52,10 +52,13 @@ async function details(offers) {
  const r=await registration(closed);assert.match(text(r),/ظرفیت دوره‌ها تکمیل/);assert.match(text(r),/منتظر بررسی/,'existing pending request is preserved');
  for(const offers of [sale,reserved])assert.ok(nodes(await registration(offers)).some(n=>n.type===form));
  assert.ok(nodes(await registration(sale,'active')).some(n=>n.type===renewalForm),'active students access a separate renewal workflow');
+ const disabledPage=await registration(sale,'disabled');assert.ok(nodes(disabledPage).some(n=>n.type===renewalForm),'disabled students access renewal');assert.match(text(disabledPage),/تا فعال‌سازی دوباره توسط مدیر غیرفعال/);
+ assert.ok(!nodes(await registration(closed,'disabled')).some(n=>n.type===renewalForm),'disabled students cannot renew when sales are closed');
  assert.ok(!nodes(await registration(closed,'active')).some(n=>n.type===renewalForm),'closed sales do not expose the renewal payment form');
  const closedDetails=await details(closed);assert.match(text(closedDetails),/ظرفیت دوره‌ها تکمیل/);assert.match(text(closedDetails),/وجهی واریز نکن/);
  assert.ok(!nodes(closedDetails).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));
  for(const offers of [sale,reserved])assert.ok(nodes(await details(offers)).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));
+ const {StudentServiceNotice}=load('components/dashboard/student-service-notice.tsx',{'next/link':{default:link},'@/lib/courses':{studentCourseCatalogPath:()=>'/courses?grade=10'}});const notice=StudentServiceNotice({status:'disabled',grade:10,studyField:'humanities'});assert.ok(nodes(notice).some(n=>n.type===link&&n.props.href==='/courses?grade=10'&&text(n).includes('درخواست تمدید')));
  const cards=fs.readFileSync('components/registration/course-cards.tsx','utf8');assert.match(cards,/offers\[0\]\.sold_out && <strong>تکمیل ظرفیت/);
  const admin=fs.readFileSync('app/dashboard/admin/courses/page.tsx','utf8');assert.match(admin,/requireSuperAdmin/);assert.match(admin,/<CourseStatusPicker/);
  const picker=fs.readFileSync('components/dashboard/course-status-picker.tsx','utf8');assert.match(picker,/value: "sold_out", label: "تکمیل ظرفیت"/);assert.match(picker,/name="reservation"/);

@@ -21,10 +21,9 @@ export default async function RegistrationPage({ searchParams }: { searchParams:
   const { user } = await getRequestUser();
   if (!user || !hasConfirmedContact(user)) redirect(`/auth?mode=signup&next=${encodeURIComponent(safeReturnPath(next))}`);
   const { supabase, profile } = await requireProfile(["student"], true);
-  if (profile.registration_status === "disabled") redirect("/dashboard/student");
-  if (profile.registration_status === "active") {
+  if (profile.registration_status === "active" || profile.registration_status === "disabled") {
     const offers=await loadCourseOffers();
-    return <DashboardShell role="student" name={profile.full_name}><div className="registration-page"><section className="registration-welcome"><h1>تمدید دوره</h1><p>درخواست تمدید جداگانه بررسی می‌شود و خدمات و ثبت‌نام فعلی تو تغییر نمی‌کند.</p></section><section className="registration-card">
+    return <DashboardShell role="student" name={profile.full_name}><div className="registration-page"><section className="registration-welcome"><h1>تمدید دوره</h1><p>{profile.registration_status === "disabled" ? "درخواست تمدید جداگانه بررسی می‌شود؛ خدمات تا فعال‌سازی دوباره توسط مدیر غیرفعال می‌ماند." : "درخواست تمدید جداگانه بررسی می‌شود و خدمات و ثبت‌نام فعلی تو تغییر نمی‌کند."}</p></section><section className="registration-card">
       {!offers ? <p role="alert">اطلاعات دوره در دسترس نیست؛ لطفاً وجهی واریز نکن.</p> : offers[0].sold_out ? <p role="alert">ظرفیت دوره‌ها تکمیل شده است؛ لطفاً وجهی واریز نکن.</p> : invalidSelection || !requested || !['base','progress'].includes(requested.course) ? <><p>برای تمدید ابتدا دوره را انتخاب کن.</p><Link className="button" href={studentCourseCatalogPath(profile.grade,profile.study_field)}>انتخاب دوره</Link></> : <RenewalForm key={courseRegistrationPath(requested)} selection={requested} offers={offers}/>}
     </section></div></DashboardShell>;
   }
