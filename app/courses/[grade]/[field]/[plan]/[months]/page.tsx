@@ -1,5 +1,6 @@
 import { loadCourseOffers } from "@/lib/load-course-offers";
 import { CoursePrice } from "@/components/registration/course-price";
+import { RenewalNotice } from "@/components/registration/renewal-notice";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -63,6 +64,7 @@ export default async function CourseDetailsPage({ params, searchParams }: PagePr
           </div>
           <h1>{plan.label}</h1>
           <p className="course-detail-tagline"><strong>{plan.tagline}</strong></p>
+          {offers && !offers[0].sold_out && ["base", "progress"].includes(selection.course) && <RenewalNotice/>}
           <div className="course-detail-cover-wrap">
             <Image
               className="course-detail-cover"

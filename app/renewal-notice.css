@@ -1,0 +1,32 @@
+/* A separate callout keeps the renewal offer visible without exposing the code. */
+.renewal-notice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 16px 18px;
+  border: 1px solid #f2b875;
+  border-radius: 14px;
+  background: #fff2dc;
+  color: #56300b;
+}
+.renewal-notice .renewal-notice-percent {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  min-height: 58px;
+  border-radius: 12px;
+  background: #a8470a;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+.renewal-notice .renewal-notice-copy { display: grid; gap: 5px; min-width: 0; }
+.renewal-notice .renewal-notice-copy strong { color: #773600; font-size: 16px; line-height: 1.7; }
+.renewal-notice .renewal-notice-copy span { color: #56300b; font-size: 14px; line-height: 1.9; }
+@media (max-width: 480px) {
+  .renewal-notice { gap: 12px; padding: 14px; align-items: flex-start; }
+  .renewal-notice .renewal-notice-percent { width: 48px; min-height: 48px; font-size: 19px; }
+}

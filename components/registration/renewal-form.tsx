@@ -3,6 +3,7 @@ import {useActionState,useState,startTransition,type FormEvent} from 'react';
 import {applyRenewalDiscount,submitRenewal} from '@/app/dashboard/registration/renewal-actions';
 import {courseDurationLabel,coursePrice,courseTypeLabel,type CourseSelection} from '@/lib/courses';
 import type {CourseOffers} from '@/lib/course-offers';
+import {RenewalNotice} from '@/components/registration/renewal-notice';
 import {studyFieldLabels} from '@/lib/study-catalog';
 
 type Quote={quote_id:string;base_price:number;discount_percent:number;payable_price:number};
@@ -17,8 +18,8 @@ export function RenewalForm({selection,offers}:{selection:CourseSelection;offers
  const submit=(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();if(!event.currentTarget.reportValidity())return;if(code.trim()){setError('ابتدا کد را اعمال کن یا کادر را خالی بگذار.');return;}startTransition(()=>action(new FormData(event.currentTarget)));};
  return <form className="registration-form" action={action} onSubmit={submit}>
   <section className="registration-course-summary" aria-label="دورهٔ انتخابی"><h2>درخواست تمدید</h2><dl><div><dt>پلن انتخابی</dt><dd>{courseTypeLabel(selection.course)}</dd></div><div><dt>بازهٔ انتخابی</dt><dd>{courseDurationLabel(selection.months)}</dd></div><div><dt>پایهٔ تحصیلی</dt><dd>{money(selection.grade)}</dd></div>{selection.field&&<div><dt>رشته</dt><dd>{studyFieldLabels[selection.field]}</dd></div>}</dl></section>
-  <section className="registration-payment" aria-label="اطلاعات واریز"><h3>واریز و ارسال فیش</h3><p>اگر دانش‌آموز مؤسسه هستی و قصد تمدید داری، می‌توانی از تخفیف ۱۵ درصدی تمدید استفاده کنی.</p>
-   <div className="renewal-code"><label>کد تخفیف<input type="password" autoComplete="off" maxLength={64} disabled={checking||pending} value={code} onChange={e=>{setCode(e.target.value);setQuote(null);setError('')}} dir="ltr"/></label><button type="button" className="button button-secondary" onClick={()=>void apply()} disabled={checking||pending}>{checking?'در حال بررسی…':'اعمال'}</button></div>
+  <section className="registration-payment" aria-label="اطلاعات واریز"><h3>واریز و ارسال فیش</h3><RenewalNotice payment/>
+   <div className="renewal-code"><label>کد تخفیف<input type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={64} disabled={checking||pending} value={code} onChange={e=>{setCode(e.target.value);setQuote(null);setError('')}} dir="ltr"/></label><button type="button" className="button button-secondary" onClick={()=>void apply()} disabled={checking||pending}>{checking?'در حال بررسی…':'اعمال'}</button></div>
    {error&&<p className="portal-alert error" role="alert">{error}</p>}
    {quote&&<p role="status">تخفیف ۱۵ درصدی اعمال شد. مبلغ تأییدشده برای ارسال فیش تا ۲۴ ساعت معتبر است. <button type="button" onClick={()=>setQuote(null)}>حذف تخفیف</button></p>}
    <p>مبلغ دوره: <strong>{money(quote?.base_price??base)} تومان</strong>{quote&&<> · تخفیف: {money(quote.base_price-quote.payable_price)} تومان</>}</p>

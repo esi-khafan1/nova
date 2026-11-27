@@ -2,6 +2,7 @@ import {SupportWidget} from "@/components/support/widget";
 import type { Metadata } from "next";
 import "@fontsource-variable/estedad";
 import "./globals.css";
+import "./renewal-notice.css";
 import "./exam-interaction-fixes.css";
 
 export const metadata: Metadata = {

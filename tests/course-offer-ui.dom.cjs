@@ -19,7 +19,7 @@ function bundled(path){const text=esbuild.buildSync({entryPoints:[path],bundle:t
  const {CoursePrice}=loadTs('components/registration/course-price.tsx',{'@/lib/course-offers':offersLib,'@/lib/courses':courses,'./course-price.css':{}});
  let html=renderToStaticMarkup(React.createElement(CoursePrice,{selection:{grade:12,field:'humanities',course:'base',months:3},offers:offersLib.defaultCourseOffers}));
  assert.match(html,/۸٬۱۰۰٬۰۰۰/);assert.match(html,/۱۵٪ تخفیف/);
- const {RegistrationForm}=loadTs('components/registration/registration-form.tsx',{'@/lib/course-offers':offersLib,'@/lib/courses':courses,'./course-price':{CoursePrice},'@/app/dashboard/registration/actions':{submitRegistration:async()=>({})},'@/lib/study-catalog':{studyFieldLabels:{humanities:'انسانی'}},'@/components/registration/province-city-fields':{ProvinceCityFields:()=>null}});
+ const {RegistrationForm}=loadTs('components/registration/registration-form.tsx',{'@/lib/course-offers':offersLib,'@/lib/courses':courses,'./course-price':{CoursePrice},'./renewal-notice':{RenewalNotice:()=>null},'@/app/dashboard/registration/actions':{submitRegistration:async()=>({})},'@/lib/study-catalog':{studyFieldLabels:{humanities:'انسانی'}},'@/components/registration/province-city-fields':{ProvinceCityFields:()=>null}});
  const offers=offersLib.defaultCourseOffers.map(o=>({...o,reservation:true}));
  html=renderToStaticMarkup(React.createElement(RegistrationForm,{values:{},selection:{grade:12,field:'humanities',course:'base',months:1},offers}));
  assert.match(html,/رزرو دوره/);assert.match(html,/ارسال اطلاعات و فیش برای رزرو/);assert.match(html,/6219861870360897/);assert.match(html,/type="file"[^>]*required/);

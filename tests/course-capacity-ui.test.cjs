@@ -16,7 +16,7 @@ function nodes(value, out=[]) {
 }
 function text(value){if(Array.isArray(value))return value.map(text).join('');if(value && typeof value==='object'&&'props'in value)return text(value.props.children);return typeof value==='string'?value:'';}
 const selected={grade:10,field:'humanities',course:'base',months:3};
-const form=()=>null, renewalForm=()=>null, link=()=>null;
+const form=()=>null, renewalForm=()=>null, renewalNotice=()=>null, link=()=>null;
 async function registration(offers, status='pending') {
  const {default:Page}=load('app/dashboard/registration/page.tsx',{
   '@/lib/load-course-offers':{loadCourseOffers:async()=>offers},
@@ -35,7 +35,7 @@ async function registration(offers, status='pending') {
 }
 async function details(offers) {
  const {default:Page}=load('app/courses/[grade]/[field]/[plan]/[months]/page.tsx',{
-  '@/lib/load-course-offers':{loadCourseOffers:async()=>offers}, '@/components/registration/course-price':{CoursePrice:()=>null},
+  '@/lib/load-course-offers':{loadCourseOffers:async()=>offers}, '@/components/registration/course-price':{CoursePrice:()=>null}, '@/components/registration/renewal-notice':{RenewalNotice:renewalNotice},
   'next/image':{default:()=>null},'next/link':{default:link},'next/navigation':{notFound:()=>{throw Error('not found');}},
   '@/lib/courses':{parseCourseSelection:()=>selected,parseCourseContext:()=>({}),courseCatalogPath:()=>'/courses',courseDurationLabel:()=>'',courseLandingPath:()=>'/#courses',courseRegistrationPath:()=>'/dashboard/registration?course=base'},
   '@/lib/course-plans':{getCoursePlan:()=>({label:'Base',summary:'',tagline:'',paragraphs:[],services:[],suitable:'',imageType:'base'})},
@@ -55,6 +55,7 @@ async function details(offers) {
  const disabledPage=await registration(sale,'disabled');assert.ok(nodes(disabledPage).some(n=>n.type===renewalForm),'disabled students access renewal');assert.match(text(disabledPage),/تا فعال‌سازی دوباره توسط مدیر غیرفعال/);
  assert.ok(!nodes(await registration(closed,'disabled')).some(n=>n.type===renewalForm),'disabled students cannot renew when sales are closed');
  assert.ok(!nodes(await registration(closed,'active')).some(n=>n.type===renewalForm),'closed sales do not expose the renewal payment form');
+ assert.ok(nodes(await details(sale)).some(n=>n.type===renewalNotice),'detail offer is present for open sales');assert.ok(!nodes(await details(closed)).some(n=>n.type===renewalNotice),'closed sales must not advertise an unavailable payment flow');
  const closedDetails=await details(closed);assert.match(text(closedDetails),/ظرفیت دوره‌ها تکمیل/);assert.match(text(closedDetails),/وجهی واریز نکن/);
  assert.ok(!nodes(closedDetails).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));
  for(const offers of [sale,reserved])assert.ok(nodes(await details(offers)).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));

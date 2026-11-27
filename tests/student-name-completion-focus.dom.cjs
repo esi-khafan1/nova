@@ -11,7 +11,7 @@ const {act} = React;
 const deps = {
   react: React, 'react/jsx-runtime': require('react/jsx-runtime'),
   'next/link': {default: ({children,...props}) => React.createElement('a',props,children)},
-  '@/lib/course-offers': {defaultCourseOffers:[]}, './course-price': {CoursePrice:()=>null},
+  '@/lib/course-offers': {defaultCourseOffers:[]}, './course-price': {CoursePrice:()=>null}, './renewal-notice': {RenewalNotice:()=>null},
   '@/app/dashboard/registration/actions': {submitRegistration:async()=>({})},
   '@/lib/courses': {courseTypeLabel:()=>'',courseDurationLabel:()=>''},
   '@/lib/study-catalog': {studyFieldLabels:{}}, '@/components/registration/province-city-fields': {ProvinceCityFields:()=>null},

@@ -33,7 +33,7 @@ function form(verifiedPhone, mode = 'profile') {
   const { RegistrationForm } = load('components/registration/registration-form.tsx', {
     react: { useState: value => [value, () => {}], useRef: () => ({current:null}), useEffect: () => {}, useActionState: () => [{}, () => {}, false], startTransition: () => {} },
     'react/jsx-runtime': { jsx, jsxs: jsx },
-    './course-price': { CoursePrice: () => null },
+    './course-price': { CoursePrice: () => null }, './renewal-notice': { RenewalNotice: () => null },
     '@/lib/course-offers': { defaultCourseOffers: [] },
     '@/app/dashboard/registration/actions': { submitRegistration: () => {} },
     '@/lib/courses': { courseTypeLabel: () => '', courseDurationLabel: () => '' },
