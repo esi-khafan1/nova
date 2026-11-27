@@ -101,3 +101,5 @@
 .registration-pagination a{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:6px;border:1px solid #c8daff;border-radius:8px;color:#12304d;text-decoration:none;font-weight:700}
 .registration-pagination a[aria-current=page]{background:#225db2;border-color:#225db2;color:white}
 @media(max-width:600px){.registration-province-filter label{width:100%}.registration-province-filter input[type=search],.registration-province-filter select{width:100%;max-width:none}}
+.renewal-code{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:16px 0}.renewal-code label{flex:1 1 180px}.renewal-code button{min-height:46px}
+.renewal-requests article{border:1px solid #d8e4f5;border-radius:12px;padding:14px;margin:12px 0}.renewal-requests article p{margin:8px 0}.renewal-requests article small{display:block}.renewal-requests article>div{display:flex;gap:14px;align-items:center;flex-wrap:wrap}

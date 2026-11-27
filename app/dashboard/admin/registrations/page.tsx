@@ -1,6 +1,7 @@
 import { requireProfile } from "@/lib/auth";
 import { hasSuperAdminAccess } from "@/lib/super-admin";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { StudentRenewalRequests } from "@/components/dashboard/student-renewal-requests";
 import { RegistrationDirectory } from "@/components/dashboard/registration-directory";
 import { provinces } from "@/lib/registration";
 
@@ -69,6 +70,9 @@ export default async function Registrations({
         </p>
       )}
 
+      {params.renewal_error && <p className="portal-alert error" role="alert">ثبت بررسی تمدید انجام نشد؛ صفحه را تازه کن.</p>}
+      {params.renewal_reviewed && <p className="portal-alert success" role="status">بررسی فیش ثبت شد؛ وضعیت خدمات و دوره خودکار تغییر نکرده‌اند.</p>}
+      <StudentRenewalRequests />
       <RegistrationDirectory audience="admin" province={provinces.includes(params.province??"") ? params.province : undefined} reviewOnly={params.review === "continuation"} search={(params.q ?? "").trim().slice(0, 120)} pageParam={params.page} />
     </DashboardShell>
   );

@@ -94,6 +94,7 @@ test('course-selection page passes the confirmed phone to the enrollment form be
     '@/lib/return-path': { safeReturnPath: path => path },
     '@/lib/courses': { parseCourseSelection: () => selection, courseRegistrationPath: () => '/dashboard/registration', studentCourseCatalogPath: () => '/courses' },
     '@/lib/load-student-account': { loadStudentAccount: async (_db, _profile, phone) => { accountPhone = phone; return { values: { ...values, grade: null, study_field: null, city: null }, registration: null, error: false }; } },
+    '@/components/registration/renewal-form': { RenewalForm: () => null },
     '@/components/registration/registration-form': { RegistrationForm },
     '@/components/dashboard/student-profile-completion-notice': { StudentProfileCompletionNotice },
     '@/lib/registration': registration,

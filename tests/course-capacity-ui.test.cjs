@@ -16,7 +16,7 @@ function nodes(value, out=[]) {
 }
 function text(value){if(Array.isArray(value))return value.map(text).join('');if(value && typeof value==='object'&&'props'in value)return text(value.props.children);return typeof value==='string'?value:'';}
 const selected={grade:10,field:'humanities',course:'base',months:3};
-const form=()=>null, link=()=>null;
+const form=()=>null, renewalForm=()=>null, link=()=>null;
 async function registration(offers, status='pending') {
  const {default:Page}=load('app/dashboard/registration/page.tsx',{
   '@/lib/load-course-offers':{loadCourseOffers:async()=>offers},
@@ -27,6 +27,7 @@ async function registration(offers, status='pending') {
   '@/lib/supabase/request-auth':{getRequestUser:async()=>({user:{}})}, '@/lib/return-path':{safeReturnPath:x=>x},
   '@/lib/courses':{parseCourseSelection:()=>selected,courseRegistrationPath:()=>'/dashboard/registration',studentCourseCatalogPath:()=>'/courses'},
   '@/lib/load-student-account':{loadStudentAccount:async()=>({values:{grade:10,study_field:'humanities'},registration:{receipt_name:'old.png',course_type:'base'},error:false})},
+  '@/components/registration/renewal-form':{RenewalForm:renewalForm},
   '@/components/registration/registration-form':{RegistrationForm:form}, '@/components/dashboard/student-profile-completion-notice':{StudentProfileCompletionNotice:()=>null},
   '@/lib/registration':{requiredStudentFieldsIssue:()=>null,requiredStudentNameIssue:()=>null},'@/app/registration.css':{},
  });
@@ -50,6 +51,8 @@ async function details(offers) {
  }
  const r=await registration(closed);assert.match(text(r),/ظرفیت دوره‌ها تکمیل/);assert.match(text(r),/منتظر بررسی/,'existing pending request is preserved');
  for(const offers of [sale,reserved])assert.ok(nodes(await registration(offers)).some(n=>n.type===form));
+ assert.ok(nodes(await registration(sale,'active')).some(n=>n.type===renewalForm),'active students access a separate renewal workflow');
+ assert.ok(!nodes(await registration(closed,'active')).some(n=>n.type===renewalForm),'closed sales do not expose the renewal payment form');
  const closedDetails=await details(closed);assert.match(text(closedDetails),/ظرفیت دوره‌ها تکمیل/);assert.match(text(closedDetails),/وجهی واریز نکن/);
  assert.ok(!nodes(closedDetails).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));
  for(const offers of [sale,reserved])assert.ok(nodes(await details(offers)).some(n=>n.type===link&&String(n.props.href).startsWith('/dashboard/registration')));

@@ -8,6 +8,7 @@ import { getRequestUser } from "@/lib/supabase/request-auth";
 import { safeReturnPath } from "@/lib/return-path";
 import { parseCourseSelection, courseRegistrationPath, studentCourseCatalogPath } from "@/lib/courses";
 import { loadStudentAccount } from "@/lib/load-student-account";
+import { RenewalForm } from "@/components/registration/renewal-form";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { StudentProfileCompletionNotice } from "@/components/dashboard/student-profile-completion-notice";
 import { requiredStudentFieldsIssue, requiredStudentNameIssue } from "@/lib/registration";
@@ -21,7 +22,12 @@ export default async function RegistrationPage({ searchParams }: { searchParams:
   if (!user || !hasConfirmedContact(user)) redirect(`/auth?mode=signup&next=${encodeURIComponent(safeReturnPath(next))}`);
   const { supabase, profile } = await requireProfile(["student"], true);
   if (profile.registration_status === "disabled") redirect("/dashboard/student");
-  if (profile.registration_status === "active") return <DashboardShell role="student" name={profile.full_name}><section className="portal-card"><h1>خدمات حساب تو فعال است</h1><p>برای حفظ ثبت‌نام تأییدشده، این فرم آن را بازنویسی نمی‌کند. برای تغییر یا تمدید دوره با نووا هماهنگ کن.</p><Link className="button" href="/dashboard/student">رفتن به پنل من</Link></section></DashboardShell>;
+  if (profile.registration_status === "active") {
+    const offers=await loadCourseOffers();
+    return <DashboardShell role="student" name={profile.full_name}><div className="registration-page"><section className="registration-welcome"><h1>تمدید دوره</h1><p>درخواست تمدید جداگانه بررسی می‌شود و خدمات و ثبت‌نام فعلی تو تغییر نمی‌کند.</p></section><section className="registration-card">
+      {!offers ? <p role="alert">اطلاعات دوره در دسترس نیست؛ لطفاً وجهی واریز نکن.</p> : offers[0].sold_out ? <p role="alert">ظرفیت دوره‌ها تکمیل شده است؛ لطفاً وجهی واریز نکن.</p> : invalidSelection || !requested || !['base','progress'].includes(requested.course) ? <><p>برای تمدید ابتدا دوره را انتخاب کن.</p><Link className="button" href={studentCourseCatalogPath(profile.grade,profile.study_field)}>انتخاب دوره</Link></> : <RenewalForm key={courseRegistrationPath(requested)} selection={requested} offers={offers}/>}
+    </section></div></DashboardShell>;
+  }
   const verifiedPhone = verifiedMobileForAccount(user);
   const account = await loadStudentAccount(supabase,profile,verifiedPhone);
   const existing = account.registration;
